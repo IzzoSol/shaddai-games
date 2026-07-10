@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XTO — Character Style Sample</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+  :root{
+    --bg:#05070d; --panel:#0b1020; --edge:#14febc; --edge2:#0affea;
+    --teal:#14febc; --emerald:#2ee6a6; --ink:#cfe9ff; --dim:#7a90ad;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 20% -10%, #0a1a2a 0%, transparent 60%),
+      radial-gradient(1000px 700px at 100% 120%, #0c1226 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    min-height:100%;
+    padding:24px 18px 48px;
+  }
+  header.top{
+    text-align:center; margin-bottom:8px;
+  }
+  header.top h1{
+    font-size:clamp(22px,4vw,38px); letter-spacing:3px; font-weight:800;
+    background:linear-gradient(90deg,var(--teal),var(--emerald),#4fd1ff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 30px rgba(20,254,188,.25);
+  }
+  header.top p{color:var(--dim); font-size:13px; letter-spacing:1px; margin-top:6px;}
+  .grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:22px;
+    max-width:1200px; margin:26px auto 0;
+  }
+  @media (max-width:820px){ .grid{grid-template-columns:1fr;} }
+  .panel{
+    background:linear-gradient(180deg,rgba(20,30,55,.55),rgba(8,12,24,.85));
+    border:1px solid rgba(20,254,188,.22);
+    border-radius:16px; padding:16px;
+    box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 18px 50px rgba(0,0,0,.55),
+      inset 0 0 40px rgba(20,254,188,.04);
+    display:flex; flex-direction:column;
+  }
+  .panel h2{
+    font-size:15px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--teal); margin-bottom:12px; display:flex; align-items:center; gap:8px;
+  }
+  .panel h2 .tag{
+    font-size:10px; background:rgba(20,254,188,.14); color:var(--emerald);
+    border:1px solid rgba(20,254,188,.3); padding:3px 8px; border-radius:20px; letter-spacing:1px;
+  }
+  .stage{
+    position:relative; width:100%; aspect-ratio:1/1; border-radius:12px; overflow:hidden;
+    background:radial-gradient(circle at 50% 35%, #10203a 0%, #05080f 75%);
+    border:1px solid rgba(20,254,188,.12);
+  }
+  .stage canvas{display:block; width:100%!important; height:100%!important;}
+  .caption{
+    margin-top:12px; font-size:12.5px; line-height:1.5; color:var(--dim);
+    border-left:2px solid var(--teal); padding-left:10px;
+  }
+  .caption b{color:var(--ink);}
+
+  /* Option A character card */
+  .cardRow{display:flex; gap:12px; margin-top:14px; align-items:stretch;}
+  .charcard{
+    flex:0 0 118px; border-radius:12px; overflow:hidden;
+    border:1px solid rgba(20,254,188,.35);
+    box-shadow:0 0 24px rgba(20,254,188,.18), inset 0 0 20px rgba(0,0,0,.5);
+    background:#04070e; position:relative; min-height:118px;
+  }
+  .charcard img{width:100%; height:100%; object-fit:cover; display:block;}
+  .charcard .ph{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:var(--dim); font-size:11px; text-align:center; padding:8px;
+  }
+  .charcard .frameGlow{position:absolute; inset:0; border:1px solid rgba(20,254,188,.5); border-radius:12px; pointer-events:none;}
+  .dialogue{
+    flex:1; background:linear-gradient(180deg,rgba(10,22,40,.9),rgba(6,12,22,.95));
+    border:1px solid rgba(20,254,188,.25); border-radius:12px; padding:12px 14px;
+    position:relative;
+  }
+  .dialogue .who{color:var(--teal); font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:6px;}
+  .dialogue .line{font-size:12.5px; line-height:1.55; color:var(--ink);}
+  .dialogue .who .lvl{font-size:10px; color:var(--dim); font-weight:400; margin-left:6px;}
+
+  .foot{max-width:1200px; margin:28px auto 0; text-align:center; color:var(--dim); font-size:11px; letter-spacing:1px;}
+</style>
+</head>
+<body>
+  <header class="top">
+    <h1>XTO — CHARACTER STYLE SAMPLE</h1>
+    <p>Two ways to render game characters — pick a direction</p>
+  </header>
+
+  <div class="grid">
+    <!-- OPTION A -->
+    <section class="panel">
+      <h2>Option A <span class="tag">STYLIZED 3D + HF FACE</span></h2>
+      <div class="stage" id="stageA"></div>
+      <div class="cardRow">
+        <div class="charcard" id="cardA">
+          <div class="ph" id="cardAph">loading portrait…</div>
+          <div class="frameGlow"></div>
+        </div>
+        <div class="dialogue">
+          <div class="who">TURTLE <span class="lvl">· Emerald Enforcer · Lv 12</span></div>
+          <div class="line">"The core holds. Bring me the sigil and I'll carve a path through the Athenaeum myself."</div>
+        </div>
+      </div>
+      <div class="caption"><b>True 3D body</b> you can walk, animate & rig, with a <b>real HF-generated face</b> shown in the UI card. Richer to build; full control.</div>
+    </section>
+
+    <!-- OPTION B -->
+    <section class="panel">
+      <h2>Option B <span class="tag">2.5D HF BILLBOARD</span></h2>
+      <div class="stage" id="stageB"></div>
+      <div class="caption"><b>Gorgeous detailed 2D art</b> from HF, standing as a camera-facing billboard in a real 3D scene with idle bob + soft shadow. Cheaper & stunning, but <b>not true 3D</b> — the art is flat.</div>
+    </section>
+  </div>
+
+  <p class="foot">SHADDAI · XTO · FLUX art via HuggingFace · Three.js r0.180</p>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+const renderers = [];
+
+function makeRenderer(el){
+  const r = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  r.setPixelRatio(DPR);
+  r.setSize(el.clientWidth, el.clientHeight, false);
+  r.outputColorSpace = THREE.SRGBColorSpace;
+  r.toneMapping = THREE.ACESFilmicToneMapping;
+  r.toneMappingExposure = 1.05;
+  el.appendChild(r.domElement);
+  renderers.push({ r, el });
+  return r;
+}
+
+/* ---------- OPTION A : GLB + lighting ---------- */
+function buildA(){
+  const el = document.getElementById('stageA');
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+  cam.position.set(0, 1.15, 3.4);
+  cam.lookAt(0, 0.9, 0);
+  const renderer = makeRenderer(el);
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3,5,4); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x14febc, 2.4); rim.position.set(-4,3,-3); scene.add(rim);
+  scene.add(new THREE.AmbientLight(0x334466, 0.6));
+  const fill = new THREE.PointLight(0x2ee6a6, 8, 20); fill.position.set(0,2,3); scene.add(fill);
+
+  // ground disc
+  const disc = new THREE.Mesh(
+    new THREE.CircleGeometry(1.6, 48),
+    new THREE.MeshStandardMaterial({ color:0x0a1830, metalness:0.4, roughness:0.5,
+      emissive:0x0a3a44, emissiveIntensity:0.4 })
+  );
+  disc.rotation.x = -Math.PI/2; disc.position.y = 0; scene.add(disc);
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(1.5, 1.62, 48),
+    new THREE.MeshBasicMaterial({ color:0x14febc, transparent:true, opacity:0.5, side:THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI/2; ring.position.y = 0.001; scene.add(ring);
+
+  const pivot = new THREE.Group(); scene.add(pivot);
+
+  function addCapsule(){
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.35, 0.7, 8, 20),
+      new THREE.MeshStandardMaterial({ color:0x14b89a, metalness:0.6, roughness:0.35,
+        emissive:0x0a4a44, emissiveIntensity:0.5 })
+    );
+    body.position.y = 0.85; g.add(body);
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.26, 24, 24),
+      new THREE.MeshStandardMaterial({ color:0x2ee6a6, metalness:0.5, roughness:0.3 })
+    );
+    head.position.y = 1.5; g.add(head);
+    pivot.add(g);
+  }
+
+  const loader = new GLTFLoader();
+  const candidates = ['/assets/agents/TURTLE.glb', '/assets/characters/XEROX.glb'];
+  let idx = 0;
+  const tryLoad = () => {
+    if (idx >= candidates.length){ addCapsule(); return; }
+    const url = candidates[idx++];
+    loader.load(url, (gltf) => {
+      const model = gltf.scene;
+      // normalize scale & center on ground
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const s = 1.9 / Math.max(size.y, 0.001);
+      model.scale.setScalar(s);
+      const box2 = new THREE.Box3().setFromObject(model);
+      const c = box2.getCenter(new THREE.Vector3());
+      const min = box2.min;
+      model.position.x -= c.x; model.position.z -= c.z;
+      model.position.y -= min.y;
+      model.traverse(o => { if (o.isMesh){ o.castShadow = false; if (o.material){ o.material.envMapIntensity = 1.1; } } });
+      pivot.add(model);
+    }, undefined, () => { tryLoad(); });
+  };
+  tryLoad();
+
+  return { scene, cam, renderer, tick:(t)=>{ pivot.rotation.y = t*0.5; fill.intensity = 7 + Math.sin(t*2)*1.5; } };
+}
+
+/* ---------- OPTION B : billboard ---------- */
+function buildB(){
+  const el = document.getElementById('stageB');
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+  cam.position.set(0, 1.2, 4.0);
+  cam.lookAt(0, 1.1, 0);
+  const renderer = makeRenderer(el);
+
+  scene.add(new THREE.AmbientLight(0x6688aa, 0.9));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(2,5,4); scene.add(key);
+  const glow = new THREE.PointLight(0x14febc, 6, 20); glow.position.set(0,1.5,2); scene.add(glow);
+
+  // ground plane
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(8,8),
+    new THREE.MeshStandardMaterial({ color:0x081426, metalness:0.3, roughness:0.7,
+      emissive:0x06222a, emissiveIntensity:0.35 })
+  );
+  ground.rotation.x = -Math.PI/2; scene.add(ground);
+  const grid = new THREE.GridHelper(8, 16, 0x14febc, 0x123040);
+  grid.material.opacity = 0.25; grid.material.transparent = true; scene.add(grid);
+
+  // soft shadow blob
+  const blob = new THREE.Mesh(
+    new THREE.CircleGeometry(0.85, 40),
+    new THREE.MeshBasicMaterial({ color:0x000000, transparent:true, opacity:0.45 })
+  );
+  blob.rotation.x = -Math.PI/2; blob.position.y = 0.01; scene.add(blob);
+
+  // billboard
+  const billboard = new THREE.Group(); scene.add(billboard);
+  let plane = null;
+
+  function makePlane(map, aspect){
+    const h = 2.6, w = h * aspect;
+    const mat = new THREE.MeshBasicMaterial({ map, transparent:true, side:THREE.DoubleSide,
+      alphaTest:0.02 });
+    plane = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+    plane.position.y = h/2; // stand on ground
+    billboard.add(plane);
+  }
+  function makePlaceholder(){
+    const mat = new THREE.MeshStandardMaterial({ color:0x14b89a, emissive:0x0a4a44,
+      emissiveIntensity:0.6, metalness:0.4, roughness:0.4, transparent:true, opacity:0.9 });
+    plane = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.6), mat);
+    plane.position.y = 1.3; billboard.add(plane);
+  }
+
+  const tex = new THREE.TextureLoader();
+  const srcs = ['/assets/xto-sample/hero-fullbody.png', '/assets/xto-sample/hero-fullbody-2.png'];
+  let bi = 0;
+  const tryTex = () => {
+    if (bi >= srcs.length){ makePlaceholder(); return; }
+    const url = srcs[bi++];
+    tex.load(url, (t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      const iw = t.image?.width || 768, ih = t.image?.height || 1024;
+      makePlane(t, iw/ih);
+    }, undefined, () => tryTex());
+  };
+  tryTex();
+
+  return { scene, cam, renderer, tick:(t)=>{
+    // billboard faces camera (Y only, so it stands upright)
+    const bob = Math.sin(t*1.6)*0.06;
+    billboard.position.y = bob;
+    if (plane) plane.position.y = 1.3 + 0; // keep base grounded
+    billboard.lookAt(cam.position.x, billboard.position.y, cam.position.z);
+    blob.scale.setScalar(1 + Math.sin(t*1.6)*0.05);
+    glow.intensity = 5 + Math.sin(t*2.2)*1.5;
+  } };
+}
+
+/* ---------- character card portrait ---------- */
+(function loadCard(){
+  const wrap = document.getElementById('cardA');
+  const ph = document.getElementById('cardAph');
+  const img = new Image();
+  img.onload = () => {
+    ph.remove();
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+    wrap.insertBefore(img, wrap.firstChild);
+  };
+  img.onerror = () => { ph.textContent = 'portrait unavailable'; };
+  img.src = '/assets/xto-sample/portrait.jpg';
+})();
+
+/* ---------- run loops ---------- */
+const A = buildA();
+const B = buildB();
+const scenes = [A, B];
+const clock = new THREE.Clock();
+
+function resize(){
+  renderers.forEach(({ r, el }) => {
+    const w = el.clientWidth, h = el.clientHeight;
+    r.setSize(w, h, false);
+  });
+  scenes.forEach(s => { s.cam.aspect = 1; s.cam.updateProjectionMatrix(); });
+}
+window.addEventListener('resize', resize);
+resize();
+
+function animate(){
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  scenes.forEach(s => { s.tick(t); s.renderer.render(s.scene, s.cam); });
+}
+animate();
+</script>
+</body>
+</html>

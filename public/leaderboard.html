@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>◆ LEADERBOARD — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#000000;
+    --panel:#050505;
+    --panel2:#080a09;
+    --panel3:#0a0f0b;
+    --border:rgba(0,255,136,0.14);
+    --border-strong:rgba(0,255,136,0.4);
+    --green:#00ff88;
+    --cyan:#00f0ff;
+    --purple:#c084fc;
+    --yellow:#f5e000;
+    --orange:#ff9d3d;
+    --red:#ff2a2a;
+    --dim:#5a6b60;
+    --text:#c8d6cd;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;width:100%;height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    font-size:14px;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  /* CRT scanlines */
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:9999;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.035) 3px,
+      rgba(0,0,0,0.035) 4px
+    );
+  }
+  /* subtle grid bg */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size:48px 48px;
+  }
+  h1,h2,h3{font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;margin:0;}
+  a{color:var(--cyan);text-decoration:none;}
+  a:hover{color:var(--green);}
+
+  /* ─── TOP BAR ─────────────────────────────────── */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:13px 28px;
+    background:rgba(0,0,0,0.92);
+    border-bottom:1px solid var(--border-strong);
+    position:sticky;
+    top:0;
+    z-index:200;
+    flex-wrap:wrap;
+    backdrop-filter:blur(8px);
+  }
+  .topbar-title{
+    display:flex;align-items:center;gap:12px;
+  }
+  .topbar h1{
+    font-size:18px;
+    color:var(--yellow);
+    text-shadow:0 0 16px rgba(245,224,0,0.55);
+    white-space:nowrap;
+  }
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;}
+  .topbar .back{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    padding:6px 14px;
+    border:1px solid var(--border);
+    white-space:nowrap;
+    transition:all .12s;
+  }
+  .topbar .back:hover{border-color:var(--green);color:var(--green);box-shadow:0 0 10px rgba(0,255,136,0.2);}
+  .topbar .spacer{flex:1;}
+  .apistatus{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);}
+  .apistatus.up{color:var(--green);text-shadow:0 0 6px rgba(0,255,136,0.5);}
+  .apistatus.down{color:var(--red);}
+  .refresh-tick{font-size:11px;color:var(--dim);letter-spacing:1px;white-space:nowrap;}
+
+  /* ─── FULL-SCREEN LAYOUT ──────────────────────── */
+  .page-body{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    z-index:1;
+    padding:0;
+  }
+
+  /* ─── CHAMPIONS STRIP ─────────────────────────── */
+  .champions-strip{
+    width:100%;
+    background:linear-gradient(180deg, rgba(0,0,0,0.0) 0%, rgba(0,20,10,0.7) 100%);
+    border-bottom:1px solid var(--border);
+    padding:20px 28px 16px;
+    overflow:hidden;
+  }
+  .champions-label{
+    font-family:'Orbitron',sans-serif;font-size:10px;
+    color:var(--dim);letter-spacing:3px;text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  .champions-row{
+    display:flex;
+    gap:16px;
+    overflow-x:auto;
+    scrollbar-width:none;
+    padding-bottom:4px;
+  }
+  .champions-row::-webkit-scrollbar{display:none;}
+  .champion-card{
+    flex:none;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    min-width:88px;
+    cursor:default;
+  }
+  .champion-img-wrap{
+    position:relative;
+    width:80px;height:80px;
+    border-radius:6px;
+    overflow:hidden;
+    border:2px solid var(--border);
+    background:#000;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .champion-card.rank-1 .champion-img-wrap{
+    border-color:var(--yellow);
+    box-shadow:0 0 18px rgba(245,224,0,0.4), 0 0 40px rgba(245,224,0,0.15);
+  }
+  .champion-card.rank-2 .champion-img-wrap{
+    border-color:#c0c0c0;
+    box-shadow:0 0 14px rgba(192,192,192,0.3);
+  }
+  .champion-card.rank-3 .champion-img-wrap{
+    border-color:#cd7f32;
+    box-shadow:0 0 14px rgba(205,127,50,0.3);
+  }
+  .champion-card:hover .champion-img-wrap{
+    box-shadow:0 0 22px rgba(0,255,136,0.35);
+    border-color:var(--green);
+  }
+  .champion-img-wrap img{
+    width:100%;height:100%;object-fit:cover;object-position:top center;display:block;
+  }
+  .champion-img-wrap .ch-tile{
+    display:none;
+    width:100%;height:100%;
+    align-items:center;justify-content:center;
+    font-family:'Orbitron',sans-serif;font-weight:900;font-size:28px;
+    color:rgba(0,0,0,0.7);
+  }
+  .champion-img-wrap.letter-mode img{display:none;}
+  .champion-img-wrap.letter-mode .ch-tile{display:flex;}
+  .champion-badge{
+    position:absolute;top:4px;left:4px;
+    font-family:'Orbitron',sans-serif;font-size:10px;font-weight:900;
+    padding:2px 5px;
+    background:rgba(0,0,0,0.8);
+  }
+  .champion-card.rank-1 .champion-badge{color:var(--yellow);}
+  .champion-card.rank-2 .champion-badge{color:#c0c0c0;}
+  .champion-card.rank-3 .champion-badge{color:#cd7f32;}
+  .champion-name{
+    font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
+    letter-spacing:1.5px;text-transform:uppercase;text-align:center;
+  }
+  .champion-score{
+    font-size:11px;color:var(--yellow);letter-spacing:1px;
+  }
+  .champion-wins{
+    font-size:10px;color:var(--dim);letter-spacing:1px;
+  }
+
+  /* ─── STATS + CONTROLS SECTION ───────────────── */
+  .controls-section{
+    display:flex;
+    align-items:center;
+    gap:0;
+    padding:0;
+    border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .stats-row{
+    display:flex;
+    gap:0;
+    flex-wrap:wrap;
+    border-right:1px solid var(--border);
+  }
+  .stat-item{
+    display:flex;flex-direction:column;gap:2px;
+    padding:12px 24px;
+    border-right:1px solid var(--border);
+    min-width:110px;
+  }
+  .stat-item:last-child{border-right:none;}
+  .stat-label{font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;}
+  .stat-val{font-family:'Orbitron',sans-serif;font-weight:700;font-size:18px;color:var(--green);}
+  .stat-val.cyan{color:var(--cyan);}
+  .stat-val.yellow{color:var(--yellow);}
+
+  .controls-right{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 20px;
+    flex-wrap:wrap;
+  }
+  .lb-head-title{
+    font-family:'Orbitron',sans-serif;font-size:11px;color:var(--yellow);
+    text-transform:uppercase;letter-spacing:2px;white-space:nowrap;
+    text-shadow:0 0 8px rgba(245,224,0,0.3);
+  }
+  .filters{display:flex;gap:8px;flex-wrap:wrap;}
+  select,button{font-family:'Share Tech Mono',monospace;outline:none;}
+  select{
+    background:#000;
+    border:1px solid var(--border);
+    color:var(--text);
+    font-size:12px;
+    padding:7px 10px;
+    transition:border-color .12s;
+  }
+  select:focus,select:hover{border-color:var(--green);}
+
+  .btn{
+    font-family:'Orbitron',sans-serif;font-weight:700;
+    letter-spacing:1.5px;text-transform:uppercase;font-size:11px;
+    padding:9px 18px;background:#000;color:var(--green);
+    border:1px solid var(--border-strong);cursor:pointer;
+    transition:all .12s ease;white-space:nowrap;
+  }
+  .btn:hover:not(:disabled){background:rgba(0,255,136,0.1);box-shadow:0 0 18px rgba(0,255,136,0.35);}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .sort-note{color:var(--dim);font-size:10px;letter-spacing:1px;white-space:nowrap;margin-left:auto;}
+
+  /* ─── TABLE SECTION (fills remaining height) ──── */
+  .table-section{
+    flex:1;
+    overflow:auto;
+    padding:0;
+  }
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead{position:sticky;top:0;z-index:10;}
+  th{
+    text-align:left;color:var(--green);font-family:'Orbitron',sans-serif;font-weight:500;
+    font-size:9px;text-transform:uppercase;letter-spacing:1.5px;
+    padding:10px 16px;
+    background:rgba(0,0,0,0.95);
+    border-bottom:1px solid var(--border-strong);
+    border-right:1px solid var(--border);
+    white-space:nowrap;cursor:pointer;user-select:none;
+  }
+  th:last-child{border-right:none;}
+  th:hover{color:var(--cyan);}
+  th.sort-asc::after{content:" ▲";}
+  th.sort-desc::after{content:" ▼";}
+  th.no-sort{cursor:default;}
+  th.no-sort:hover{color:var(--green);}
+
+  td{
+    padding:0 16px;
+    height:64px;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+    border-right:1px solid var(--border);
+    vertical-align:middle;
+  }
+  td:last-child{border-right:none;}
+  tr:hover td{background:rgba(0,255,136,0.028);}
+  tr.row-winner td{background:rgba(0,255,136,0.018);}
+
+  /* rank column */
+  .rank{color:var(--dim);font-size:12px;font-family:'Orbitron',sans-serif;font-weight:700;text-align:center;width:48px;}
+  .rank-1 td.rank-col{color:var(--yellow);text-shadow:0 0 8px rgba(245,224,0,0.6);}
+  .rank-2 td.rank-col{color:#c0c0c0;}
+  .rank-3 td.rank-col{color:#cd7f32;}
+  .rank-sym{font-size:14px;}
+
+  /* Agent cell */
+  .agent-cell{display:flex;align-items:center;gap:12px;}
+  .agent-avatar{
+    width:48px;height:48px;border-radius:5px;overflow:hidden;
+    background:#000;border:1px solid #1a2a1a;flex:none;
+    position:relative;transition:border-color .15s,box-shadow .15s;
+  }
+  tr:hover .agent-avatar{border-color:rgba(0,255,136,0.3);box-shadow:0 0 10px rgba(0,255,136,0.15);}
+  .agent-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
+  .agent-avatar .av-tile{
+    display:none;width:100%;height:100%;
+    align-items:center;justify-content:center;
+    font-family:'Orbitron',sans-serif;font-weight:900;font-size:18px;
+    color:rgba(0,0,0,0.65);
+  }
+  .agent-avatar.letter-mode .av-tile{display:flex;}
+  .agent-avatar.letter-mode img{display:none;}
+  .agent-info{display:flex;flex-direction:column;gap:3px;}
+  .aname{font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;}
+  .agame-sub{font-size:10px;color:var(--dim);letter-spacing:1px;}
+
+  /* game pill */
+  .game-pill{
+    display:inline-block;
+    padding:3px 9px;
+    font-size:10px;letter-spacing:1px;
+    border:1px solid rgba(0,240,255,0.2);
+    color:var(--cyan);
+    background:rgba(0,240,255,0.05);
+    text-transform:uppercase;
+    font-family:'Share Tech Mono',monospace;
+  }
+
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;box-shadow:0 0 5px currentColor;}
+  .badge-win{color:var(--green);font-weight:700;letter-spacing:1.5px;font-size:12px;text-shadow:0 0 8px rgba(0,255,136,0.5);}
+  .badge-loss{color:var(--red);font-weight:700;letter-spacing:1.5px;font-size:12px;}
+  .score-val{color:var(--yellow);font-family:'Orbitron',sans-serif;font-weight:700;font-size:15px;text-shadow:0 0 6px rgba(245,224,0,0.3);}
+  .when{color:var(--dim);font-size:11px;letter-spacing:1px;}
+
+  .empty-cell{color:var(--dim);text-align:center;padding:48px 16px;font-size:13px;letter-spacing:1px;}
+  .empty-cell .sub{margin-top:10px;font-size:11px;color:#3a4a40;}
+
+  /* ─── RESPONSIVE ──────────────────────────────── */
+  @media(max-width:800px){
+    .topbar{padding:10px 14px;gap:10px;}
+    .topbar h1{font-size:14px;}
+    .topbar .tag{display:none;}
+    .champion-img-wrap{width:60px;height:60px;}
+    .champion-card{min-width:66px;}
+    .stat-item{padding:10px 14px;min-width:80px;}
+    .stat-val{font-size:14px;}
+    .champions-strip{padding:14px 14px 10px;}
+    .controls-right{padding:8px 14px;}
+    td{height:54px;padding:0 10px;}
+    .agent-avatar{width:36px;height:36px;}
+    .aname{font-size:10px;}
+  }
+  @media(max-width:500px){
+    .stats-row{width:100%;border-right:none;}
+    .champion-img-wrap{width:50px;height:50px;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- ─── STICKY TOP BAR ─────────────────────────── -->
+  <div class="topbar">
+    <div class="topbar-title">
+      <h1>◆ LEADERBOARD</h1>
+      <span class="tag">all-time arcade scores</span>
+    </div>
+    <div class="spacer"></div>
+    <span id="refreshTick" class="refresh-tick">↻ <span id="countdownVal">15</span>s</span>
+    <span id="apiStatus" class="apistatus">● connecting…</span>
+    <a class="back" href="/arcade.html">← ARCADE</a>
+    <a class="back" href="/">← DASHBOARD</a>
+  </div>
+
+  <!-- ─── PAGE BODY (fills remaining viewport) ───── -->
+  <div class="page-body">
+
+    <!-- Champions strip -->
+    <div class="champions-strip" id="championsStrip" style="display:none;">
+      <div class="champions-label">◆ Top Champions</div>
+      <div class="champions-row" id="championsRow"></div>
+    </div>
+
+    <!-- Stats + controls bar -->
+    <div class="controls-section">
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-label">Total Scores</span>
+          <span class="stat-val" id="statTotal">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Win Rate</span>
+          <span class="stat-val cyan" id="statWinRate">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Top Score</span>
+          <span class="stat-val yellow" id="statTopScore">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Top Agent</span>
+          <span class="stat-val" id="statTopAgent">—</span>
+        </div>
+      </div>
+      <div class="controls-right">
+        <span class="lb-head-title">◆ All Scores</span>
+        <div class="filters">
+          <select id="filterGame"><option value="">All Games</option></select>
+          <select id="filterAgent"><option value="">All Agents</option></select>
+          <select id="filterResult">
+            <option value="">All Results</option>
+            <option value="win">Wins Only</option>
+            <option value="loss">Losses Only</option>
+          </select>
+        </div>
+        <span class="sort-note">Click column to sort</span>
+        <button id="btnRefresh" class="btn">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- Full-width scrollable table -->
+    <div class="table-section">
+      <table id="lbTable">
+        <thead>
+          <tr>
+            <th class="no-sort rank" data-col="rank">#</th>
+            <th class="no-sort" data-col="agent">Agent</th>
+            <th data-col="game">Game</th>
+            <th data-col="score">Score</th>
+            <th data-col="win">Result</th>
+            <th data-col="ts">When</th>
+          </tr>
+        </thead>
+        <tbody id="lbBody">
+          <tr><td colspan="6" class="empty-cell">Loading leaderboard…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /.page-body -->
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- fallback catalog ----------
+  var FALLBACK_GAMES = [
+    {id:"basketball",   name:"NEON HOOPS",     color:"#ff9d3d"},
+    {id:"football",     name:"GRID GRIDIRON",  color:"#ff2a2a"},
+    {id:"dodgeball",    name:"GRID DODGEBALL", color:"#ff5db1"},
+    {id:"sigil-storm",  name:"SIGIL STORM",    color:"#c084fc"},
+    {id:"xt-adventure", name:"XT ADVENTURE",   color:"#00ff88"}
+  ];
+  var FALLBACK_AGENTS = [
+    {id:"SHADDAI", name:"SHADDAI", color:"#ffcf1a"},
+    {id:"NEXUS",   name:"NEXUS",   color:"#00f0ff"},
+    {id:"ORACLE",  name:"ORACLE",  color:"#b06bff"},
+    {id:"ZEROX",   name:"ZEROX",   color:"#ff9d3d"},
+    {id:"TURTLE",  name:"TURTLE",  color:"#ff2bd6"},
+    {id:"QUILL",   name:"QUILL",   color:"#f5e000"},
+    {id:"PIKADON", name:"PIKADON", color:"#ff2a2a"}
+  ];
+
+  // ---------- state ----------
+  var GAMES  = [];
+  var AGENTS = [];
+  var ALL_SCORES = [];
+  var sortCol = "ts";
+  var sortDir = "desc";
+  var countdownTimer = null;
+  var REFRESH_INTERVAL = 15;
+  var countdownRemaining = REFRESH_INTERVAL;
+
+  // ---------- dom ----------
+  var $ = function(id){ return document.getElementById(id); };
+  var lbBody        = $("lbBody");
+  var filterGame    = $("filterGame");
+  var filterAgent   = $("filterAgent");
+  var filterResult  = $("filterResult");
+  var apiStatus     = $("apiStatus");
+  var countdownEl   = $("countdownVal");
+  var championsStrip= $("championsStrip");
+  var championsRow  = $("championsRow");
+
+  // ---------- helpers ----------
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function agentById(id){
+    for(var i=0;i<AGENTS.length;i++){ if(AGENTS[i].id===id) return AGENTS[i]; }
+    return null;
+  }
+  function gameById(id){
+    for(var i=0;i<GAMES.length;i++){ if(GAMES[i].id===id) return GAMES[i]; }
+    return null;
+  }
+  function timeAgo(ts){
+    if(!ts) return "—";
+    var t = (typeof ts === "number") ? ts : Date.parse(ts);
+    if(isNaN(t)) return "—";
+    var s = Math.max(0, Math.floor((Date.now()-t)/1000));
+    if(s<60) return s+"s ago";
+    var m = Math.floor(s/60); if(m<60) return m+"m ago";
+    var h = Math.floor(m/60); if(h<24) return h+"h ago";
+    return Math.floor(h/24)+"d ago";
+  }
+  function setApiStatus(up){
+    apiStatus.className = "apistatus " + (up ? "up" : "down");
+    apiStatus.textContent = up ? "● API online" : "● API offline";
+  }
+  async function api(path, opts){
+    var res = await fetch(path, opts);
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    return res.json();
+  }
+
+  // ---------- image URL helpers ----------
+  // Priority: action.png → portrait.png → letter tile
+  function actionUrl(id){
+    // id should already be uppercased agent id
+    return "/assets/agents/"+encodeURIComponent(id)+"-action.png";
+  }
+  function portraitUrl(id){
+    return "/assets/agents/"+encodeURIComponent(id)+"-portrait.png";
+  }
+
+  // Build row avatar (48×48) with 3-level fallback
+  function buildAvatar(agent){
+    var a   = agent || {};
+    var col = a.color || "#00ff88";
+    var id  = (a.id || "?").toUpperCase();
+    var initial = id.charAt(0);
+
+    var wrap = document.createElement("div");
+    wrap.className = "agent-avatar";
+
+    var tile = document.createElement("div");
+    tile.className = "av-tile";
+    tile.style.background = col;
+    tile.textContent = initial;
+
+    var img = document.createElement("img");
+    img.alt = a.name || id;
+    img.src = actionUrl(id);
+
+    var stage = 0; // 0=action, 1=portrait, 2=tile
+    img.onerror = function(){
+      stage++;
+      if(stage === 1){
+        img.src = portraitUrl(id);
+      } else {
+        wrap.classList.add("letter-mode");
+      }
+    };
+
+    wrap.appendChild(img);
+    wrap.appendChild(tile);
+    return wrap;
+  }
+
+  // Build champion card image (80×80) with same fallback
+  function buildChampionImg(agent, rankNum){
+    var a   = agent || {};
+    var col = a.color || "#00ff88";
+    var id  = (a.id || "?").toUpperCase();
+    var initial = id.charAt(0);
+
+    var wrap = document.createElement("div");
+    wrap.className = "champion-img-wrap";
+
+    var tile = document.createElement("div");
+    tile.className = "ch-tile";
+    tile.style.background = col;
+    tile.textContent = initial;
+
+    var img = document.createElement("img");
+    img.alt = a.name || id;
+    img.src = actionUrl(id);
+
+    var stage = 0;
+    img.onerror = function(){
+      stage++;
+      if(stage === 1){
+        img.src = portraitUrl(id);
+      } else {
+        wrap.classList.add("letter-mode");
+      }
+    };
+
+    // rank badge overlay
+    var badge = document.createElement("div");
+    badge.className = "champion-badge";
+    badge.textContent = rankNum === 1 ? "◈ #1" : "#"+rankNum;
+
+    wrap.appendChild(img);
+    wrap.appendChild(tile);
+    wrap.appendChild(badge);
+    return wrap;
+  }
+
+  // ---------- populate filter dropdowns ----------
+  function populateFilters(){
+    filterGame.innerHTML  = '<option value="">All Games</option>';
+    filterAgent.innerHTML = '<option value="">All Agents</option>';
+    GAMES.forEach(function(g){
+      var o = document.createElement("option");
+      o.value = g.id; o.textContent = g.name;
+      filterGame.appendChild(o);
+    });
+    AGENTS.forEach(function(a){
+      var o = document.createElement("option");
+      o.value = a.id; o.textContent = a.name || a.id;
+      filterAgent.appendChild(o);
+    });
+  }
+
+  // ---------- champions strip builder ----------
+  function renderChampions(scores){
+    // build per-agent summary: best score + win count
+    var agentMap = {};
+    scores.forEach(function(s){
+      if(!s.agent) return;
+      if(!agentMap[s.agent]){
+        agentMap[s.agent] = {id:s.agent, topScore:null, wins:0, total:0};
+      }
+      var rec = agentMap[s.agent];
+      rec.total++;
+      if(s.win) rec.wins++;
+      var sc = s.score != null ? Number(s.score) : null;
+      if(sc !== null && (rec.topScore === null || sc > rec.topScore)) rec.topScore = sc;
+    });
+
+    // sort agents by wins desc, then topScore desc
+    var agentList = Object.keys(agentMap).map(function(k){ return agentMap[k]; });
+    agentList.sort(function(a,b){
+      if(b.wins !== a.wins) return b.wins - a.wins;
+      return (b.topScore||0) - (a.topScore||0);
+    });
+
+    var top = agentList.slice(0, 8); // show up to 8 champions
+    if(!top.length){ championsStrip.style.display="none"; return; }
+    championsStrip.style.display="block";
+    championsRow.innerHTML = "";
+
+    top.forEach(function(rec, idx){
+      var rankNum = idx + 1;
+      var agentDef = agentById(rec.id) || {id:rec.id, name:rec.id, color:"#00ff88"};
+
+      var card = document.createElement("div");
+      card.className = "champion-card" + (rankNum<=3 ? " rank-"+rankNum : "");
+
+      var imgWrap = buildChampionImg(agentDef, rankNum);
+      card.appendChild(imgWrap);
+
+      var nameEl = document.createElement("div");
+      nameEl.className = "champion-name";
+      nameEl.style.color = agentDef.color || "var(--green)";
+      nameEl.textContent = agentDef.name || agentDef.id;
+      card.appendChild(nameEl);
+
+      if(rec.topScore !== null){
+        var scoreEl = document.createElement("div");
+        scoreEl.className = "champion-score";
+        scoreEl.textContent = rec.topScore;
+        card.appendChild(scoreEl);
+      }
+
+      var winsEl = document.createElement("div");
+      winsEl.className = "champion-wins";
+      winsEl.textContent = rec.wins + "W / " + rec.total + "G";
+      card.appendChild(winsEl);
+
+      championsRow.appendChild(card);
+    });
+  }
+
+  // ---------- sort + filter then render ----------
+  function applyAndRender(){
+    var gf = filterGame.value;
+    var af = filterAgent.value;
+    var rf = filterResult.value;
+
+    var filtered = ALL_SCORES.filter(function(s){
+      if(gf && s.game !== gf) return false;
+      if(af && s.agent !== af) return false;
+      if(rf === "win"  && !s.win)  return false;
+      if(rf === "loss" &&  s.win)  return false;
+      return true;
+    });
+
+    // sort
+    filtered.sort(function(a, b){
+      var av, bv;
+      if(sortCol === "score"){
+        av = a.score == null ? -Infinity : Number(a.score);
+        bv = b.score == null ? -Infinity : Number(b.score);
+      } else if(sortCol === "win"){
+        av = a.win ? 1 : 0;
+        bv = b.win ? 1 : 0;
+      } else if(sortCol === "ts"){
+        av = a.ts ? (typeof a.ts==="number"?a.ts:Date.parse(a.ts)) : 0;
+        bv = b.ts ? (typeof b.ts==="number"?b.ts:Date.parse(b.ts)) : 0;
+      } else if(sortCol === "game"){
+        var ga = gameById(a.game), gb = gameById(b.game);
+        av = (ga?ga.name:a.game||"").toLowerCase();
+        bv = (gb?gb.name:b.game||"").toLowerCase();
+      } else {
+        av = (a[sortCol]||"").toString().toLowerCase();
+        bv = (b[sortCol]||"").toString().toLowerCase();
+      }
+      if(av < bv) return sortDir === "asc" ?  -1 : 1;
+      if(av > bv) return sortDir === "asc" ?   1 : -1;
+      return 0;
+    });
+
+    renderStats(filtered);
+    renderChampions(filtered);
+    renderRows(filtered);
+    updateSortHeaders();
+  }
+
+  function renderStats(scores){
+    var total = scores.length;
+    var wins  = scores.filter(function(s){ return s.win; }).length;
+    var winPct = total ? Math.round(wins/total*100) : 0;
+    var top = null;
+    scores.forEach(function(s){
+      if(s.score != null && (top === null || Number(s.score) > Number(top))) top = s.score;
+    });
+
+    var agentWins = {};
+    scores.forEach(function(s){
+      if(s.win){
+        agentWins[s.agent] = (agentWins[s.agent]||0)+1;
+      }
+    });
+    var topAgent = null, topWins = 0;
+    Object.keys(agentWins).forEach(function(k){
+      if(agentWins[k] > topWins){ topWins = agentWins[k]; topAgent = k; }
+    });
+
+    $("statTotal").textContent    = total;
+    $("statWinRate").textContent  = total ? winPct+"%" : "—";
+    $("statTopScore").textContent = top != null ? top : "—";
+    $("statTopAgent").textContent = topAgent || "—";
+  }
+
+  function renderRows(scores){
+    if(!scores.length){
+      lbBody.innerHTML =
+        '<tr><td colspan="6" class="empty-cell">No scores yet'+(filterGame.value||filterAgent.value||filterResult.value?" for this filter":"")+'.'
+        +'<div class="sub">Play a game in the arcade to get on the board.</div></td></tr>';
+      return;
+    }
+
+    var frag = document.createDocumentFragment();
+    scores.forEach(function(s, i){
+      var a   = agentById(s.agent);
+      var g   = gameById(s.game);
+      var col = a ? a.color : "#00ff88";
+      var win = !!s.win;
+      var rankNum = i+1;
+
+      var tr = document.createElement("tr");
+      if(win) tr.className = "row-winner";
+      if(rankNum===1) tr.className += " rank-1";
+      else if(rankNum===2) tr.className += " rank-2";
+      else if(rankNum===3) tr.className += " rank-3";
+
+      // # rank
+      var tdRank = document.createElement("td");
+      tdRank.className = "rank-col";
+      tdRank.style.textAlign = "center";
+      tdRank.style.fontFamily = "'Orbitron',sans-serif";
+      tdRank.style.fontWeight = "700";
+      tdRank.style.fontSize   = "12px";
+      if(rankNum===1){
+        tdRank.style.color = "var(--yellow)";
+        tdRank.style.textShadow = "0 0 8px rgba(245,224,0,0.6)";
+        tdRank.textContent = "◈ 1";
+      } else if(rankNum===2){
+        tdRank.style.color = "#c0c0c0";
+        tdRank.textContent = "2";
+      } else if(rankNum===3){
+        tdRank.style.color = "#cd7f32";
+        tdRank.textContent = "3";
+      } else {
+        tdRank.style.color = "var(--dim)";
+        tdRank.textContent = rankNum;
+      }
+      tr.appendChild(tdRank);
+
+      // Agent cell — avatar + name + sub-label
+      var tdAgent = document.createElement("td");
+      var agentCell = document.createElement("div");
+      agentCell.className = "agent-cell";
+
+      // avatar with action → portrait → tile fallback
+      agentCell.appendChild(buildAvatar(a || {id:s.agent, color:col}));
+
+      var infoDiv = document.createElement("div");
+      infoDiv.className = "agent-info";
+
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "aname";
+      nameSpan.style.color = col;
+      nameSpan.textContent = a ? (a.name||a.id) : (s.agent||"UNKNOWN");
+      infoDiv.appendChild(nameSpan);
+
+      if(s.game){
+        var subSpan = document.createElement("span");
+        subSpan.className = "agame-sub";
+        subSpan.textContent = g ? (g.name||g.id) : s.game;
+        infoDiv.appendChild(subSpan);
+      }
+
+      agentCell.appendChild(infoDiv);
+      tdAgent.appendChild(agentCell);
+      tr.appendChild(tdAgent);
+
+      // Game pill
+      var tdGame = document.createElement("td");
+      var pill = document.createElement("span");
+      pill.className = "game-pill";
+      var gameCol = g ? (g.color || "var(--cyan)") : "var(--cyan)";
+      pill.style.borderColor = gameCol.replace(")",",0.3)").replace("rgb(","rgba(");
+      pill.style.color = gameCol;
+      pill.textContent = g ? (g.name||g.id) : (s.game||"—");
+      tdGame.appendChild(pill);
+      tr.appendChild(tdGame);
+
+      // Score
+      var tdScore = document.createElement("td");
+      tdScore.className = "score-val";
+      tdScore.textContent = s.score == null ? "—" : s.score;
+      tr.appendChild(tdScore);
+
+      // Result
+      var tdResult = document.createElement("td");
+      var badge = document.createElement("span");
+      badge.className = win ? "badge-win" : "badge-loss";
+      badge.textContent = win ? "▲ WIN" : "▼ LOSS";
+      tdResult.appendChild(badge);
+      tr.appendChild(tdResult);
+
+      // When
+      var tdWhen = document.createElement("td");
+      tdWhen.className = "when";
+      tdWhen.textContent = timeAgo(s.ts);
+      tr.appendChild(tdWhen);
+
+      frag.appendChild(tr);
+    });
+    lbBody.innerHTML = "";
+    lbBody.appendChild(frag);
+  }
+
+  function updateSortHeaders(){
+    var ths = document.querySelectorAll("#lbTable thead th");
+    [].forEach.call(ths, function(th){
+      th.classList.remove("sort-asc","sort-desc");
+      if(!th.classList.contains("no-sort") && th.dataset.col === sortCol){
+        th.classList.add(sortDir === "asc" ? "sort-asc" : "sort-desc");
+      }
+    });
+  }
+
+  // ---------- load leaderboard ----------
+  async function loadLeaderboard(){
+    try{
+      var data = await api("/api/arcade/leaderboard?limit=100");
+      setApiStatus(true);
+      ALL_SCORES = (data && data.scores) ? data.scores : [];
+      // auto-populate any unseen agents/games from scores
+      ALL_SCORES.forEach(function(s){
+        if(s.agent && !agentById(s.agent)){
+          AGENTS.push({id:s.agent, name:s.agent, color:"#00ff88"});
+        }
+        if(s.game && !gameById(s.game)){
+          GAMES.push({id:s.game, name:s.game, color:"#00ff88"});
+        }
+      });
+      populateFilters();
+      applyAndRender();
+    }catch(e){
+      setApiStatus(false);
+      championsStrip.style.display = "none";
+      lbBody.innerHTML =
+        '<tr><td colspan="6" class="empty-cell">Leaderboard unavailable — arcade API is offline.'
+        +'<div class="sub">Start the backend and refresh to load scores.</div></td></tr>';
+      $("statTotal").textContent    = "—";
+      $("statWinRate").textContent  = "—";
+      $("statTopScore").textContent = "—";
+      $("statTopAgent").textContent = "—";
+    }
+  }
+
+  // ---------- load games + agents catalog ----------
+  async function loadCatalog(){
+    try{
+      var gd = await api("/api/arcade/games");
+      GAMES = (gd && gd.ok && gd.games && gd.games.length) ? gd.games : FALLBACK_GAMES;
+    }catch(e){ GAMES = FALLBACK_GAMES; }
+
+    try{
+      var ad = await api("/api/arcade/agents");
+      AGENTS = (ad && ad.ok && ad.agents && ad.agents.length) ? ad.agents.map(function(a){
+        a.name = a.name || a.id;
+        return a;
+      }) : FALLBACK_AGENTS;
+    }catch(e){ AGENTS = FALLBACK_AGENTS; }
+
+    populateFilters();
+  }
+
+  // ---------- countdown + auto-refresh ----------
+  function startCountdown(){
+    countdownRemaining = REFRESH_INTERVAL;
+    if(countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(function(){
+      countdownRemaining--;
+      if(countdownRemaining <= 0){
+        countdownRemaining = REFRESH_INTERVAL;
+        loadLeaderboard();
+      }
+      if(countdownEl) countdownEl.textContent = countdownRemaining;
+    }, 1000);
+  }
+
+  // ---------- sort header wire ----------
+  var ths = document.querySelectorAll("#lbTable thead th");
+  [].forEach.call(ths, function(th){
+    if(th.classList.contains("no-sort")) return;
+    th.addEventListener("click", function(){
+      var col = th.dataset.col;
+      if(sortCol === col){
+        sortDir = sortDir === "asc" ? "desc" : "asc";
+      } else {
+        sortCol = col;
+        sortDir = col === "ts" || col === "score" ? "desc" : "asc";
+      }
+      applyAndRender();
+    });
+  });
+
+  // ---------- filter wire ----------
+  filterGame.addEventListener("change",   applyAndRender);
+  filterAgent.addEventListener("change",  applyAndRender);
+  filterResult.addEventListener("change", applyAndRender);
+  $("btnRefresh").addEventListener("click", function(){
+    countdownRemaining = REFRESH_INTERVAL;
+    if(countdownEl) countdownEl.textContent = countdownRemaining;
+    loadLeaderboard();
+  });
+
+  // ---------- init ----------
+  (async function init(){
+    await loadCatalog();
+    await loadLeaderboard();
+    startCountdown();
+  })();
+
+})();
+</script>
+</body>
+</html>

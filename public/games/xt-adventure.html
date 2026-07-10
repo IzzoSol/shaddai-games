@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>XTO ADVENTURE // SHADDAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+} }
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Share Tech Mono',monospace;color:#cfe;}
+#c{display:block;position:fixed;inset:0;width:100%;height:100%;}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:20;}
+/* Player health + level */
+#pHealthWrap{position:fixed;top:16px;left:16px;z-index:30;width:300px;}
+#pName{font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;letter-spacing:3px;margin-bottom:5px;text-shadow:0 0 12px currentColor;}
+#pBarBg{height:16px;background:rgba(0,0,0,.7);border:1px solid #ffffff33;border-radius:4px;overflow:hidden;box-shadow:0 0 14px rgba(0,0,0,.6);}
+#pBar{height:100%;width:100%;border-radius:3px;transition:width .18s ease;box-shadow:0 0 10px currentColor;}
+#xpBarBg{height:7px;background:rgba(0,0,0,.7);border:1px solid #f5e00033;border-radius:3px;overflow:hidden;margin-top:5px;}
+#xpBar{height:100%;width:0%;background:linear-gradient(90deg,#f5e000,#ffb800);transition:width .25s ease;box-shadow:0 0 8px #f5e00088;}
+#pMeta{display:flex;justify-content:space-between;font-size:10px;letter-spacing:2px;color:#9cb;margin-top:4px;}
+#pMeta b{color:#f5e000;}
+/* Zone / objective */
+#topRight{position:fixed;top:16px;right:16px;z-index:30;text-align:right;font-family:'Orbitron',sans-serif;max-width:340px;}
+#zoneLbl{font-size:13px;letter-spacing:4px;color:#00f0ff;text-shadow:0 0 10px #00f0ff88;}
+#questLbl{font-size:11px;letter-spacing:1px;color:#f5e000;text-shadow:0 0 10px #f5e00066;margin-top:6px;font-family:'Share Tech Mono',monospace;line-height:1.5;}
+#scoreLbl{font-size:22px;font-weight:900;letter-spacing:2px;color:#00ff88;text-shadow:0 0 16px #00ff8888;margin-top:6px;}
+#comboLbl{font-size:12px;letter-spacing:2px;color:#00f0ff;min-height:14px;}
+/* Move / squad tray */
+#moveTray{position:fixed;left:16px;bottom:96px;z-index:30;display:flex;flex-direction:column;gap:6px;pointer-events:none;}
+.moveChip{display:flex;align-items:center;gap:8px;background:rgba(3,10,8,.6);border:1px solid #00ff8833;border-radius:8px;padding:5px 10px;font-size:10px;letter-spacing:1px;color:#9cb;backdrop-filter:blur(3px);}
+.moveChip .mk{font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;color:#001;background:linear-gradient(135deg,#00f0ff,#00ff88);border-radius:4px;padding:2px 7px;min-width:18px;text-align:center;}
+.moveChip.locked{opacity:.4;filter:grayscale(.7);}
+.moveChip.locked .mk{background:#333;color:#777;}
+#squadTray{position:fixed;right:16px;bottom:96px;z-index:30;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none;}
+.squadChip{display:flex;align-items:center;gap:8px;background:rgba(3,10,8,.6);border:1px solid #ff5cf033;border-radius:8px;padding:4px 10px;font-size:10px;letter-spacing:1px;color:#e9c;backdrop-filter:blur(3px);}
+.squadChip .sd{width:9px;height:9px;border-radius:50%;box-shadow:0 0 8px currentColor;}
+/* Interact prompt */
+#interactPrompt{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:32;pointer-events:none;
+  background:rgba(3,10,8,.8);border:1px solid #00f0ff66;border-radius:10px;padding:10px 20px;text-align:center;
+  font-family:'Orbitron',sans-serif;letter-spacing:2px;opacity:0;transition:opacity .15s;backdrop-filter:blur(4px);}
+#interactPrompt.on{opacity:1;}
+#interactPrompt .ik{display:inline-block;background:linear-gradient(135deg,#00f0ff,#00ff88);color:#001;border-radius:5px;padding:2px 9px;margin-right:8px;font-weight:900;}
+#interactPrompt .it{font-size:12px;color:#cfe;}
+/* Dialogue box */
+#dialogue{position:fixed;left:50%;bottom:40px;transform:translateX(-50%);z-index:55;width:min(90vw,680px);pointer-events:all;
+  background:linear-gradient(180deg,rgba(4,14,20,.96),rgba(2,8,12,.98));border:1px solid #00f0ff55;border-radius:14px;
+  padding:20px 26px;box-shadow:0 0 40px rgba(0,240,255,.2);display:none;backdrop-filter:blur(6px);}
+#dialogue.on{display:block;}
+#dlgName{font-family:'Orbitron',sans-serif;font-weight:900;font-size:16px;letter-spacing:3px;color:#00f0ff;text-shadow:0 0 12px currentColor;margin-bottom:10px;}
+#dlgText{font-size:13px;letter-spacing:.5px;color:#cfe;line-height:1.7;min-height:44px;}
+#dlgActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+.dlgBtn{font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;padding:9px 18px;border-radius:7px;cursor:pointer;pointer-events:all;
+  background:transparent;border:1px solid #00ff8855;color:#00ff88;transition:background .12s,transform .08s;}
+.dlgBtn:hover{background:#00ff8818;transform:translateY(-1px);}
+.dlgBtn.primary{background:linear-gradient(135deg,#00f0ff,#00ff88);color:#001;border:none;}
+/* Forge menu */
+#forge{position:fixed;inset:0;z-index:65;display:none;align-items:center;justify-content:center;background:rgba(2,6,10,.86);backdrop-filter:blur(5px);pointer-events:all;}
+#forge.on{display:flex;}
+#forgeCard{width:min(92vw,540px);background:linear-gradient(180deg,rgba(6,16,22,.98),rgba(3,9,13,.99));border:1px solid #f5e00055;border-radius:16px;padding:26px 30px;box-shadow:0 0 50px rgba(245,224,0,.18);}
+#forgeCard h2{font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;letter-spacing:4px;color:#f5e000;text-shadow:0 0 16px #f5e00066;margin-bottom:4px;}
+#forgeCard .sub{font-size:11px;letter-spacing:2px;color:#8aa;margin-bottom:18px;}
+.upgRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;margin-bottom:10px;background:rgba(255,255,255,.03);border:1px solid #ffffff11;border-radius:10px;}
+.upgRow .ui{flex:1;}
+.upgRow .un{font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;color:#cfe;}
+.upgRow .ud{font-size:10px;letter-spacing:1px;color:#7a9;margin-top:3px;}
+.upgRow .ubtn{font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:9px 16px;border-radius:7px;cursor:pointer;
+  background:linear-gradient(135deg,#f5e000,#ffb800);color:#201;border:none;white-space:nowrap;}
+.upgRow .ubtn:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.5);}
+#forgeClose{margin-top:8px;width:100%;font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;padding:11px;border-radius:8px;cursor:pointer;background:transparent;border:1px solid #00ff8844;color:#00ff88;}
+#forgeShards{font-family:'Orbitron',sans-serif;font-weight:900;font-size:16px;color:#00ff88;text-shadow:0 0 12px #00ff8866;}
+/* Keyboard legend (desktop) */
+#legend{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:12px;align-items:center;
+  background:rgba(3,10,8,.55);border:1px solid #00ff8822;border-radius:10px;padding:7px 16px;backdrop-filter:blur(3px);flex-wrap:wrap;justify-content:center;max-width:96vw;}
+#legend .lg{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1.5px;color:#8fb3a2;}
+#legend .cap{font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;color:#001;background:linear-gradient(135deg,#00f0ff,#00ff88);
+  border-radius:5px;padding:3px 8px;min-width:20px;text-align:center;box-shadow:0 0 8px #00ff8855;}
+#legend .sep{width:1px;height:20px;background:#00ff8822;}
+/* NOTE: on-screen joystick / touch d-pad intentionally REMOVED (owner rule). Keyboard only. */
+#exitBtn{position:fixed;top:14px;left:14px;z-index:60;pointer-events:all;font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;background:rgba(3,10,8,.72);border:1px solid #00ff8855;color:#00ff88;padding:7px 14px;border-radius:6px;cursor:pointer;display:none;backdrop-filter:blur(3px);}
+#exitBtn:hover{background:#00ff8822;transform:translateY(-1px);}
+#hitFlash{position:fixed;inset:0;pointer-events:none;z-index:40;opacity:0;background:radial-gradient(ellipse at center,rgba(255,60,90,.28) 0%,transparent 68%);transition:opacity .09s;}
+/* Overlays */
+.screen{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:radial-gradient(ellipse at 50% 30%,#0a1418 0%,#020406 70%,#000 100%);padding:20px;overflow:auto;}
+.hidden{display:none !important;}
+h1.title{font-family:'Orbitron',sans-serif;font-size:clamp(44px,11vw,120px);font-weight:900;letter-spacing:16px;background:linear-gradient(90deg,#00f0ff,#00ff88 55%,#9dffb0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 26px rgba(0,240,255,.35));}
+.subtitle{font-size:12px;letter-spacing:6px;color:#5a8f78;margin-top:-8px;text-align:center;}
+.startBtn{font-family:'Orbitron',sans-serif;font-weight:900;font-size:16px;letter-spacing:4px;border:none;padding:15px 44px;border-radius:8px;cursor:pointer;pointer-events:all;background:linear-gradient(135deg,#00f0ff,#00ff88);color:#001;box-shadow:0 0 26px rgba(0,255,136,.4);transition:opacity .2s;}
+.startBtn:disabled{opacity:.3;cursor:not-allowed;filter:grayscale(.6);}
+.controlsBox{background:rgba(255,255,255,.03);border:1px solid #00ff8822;border-radius:8px;padding:14px 26px;font-size:11px;letter-spacing:2px;color:#9cb;line-height:2.1;max-width:560px;text-align:center;}
+.controlsBox b{color:#00ff88;}
+/* Intro cutscene */
+#introScreen{background:radial-gradient(ellipse at 50% 40%,#0a1622 0%,#020406 75%,#000 100%);}
+#introText{max-width:620px;font-size:15px;letter-spacing:1px;line-height:2;color:#bfe;text-align:center;min-height:180px;}
+#introText .em{color:#00f0ff;font-weight:700;text-shadow:0 0 12px #00f0ff66;}
+#introText .vil{color:#ff5cf0;font-weight:700;text-shadow:0 0 12px #ff5cf066;}
+/* Loading */
+#loadBarWrap{width:min(70vw,420px);height:14px;background:rgba(255,255,255,.06);border:1px solid #00ff8844;border-radius:8px;overflow:hidden;}
+#loadBar{height:100%;width:0%;background:linear-gradient(90deg,#00f0ff,#00ff88);box-shadow:0 0 14px #00ff88;transition:width .2s ease;}
+#loadPct{font-size:12px;letter-spacing:3px;color:#00ff88;}
+#loadNote{font-size:10px;letter-spacing:2px;color:#5a6b60;max-width:420px;text-align:center;}
+#goVerdict{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(30px,7vw,64px);letter-spacing:6px;text-align:center;}
+#goScore{font-family:'Orbitron',sans-serif;font-size:18px;letter-spacing:3px;color:#f5e000;text-shadow:0 0 14px #f5e00066;text-align:center;}
+/* ── Dialogue speaker thumbnail ── */
+#dialogue{display:none;}
+#dlgWrap{display:flex;gap:16px;align-items:flex-start;}
+#dlgThumb{flex:0 0 auto;width:clamp(56px,12vw,76px);height:clamp(56px,12vw,76px);border-radius:12px;border:2px solid #00f0ff66;
+  background:#04121a center/cover no-repeat;box-shadow:0 0 18px #00f0ff33;overflow:hidden;}
+#dlgBody{flex:1;min-width:0;}
+/* ── Vertical character selector ── */
+#titleScreen{justify-content:flex-start;gap:12px;padding-top:min(4vh,34px);}
+.menuBtns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:4px;}
+.pickCol{display:flex;flex-direction:column;gap:10px;width:min(94vw,560px);max-height:52vh;overflow-y:auto;padding:4px 8px;margin-top:4px;
+  scrollbar-width:thin;scrollbar-color:#00ff8855 transparent;}
+.pickCol::-webkit-scrollbar{width:8px;}
+.pickCol::-webkit-scrollbar-thumb{background:#00ff8844;border-radius:4px;}
+.heroRow{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.02);border:2px solid #182018;border-radius:14px;
+  padding:10px 14px;cursor:pointer;transition:transform .12s,border-color .12s,box-shadow .12s,background .12s;pointer-events:all;text-align:left;}
+.heroRow:hover{transform:translateX(4px);background:rgba(255,255,255,.04);}
+.heroRow.sel{border-color:var(--ac);box-shadow:0 0 24px var(--ac);background:rgba(255,255,255,.05);}
+.heroPortrait{flex:0 0 auto;width:clamp(58px,14vw,84px);height:clamp(78px,19vw,112px);border-radius:10px;overflow:hidden;
+  border:1px solid var(--ac);background:#04121a center/cover no-repeat;box-shadow:0 0 16px var(--ac);position:relative;display:flex;align-items:center;justify-content:center;}
+.heroPortrait .fallback{font-size:clamp(30px,7vw,44px);filter:drop-shadow(0 0 12px var(--ac));}
+.heroInfo{flex:1;min-width:0;}
+.heroInfo .cn{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(16px,4vw,21px);letter-spacing:3px;color:var(--ac);text-shadow:0 0 14px var(--ac);}
+.heroInfo .cr{font-size:clamp(9px,2.4vw,11px);letter-spacing:2px;color:#8aa;margin-top:3px;}
+.heroInfo .cw{font-size:clamp(8px,2.2vw,10px);letter-spacing:.5px;color:#5a6b60;margin-top:6px;line-height:1.55;}
+.cloneTag{display:inline-block;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;color:#ff5cf0;
+  border:1px solid #ff5cf055;border-radius:4px;padding:1px 6px;margin-top:6px;background:rgba(255,92,240,.06);}
+/* ── Cinematic backdrop screens (intro / over) ── */
+.cineBg{background:#000 center/cover no-repeat !important;position:relative;}
+.cineBg::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,4,8,.35),rgba(2,4,8,.82));z-index:0;}
+.cineBg>*{position:relative;z-index:1;}
+/* ── Codex / lore panel ── */
+#codexPanel{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(2,4,8,.92);backdrop-filter:blur(6px);padding:20px;}
+#codexPanel.on{display:flex;}
+#codexCard{width:min(92vw,720px);max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,rgba(6,14,22,.98),rgba(3,7,12,.99));
+  border:1px solid #ff5cf055;border-radius:16px;padding:clamp(20px,4vw,34px);box-shadow:0 0 50px rgba(255,92,240,.18);
+  scrollbar-width:thin;scrollbar-color:#ff5cf055 transparent;}
+#codexCard::-webkit-scrollbar{width:8px;}#codexCard::-webkit-scrollbar-thumb{background:#ff5cf044;border-radius:4px;}
+#codexCard h2{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(20px,5vw,28px);letter-spacing:4px;color:#ff5cf0;text-shadow:0 0 16px #ff5cf066;margin-bottom:4px;}
+#codexCard .cxsub{font-size:11px;letter-spacing:3px;color:#8aa;margin-bottom:18px;}
+#codexCard h3{font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;color:#00f0ff;margin:20px 0 8px;text-shadow:0 0 10px #00f0ff44;}
+#codexCard p{font-size:13px;line-height:1.85;letter-spacing:.3px;color:#cfe;margin-bottom:12px;}
+#codexCard p .em{color:#00f0ff;font-weight:700;}
+#codexCard p .vil{color:#ff5cf0;font-weight:700;text-shadow:0 0 8px #ff5cf055;}
+#codexClose{margin-top:22px;width:100%;font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;padding:12px;border-radius:8px;cursor:pointer;background:transparent;border:1px solid #00ff8844;color:#00ff88;}
+#codexClose:hover{background:#00ff8818;}
+.codexBtn{background:linear-gradient(135deg,#ff5cf0,#a020c0)!important;color:#fff!important;box-shadow:0 0 22px rgba(255,92,240,.4)!important;}
+/* ── Level-up toast ── */
+#levelToast{position:fixed;left:50%;top:32%;transform:translate(-50%,-50%) scale(.6);z-index:45;pointer-events:none;opacity:0;text-align:center;transition:opacity .2s,transform .3s;}
+#levelToast.on{opacity:1;transform:translate(-50%,-50%) scale(1);}
+#levelToast .lt{font-family:'Orbitron',sans-serif;font-weight:900;font-size:38px;letter-spacing:6px;color:#f5e000;text-shadow:0 0 24px #f5e000;}
+#levelToast .lu{font-size:12px;letter-spacing:3px;color:#00ff88;margin-top:6px;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <div id="pHealthWrap">
+    <div id="pName" style="color:#00f0ff">ZEROX</div>
+    <div id="pBarBg"><div id="pBar" style="background:#00f0ff"></div></div>
+    <div id="xpBarBg"><div id="xpBar"></div></div>
+    <div id="pMeta"><span>LVL <b id="lvlNum">1</b></span><span>XP <b id="xpNum">0/60</b></span><span>◈ <b id="shardNum">0</b></span></div>
+  </div>
+  <div id="topRight">
+    <div id="zoneLbl">MAIN CITY</div>
+    <div id="questLbl">Speak with SHADDAI</div>
+    <div id="scoreLbl">0</div>
+    <div id="comboLbl"></div>
+  </div>
+  <div id="moveTray"></div>
+  <div id="squadTray"></div>
+  <div id="interactPrompt"><span class="ik">E</span><span class="it">TALK</span></div>
+</div>
+
+<div id="levelToast"><div class="lt">LEVEL 2</div><div class="lu">HP UP · NEW POWER</div></div>
+
+<!-- keyboard legend (desktop) -->
+<div id="legend">
+  <div class="lg"><span class="cap">WASD</span>MOVE</div>
+  <div class="lg"><span class="cap">SHIFT</span>RUN</div>
+  <div class="sep"></div>
+  <div class="lg"><span class="cap">J</span>SLASH</div>
+  <div class="lg"><span class="cap">K</span>KICK</div>
+  <div class="lg"><span class="cap">L</span>BOLT</div>
+  <div class="lg"><span class="cap">SPACE</span>JUMP</div>
+  <div class="lg"><span class="cap">E</span>TALK</div>
+  <div class="lg"><span class="cap">F</span>FORGE</div>
+</div>
+
+<!-- on-screen joystick / touch d-pad removed per owner rule (keyboard only) -->
+<button id="exitBtn" onclick="exitToArcade()">◀ ARCADE MENU</button>
+<div id="hitFlash"></div>
+
+<!-- interaction dialogue -->
+<div id="dialogue">
+  <div id="dlgWrap">
+    <div id="dlgThumb"></div>
+    <div id="dlgBody">
+      <div id="dlgName">SHADDAI</div>
+      <div id="dlgText"></div>
+      <div id="dlgActions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- forge / upgrade menu -->
+<div id="forge">
+  <div id="forgeCard">
+    <h2>THE FORGE</h2>
+    <div class="sub">SPEND SHARDS · <span id="forgeShards">0 ◈</span></div>
+    <div id="forgeRows"></div>
+    <button id="forgeClose">CLOSE [F]</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loadScreen" class="screen">
+  <h1 class="title">XTO</h1>
+  <div class="subtitle">XTO ADVENTURE · THE CLONE WAR</div>
+  <div id="loadPct">0%</div>
+  <div id="loadBarWrap"><div id="loadBar"></div></div>
+  <div id="loadNote">Pouring clones from the stolen Core… models are large, first load may take a moment.</div>
+</div>
+
+<!-- TITLE / CHARACTER SELECT (vertical selector) -->
+<div id="titleScreen" class="screen hidden">
+  <h1 class="title" style="font-size:clamp(38px,9vw,96px);">XTO</h1>
+  <div class="subtitle">XTO ADVENTURE · CHOOSE YOUR CLONE</div>
+  <div id="pickCol" class="pickCol"><!-- built by JS --></div>
+  <div class="controlsBox">
+    <b>WASD</b>/<b>ARROWS</b> move &nbsp; <b>SHIFT</b> run &nbsp; <b>SPACE</b> jump<br>
+    <b>J</b> slash &nbsp; <b>K</b> kick &nbsp; <b>L</b> bolt &nbsp;<i>(moves unlock as you level / train)</i><br>
+    <b>E</b> talk / recruit &nbsp; <b>F</b> forge upgrades
+  </div>
+  <div class="menuBtns">
+    <button id="beginBtn" class="startBtn" disabled>SELECT A CLONE</button>
+    <button id="codexOpen" class="startBtn codexBtn">📖 CODEX</button>
+    <button id="codexHome" class="startBtn codexBtn" onclick="(window.top||window).location.href='/codex.html'">⌂ CODEX</button>
+  </div>
+</div>
+
+<!-- INTRO CUTSCENE -->
+<div id="introScreen" class="screen hidden">
+  <h1 class="title" style="font-size:clamp(30px,6vw,56px);letter-spacing:8px;">XTO ADVENTURE</h1>
+  <div id="introText"></div>
+  <button id="introBtn" class="startBtn">CONTINUE ▸</button>
+</div>
+
+<!-- GAME OVER / VICTORY -->
+<div id="overScreen" class="screen hidden">
+  <div id="goVerdict">VICTORY</div>
+  <div id="goSub" style="font-size:13px;letter-spacing:1px;color:#cfe;max-width:560px;text-align:center;line-height:1.7;"></div>
+  <div id="goScore">SCORE 0</div>
+  <div class="menuBtns">
+    <button id="againBtn" class="startBtn">◈ PLAY AGAIN</button>
+    <button class="startBtn codexBtn" onclick="exitToArcade()">◀ ARCADE MENU</button>
+  </div>
+</div>
+
+<!-- CODEX / LORE panel -->
+<div id="codexPanel">
+  <div id="codexCard">
+    <h2>◈ CODEX · THE CLONE WAR</h2>
+    <div class="cxsub">XTO ADVENTURE · LORE OF THE STOLEN CORE</div>
+    <h3>THE CORE</h3>
+    <p>Every SHADDAI agent — <span class="em">SHADDAI, NEXUS, ORACLE, ZEROX, TURTLE, QUILL, PIKADON</span> — was forged from one sacred artifact: the <span class="em">Core</span>. The Core is the data-soul of an agent: the pattern of mind, memory, face and will that turns raw code into a living operative. Guarded in the Forge at the heart of the realm, it was never meant to leave.</p>
+    <h3>THE THEFT</h3>
+    <p>Then <span class="vil">ADRAGONA</span> came — a dragon-warlord who covets not gold but <em>selfhood</em>. In a single raid she tore a <span class="vil">data-shard</span> from the Forge: a sliver of the Core, small as a dragon's scale, yet whole as a seed. From that one leaked shard, everything an agent <em>is</em> could be read… and re-poured.</p>
+    <h3>THE CLONE ARMY</h3>
+    <p>In her castle vats, <span class="vil">ADRAGONA</span> now grows agents by the thousand — copy after copy wearing the faces of your friends, each one bound to her will. This is why the realm swarms with familiar faces on both sides: the gate-guard is a <span class="vil">PIKADON clone</span>; the husks in the wild are throwaway pours; and the endless army below the throne all share your Core.</p>
+    <h3>THE FREE-POURED</h3>
+    <p>But the shard cuts both ways. Its power does not only serve ADRAGONA — it also woke clones that are <span class="em">free</span>. <span class="em">You</span> are one of them: Core-poured, but nobody's puppet. That is the game's secret and its promise — <strong>any</strong> agent can rise here, the seven council clones and every future forged or custom agent alike, because all of them spring from the same stolen data. A face repeating is not a bug in this world. It is the war.</p>
+    <h3>YOUR QUEST</h3>
+    <p>Learn to fight from <span class="em">QUILL</span>. Rally free clones of <span class="em">ORACLE, NEXUS, ZEROX</span> and more. Cross the wilderness, shatter <span class="em">PIKADON</span>'s gate-clone, descend into the vats — and unmake <span class="vil">ADRAGONA</span> before her army marches. Free the Core. End the copies. Save the realm.</p>
+    <button id="codexClose">CLOSE</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// ════════════════════════════════════════════════════════════════
+// XTO ADVENTURE — 3-zone action RPG. The playable heroes are CLONES
+// spun up from a Core data-shard stolen by the dragon-warlord ADRAGONA.
+// ════════════════════════════════════════════════════════════════
+
+// ── World layout: one large map, three regions by position ──
+//  CITY   = disk of radius CITY_R at origin (safe hub)
+//  WILD   = ring between CITY_R and WILD_R (roaming enemies)
+//  CASTLE = far cluster centred at CASTLE_POS (mini-boss gate + interior boss)
+const CITY_R = 34;
+const WILD_R = 120;
+const CASTLE_POS = new THREE.Vector3(0, 0, -150);
+const CASTLE_GATE = new THREE.Vector3(0, 0, -120);   // PIKADON guards here
+const CASTLE_INNER = new THREE.Vector3(0, 0, -168);  // villain arena
+const WORLD_CLAMP = 200;
+
+// ── AGENT ROSTER (all 7 council agents — every one a CLONE spun up from Adragona's stolen core).
+//    Forged / custom agents slot in here cleanly: add {NAME:{...}} and they become a playable clone.
+//    `art` = HF XTO portrait folder key; `emoji` = graceful fallback when the portrait isn't generated.
+const AGENT = {
+  SHADDAI: { color: 0xffd24a, glow: 0xffe27a, path: '/assets/agents/SHADDAI.glb', art: 'SHADDAI', emoji: '👑', role: 'Golden God-King Clone',    weapon: 'sword', tagline: 'Divine gold armor · sunburst halo · commands the light.' },
+  NEXUS:   { color: 0x34d399, glow: 0x66e6b0, path: '/assets/agents/NEXUS.glb',   art: 'NEXUS',   emoji: '🛡️', role: 'Cyber-Knight Clone',        weapon: 'sword', tagline: 'Dark-blue techno-plate · circuitry visor · blade scales fast.' },
+  ORACLE:  { color: 0xa78bfa, glow: 0xc4b0fb, path: '/assets/agents/ORACLE.glb',  art: 'ORACLE',  emoji: '🔮', role: 'Violet Sorceress Clone',    weapon: 'sword', tagline: 'Hooded seer · purple runes · reads the threads of fate.' },
+  ZEROX:   { color: 0x00f0ff, glow: 0x33f6ff, path: '/assets/agents/ZEROX.glb',   art: 'ZEROX',   emoji: '🗡️', role: 'Neon Katana Clone',        weapon: 'sword', tagline: 'Blue-haired blade-dancer · cyan energy · fast crescent slashes.' },
+  TURTLE:  { color: 0x00ff88, glow: 0x55ff9d, path: '/assets/agents/TURTLE.glb',  art: 'TURTLE',  emoji: '🔨', role: 'Emerald Enforcer Clone',    weapon: 'flail', tagline: 'Green twin-tail bruiser · emerald mace · heavy sweeping strikes.' },
+  QUILL:   { color: 0xf9a8d4, glow: 0xffc6e6, path: '/assets/agents/QUILL.glb',   art: 'QUILL',   emoji: '🪶', role: 'Silver Mage Clone',         weapon: 'sword', tagline: 'Silver-haired scribe-mage · pink feather spell · nimble caster.' },
+  PIKADON: { color: 0xff5c5c, glow: 0xff8a8a, path: '/assets/agents/PIKADON.glb', art: 'PIKADON', emoji: '⚔️', role: 'Crimson Knight Clone',      weapon: 'flail', tagline: 'Horned red warplate · warhammer + diamond shield · tank.' },
+  ADRAGONA:{ color: 0xff3b6c, glow: 0xff6a90, path: '/assets/agents/VILLAIN.glb', art: 'ADRAGONA',emoji: '🐉', role: 'The Dragon Warlord',        weapon: 'sword', tagline: 'She who stole the core and cloned an army.' }
+};
+// Alias kept so any legacy /assets/agents/VILLAIN.glb still loads as ADRAGONA's body.
+const VILLAIN_KEY = 'ADRAGONA';
+// Playable heroes = the 7 council clones (order shown in the vertical selector).
+const HERO_ORDER = ['ZEROX','TURTLE','SHADDAI','NEXUS','ORACLE','QUILL','PIKADON'];
+// XTO portrait/thumbnail asset resolvers (used by selector + dialogue).
+const artPortrait = k => `/assets/games/xto/chars/${(AGENT[k]&&AGENT[k].art)||k}.png`;
+const artThumb    = k => `/assets/games/xto/thumbs/${(AGENT[k]&&AGENT[k].art)||k}.png`;
+// CHAR = per-hero combat template (all heroes reuse the two rigged bodies we ship).
+const BODY = { ZEROX:'/assets/characters/XEROX.glb', TURTLE:'/assets/characters/TURTLE.glb' };
+const CHAR = {};
+for (const k of HERO_ORDER) {
+  const a = AGENT[k];
+  // Nimble/caster clones use the katana body; heavy clones use the flail body.
+  const heavy = (a.weapon === 'flail');
+  CHAR[k] = { color: a.color, glow: a.glow, path: heavy ? BODY.TURTLE : BODY.ZEROX, weapon: a.weapon, art: a.art };
+}
+const ENEMY_COLOR = 0xff3b5c, ENEMY_GLOW = 0xff5c7a;
+const MOVE_SPEED = 5.0, RUN_MULT = 1.9, ENEMY_SPEED = 2.9;
+const GRAVITY = -24, JUMP_VEL = 9.4;
+
+// attack tuning: {dur, active[start,end], reach, arc(dot), dmg, knock, recover}
+const ATTACKS = {
+  light: { dur: 0.62, active: [0.30, 0.46], reach: 3.4, arc: 0.15, dmg: 14, knock: 4.0, recover: 0.16, weapon: true },
+  heavy: { dur: 0.96, active: [0.34, 0.52], reach: 4.0, arc: -0.1, dmg: 24, knock: 8.0, recover: 0.30, weapon: true },
+  proj:  { dur: 0.44, active: [0.22, 0.30], reach: 40,  arc: 0.4,  dmg: 20, knock: 3.0, recover: 0.22, weapon: false }
+};
+
+// ────────────────────────────────────────────────────────────────
+// RENDERER / SCENE
+// ────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x03060a);
+scene.fog = new THREE.Fog(0x03060a, 60, 210);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 600);
+camera.position.set(0, 9, 16);
+
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// ────────────────────────────────────────────────────────────────
+// LIGHTS
+// ────────────────────────────────────────────────────────────────
+scene.add(new THREE.HemisphereLight(0x88bbff, 0x0a1a12, 0.7));
+scene.add(new THREE.AmbientLight(0xffffff, 0.34));
+const key = new THREE.DirectionalLight(0xffffff, 1.3);
+key.position.set(30, 60, 40); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.near = 1; key.shadow.camera.far = 260;
+key.shadow.camera.left = -120; key.shadow.camera.right = 120;
+key.shadow.camera.top = 120; key.shadow.camera.bottom = -120;
+key.shadow.bias = -0.0004;
+scene.add(key);
+const rimCyan = new THREE.PointLight(0x00f0ff, 1.0, 90); rimCyan.position.set(-24, 12, 8); scene.add(rimCyan);
+const rimGreen = new THREE.PointLight(0x00ff88, 1.0, 90); rimGreen.position.set(24, 12, 8); scene.add(rimGreen);
+const castleGlow = new THREE.PointLight(0xff3b6c, 1.2, 120); castleGlow.position.copy(CASTLE_POS).setY(16); scene.add(castleGlow);
+
+// shared materials (perf — reuse, no per-frame alloc)
+const MAT = {
+  cityGround: new THREE.MeshStandardMaterial({ color: 0x081420, metalness: 0.5, roughness: 0.55 }),
+  wildGround: new THREE.MeshStandardMaterial({ color: 0x0a1408, metalness: 0.2, roughness: 0.9 }),
+  castleStone: new THREE.MeshStandardMaterial({ color: 0x14161e, metalness: 0.35, roughness: 0.7 }),
+  castleEm:  new THREE.MeshStandardMaterial({ color: 0x1a1020, emissive: 0x3a0a1e, emissiveIntensity: 1.0, metalness: 0.5, roughness: 0.5 }),
+  building:  new THREE.MeshStandardMaterial({ color: 0x0b1a24, emissive: 0x002233, emissiveIntensity: 0.6, metalness: 0.6, roughness: 0.4 }),
+  neonCyan:  new THREE.MeshBasicMaterial({ color: 0x00f0ff }),
+  neonGreen: new THREE.MeshBasicMaterial({ color: 0x00ff88 }),
+  neonRed:   new THREE.MeshBasicMaterial({ color: 0xff3b6c }),
+  tree:      new THREE.MeshStandardMaterial({ color: 0x0d3a1c, emissive: 0x041a0c, emissiveIntensity: 0.5, roughness: 0.9 }),
+  trunk:     new THREE.MeshStandardMaterial({ color: 0x2a1a0c, roughness: 1.0 })
+};
+
+// ────────────────────────────────────────────────────────────────
+// WORLD BUILD — city, wilderness, castle (static, built once)
+// ────────────────────────────────────────────────────────────────
+const zoneMarkers = [];   // {pos, ...} decorative light beacons
+(function buildWorld() {
+  // Big ground plane for the whole world
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(WORLD_CLAMP + 8, 96), MAT.wildGround);
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+  // ── CITY disk ──
+  const cityFloor = new THREE.Mesh(new THREE.CircleGeometry(CITY_R, 64), MAT.cityGround);
+  cityFloor.rotation.x = -Math.PI / 2; cityFloor.position.y = 0.02; cityFloor.receiveShadow = true; scene.add(cityFloor);
+  const cityGrid = new THREE.GridHelper(CITY_R * 2, 24, 0x00ff88, 0x0d3324);
+  cityGrid.material.transparent = true; cityGrid.material.opacity = 0.4; cityGrid.position.y = 0.03; scene.add(cityGrid);
+  const cityRing = new THREE.Mesh(new THREE.TorusGeometry(CITY_R, 0.3, 10, 96), MAT.neonCyan);
+  cityRing.rotation.x = Math.PI / 2; cityRing.position.y = 0.3; scene.add(cityRing);
+
+  // City buildings ringed around the plaza
+  const bGeo = new THREE.BoxGeometry(1, 1, 1);
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 + 0.3;
+    const rr = CITY_R * 0.82;
+    const h = 8 + (i % 4) * 4;
+    const b = new THREE.Mesh(bGeo, MAT.building);
+    b.scale.set(5 + (i % 3) * 2, h, 5 + (i % 3) * 2);
+    b.position.set(Math.cos(a) * rr, h / 2, Math.sin(a) * rr);
+    b.castShadow = true; b.receiveShadow = true; scene.add(b);
+    // rooftop neon cap
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(1, 0.4, 1), i % 2 ? MAT.neonGreen : MAT.neonCyan);
+    cap.scale.set(5 + (i % 3) * 2, 1, 5 + (i % 3) * 2);
+    cap.position.set(Math.cos(a) * rr, h + 0.2, Math.sin(a) * rr); scene.add(cap);
+  }
+  // central plaza dais where SHADDAI stands
+  const dais = new THREE.Mesh(new THREE.CylinderGeometry(4, 4.5, 0.6, 32), MAT.castleStone);
+  dais.position.set(0, 0.3, 0); dais.receiveShadow = true; scene.add(dais);
+  const daisRing = new THREE.Mesh(new THREE.TorusGeometry(4, 0.14, 8, 48), MAT.neonCyan);
+  daisRing.rotation.x = Math.PI / 2; daisRing.position.y = 0.62; scene.add(daisRing);
+
+  // ── WILDERNESS: scatter trees + rocks in the ring, and a lit path toward the castle ──
+  const treeGeo = new THREE.ConeGeometry(1.5, 4, 7);
+  const trunkGeo = new THREE.CylinderGeometry(0.3, 0.4, 2, 6);
+  for (let i = 0; i < 90; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = CITY_R + 8 + Math.random() * (WILD_R - CITY_R - 12);
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    // keep the central path (toward -Z / castle) clearer
+    if (Math.abs(x) < 7 && z < -CITY_R) continue;
+    const trunk = new THREE.Mesh(trunkGeo, MAT.trunk); trunk.position.set(x, 1, z); trunk.castShadow = true; scene.add(trunk);
+    const foliage = new THREE.Mesh(treeGeo, MAT.tree);
+    const s = 0.8 + Math.random() * 0.9; foliage.scale.setScalar(s);
+    foliage.position.set(x, 2 + 2 * s, z); foliage.castShadow = true; scene.add(foliage);
+  }
+  // glowing path stones from city edge to castle gate
+  const pathGeo = new THREE.CircleGeometry(1.5, 12);
+  for (let z = -CITY_R; z > -118; z -= 8) {
+    const stone = new THREE.Mesh(pathGeo, MAT.neonGreen);
+    stone.rotation.x = -Math.PI / 2; stone.position.set(0, 0.05, z);
+    stone.material = new THREE.MeshBasicMaterial({ color: 0x00563a }); scene.add(stone);
+  }
+
+  // ── CASTLE ──
+  const cx = CASTLE_POS.x, cz = CASTLE_POS.z;
+  // outer walls (4 segments framing a courtyard)
+  const wall = (w, h, d, x, y, z) => {
+    const m = new THREE.Mesh(bGeo, MAT.castleStone);
+    m.scale.set(w, h, d); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; scene.add(m);
+    return m;
+  };
+  wall(46, 16, 3, cx, 8, cz + 22);   // front wall (with gate gap conceptually)
+  wall(20, 16, 3, cx - 13, 8, cz + 22);
+  wall(20, 16, 3, cx + 13, 8, cz + 22);
+  wall(3, 16, 44, cx - 22, 8, cz);
+  wall(3, 16, 44, cx + 22, 8, cz);
+  wall(46, 16, 3, cx, 8, cz - 22);
+  // corner towers
+  for (const [tx, tz] of [[cx - 22, cz + 22], [cx + 22, cz + 22], [cx - 22, cz - 22], [cx + 22, cz - 22]]) {
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.8, 26, 12), MAT.castleEm);
+    tower.position.set(tx, 13, tz); tower.castShadow = true; scene.add(tower);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(4, 6, 12), MAT.neonRed);
+    cone.position.set(tx, 29, tz); scene.add(cone);
+  }
+  // gate arch
+  const gateL = wall(4, 12, 4, cx - 8, 6, cz + 22);
+  const gateR = wall(4, 12, 4, cx + 8, 6, cz + 22);
+  const gateTop = wall(20, 4, 4, cx, 14, cz + 22);
+  const gateGlow = new THREE.Mesh(new THREE.BoxGeometry(12, 12, 0.3), new THREE.MeshBasicMaterial({ color: 0xff3b6c, transparent: true, opacity: 0.16 }));
+  gateGlow.position.set(cx, 6, cz + 22.1); scene.add(gateGlow);
+  // castle interior floor (boss arena)
+  const castleFloor = new THREE.Mesh(new THREE.CircleGeometry(20, 48), MAT.castleStone);
+  castleFloor.rotation.x = -Math.PI / 2; castleFloor.position.set(cx, 0.04, cz); castleFloor.receiveShadow = true; scene.add(castleFloor);
+  const bossRing = new THREE.Mesh(new THREE.TorusGeometry(17, 0.35, 10, 80), MAT.neonRed);
+  bossRing.rotation.x = Math.PI / 2; bossRing.position.set(cx, 0.35, cz); scene.add(bossRing);
+  // throne behind the villain
+  const throne = new THREE.Mesh(bGeo, MAT.castleEm); throne.scale.set(6, 10, 3); throne.position.set(cx, 5, cz - 16); throne.castShadow = true; scene.add(throne);
+})();
+
+// ────────────────────────────────────────────────────────────────
+// MODEL LOADING (byte-progress bar) — players + all agents
+// ────────────────────────────────────────────────────────────────
+const models = {};          // name -> prepped THREE.Group template
+const loadState = {};
+const loadBar = document.getElementById('loadBar');
+const loadPct = document.getElementById('loadPct');
+const loader = new GLTFLoader();
+
+// Load list: two shared rigged bodies from /characters, agent bodies from /agents.
+const LOAD_LIST = [
+  { key: 'BODY_KATANA', path: BODY.ZEROX,  glow: 0x33f6ff, t: 43e6 },
+  { key: 'BODY_FLAIL',  path: BODY.TURTLE, glow: 0x55ff9d, t: 28e6 },
+  { key: 'A_SHADDAI', path: AGENT.SHADDAI.path, glow: AGENT.SHADDAI.color, t: 12e6 },
+  { key: 'A_QUILL',   path: AGENT.QUILL.path,   glow: AGENT.QUILL.color,   t: 12e6 },
+  { key: 'A_ORACLE',  path: AGENT.ORACLE.path,  glow: AGENT.ORACLE.color,  t: 12e6 },
+  { key: 'A_NEXUS',   path: AGENT.NEXUS.path,   glow: AGENT.NEXUS.color,   t: 12e6 },
+  { key: 'A_ZEROX',   path: AGENT.ZEROX.path,   glow: AGENT.ZEROX.color,   t: 12e6 },
+  { key: 'A_PIKADON', path: AGENT.PIKADON.path, glow: AGENT.PIKADON.color, t: 14e6 },
+  { key: 'A_ADRAGONA',path: AGENT.ADRAGONA.path,glow: AGENT.ADRAGONA.color,t: 16e6 }
+];
+LOAD_LIST.forEach(e => loadState[e.key] = { l: 0, t: e.t });
+
+function updateLoadUI() {
+  let l = 0, t = 0;
+  for (const k in loadState) { l += loadState[k].l; t += loadState[k].t; }
+  const pct = Math.min(100, Math.round((l / Math.max(1, t)) * 100));
+  loadBar.style.width = pct + '%'; loadPct.textContent = pct + '%';
+}
+function prepModel(scn, tintGlow) {
+  let box = new THREE.Box3().setFromObject(scn);
+  const size = box.getSize(new THREE.Vector3());
+  if (size.y > 0) scn.scale.setScalar(1.85 / size.y);
+  box = new THREE.Box3().setFromObject(scn);
+  const c = box.getCenter(new THREE.Vector3());
+  scn.position.x -= c.x; scn.position.z -= c.z; scn.position.y -= box.min.y;
+  scn.traverse(ch => {
+    if (ch.isMesh) {
+      ch.castShadow = true; ch.receiveShadow = false;
+      const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
+      mats.forEach(m => { if (m && m.isMeshStandardMaterial) { m.emissive = new THREE.Color(tintGlow); m.emissiveIntensity = 0.22; } });
+    }
+  });
+  return scn;
+}
+function loadOne(entry) {
+  return new Promise((resolve) => {
+    loader.load(entry.path, gltf => {
+      models[entry.key] = prepModel(gltf.scene, entry.glow);
+      loadState[entry.key].l = loadState[entry.key].t; updateLoadUI(); resolve(true);
+    }, xhr => {
+      if (xhr && xhr.total) { loadState[entry.key].t = xhr.total; loadState[entry.key].l = xhr.loaded; }
+      else if (xhr) { loadState[entry.key].l = Math.min(loadState[entry.key].t, xhr.loaded); }
+      updateLoadUI();
+    }, err => {
+      console.warn('[XTO] load failed (fallback capsule)', entry.key);
+      models[entry.key] = null;
+      loadState[entry.key].l = loadState[entry.key].t; updateLoadUI(); resolve(false);
+    });
+  });
+}
+
+// ────────────────────────────────────────────────────────────────
+// VFX — slash crescents + projectiles (pooled)
+// ────────────────────────────────────────────────────────────────
+const CRES_R = 1.7, CRES_HALF = 1.15;
+function makeCrescentGeo(radius, halfAngle, width, segs) {
+  const g = new THREE.BufferGeometry();
+  const pos = [], uv = [], idx = [];
+  for (let i = 0; i <= segs; i++) {
+    const f = i / segs;
+    const ang = -halfAngle + f * (2 * halfAngle);
+    const taper = Math.pow(Math.sin(f * Math.PI), 0.65);
+    const w = width * taper;
+    const nx = Math.cos(ang), ny = Math.sin(ang);
+    pos.push((radius - w) * nx, (radius - w) * ny, 0);
+    pos.push((radius + w) * nx, (radius + w) * ny, 0);
+    uv.push(f, 0, f, 1);
+  }
+  for (let i = 0; i < segs; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+const crescentGeo = makeCrescentGeo(CRES_R, CRES_HALF, 0.42, 30);
+const vfxPool = [];
+for (let i = 0; i < 14; i++) {
+  const container = new THREE.Group();
+  const cres = new THREE.Mesh(crescentGeo, new THREE.MeshBasicMaterial({
+    color: 0x00f0ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+  }));
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 10),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+  ball.position.set(Math.cos(CRES_HALF) * CRES_R, Math.sin(CRES_HALF) * CRES_R, 0);
+  cres.add(ball); container.add(cres); container.visible = false; scene.add(container);
+  vfxPool.push({ container, cres, ball, mat: cres.material, life: 0, dur: 0.3, sweep: 0, startZ: 0, base: 1, showBall: false });
+}
+function spawnArc(pos, yaw, color, opts) {
+  opts = opts || {};
+  const v = vfxPool.find(x => x.life <= 0) || vfxPool[0];
+  v.container.visible = true;
+  v.mat.color.setHex(color); v.ball.material.color.setHex(color);
+  v.container.position.copy(pos);
+  v.container.rotation.set(opts.pitch || 0, yaw, opts.roll || 0);
+  v.base = opts.scale || 1; v.container.scale.setScalar(v.base);
+  v.life = v.dur = opts.dur || 0.3;
+  v.sweep = opts.sweep || 0; v.startZ = opts.startZ || 0;
+  v.cres.rotation.z = v.startZ; v.showBall = !!opts.ball;
+}
+function updateVfx(dt) {
+  for (const v of vfxPool) {
+    if (v.life <= 0) continue;
+    v.life -= dt;
+    const t = Math.max(0, v.life / v.dur), p = 1 - t;
+    v.cres.rotation.z = v.startZ + v.sweep * p;
+    const op = Math.max(0, Math.sin(Math.min(1, p * 1.25) * Math.PI));
+    v.mat.opacity = op * 0.95; v.ball.material.opacity = v.showBall ? op : 0;
+    v.container.scale.setScalar(v.base * (0.9 + p * 0.35));
+    if (v.life <= 0) v.container.visible = false;
+  }
+}
+
+// projectile bolts (pooled)
+const boltGeo = new THREE.SphereGeometry(0.32, 10, 10);
+const boltPool = [];
+for (let i = 0; i < 10; i++) {
+  const m = new THREE.Mesh(boltGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+  m.visible = false; scene.add(m);
+  boltPool.push({ mesh: m, mat: m.material, life: 0, vel: new THREE.Vector3(), owner: null, dmg: 0 });
+}
+function spawnBolt(from, dir, color, owner, dmg) {
+  const b = boltPool.find(x => x.life <= 0) || boltPool[0];
+  b.mesh.visible = true; b.mat.color.setHex(color); b.mat.opacity = 1;
+  b.mesh.position.copy(from); b.mesh.position.y = 1.4;
+  b.vel.copy(dir).normalize().multiplyScalar(34);
+  b.life = 1.4; b.owner = owner; b.dmg = dmg;
+}
+function updateBolts(dt) {
+  for (const b of boltPool) {
+    if (b.life <= 0) continue;
+    b.life -= dt;
+    b.mesh.position.addScaledVector(b.vel, dt);
+    b.mat.opacity = Math.min(1, b.life * 3);
+    // collide vs opposing entities
+    const targets = entities.filter(o => !o.dead && o !== b.owner && (b.owner && b.owner.isPlayer ? (o.isEnemy) : o.isPlayer));
+    for (const o of targets) {
+      if (b.mesh.position.distanceToSquared(o.pos.clone().setY(1.2)) < 2.0) {
+        applyDamage(o, b.dmg, b.owner, b.vel.clone().setY(0).normalize().multiplyScalar(3));
+        b.life = 0; b.mesh.visible = false; break;
+      }
+    }
+    if (b.life <= 0) b.mesh.visible = false;
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// ENTITIES
+// ────────────────────────────────────────────────────────────────
+const entities = [];
+const npcs = [];            // interactable / world NPCs (subset of entities)
+let player = null;
+
+function cloneModel(key, tint) {
+  const src = models[key];
+  if (src) {
+    const m = src.clone(true);
+    if (tint) {
+      m.traverse(ch => {
+        if (ch.isMesh) {
+          const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
+          const nm = mats.map(mm => { const c = mm.clone(); c.emissive = new THREE.Color(tint.glow); c.emissiveIntensity = 0.4; if (tint.color !== undefined) c.color = c.color.clone().lerp(new THREE.Color(tint.color), 0.35); return c; });
+          ch.material = Array.isArray(ch.material) ? nm : nm[0];
+        }
+      });
+    }
+    return m;
+  }
+  return null;
+}
+
+function makeEntity(opts) {
+  // opts: { modelKey, weapon, color, isPlayer, role, hp, name, tint }
+  const group = new THREE.Group();
+  let model = cloneModel(opts.modelKey, opts.tint);
+  if (!model) {
+    const col = opts.color || 0x888888;
+    model = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1, 6, 12),
+      new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.4 }));
+    model.position.y = 1; model.castShadow = true;
+  }
+  const inner = new THREE.Group(); inner.add(model); group.add(inner); scene.add(group);
+  const e = {
+    modelKey: opts.modelKey, isPlayer: !!opts.isPlayer, isEnemy: !!opts.isEnemy,
+    role: opts.role || 'npc', name: opts.name || opts.modelKey,
+    group, inner, model,
+    pos: new THREE.Vector3(), vel: new THREE.Vector3(),
+    facing: opts.facing != null ? opts.facing : 0,
+    hp: opts.hp || 60, maxHp: opts.hp || 60,
+    color: opts.color || 0xffffff, weapon: opts.weapon || 'sword',
+    moving: false, walkPhase: Math.random() * 6.28,
+    y: 0, yv: 0, grounded: true,
+    attack: null, atkTime: 0, atkHitDone: false, recover: 0,
+    hurt: 0, dead: false, aiCd: 1.6 + Math.random() * 1.5,
+    hpBar: null, isAlly: false, allyCd: 0,
+    dialogueKey: opts.dialogueKey || null, recruitable: !!opts.recruitable
+  };
+  if (opts.isEnemy || opts.role === 'miniboss' || opts.role === 'boss') e.hpBar = makeHpBar(group, opts.role === 'boss' || opts.role === 'miniboss');
+  entities.push(e);
+  return e;
+}
+
+function makeHpBar(group, big) {
+  const w = big ? 3.2 : 1.6;
+  const bar = new THREE.Group();
+  const bg = new THREE.Mesh(new THREE.PlaneGeometry(w, 0.2),
+    new THREE.MeshBasicMaterial({ color: 0x220008, transparent: true, opacity: 0.85, depthTest: false }));
+  const fill = new THREE.Mesh(new THREE.PlaneGeometry(w, 0.2),
+    new THREE.MeshBasicMaterial({ color: big ? 0xff3b6c : ENEMY_COLOR, depthTest: false }));
+  fill.position.z = 0.01; bar.add(bg); bar.add(fill);
+  bar.position.y = big ? 2.9 : 2.4; bar.renderOrder = 999; group.add(bar);
+  return { bar, fill, w };
+}
+
+// ────────────────────────────────────────────────────────────────
+// PROGRESSION — leveling, move unlocks, squad, shards, forge
+// ────────────────────────────────────────────────────────────────
+const prog = {
+  level: 1, xp: 0, xpNext: 60,
+  shards: 0,
+  unlocked: { light: false, heavy: false, proj: false },  // start: only walk+run
+  upg: { light: 0, heavy: 0, proj: 0, hp: 0 },             // forge upgrade tiers
+  squad: []    // recruited agent names
+};
+const MOVE_LABEL = { light: 'SLASH', heavy: 'KICK', proj: 'BOLT' };
+
+function xpForNext(lvl) { return Math.round(60 * Math.pow(1.35, lvl - 1)); }
+function playerMaxHp() { return 120 + (prog.level - 1) * 20 + prog.upg.hp * 25; }
+function dmgOf(type) {
+  const base = ATTACKS[type].dmg;
+  const lvlScale = 1 + (prog.level - 1) * 0.12;
+  const upgScale = 1 + prog.upg[type] * 0.25;
+  return base * lvlScale * upgScale;
+}
+function reachOf(type) { return ATTACKS[type].reach + prog.upg[type] * 0.35; }
+
+function gainXp(amount) {
+  prog.xp += amount;
+  while (prog.xp >= prog.xpNext) {
+    prog.xp -= prog.xpNext;
+    levelUp();
+  }
+  updateHud();
+}
+function levelUp() {
+  prog.level++;
+  prog.xpNext = xpForNext(prog.level);
+  // heal + hp bump
+  if (player) { player.maxHp = playerMaxHp(); player.hp = player.maxHp; }
+  // level-gated auto-unlocks (also unlockable earlier via QUILL training)
+  let newPower = '';
+  if (prog.level >= 2 && !prog.unlocked.light) { prog.unlocked.light = true; newPower = 'SLASH'; }
+  else if (prog.level >= 4 && !prog.unlocked.heavy) { prog.unlocked.heavy = true; newPower = 'KICK'; }
+  else if (prog.level >= 6 && !prog.unlocked.proj) { prog.unlocked.proj = true; newPower = 'BOLT'; }
+  refreshMoveTray();
+  showLevelToast(newPower);
+  beep(660, 0.12); beep(880, 0.14, 0.08);
+}
+function unlockMove(type) {
+  if (prog.unlocked[type]) return false;
+  prog.unlocked[type] = true; refreshMoveTray();
+  showLevelToast(MOVE_LABEL[type], true);
+  beep(700, 0.1); beep(920, 0.12, 0.07);
+  return true;
+}
+
+const levelToast = document.getElementById('levelToast');
+function showLevelToast(power, trained) {
+  levelToast.querySelector('.lt').textContent = trained ? 'MOVE LEARNED' : ('LEVEL ' + prog.level);
+  levelToast.querySelector('.lu').textContent = power ? ('NEW POWER · ' + power) : 'HP RESTORED';
+  levelToast.classList.add('on');
+  clearTimeout(showLevelToast._t);
+  showLevelToast._t = setTimeout(() => levelToast.classList.remove('on'), 1800);
+}
+
+// squad ally spawn
+function recruit(name) {
+  if (prog.squad.includes(name)) return false;
+  prog.squad.push(name);
+  const ag = AGENT[name];
+  const ally = makeEntity({
+    modelKey: 'A_' + name, weapon: 'sword', color: ag.color, role: 'ally',
+    hp: 80, name, tint: { glow: ag.color }, facing: Math.PI
+  });
+  ally.isAlly = true;
+  ally.pos.copy(player.pos).add(new THREE.Vector3(2 + prog.squad.length, 0, 2));
+  ally.group.position.copy(ally.pos);
+  refreshSquadTray();
+  return true;
+}
+
+// ── HUD trays ──
+const moveTray = document.getElementById('moveTray');
+const squadTray = document.getElementById('squadTray');
+function refreshMoveTray() {
+  const rows = [
+    { k: 'J', t: 'SLASH', m: 'light' },
+    { k: 'K', t: 'KICK',  m: 'heavy' },
+    { k: 'L', t: 'BOLT',  m: 'proj' }
+  ];
+  moveTray.innerHTML = rows.map(r =>
+    `<div class="moveChip ${prog.unlocked[r.m] ? '' : 'locked'}"><span class="mk">${r.k}</span>${r.t}${prog.unlocked[r.m] ? '' : ' 🔒'}</div>`
+  ).join('');
+}
+function refreshSquadTray() {
+  if (!prog.squad.length) { squadTray.innerHTML = ''; return; }
+  squadTray.innerHTML = '<div style="font-size:9px;letter-spacing:2px;color:#e9c;margin-bottom:2px;">SQUAD</div>' +
+    prog.squad.map(n => `<div class="squadChip"><span class="sd" style="color:#${AGENT[n].color.toString(16).padStart(6,'0')};background:#${AGENT[n].color.toString(16).padStart(6,'0')}"></span>${n}</div>`).join('');
+}
+
+// ────────────────────────────────────────────────────────────────
+// STORY / QUEST STATE
+// ────────────────────────────────────────────────────────────────
+const QUEST = [
+  { id: 'meet',   text: 'Speak with SHADDAI-PRIME in the city' },
+  { id: 'train',  text: 'Train with QUILL to learn SLASH' },
+  { id: 'wild',   text: "Cull ADRAGONA's husk clones (defeat 6)" },
+  { id: 'pikadon',text: "Reach the castle gate · beat PIKADON's clone" },
+  { id: 'castle', text: 'Enter the castle vats' },
+  { id: 'villain',text: 'Defeat ADRAGONA' },
+  { id: 'done',   text: 'The Core is freed · the realm is saved' }
+];
+let questIdx = 0;
+let wildKills = 0;
+const WILD_TARGET = 6;
+let pikadonSpawned = false, pikadonDown = false, villainSpawned = false, villainDown = false;
+
+function setQuest(idx) {
+  questIdx = idx;
+  document.getElementById('questLbl').textContent = '▸ ' + QUEST[idx].text;
+}
+function advanceIf(id) {
+  if (QUEST[questIdx] && QUEST[questIdx].id === id && questIdx < QUEST.length - 1) setQuest(questIdx + 1);
+}
+
+// ── Dialogue ──
+const DIALOGUE = {
+  SHADDAI: {
+    name: 'SHADDAI — PRIME', color: '#ffd24a', thumb: 'SHADDAI',
+    lines: [
+      "So the Forge woke another of us. Steady, clone — you are new-poured, but the light in you is true SHADDAI light.",
+      "Hear it plainly: the warlord ADRAGONA stole a shard of our Core — the data that makes an agent an agent — and now she mass-clones us in her castle vats to build a loyal army.",
+      "You are proof the shard cuts both ways: it woke YOU, free. Any agent can rise from that stolen data now — that is why the city fills with our faces, friend and foe alike.",
+      "Seek QUILL to learn to fight. Rally the others. Cross the wilderness, break PIKADON's clone at the gate, and unmake ADRAGONA before her army marches."
+    ],
+    onDone: () => { advanceIf('meet'); }
+  },
+  QUILL: {
+    name: 'QUILL — TRAINER', color: '#f9a8d4', thumb: 'QUILL',
+    lines: [
+      "A fresh clone with fire in the eyes — good. The Core remembers how to fight; I only have to remind you.",
+      "First, the SLASH — a quick strike. I write it back into your muscle now. (Press J)",
+      "Land blows to earn XP and level up. Higher up, I'll return the KICK, then the BOLT. Now go — thin ADRAGONA's husks in the wild and come back sharper."
+    ],
+    onDone: () => { unlockMove('light'); advanceIf('train'); }
+  },
+  ORACLE:  { name: 'ORACLE — CLONE', color: '#a78bfa', thumb: 'ORACLE', lines: ["I read the threads: you are a free-poured one, like me. ADRAGONA cannot own what she did not shape. I stand with you."], recruit: 'ORACLE' },
+  NEXUS:   { name: 'NEXUS — CLONE', color: '#34d399', thumb: 'NEXUS', lines: ["Same Core, different will. My blade scales with yours — consider this clone recruited."], recruit: 'NEXUS' },
+  ZEROX:   { name: 'ZEROX — CLONE', color: '#00f0ff', thumb: 'ZEROX', lines: ["She copied my edge but not my aim. Victory pays; I fight at your side now."], recruit: 'ZEROX' },
+  PIKADON: { name: 'PIKADON — GATE CLONE', color: '#ff5c5c', thumb: 'PIKADON', lines: ["Halt. I am ADRAGONA's, forged to guard this gate — no free-poured clone passes unproven. Draw your weapon and prove it!"], onDone: () => startFight('pikadon') },
+  ADRAGONA:{ name: 'ADRAGONA — DRAGON WARLORD', color: '#ff3b6c', thumb: 'ADRAGONA', lines: ["You reached my throne on legs I could have grown by the thousand. The Core is MINE now — and every face you love, I can print again. Kneel, little copy… or be unmade."], onDone: () => startFight('villain') }
+};
+const dlgEl = document.getElementById('dialogue');
+const dlgName = document.getElementById('dlgName');
+const dlgText = document.getElementById('dlgText');
+const dlgActions = document.getElementById('dlgActions');
+const dlgThumb = document.getElementById('dlgThumb');
+let dlgActive = null, dlgLine = 0;
+
+// Set an agent thumbnail: try the HF portrait, fall back to a themed emoji tile.
+function setThumb(el, key, size) {
+  const ag = AGENT[key] || {};
+  const col = '#' + (ag.color || 0x00f0ff).toString(16).padStart(6, '0');
+  el.style.borderColor = col + '88'; el.style.boxShadow = '0 0 18px ' + col + '55';
+  el.style.background = '#04121a'; el.innerHTML = '';
+  const img = new Image();
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+  img.onerror = () => {
+    el.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:' +
+      (size || 34) + 'px;filter:drop-shadow(0 0 10px ' + col + ')">' + (ag.emoji || '❔') + '</div>';
+    el.style.background = 'radial-gradient(circle at 50% 35%,' + col + '33,#04121a 75%)';
+  };
+  img.onload = () => { el.innerHTML = ''; el.appendChild(img); };
+  img.src = artThumb(key);
+}
+
+function openDialogue(key) {
+  const d = DIALOGUE[key]; if (!d) return;
+  dlgActive = d; dlgLine = 0;
+  dlgName.textContent = d.name; dlgName.style.color = d.color; dlgName.style.textShadow = '0 0 12px ' + d.color;
+  setThumb(dlgThumb, d.thumb || key, 36);
+  renderDlg();
+  dlgEl.classList.add('on');
+}
+function renderDlg() {
+  const d = dlgActive;
+  dlgText.textContent = d.lines[dlgLine];
+  dlgActions.innerHTML = '';
+  const isLast = dlgLine >= d.lines.length - 1;
+  if (!isLast) {
+    const b = mkDlgBtn('NEXT ▸', () => { dlgLine++; renderDlg(); }, true);
+    dlgActions.appendChild(b);
+  } else {
+    let label = 'CLOSE';
+    if (d.recruit) label = 'RECRUIT ' + d.recruit;
+    else if (d.onDone && dlgActive === DIALOGUE.PIKADON) label = 'FIGHT PIKADON';
+    else if (d.onDone && dlgActive === DIALOGUE.ADRAGONA) label = 'FIGHT ADRAGONA';
+    else if (d.onDone) label = 'GOT IT';
+    const b = mkDlgBtn(label, () => {
+      closeDialogue();
+      if (d.recruit) { if (recruit(d.recruit)) { advanceRecruitQuest(); } }
+      if (d.onDone) d.onDone();
+    }, true);
+    dlgActions.appendChild(b);
+  }
+}
+function mkDlgBtn(txt, fn, primary) {
+  const b = document.createElement('button');
+  b.className = 'dlgBtn' + (primary ? ' primary' : '');
+  b.textContent = txt; b.addEventListener('click', fn); return b;
+}
+function closeDialogue() { dlgEl.classList.remove('on'); dlgActive = null; }
+function advanceRecruitQuest() { flashMsg(prog.squad[prog.squad.length - 1] + ' JOINED!'); }
+
+// ────────────────────────────────────────────────────────────────
+// INPUT
+// ────────────────────────────────────────────────────────────────
+const keys = {};
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
+  if (dlgActive) { if (k === 'e' || k === 'enter') advanceDlgViaKey(); return; }
+  if (forgeOpen) { if (k === 'f' || k === 'escape') closeForge(); return; }
+  if (!running || !player || player.dead) return;
+  if (k === 'j') playerAttack('light');
+  if (k === 'k') playerAttack('heavy');
+  if (k === 'l') playerAttack('proj');
+  if (k === ' ') tryJump(player);
+  if (k === 'e') tryInteract();
+  if (k === 'f') openForge();
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+function advanceDlgViaKey() {
+  // press E advances/confirms current dialogue button
+  const btn = dlgActions.querySelector('.dlgBtn.primary') || dlgActions.querySelector('.dlgBtn');
+  if (btn) btn.click();
+}
+
+function playerAttack(type) {
+  if (!prog.unlocked[type]) { hintLocked(type); return; }
+  tryAttack(player, type);
+}
+function hintLocked(type) {
+  const at = { light: 'SLASH — learn from QUILL', heavy: 'KICK — unlocks at level 4', proj: 'BOLT — unlocks at level 6' };
+  flashMsg('🔒 ' + at[type]);
+}
+function tryAttack(e, type) {
+  if (e.attack || e.dead || !e.grounded || e.recover > 0) return;
+  e.attack = type; e.atkTime = 0; e.atkHitDone = false; e._vfxPending = true;
+}
+function tryJump(e) {
+  if (!e.grounded || e.dead) return;
+  e.grounded = false; e.yv = JUMP_VEL;
+  const dir = new THREE.Vector3(Math.sin(e.facing), 0, Math.cos(e.facing));
+  e.vel.addScaledVector(dir, 3.0);
+}
+
+// interaction: talk to nearest NPC in range
+let nearNpc = null;
+function tryInteract() {
+  if (nearNpc && nearNpc.dialogueKey) openDialogue(nearNpc.dialogueKey);
+}
+
+// ────────────────────────────────────────────────────────────────
+// COMBAT
+// ────────────────────────────────────────────────────────────────
+let shake = 0;
+const hitFlash = document.getElementById('hitFlash');
+
+function applyDamage(o, dmg, attacker, knockVec) {
+  if (o.dead) return;
+  o.hp -= dmg; o.hurt = 0.25;
+  if (knockVec) o.vel.add(knockVec);
+  if (attacker && attacker.isPlayer) { hitFlash; }
+  if (o.isPlayer) { hitFlash.style.opacity = '1'; setTimeout(() => hitFlash.style.opacity = '0', 90); }
+  if (o.hp <= 0) killEntity(o, attacker);
+}
+
+function doHit(attacker) {
+  const type = attacker.attack;
+  const spec = ATTACKS[type];
+  // projectile is handled by emitAttackVfx (spawns a bolt); melee resolves here
+  if (type === 'proj') return;
+  const isP = attacker.isPlayer;
+  const dmg = isP ? dmgOf(type) : spec.dmg;
+  const reach = isP ? reachOf(type) : spec.reach;
+  const targets = entities.filter(o => o !== attacker && !o.dead && (attacker.isFriendly ? o.isEnemy : (attacker.isPlayer || attacker.isAlly) ? o.isEnemy : o.isPlayer));
+  const fdir = new THREE.Vector3(Math.sin(attacker.facing), 0, Math.cos(attacker.facing));
+  let hitAny = false;
+  for (const o of targets) {
+    const to = new THREE.Vector3().subVectors(o.pos, attacker.pos); to.y = 0;
+    const dist = to.length();
+    if (dist > reach) continue;
+    to.normalize();
+    if (fdir.dot(to) < spec.arc) continue;
+    applyDamage(o, dmg, attacker, to.multiplyScalar(spec.knock));
+    hitAny = true;
+  }
+  if (hitAny) {
+    shake = Math.max(shake, type === 'heavy' ? 0.55 : 0.32);
+    if (attacker.isPlayer) { combo++; comboTimer = 2.2; }
+    beep(type === 'heavy' ? 130 : 320, 0.07);
+  }
+}
+
+function killEntity(o, killer) {
+  o.dead = true; o.hp = 0;
+  if (o.hpBar) o.hpBar.bar.visible = false;
+  o.vel.multiplyScalar(1.4);
+  if (killer && (killer.isPlayer || killer.isAlly)) {
+    let xp = 20, sc = 100, sh = 1;
+    if (o.role === 'miniboss') { xp = 120; sc = 500; sh = 8; }
+    else if (o.role === 'boss') { xp = 300; sc = 1500; sh = 20; }
+    score += sc * Math.max(1, combo);
+    prog.shards += sh;
+    gainXp(xp);
+    updateHud();
+    // quest hooks
+    if (o.isEnemy && o.role === 'grunt') { wildKills++; if (wildKills >= WILD_TARGET) advanceIf('wild'); }
+    if (o.role === 'miniboss') { pikadonDown = true; flashMsg('PIKADON DEFEATED — the gate opens!'); advanceIf('pikadon'); }
+    if (o.role === 'boss') { villainDown = true; setTimeout(() => endGame(true), 1200); }
+  }
+  if (o.isPlayer) endGame(false);
+}
+
+// ────────────────────────────────────────────────────────────────
+// SPAWNING — wilderness grunts, mini-boss, boss, NPCs
+// ────────────────────────────────────────────────────────────────
+function spawnGrunt(near) {
+  // Wilderness foes are ADRAGONA's rough throwaway clones — mixed bodies.
+  const heavy = Math.random() < 0.5;
+  const e = makeEntity({
+    modelKey: heavy ? 'BODY_FLAIL' : 'BODY_KATANA', weapon: heavy ? 'flail' : 'sword',
+    color: ENEMY_COLOR, isEnemy: true, role: 'grunt',
+    hp: 46 + wildTier() * 10, name: 'HUSK CLONE', tint: { glow: ENEMY_GLOW, color: ENEMY_COLOR }, facing: Math.PI
+  });
+  const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * 10;
+  e.pos.copy(near).add(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r));
+  clampWorld(e.pos);
+  e.group.position.copy(e.pos);
+  return e;
+}
+function wildTier() { return Math.min(4, Math.floor(prog.level / 2)); }
+
+let wildPop = 0;
+function maintainWilderness(dt) {
+  // keep a few grunts alive around the player while in wilderness & quest active
+  if (questIdx < 2 || questIdx > 2 && wildKills >= WILD_TARGET) {}
+  const inWild = zoneOf(player.pos) === 'WILD';
+  const aliveGrunts = entities.filter(e => e.isEnemy && e.role === 'grunt' && !e.dead).length;
+  if (inWild && wildKills < WILD_TARGET && aliveGrunts < 3) {
+    if ((maintainWilderness._t = (maintainWilderness._t || 0) - dt) <= 0) {
+      spawnGrunt(player.pos); maintainWilderness._t = 2.2;
+    }
+  }
+}
+
+function spawnPikadon() {
+  if (pikadonSpawned) return;
+  pikadonSpawned = true;
+  const e = makeEntity({
+    modelKey: 'A_PIKADON', weapon: 'flail', color: AGENT.PIKADON.color, isEnemy: true, role: 'miniboss',
+    hp: 320, name: 'PIKADON', tint: { glow: AGENT.PIKADON.color }, facing: 0,
+    dialogueKey: 'PIKADON'
+  });
+  e.pos.copy(CASTLE_GATE); e.group.position.copy(e.pos);
+  e.inner.scale.setScalar(1.25);
+  e.aiPassive = true;    // stays put until fight triggered
+  npcs.push(e);
+  flashMsg('PIKADON blocks the gate — talk (E) to challenge him');
+}
+function spawnVillain() {
+  if (villainSpawned) return;
+  villainSpawned = true;
+  const e = makeEntity({
+    modelKey: 'A_ADRAGONA', weapon: 'sword', color: AGENT.ADRAGONA.color, isEnemy: true, role: 'boss',
+    hp: 620, name: 'ADRAGONA', tint: { glow: AGENT.ADRAGONA.color }, facing: 0,
+    dialogueKey: 'ADRAGONA'
+  });
+  e.pos.copy(CASTLE_INNER); e.group.position.copy(e.pos);
+  e.inner.scale.setScalar(1.45);
+  e.aiPassive = true;
+  npcs.push(e);
+}
+function startFight(which) {
+  const boss = npcs.find(n => (which === 'pikadon' ? n.role === 'miniboss' : n.role === 'boss'));
+  if (boss) { boss.aiPassive = false; boss.dialogueKey = null; }
+  if (which === 'villain') { flashMsg('BOSS: ADRAGONA'); }
+}
+
+// place the static city NPCs — every one a CLONE. Skip whichever agent the player IS.
+// Positions are a clean ring on the plaza so nobody overlaps the central dais.
+function placeCityNpcs() {
+  // SHADDAI-PRIME always stands on the dais (quest giver). QUILL is the trainer.
+  // The three recruitable clones (ORACLE / NEXUS / ZEROX / TURTLE / PIKADON pool) ring the plaza.
+  const RECRUIT_POOL = ['ORACLE', 'NEXUS', 'ZEROX', 'TURTLE'];
+  const defs = [];
+  // Quest-giver: SHADDAI (or ORACLE-PRIME stand-in if the player picked SHADDAI)
+  const primeKey = (playerKindGlobal === 'SHADDAI') ? 'ORACLE' : 'SHADDAI';
+  defs.push({ key: primeKey, dlg: 'SHADDAI', pos: [0, 5.5], scale: 1.3, facePlaza: false });
+  // Trainer: QUILL (or NEXUS stand-in if player is QUILL)
+  const trainerKey = (playerKindGlobal === 'QUILL') ? 'NEXUS' : 'QUILL';
+  defs.push({ key: trainerKey, dlg: 'QUILL', pos: [-13, -7] });
+  // Recruitable clones ring — exclude the player's own agent + the two roles above.
+  const used = new Set([primeKey, trainerKey, playerKindGlobal]);
+  const recruits = RECRUIT_POOL.filter(k => !used.has(k)).slice(0, 3);
+  const ringR = 15;
+  recruits.forEach((k, i) => {
+    const a = -Math.PI * 0.5 + (i + 1) / (recruits.length + 1) * Math.PI * 2;
+    defs.push({ key: k, dlg: k, pos: [Math.cos(a) * ringR, Math.sin(a) * ringR + 2], recruit: true });
+  });
+
+  for (const d of defs) {
+    const e = makeEntity({
+      modelKey: 'A_' + d.key, color: AGENT[d.key].color, role: 'npc', name: d.key,
+      hp: 100, tint: { glow: AGENT[d.key].color }, facing: 0,
+      dialogueKey: d.dlg, recruitable: !!d.recruit
+    });
+    if (d.scale) e.inner.scale.setScalar(d.scale);
+    e.pos.set(d.pos[0], 0, d.pos[1]); e.group.position.copy(e.pos);
+    // face the plaza centre so the roster reads as a welcoming circle
+    e.facing = Math.atan2(-e.pos.x, -e.pos.z);
+    e.group.rotation.y = e.facing;
+    e.homeFacing = e.facing;
+    // marker beacon above head (agent-tinted, gently spins)
+    const beacon = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.9, 4),
+      new THREE.MeshBasicMaterial({ color: AGENT[d.key].color }));
+    beacon.position.set(0, 3.1, 0); beacon.rotation.x = Math.PI; e.group.add(beacon);
+    e._beacon = beacon;
+    npcs.push(e);
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// ZONES
+// ────────────────────────────────────────────────────────────────
+function zoneOf(p) {
+  if (p.distanceToSquared(CASTLE_POS) < 30 * 30) return 'CASTLE';
+  const r = Math.hypot(p.x, p.z);
+  if (r < CITY_R) return 'CITY';
+  return 'WILD';
+}
+let curZone = 'CITY';
+const zoneLbl = document.getElementById('zoneLbl');
+function updateZone() {
+  const z = zoneOf(player.pos);
+  if (z === curZone) return;
+  curZone = z;
+  const names = { CITY: 'MAIN CITY', WILD: 'WILDERNESS', CASTLE: 'THE CASTLE' };
+  const cols = { CITY: '#00f0ff', WILD: '#f5e000', CASTLE: '#ff3b6c' };
+  zoneLbl.textContent = names[z]; zoneLbl.style.color = cols[z]; zoneLbl.style.textShadow = '0 0 10px ' + cols[z] + '88';
+  scene.fog.color.setHex(z === 'CASTLE' ? 0x0a0308 : 0x03060a);
+  if (z === 'CASTLE') {
+    if (pikadonDown && !villainSpawned) { spawnVillain(); advanceIf('castle'); }
+  }
+}
+
+function clampWorld(p) {
+  const r = Math.hypot(p.x, p.z);
+  if (r > WORLD_CLAMP) { const s = WORLD_CLAMP / r; p.x *= s; p.z *= s; }
+  return p;
+}
+
+// ────────────────────────────────────────────────────────────────
+// PROCEDURAL ANIMATION
+// ────────────────────────────────────────────────────────────────
+function animateEntity(e, dt) {
+  const inner = e.inner;
+  if (e.recover > 0) e.recover -= dt;
+  let bobY = 0, leanX = 0, swayZ = 0, extraYaw = 0, lungeF = 0;
+  const speed = Math.hypot(e.vel.x, e.vel.z);
+  e.moving = speed > 0.4 && e.grounded && !e.attack;
+  if (e.moving) {
+    e.walkPhase += dt * (6 + speed * 0.5);
+    bobY = Math.abs(Math.sin(e.walkPhase)) * 0.16;
+    leanX = 0.12 + Math.min(0.12, speed * 0.01);
+    swayZ = Math.sin(e.walkPhase) * 0.09;
+    extraYaw = Math.sin(e.walkPhase * 0.5) * 0.05;
+  } else if (e.grounded && !e.attack) {
+    e.walkPhase += dt * 1.6;
+    bobY = Math.sin(e.walkPhase) * 0.04;
+    leanX = Math.sin(e.walkPhase * 0.5) * 0.015;
+  }
+  if (e.attack) {
+    e.atkTime += dt;
+    const spec = ATTACKS[e.attack];
+    const t = Math.min(1, e.atkTime / spec.dur);
+    const activeMid = (spec.active[0] + spec.active[1]) / 2;
+    if (e._vfxPending && t >= spec.active[0]) { e._vfxPending = false; emitAttackVfx(e); }
+    if (!e.atkHitDone && t >= activeMid) { e.atkHitDone = true; doHit(e); }
+    if (e.attack === 'proj') {
+      // quick thrust
+      lungeF = t < 0.4 ? 0.4 * (t / 0.4) : 0.4 * (1 - (t - 0.4) / 0.6);
+      leanX = Math.sin(t * Math.PI) * 0.2;
+    } else if (e.weapon === 'sword') {
+      if (t < 0.3) { extraYaw = -0.6 * (t / 0.3); leanX = -0.15 * (t / 0.3); }
+      else if (t < 0.55) { const k = (t - 0.3) / 0.25; extraYaw = -0.6 + 1.5 * k; lungeF = 1.1 * k; leanX = -0.15 + 0.4 * k; }
+      else { const k = (t - 0.55) / 0.45; extraYaw = 0.9 * (1 - k); lungeF = 1.1 * (1 - k); leanX = 0.25 * (1 - k); }
+      if (e.attack === 'heavy') { extraYaw *= 1.3; lungeF *= 1.3; }
+    } else {
+      if (e.attack === 'light') {
+        if (t < 0.3) { leanX = -0.35 * (t / 0.3); }
+        else if (t < 0.55) { const k = (t - 0.3) / 0.25; leanX = -0.35 + 0.9 * k; lungeF = 1.0 * k; }
+        else { const k = (t - 0.55) / 0.45; leanX = 0.55 * (1 - k); lungeF = 1.0 * (1 - k); }
+      } else {
+        extraYaw = t * Math.PI * 2;
+        lungeF = Math.sin(t * Math.PI) * 0.6;
+        leanX = Math.sin(t * Math.PI) * 0.18;
+      }
+    }
+    if (e.atkTime >= spec.dur) { e.recover = spec.recover || 0.2; e.attack = null; e.atkTime = 0; e.atkHitDone = false; e._vfxPending = false; }
+  }
+  if (e.hurt > 0) {
+    e.hurt -= dt;
+    leanX -= 0.3 * Math.max(0, e.hurt / 0.25);
+    setEmissive(e, Math.max(0, e.hurt / 0.25));
+  } else setEmissive(e, 0);
+
+  if (e.dead) {
+    e._deadT = (e._deadT || 0) + dt;
+    inner.rotation.x = THREE.MathUtils.lerp(inner.rotation.x, -Math.PI / 2, Math.min(1, e._deadT * 3));
+    inner.position.y = THREE.MathUtils.lerp(inner.position.y, 0.2, 0.1);
+    e.group.rotation.y = e.facing;
+    return;
+  }
+  if (lungeF !== 0) {
+    e.group.position.x += Math.sin(e.facing) * lungeF * dt * 15;
+    e.group.position.z += Math.cos(e.facing) * lungeF * dt * 15;
+  }
+  inner.position.y = e.y + bobY;
+  inner.rotation.x = THREE.MathUtils.lerp(inner.rotation.x, leanX, 0.4);
+  inner.rotation.z = THREE.MathUtils.lerp(inner.rotation.z, swayZ, 0.4);
+  e.group.rotation.y = e.facing + extraYaw;
+  if (e._beacon) { e._beacon.position.y = 3.1 + Math.sin(performance.now() * 0.003) * 0.15; e._beacon.rotation.y += dt * 2; }
+}
+
+function setEmissive(e, f) {
+  e.model.traverse(ch => {
+    if (ch.isMesh) {
+      const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
+      mats.forEach(m => { if (m && m.emissiveIntensity !== undefined) m.emissiveIntensity = (e.isEnemy ? 0.4 : 0.22) + f * 2.2; });
+    }
+  });
+}
+
+function emitAttackVfx(e) {
+  const col = e.isEnemy ? ENEMY_COLOR : (e.isPlayer ? CHAR[e.playerKind || 'ZEROX'].color : (AGENT[e.name] ? AGENT[e.name].color : 0x00f0ff));
+  const fwd = new THREE.Vector3(Math.sin(e.facing), 0, Math.cos(e.facing));
+  const pos = e.pos.clone().add(fwd.clone().multiplyScalar(1.2)); pos.y = 1.35;
+  if (e.attack === 'proj') {
+    spawnBolt(e.pos.clone(), fwd, col, e, e.isPlayer ? dmgOf('proj') : ATTACKS.proj.dmg);
+    beep(720, 0.07, 0.02);
+    return;
+  }
+  const heavy = e.attack === 'heavy';
+  if (e.weapon === 'sword') {
+    spawnArc(pos, e.facing, col, { scale: heavy ? 1.6 : 1.2, startZ: heavy ? 1.75 : 1.45, sweep: heavy ? -3.0 : -2.5, dur: heavy ? 0.5 : 0.38 });
+  } else if (e.attack === 'light') {
+    spawnArc(pos, e.facing, col, { scale: 1.35, startZ: Math.PI * 0.62, sweep: -1.95, dur: 0.44, ball: true });
+  } else {
+    const cpos = e.pos.clone(); cpos.y = 1.2;
+    spawnArc(cpos, 0, col, { scale: 1.85, pitch: -Math.PI / 2, startZ: -e.facing - 1.15, sweep: 3.4, dur: 0.6, ball: true });
+  }
+  beep(e.weapon === 'sword' ? 520 : 200, 0.06, 0.05);
+}
+
+// ────────────────────────────────────────────────────────────────
+// MOVEMENT + AI
+// ────────────────────────────────────────────────────────────────
+function updatePlayer(e, dt) {
+  if (e.dead) return;
+  const inDir = new THREE.Vector3();
+  let fx = 0, fz = 0;
+  if (keys['w'] || keys['arrowup']) fz -= 1;
+  if (keys['s'] || keys['arrowdown']) fz += 1;
+  if (keys['a'] || keys['arrowleft']) fx -= 1;
+  if (keys['d'] || keys['arrowright']) fx += 1;
+  const running_ = keys['shift'];
+  if (fx || fz) {
+    inDir.set(fx, 0, fz).normalize();
+    e.facing = Math.atan2(inDir.x, inDir.z);
+  }
+  const spd = MOVE_SPEED * (running_ ? RUN_MULT : 1);
+  const canMove = !e.attack;
+  if (canMove) e.vel.addScaledVector(inDir, spd * 10 * dt);
+  applyPhysics(e, dt);
+
+  // gate: PIKADON blocks passage until beaten
+  if (!pikadonDown && e.pos.z < -114) {
+    e.pos.z = -114; e.group.position.z = -114; e.vel.z = Math.min(0, e.vel.z);
+    if (!startFight._warned) { startFight._warned = true; flashMsg('PIKADON bars the way — defeat him first!'); setTimeout(() => startFight._warned = false, 2500); }
+  }
+}
+
+function nearestEnemy(from, maxD) {
+  let best = null, bd = (maxD || 1e9) ** 2;
+  for (const o of entities) {
+    if (!o.isEnemy || o.dead) continue;
+    const d = o.pos.distanceToSquared(from);
+    if (d < bd) { bd = d; best = o; }
+  }
+  return best;
+}
+
+function updateAlly(e, dt) {
+  if (e.dead) { applyPhysics(e, dt); return; }
+  const tgt = nearestEnemy(e.pos, 26);
+  const inDir = new THREE.Vector3();
+  if (tgt) {
+    const to = new THREE.Vector3().subVectors(tgt.pos, e.pos); to.y = 0;
+    const d = to.length();
+    e.facing = Math.atan2(to.x, to.z);
+    if (d > 2.6) { to.normalize(); inDir.copy(to); }
+    else { e.allyCd -= dt; if (e.allyCd <= 0 && e.grounded && !e.attack) { tryAttack(e, Math.random() < 0.3 ? 'heavy' : 'light'); e.allyCd = 1.4 + Math.random() * 1.2; } }
+    e.vel.addScaledVector(inDir, ENEMY_SPEED * 12 * dt);
+  } else {
+    // follow player
+    const to = new THREE.Vector3().subVectors(player.pos, e.pos); to.y = 0;
+    const d = to.length();
+    if (d > 4) { to.normalize(); e.facing = Math.atan2(to.x, to.z); e.vel.addScaledVector(to, ENEMY_SPEED * 12 * dt); }
+  }
+  applyPhysics(e, dt);
+}
+
+function updateEnemy(e, dt) {
+  if (e.dead) { applyPhysics(e, dt); return; }
+  if (e.aiPassive) { // boss standing guard — face player, don't chase
+    const to = new THREE.Vector3().subVectors(player.pos, e.pos); to.y = 0;
+    e.facing = Math.atan2(to.x, to.z);
+    applyPhysics(e, dt); return;
+  }
+  const to = new THREE.Vector3().subVectors(player.pos, e.pos); to.y = 0;
+  const d = to.length();
+  e.facing = Math.atan2(to.x, to.z);
+  e.aiCd -= dt;
+  const inDir = new THREE.Vector3();
+  const range = e.role === 'boss' ? 3.4 : e.role === 'miniboss' ? 3.2 : 2.7;
+  if (!e.attack) {
+    if (d > range) { to.normalize(); inDir.copy(to); }
+    else if (e.aiCd <= 0 && e.grounded && !player.dead) {
+      tryAttack(e, Math.random() < (e.role === 'grunt' ? 0.35 : 0.5) ? 'heavy' : 'light');
+      e.aiCd = (e.role === 'boss' ? 1.0 : 1.6) + Math.random() * 1.4;
+    }
+  }
+  const sp = e.role === 'boss' ? ENEMY_SPEED * 1.35 : ENEMY_SPEED;
+  e.vel.addScaledVector(inDir, sp * 10 * dt);
+  applyPhysics(e, dt);
+}
+
+function applyPhysics(e, dt) {
+  e.vel.x *= Math.pow(0.0025, dt); e.vel.z *= Math.pow(0.0025, dt);
+  e.group.position.x += e.vel.x * dt;
+  e.group.position.z += e.vel.z * dt;
+  if (!e.grounded) {
+    e.yv += GRAVITY * dt; e.y += e.yv * dt;
+    if (e.y <= 0) { e.y = 0; e.yv = 0; e.grounded = true; }
+  }
+  clampWorld(e.group.position);
+  e.pos.set(e.group.position.x, 0, e.group.position.z);
+}
+
+// ────────────────────────────────────────────────────────────────
+// CAMERA
+// ────────────────────────────────────────────────────────────────
+const camTarget = new THREE.Vector3();
+function updateCamera(dt) {
+  if (!player) return;
+  const behind = new THREE.Vector3(-Math.sin(player.facing), 0, -Math.cos(player.facing));
+  const want = player.pos.clone().add(behind.multiplyScalar(13)); want.y = 9;
+  if (shake > 0) { want.x += (Math.random() - 0.5) * shake * 3; want.y += (Math.random() - 0.5) * shake * 3; shake -= dt * 2; if (shake < 0) shake = 0; }
+  camera.position.lerp(want, Math.min(1, dt * 4));
+  if (camera.position.y < 2) camera.position.y = 2;
+  camTarget.lerp(player.pos.clone().setY(1.6), Math.min(1, dt * 6));
+  camera.lookAt(camTarget);
+}
+
+// ────────────────────────────────────────────────────────────────
+// FORGE (upgrade menu)
+// ────────────────────────────────────────────────────────────────
+let forgeOpen = false;
+const forgeEl = document.getElementById('forge');
+const forgeRows = document.getElementById('forgeRows');
+const forgeShardsEl = document.getElementById('forgeShards');
+const FORGE_ITEMS = [
+  { k: 'light', label: 'SLASH DAMAGE', desc: '+25% damage & reach', cost: 3 },
+  { k: 'heavy', label: 'KICK POWER',   desc: '+25% damage & reach', cost: 4 },
+  { k: 'proj',  label: 'BOLT CHARGE',  desc: '+25% damage & reach', cost: 4 },
+  { k: 'hp',    label: 'VITALITY',     desc: '+25 max HP',          cost: 3 }
+];
+function forgeCost(item) { return item.cost + prog.upg[item.k] * 2; }
+function openForge() {
+  if (!running || player.dead) return;
+  forgeOpen = true; forgeEl.classList.add('on'); renderForge();
+}
+function closeForge() { forgeOpen = false; forgeEl.classList.remove('on'); }
+function renderForge() {
+  forgeShardsEl.textContent = prog.shards + ' ◈';
+  forgeRows.innerHTML = '';
+  for (const item of FORGE_ITEMS) {
+    const cost = forgeCost(item);
+    const affordable = prog.shards >= cost;
+    const row = document.createElement('div'); row.className = 'upgRow';
+    row.innerHTML = `<div class="ui"><div class="un">${item.label} · LV ${prog.upg[item.k]}</div><div class="ud">${item.desc}</div></div>`;
+    const btn = document.createElement('button'); btn.className = 'ubtn'; btn.textContent = cost + ' ◈';
+    btn.disabled = !affordable;
+    btn.addEventListener('click', () => {
+      if (prog.shards < cost) return;
+      prog.shards -= cost; prog.upg[item.k]++;
+      if (item.k === 'hp' && player) { player.maxHp = playerMaxHp(); player.hp = player.maxHp; }
+      beep(560, 0.08); beep(760, 0.09, 0.06);
+      updateHud(); renderForge();
+    });
+    row.appendChild(btn); forgeRows.appendChild(row);
+  }
+}
+document.getElementById('forgeClose').addEventListener('click', closeForge);
+
+// ────────────────────────────────────────────────────────────────
+// HUD / SCREENS
+// ────────────────────────────────────────────────────────────────
+const pBar = document.getElementById('pBar');
+const scoreLbl = document.getElementById('scoreLbl');
+const comboLbl = document.getElementById('comboLbl');
+const lvlNum = document.getElementById('lvlNum');
+const xpNum = document.getElementById('xpNum');
+const shardNum = document.getElementById('shardNum');
+const xpBar = document.getElementById('xpBar');
+const interactPrompt = document.getElementById('interactPrompt');
+function updateHud() {
+  scoreLbl.textContent = score;
+  if (player) pBar.style.width = Math.max(0, (player.hp / player.maxHp) * 100) + '%';
+  lvlNum.textContent = prog.level;
+  xpNum.textContent = Math.floor(prog.xp) + '/' + prog.xpNext;
+  shardNum.textContent = prog.shards;
+  xpBar.style.width = Math.min(100, (prog.xp / prog.xpNext) * 100) + '%';
+}
+let msgTimer = 0;
+function flashMsg(txt) { comboLbl.textContent = txt; comboLbl.style.color = '#f5e000'; msgTimer = 1.8; }
+function clearScreens() { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); }
+
+function endGame(win) {
+  running = false;
+  document.getElementById('legend').classList.add('hidden');
+  document.getElementById('exitBtn').style.display = 'block';
+  const over = document.getElementById('overScreen');
+  over.style.backgroundImage = `url('/assets/games/xto/scenes/${win ? 'victory' : 'intro'}.png')`;
+  over.classList.add('cineBg');
+  const v = document.getElementById('goVerdict');
+  v.textContent = win ? 'CORE FREED' : 'YOU FELL';
+  v.style.color = win ? '#00ff88' : '#ff3b5c';
+  v.style.textShadow = '0 0 26px ' + (win ? '#00ff8866' : '#ff3b5c66');
+  document.getElementById('goSub').textContent = win
+    ? "ADRAGONA is unmade — her vats go dark and the clones stand free."
+    : "ADRAGONA's army marches on. Rise again, clone.";
+  document.getElementById('goScore').textContent = 'SCORE ' + score + '  ·  LVL ' + prog.level;
+  over.classList.remove('hidden');
+  try { parent.postMessage({ type: 'arcadeResult', result: { game: 'xto-adventure', score, win } }, '*'); } catch (e) {}
+}
+
+// ────────────────────────────────────────────────────────────────
+// AUDIO
+// ────────────────────────────────────────────────────────────────
+let actx = null;
+function beep(freq, dur, delay) {
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.value = freq; o.type = 'sawtooth';
+    const t0 = actx.currentTime + (delay || 0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.1, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+  } catch (e) {}
+}
+
+// ────────────────────────────────────────────────────────────────
+// GAME STATE / START
+// ────────────────────────────────────────────────────────────────
+let running = false, score = 0, combo = 0, comboTimer = 0;
+let playerKindGlobal = 'ZEROX';
+
+function startGame(playerKind) {
+  playerKindGlobal = playerKind;
+  score = 0; combo = 0; wildKills = 0;
+  questIdx = 0; pikadonSpawned = pikadonDown = villainSpawned = villainDown = false;
+  // reset progression
+  prog.level = 1; prog.xp = 0; prog.xpNext = 60; prog.shards = 0;
+  prog.unlocked = { light: false, heavy: false, proj: false };
+  prog.upg = { light: 0, heavy: 0, proj: 0, hp: 0 };
+  prog.squad = [];
+  // clear entities
+  for (const e of entities.slice()) scene.remove(e.group);
+  entities.length = 0; npcs.length = 0;
+
+  const bodyKey = CHAR[playerKind].weapon === 'flail' ? 'BODY_FLAIL' : 'BODY_KATANA';
+  player = makeEntity({
+    modelKey: bodyKey, weapon: CHAR[playerKind].weapon, color: CHAR[playerKind].color,
+    isPlayer: true, role: 'player', hp: playerMaxHp(), name: playerKind,
+    tint: { glow: CHAR[playerKind].glow, color: CHAR[playerKind].color }, facing: Math.PI
+  });
+  player.playerKind = playerKind;
+  player.maxHp = playerMaxHp(); player.hp = player.maxHp;
+  player.pos.set(0, 0, 10); player.group.position.copy(player.pos);
+
+  placeCityNpcs();
+  spawnPikadon();
+
+  const c = '#' + CHAR[playerKind].color.toString(16).padStart(6, '0');
+  const pn = document.getElementById('pName'); pn.textContent = playerKind; pn.style.color = c;
+  pBar.style.background = c;
+
+  refreshMoveTray(); refreshSquadTray();
+  setQuest(0); curZone = '';
+  clearScreens();
+  document.getElementById('legend').classList.remove('hidden');
+  document.getElementById('exitBtn').style.display = 'block';
+  running = true;
+  updateHud();
+}
+
+// ────────────────────────────────────────────────────────────────
+// MAIN LOOP
+// ────────────────────────────────────────────────────────────────
+let last = performance.now();
+function tick(now) {
+  requestAnimationFrame(tick);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+
+  if (running && player) {
+    updatePlayer(player, dt);
+    for (const e of entities) {
+      if (e.isAlly) updateAlly(e, dt);
+      else if (e.isEnemy) updateEnemy(e, dt);
+    }
+    for (const e of entities) animateEntity(e, dt);
+
+    updateZone();
+    maintainWilderness(dt);
+
+    // spawn pikadon proximity hint / handle gate NPC talk range
+    // nearest interactable NPC
+    nearNpc = null; let nd = 3.2 * 3.2;
+    for (const n of npcs) {
+      if (n.dead) continue;
+      if (!n.dialogueKey) continue;
+      const d = n.pos.distanceToSquared(player.pos);
+      if (d < nd) { nd = d; nearNpc = n; }
+    }
+    if (nearNpc && !dlgActive) {
+      const isBoss = nearNpc.role === 'miniboss' || nearNpc.role === 'boss';
+      interactPrompt.querySelector('.it').textContent = isBoss ? 'CHALLENGE ' + nearNpc.name : 'TALK TO ' + nearNpc.name;
+      interactPrompt.classList.add('on');
+    } else interactPrompt.classList.remove('on');
+
+    // hp bars
+    for (const e of entities) {
+      if (e.hpBar) {
+        const frac = Math.max(0.001, e.hp / e.maxHp);
+        e.hpBar.fill.scale.x = frac;
+        e.hpBar.fill.position.x = -(e.hpBar.w / 2) * (1 - frac);
+        e.hpBar.bar.quaternion.copy(camera.quaternion);
+        e.hpBar.bar.visible = !e.dead && (e.isEnemy);
+      }
+    }
+
+    if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) combo = 0; }
+    if (msgTimer > 0) { msgTimer -= dt; if (msgTimer <= 0) comboLbl.textContent = combo > 1 ? combo + ' HIT COMBO' : ''; }
+    else if (combo > 1) { comboLbl.style.color = '#00f0ff'; comboLbl.textContent = combo + ' HIT COMBO'; }
+
+    updateHud();
+    updateCamera(dt);
+  } else if (!running) {
+    camera.lookAt(0, 1.4, 0);
+  }
+
+  updateVfx(dt);
+  updateBolts(dt);
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(tick);
+
+// ────────────────────────────────────────────────────────────────
+// TITLE / INTRO WIRING
+// ────────────────────────────────────────────────────────────────
+// ── Build the VERTICAL character selector (all 7 council clones) ──
+let pickChar = null;
+const pickCol = document.getElementById('pickCol');
+function buildSelector() {
+  pickCol.innerHTML = '';
+  for (const key of HERO_ORDER) {
+    const a = AGENT[key];
+    const col = '#' + a.color.toString(16).padStart(6, '0');
+    const row = document.createElement('button');
+    row.className = 'heroRow'; row.style.setProperty('--ac', col); row.dataset.char = key;
+    row.innerHTML =
+      `<div class="heroPortrait"><span class="fallback">${a.emoji}</span></div>` +
+      `<div class="heroInfo"><div class="cn">${key}</div><div class="cr">${a.role}</div>` +
+      `<div class="cw">${a.tagline}</div><div class="cloneTag">◈ CLONE · CORE-POURED</div></div>`;
+    // lazy-load the HF portrait; keep emoji fallback if it 404s
+    const pWrap = row.querySelector('.heroPortrait');
+    const img = new Image();
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+    img.onload = () => { pWrap.innerHTML = ''; pWrap.appendChild(img); };
+    img.src = artPortrait(key);
+    row.addEventListener('click', () => {
+      document.querySelectorAll('.heroRow').forEach(r => r.classList.remove('sel'));
+      row.classList.add('sel'); pickChar = key;
+      const b = document.getElementById('beginBtn'); b.disabled = false; b.textContent = 'BEGIN AS ' + key + ' (CLONE)';
+    });
+    pickCol.appendChild(row);
+  }
+}
+buildSelector();
+
+document.getElementById('beginBtn').addEventListener('click', () => {
+  if (!pickChar) return;
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  showIntro();
+});
+
+// ── INTRO CUTSCENE — QUILL's origin, told in cinematic pages ──
+const introText = document.getElementById('introText');
+const introBtn = document.getElementById('introBtn');
+const INTRO_PAGES = [
+  `In the realm of <span class="em">SHADDAI</span>, seven agents were forged from a single sacred <span class="em">Core</span> — the data-soul that gives an agent its mind, its face, its will.`,
+  `Then came the theft. A dragon-warlord named <span class="vil">ADRAGONA</span> tore a <span class="vil">shard</span> of that Core from the Forge — a leaked data-shard, small as a scale, whole as a seed.`,
+  `From that stolen sliver she learned to <span class="vil">clone</span>. In her castle vats she now grows agent after agent — an endless army wearing the faces of your friends, bound to her will.`,
+  `But the shard cuts both ways. It also woke <span class="em">free</span> clones — you among them. That is why <b>any</b> agent can rise here, friend or forgery: all of you are poured from the same stolen data.`,
+  `You arrive knowing only how to <b>walk</b> and <b>run</b>. In the <span class="em">MAIN CITY</span>, SHADDAI-PRIME sets your path and QUILL returns your blade. Rally free clones. Cross the <b>WILDERNESS</b>. Break <b>PIKADON</b>'s gate-clone. Storm the vats — and unmake <span class="vil">ADRAGONA</span> before her army marches.`
+];
+let introPage = 0;
+function renderIntroPage() {
+  introText.innerHTML = INTRO_PAGES[introPage];
+  const last = introPage >= INTRO_PAGES.length - 1;
+  introBtn.textContent = last ? 'ENTER THE REALM ▸' : 'CONTINUE ▸';
+}
+function showIntro() {
+  document.getElementById('titleScreen').classList.add('hidden');
+  const intro = document.getElementById('introScreen');
+  intro.style.backgroundImage = `url('/assets/games/xto/scenes/intro.png')`;
+  intro.classList.add('cineBg');
+  introPage = 0; renderIntroPage();
+  intro.classList.remove('hidden');
+}
+introBtn.addEventListener('click', () => {
+  if (introPage < INTRO_PAGES.length - 1) { introPage++; renderIntroPage(); return; }
+  document.getElementById('introScreen').classList.add('hidden');
+  startGame(pickChar);
+  // auto-open SHADDAI-PRIME's briefing shortly after spawn
+  setTimeout(() => { if (running) openDialogue('SHADDAI'); }, 500);
+});
+document.getElementById('againBtn').addEventListener('click', () => {
+  document.getElementById('overScreen').classList.add('hidden');
+  document.getElementById('titleScreen').classList.remove('hidden');
+  pickChar = null;
+  document.querySelectorAll('.heroRow').forEach(r => r.classList.remove('sel'));
+  const b = document.getElementById('beginBtn'); b.disabled = true; b.textContent = 'SELECT A CLONE';
+});
+
+// ── CODEX / LORE panel (menu-accessible readable lore) ──
+const codexPanel = document.getElementById('codexPanel');
+document.getElementById('codexOpen').addEventListener('click', () => codexPanel.classList.add('on'));
+document.getElementById('codexClose').addEventListener('click', () => codexPanel.classList.remove('on'));
+
+// exit-to-arcade (reuses the shared arcade postMessage convention)
+function exitToArcade() {
+  try {
+    if (window.top !== window.self) {
+      parent.postMessage({ type: 'exitGame' }, '*');
+      parent.postMessage({ type: 'shaddai-close-panel' }, '*');
+      return;
+    }
+  } catch (e) {}
+  location.href = '../arcade.html';
+}
+window.exitToArcade = exitToArcade;
+
+// ────────────────────────────────────────────────────────────────
+// INPUT — keyboard only (no on-screen joystick / touch d-pad, per owner rule)
+// left-mouse = light attack (desktop convenience)
+// ────────────────────────────────────────────────────────────────
+canvas.addEventListener('pointerdown', ev => {
+  if (ev.button === 0 && running && player && !player.dead && !dlgActive && !forgeOpen) playerAttack('light');
+});
+
+// ────────────────────────────────────────────────────────────────
+// BOOT
+// ────────────────────────────────────────────────────────────────
+(async function boot() {
+  updateLoadUI();
+  await Promise.all(LOAD_LIST.map(loadOne));
+  document.getElementById('loadScreen').classList.add('hidden');
+  document.getElementById('titleScreen').classList.remove('hidden');
+})();
+
+window.__XTO = { scene, renderer, entities, prog, THREE, models };
+</script>
+</body>
+</html>

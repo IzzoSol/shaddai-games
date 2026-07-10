@@ -1,0 +1,16 @@
+{
+  "name": "shaddai-games",
+  "version": "1.0.0",
+  "description": "SHADDAI Games — a neon arcade of agent-driven sports & action games with a scalable skill→ability engine.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.22.2"
+  },
+  "license": "MIT"
+}

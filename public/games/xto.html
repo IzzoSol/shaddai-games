@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>XTO — The SHADDAI Chronicles</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+} }
+</script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:#04060d;color:#dbe8ff;font-family:'Segoe UI',system-ui,sans-serif;-webkit-user-select:none;user-select:none}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block}
+  /* HUD root — modules attach their panels here so they never fight the canvas */
+  #hud{position:fixed;inset:0;z-index:10;pointer-events:none}
+  #hud .panel{pointer-events:auto}
+  /* Boot / loading */
+  #boot{position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at 50% 40%,#0b1226,#04060d 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .6s}
+  #boot.gone{opacity:0;pointer-events:none}
+  #boot h1{font-family:'Cinzel',serif;font-weight:900;font-size:clamp(34px,7vw,72px);letter-spacing:.18em;
+    background:linear-gradient(120deg,#27e0ff,#8a6cff,#1fd6c4,#27e0ff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 24px rgba(39,224,255,.4))}
+  #boot .sub{font-size:12px;letter-spacing:.4em;text-transform:uppercase;color:#7f93b8}
+  #bootBar{width:min(420px,70vw);height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+  #bootFill{height:100%;width:0;background:linear-gradient(90deg,#27e0ff,#1fd6c4);transition:width .25s}
+  #bootMsg{font-size:11px;letter-spacing:.15em;color:#5f739a;font-family:'IBM Plex Mono',monospace;min-height:14px}
+  #err{position:fixed;left:10px;bottom:10px;z-index:200;max-width:60vw;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#ff8080;white-space:pre-wrap;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<div id="boot">
+  <div class="sub">The SHADDAI Chronicles</div>
+  <h1>XTO</h1>
+  <div id="bootBar"><div id="bootFill"></div></div>
+  <div id="bootMsg">waking the city…</div>
+</div>
+<div id="err"></div>
+
+<!-- ═══ XTO MODULES (classic scripts — each sets window.XTO_<Name> = { build(ctx) → {update(dt,t), ...} } before the shell runs) ═══ -->
+<script src="/games/xto/terrain.js?v=2"></script>
+<script src="/games/xto/daynight.js?v=2"></script>
+<script src="/games/xto/city.js?v=2"></script>
+<script src="/games/xto/mechanics.js?v=2"></script>
+<script src="/games/xto/npcs.js?v=2"></script>
+<script src="/games/xto/player.js?v=2"></script>
+<script src="/games/xto/story.js?v=2"></script>
+
+<!-- ═══ SHELL — owns renderer/scene/camera/loop + the shared context every module plugs into ═══ -->
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const errEl = document.getElementById('err');
+window.__xtoErr = (m)=>{ try{ errEl.textContent = String(m).slice(0,400); }catch(_){} };
+window.addEventListener('error', e=> window.__xtoErr('ERR: '+(e.message||e)) );
+
+// ── Renderer / scene / camera ──────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio||1, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a1226);
+scene.fog = new THREE.FogExp2(0x0a1226, 0.006);
+{ const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; }
+
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 900);
+camera.position.set(0, 8, 14);
+
+addEventListener('resize', ()=>{ renderer.setSize(innerWidth,innerHeight); camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); }, {passive:true});
+
+const clock = new THREE.Clock();
+const loader = new GLTFLoader();
+
+// ── SHARED CONTEXT — every module receives this. Modules read/extend it; the shell owns the loop. ──
+// state: the single source of game truth modules read/write (mechanics owns the numbers; others read).
+const XTO = {
+  THREE, scene, camera, renderer, loader, canvas,
+  hud: document.getElementById('hud'),
+  keys: Object.create(null),                 // keydown map (e.code → true)
+  input: { moveX:0, moveZ:0, run:false },     // normalized movement intent (player module writes; others may read)
+  player: null,                               // { object3D, position:Vector3, heading, ... } set by XTO_Player
+  time: { t:0, dayFrac:0.35, night:false },   // day/night writes dayFrac(0..1)+night; others read
+  state: {                                    // mechanics owns these; UI + combat read/write via helpers
+    hp:100, hpMax:100, stamina:100, staminaMax:100, level:1, xp:0, coins:0,
+    inventory: [], character:'TURTLE'
+  },
+  helpers: {},                                // mechanics/etc. register shared fns here (e.g. addItem, damage, gainXp)
+  flags: { paused:false },
+  // char pick via ?char=  (turtle|oracle|xerox) — each has its own start building/story later
+  chosen: (new URLSearchParams(location.search).get('char')||'turtle').toUpperCase()
+};
+XTO.state.character = XTO.chosen;
+window.XTO = XTO;   // exposed so modules + console can reach it
+
+// ── Input ──────────────────────────────────────────────────────────────────
+addEventListener('keydown', e=>{ XTO.keys[e.code]=true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); }, {passive:false});
+addEventListener('keyup',   e=>{ XTO.keys[e.code]=false; });
+addEventListener('blur',    ()=>{ for(const k in XTO.keys) XTO.keys[k]=false; });
+
+// ── Base lights (day/night module animates these; kept sane if that module is absent) ──
+const hemi = new THREE.HemisphereLight(0x9fc0ff, 0x0a1424, 0.6); scene.add(hemi);
+const sun  = new THREE.DirectionalLight(0xffe9c4, 1.15);
+sun.position.set(40, 80, 30); sun.castShadow = true;
+sun.shadow.mapSize.set(1024,1024); sun.shadow.camera.near=1; sun.shadow.camera.far=260;
+sun.shadow.camera.left=-90; sun.shadow.camera.right=90; sun.shadow.camera.top=90; sun.shadow.camera.bottom=-90;
+scene.add(sun); scene.add(sun.target);
+XTO.lights = { hemi, sun };
+
+// ── Ground fallback (city module replaces/covers this) ──
+{ const g = new THREE.Mesh(new THREE.CircleGeometry(400,48), new THREE.MeshStandardMaterial({color:0x0c1220, roughness:0.95, metalness:0.0}));
+  g.rotation.x = -Math.PI/2; g.receiveShadow = true; g.position.y = -0.02; scene.add(g); XTO.groundFallback = g; }
+
+// ── Module bring-up: call each module's build(XTO); collect update handlers ──
+const bootFill = document.getElementById('bootFill');
+const bootMsg  = document.getElementById('bootMsg');
+const updaters = [];
+const MODULES = [
+  ['XTO_Terrain',   'the land'],       // FIRST — city/player read ctx.terrain.heightAt
+  ['XTO_DayNight',  'day & night'],
+  ['XTO_City',      'the town'],
+  ['XTO_Mechanics', 'your vitals'],
+  ['XTO_Npcs',      'the townsfolk'],
+  ['XTO_Player',    'your hero'],
+  // XTO_Story self-bootstraps (polls window.XTO until player+city exist) so it is
+  // intentionally NOT listed here — listing it would double-invoke build().
+];
+async function boot(){
+  for(let i=0;i<MODULES.length;i++){
+    const [name,label] = MODULES[i];
+    bootMsg.textContent = 'building '+label+'…';
+    bootFill.style.width = Math.round((i/MODULES.length)*100)+'%';
+    try{
+      const mod = window[name];
+      if(mod && typeof mod.build === 'function'){
+        const api = await mod.build(XTO);
+        if(api && typeof api.update === 'function') updaters.push(api.update);
+        XTO[name] = api || {};
+      } else { console.warn('[XTO] module missing:', name); }
+    }catch(e){ console.warn('[XTO] module failed:', name, e); window.__xtoErr(name+': '+(e&&e.message)); }
+    await new Promise(r=>requestAnimationFrame(r));   // yield so the boot bar animates (no freeze)
+  }
+  bootFill.style.width='100%'; bootMsg.textContent='enter the world';
+  setTimeout(()=>{ document.getElementById('boot').classList.add('gone'); }, 350);
+  clock.start();
+  loop();
+}
+
+// ── Main loop ────────────────────────────────────────────────────────────────
+function loop(){
+  requestAnimationFrame(loop);
+  const dt = Math.min(0.05, clock.getDelta());
+  XTO.time.t += dt;
+  if(!XTO.flags.paused){
+    for(let i=0;i<updaters.length;i++){ try{ updaters[i](dt, XTO.time.t); }catch(_){ } }
+  }
+  renderer.render(scene, camera);
+}
+
+boot();
+</script>
+</body>
+</html>
