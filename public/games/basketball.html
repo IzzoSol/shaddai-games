@@ -124,6 +124,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   letter-spacing:3px;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;
   transition:transform .12s,box-shadow .12s;}
 #tipoff button:hover{transform:translateY(-2px);}
+/* Mode chooser row */
+#mode-chooser{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:2px;}
+#mode-chooser-title{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:4px;
+  color:#ffd700;text-shadow:0 0 8px #ffd70066;}
+#mode-btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.mode-btn{font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;letter-spacing:2px;
+  padding:11px 22px;border-radius:8px;cursor:pointer;
+  background:rgba(55,230,255,.07);border:1.5px solid #37e6ff44;color:#37e6ff;
+  transition:transform .12s,box-shadow .12s,border-color .15s,background .12s;}
+.mode-btn:hover{transform:translateY(-2px);box-shadow:0 0 18px rgba(55,230,255,.35);}
+.mode-btn.active{background:linear-gradient(135deg,rgba(55,230,255,.22),rgba(255,77,148,.18));
+  border-color:#37e6ff;box-shadow:0 0 22px rgba(55,230,255,.55),inset 0 0 12px rgba(55,230,255,.08);}
 #startBtn{background:linear-gradient(135deg,#37e6ff,#ff4d94);color:#000;
   box-shadow:0 0 20px rgba(55,230,255,.4);}
 #startBtn:hover{box-shadow:0 0 30px rgba(255,77,148,.6);}
@@ -238,7 +250,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
 <div id="tipoff">
   <div class="tipoff-card">
     <h1>NEON HOOPS</h1>
-    <div class="sub">1v1 · SHADDAI ARENA</div>
+    <div class="sub" id="tipoff-sub">1 ON 1 · SHADDAI ARENA</div>
+    <!-- Mode chooser -->
+    <div id="mode-chooser">
+      <div id="mode-chooser-title">SELECT MODE</div>
+      <div id="mode-btn-row">
+        <button class="mode-btn active" type="button" data-mode="1">1 ON 1</button>
+        <button class="mode-btn" type="button" data-mode="2">2 ON 2</button>
+        <button class="mode-btn" type="button" data-mode="3">3 ON 3</button>
+      </div>
+    </div>
     <div class="controls-box">
       <div class="ctrl-row"><span class="k">WASD / Arrows</span><span class="d">Move (camera-relative)</span></div>
       <div class="ctrl-row"><span class="k">SHIFT</span><span class="d">Sprint</span></div>
@@ -624,10 +645,10 @@ function buildHoop() {
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, HOOP_Y + 0.5, 10), matPole);
   pole.position.set(0, (HOOP_Y + 0.5)/2, -COURT_D/2 + 0.4);
   pole.castShadow = true; hoopGroup.add(pole);
-  // Arm
+  // Arm — horizontal support connecting pole to board; y-aligned with board center
   const arm = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 2.5), matPole);
-  arm.position.set(0, HOOP_Y + 0.08, -COURT_D/2 + 0.4 + 1.25); hoopGroup.add(arm);
-  // Backboard
+  arm.position.set(0, HOOP_Y + 0.48, -COURT_D/2 + 0.4 + 1.25); hoopGroup.add(arm);
+  // Backboard — center is 0.48 above rim so board bottom sits ~0.1 above rim level
   const board = new THREE.Mesh(new THREE.BoxGeometry(1.85, 1.15, 0.08), matBoard);
   board.position.set(0, HOOP_Y + 0.48, -COURT_D/2 + 0.4 + 2.5);
   board.castShadow = true; hoopGroup.add(board);
@@ -635,12 +656,12 @@ function buildHoop() {
   const borderOuter = new THREE.Mesh(new THREE.PlaneGeometry(1.87, 1.17), matBoardGlow);
   borderOuter.position.copy(board.position); borderOuter.position.z += 0.05;
   hoopGroup.add(borderOuter);
-  // Board target box (inner rectangle) — clearly separated in z so it never z-fights the border
+  // Board target box (inner rectangle) — sits just above rim level, clearly on the glass face
   const targetBox = new THREE.Mesh(new THREE.PlaneGeometry(0.59, 0.45),
     new THREE.MeshBasicMaterial({ color: 0x37e6ff, transparent: true, opacity: 0.5,
       depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   targetBox.position.copy(board.position);
-  targetBox.position.y -= 0.1; targetBox.position.z += 0.07;
+  targetBox.position.y -= 0.22; targetBox.position.z += 0.07;
   hoopGroup.add(targetBox);
   // Rim — glowing orange torus
   const rim = new THREE.Mesh(new THREE.TorusGeometry(RIM_R, 0.028, 10, 32), matRim);
@@ -1288,18 +1309,27 @@ function animatePlayer(p, dt, moving, speed) {
   mesh.rotation.y = p.facingAngle;
 
   const { lArmPiv, rArmPiv, lLegPiv, rLegPiv } = mesh.userData.limbs;
-  if (moving) mesh.userData.animPhase += dt * (2.5 + speed * 0.4);
+  // Phase advances faster proportionally to speed so sprint looks like a sprint
+  const spd2 = Math.sqrt(p.vel.x*p.vel.x + p.vel.z*p.vel.z);
+  if (moving) mesh.userData.animPhase += dt * (4.5 + spd2 * 0.55);
   const ph = mesh.userData.animPhase;
-  const swing = moving ? 0.45 : 0;
-  lLegPiv.rotation.x =  Math.sin(ph) * swing;
-  rLegPiv.rotation.x = -Math.sin(ph) * swing;
-  lArmPiv.rotation.x = -Math.sin(ph) * swing * 0.6;
-  rArmPiv.rotation.x =  Math.sin(ph) * swing * 0.6;
+  // Swing amplitude also grows with speed for a more expressive run
+  const swingAmt = moving ? Math.min(0.72, 0.44 + spd2 * 0.045) : 0;
+  // Ease idle arms/legs to neutral when stopping
+  const blendK = moving ? 1.0 : 0.85;
+  lLegPiv.rotation.x = THREE.MathUtils.lerp(lLegPiv.rotation.x,  Math.sin(ph) * swingAmt, blendK);
+  rLegPiv.rotation.x = THREE.MathUtils.lerp(rLegPiv.rotation.x, -Math.sin(ph) * swingAmt, blendK);
+  lArmPiv.rotation.x = THREE.MathUtils.lerp(lArmPiv.rotation.x, -Math.sin(ph) * swingAmt * 0.62, blendK);
+  rArmPiv.rotation.x = THREE.MathUtils.lerp(rArmPiv.rotation.x,  Math.sin(ph) * swingAmt * 0.62, blendK);
   if (p.hasBall && game.shotCharging && p.isUser) rArmPiv.rotation.x = -Math.PI * 0.7;
   if (p.dunking) { rArmPiv.rotation.x = -Math.PI * 0.85; lArmPiv.rotation.x = -Math.PI * 0.8; }
-  if (!p.onGround) { lLegPiv.rotation.x = -0.3; rLegPiv.rotation.x = -0.3; }
+  if (!p.onGround) {
+    // Tuck legs under body while airborne
+    lLegPiv.rotation.x = THREE.MathUtils.lerp(lLegPiv.rotation.x, -0.28, 0.18);
+    rLegPiv.rotation.x = THREE.MathUtils.lerp(rLegPiv.rotation.x, -0.28, 0.18);
+  }
   if (!p.isUser && p.state === 'shoot')  rArmPiv.rotation.x = -Math.PI * 0.6;
-  if (!p.isUser && p.state === 'guard') { lLegPiv.rotation.x += 0.2; rLegPiv.rotation.x += 0.2; }
+  if (!p.isUser && p.state === 'guard') { lLegPiv.rotation.x += 0.22; rLegPiv.rotation.x += 0.22; }
 
   // Keep jersey/wristbands/headband anchored to estimated body positions on the procedural path too
   const pidx = players.indexOf(p);
@@ -2120,12 +2150,12 @@ function updateBall(dt) {
   ball.mesh.rotation.z -= ball.vel.x * dt * 1.5;
   ball.mesh.position.copy(ball.pos);
 
-  // Ground bounce
+  // Ground bounce — restitution 0.68 (realistic basketball off hardwood)
   if (ball.pos.y <= BALL_R) {
     ball.pos.y = BALL_R;
-    if (Math.abs(ball.vel.y) > 0.5) {
-      ball.vel.y = -ball.vel.y * 0.52;
-      ball.vel.x *= 0.72; ball.vel.z *= 0.72;
+    if (Math.abs(ball.vel.y) > 0.4) {
+      ball.vel.y = -ball.vel.y * 0.68;
+      ball.vel.x *= 0.84; ball.vel.z *= 0.84;
       ball.bounces++;
       sfxBounce();
     } else {
@@ -2295,14 +2325,14 @@ let camSmoothLook = new THREE.Vector3(0, 1, 0);
 // The camera must never cross behind the backboard/rim plane (it sits at ~z = BOARD_Z_FACE,
 // which is HOOP_Z - 0.1). Keeping the camera on the COURT side of this plane stops the
 // clip/flip that happened when the player walked behind the hoop.
-const CAM_Z_LIMIT = HOOP_Z + 0.9;   // stay at least 0.9m court-side of the rim
+const CAM_Z_LIMIT = HOOP_Z + 1.6;   // stay at least 1.6m court-side of the rim (prevents glass-clip flip)
 
 // Reused scratch vectors (avoid per-frame allocation in this hot path)
 const _camBehind = new THREE.Vector3();
 const _camIdeal  = new THREE.Vector3();
 const _camEye    = new THREE.Vector3();
 const _camLook   = new THREE.Vector3();
-const _camHoopHi = new THREE.Vector3(HOOP_X, HOOP_Y * 0.55, HOOP_Z);
+const _camHoopHi = new THREE.Vector3(HOOP_X, HOOP_Y * 0.78, HOOP_Z);
 
 // Scratch vectors for the alternate cameras
 const _fpEye   = new THREE.Vector3();
@@ -2411,8 +2441,9 @@ function updateCameraBroadcast(dt) {
   _camIdeal.copy(you.pos).addScaledVector(_camBehind, camBack);
   _camIdeal.y += camUp;
 
-  // ── Hard bounds: keep camera in court & above floor ──
-  _camIdeal.y = Math.max(2.4, _camIdeal.y);
+  // ── Hard bounds: keep camera in court, above floor, and never inside a player ──
+  const minCamY = 2.8 + nearHoop * 1.2; // raise floor higher when close to hoop
+  _camIdeal.y = Math.max(minCamY, _camIdeal.y);
   _camIdeal.x = Math.max(-COURT_W/2 + 1.2, Math.min(COURT_W/2 - 1.2, _camIdeal.x));
   _camIdeal.z = Math.max(-COURT_D/2 + 1.8, Math.min(COURT_D/2 - 1.8, _camIdeal.z));
 
@@ -2607,7 +2638,9 @@ function startGame(auto = false) {
     document.getElementById('auto-badge').style.display = 'block';
     showMsg('AUTO DEMO', '#ffd700', 1.5);
   } else {
-    showMsg('TIP-OFF!', '#ffd700', 1.5);
+    // 2v2 / 3v3 engine expansion pending — always starts as 1v1 for now
+    const modeTag = selectedMode === 1 ? '1 ON 1' : `${modeLabels[selectedMode] || '1 ON 1'} (1v1 ENGINE)`;
+    showMsg(`TIP-OFF · ${modeTag}!`, '#ffd700', 1.8);
   }
   updateScoreUI();
   updatePossUI();
@@ -2696,6 +2729,23 @@ function buildCharSelector() {
 }
 buildCharSelector();
 applySelectionColors();
+
+// ─────────────────────────────────────────────────────────────────
+// MODE CHOOSER — 1 on 1 / 2 on 2 / 3 on 3
+// 2v2 and 3v3 use the same 1v1 engine for now (UI is ready for expansion).
+// ─────────────────────────────────────────────────────────────────
+let selectedMode = 1; // 1, 2, or 3 players per team
+const modeLabels = { 1: '1 ON 1', 2: '2 ON 2', 3: '3 ON 3' };
+const modeSubEl  = document.getElementById('tipoff-sub');
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedMode = parseInt(btn.dataset.mode, 10);
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (modeSubEl) modeSubEl.textContent = `${modeLabels[selectedMode]} · SHADDAI ARENA`;
+    if (selectedMode > 1) showMsg(`${modeLabels[selectedMode]} — COMING SOON`, '#ffd700', 1.5);
+  });
+});
 
 document.getElementById('startBtn').addEventListener('click', () => startGame(false));
 document.getElementById('watchBtn').addEventListener('click', () => startGame(true));
