@@ -319,6 +319,12 @@ const CHAR_ART = id => `/assets/games/hoops/chars/${id}.png`;
 // selection: index 0 = your baller, index 1 = ghost opponent
 let selectedAgent = ROSTER[1];       // default ZEROX (cyan Vanguard)
 let ghostAgent    = ROSTER[5];       // default PIKADON (crimson Ghost)
+// Team/jersey color arrays — hoisted here (near the roster defaults) so they exist
+// before loadGLBPlayer() runs; they used to be declared far below, causing a
+// "TEAM_COLORS before initialization" temporal-dead-zone crash.
+const JERSEY_NUMBERS = [1, 7];
+const JERSEY_COLORS  = [selectedAgent.hex, ghostAgent.hex];
+const TEAM_COLORS    = [selectedAgent.color, ghostAgent.color];
 
 // ─────────────────────────────────────────────────────────────────
 // SCENE SETUP
@@ -1037,11 +1043,8 @@ const _jwLq = new THREE.Quaternion();
 const _jhP  = new THREE.Vector3();
 const _jhQ  = new THREE.Quaternion();
 
-const JERSEY_NUMBERS = [1, 7];
-// Jersey colors follow the selected roster agents (fallback to team defaults).
-const JERSEY_COLORS  = [selectedAgent.hex, ghostAgent.hex];
-// Team tints (used by GLB emissive + jersey) — mutable so selection can update them.
-const TEAM_COLORS    = [selectedAgent.color, ghostAgent.color];
+// JERSEY_NUMBERS / JERSEY_COLORS / TEAM_COLORS are declared up near the roster
+// defaults (hoisted to fix a temporal-dead-zone crash).
 
 function _makeNumTex(colorHex, number) {
   const cv = document.createElement('canvas');
