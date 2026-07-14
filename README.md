@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-00ff88.svg)](LICENSE)
 [![Node ≥18](https://img.shields.io/badge/Node-%3E%3D18-339933?logo=node.js)](package.json)
 [![No build step](https://img.shields.io/badge/build-none%20required-00f0ff)](server.js)
-[![Part of SHADDAI](https://img.shields.io/badge/SHADDAI-ecosystem-c084fc)](https://github.com/IzzoIzzoIzzo)
+[![Part of SHADDAI](https://img.shields.io/badge/SHADDAI-ecosystem-c084fc)](https://shaddai-g81x.onrender.com)
 
 ---
 
@@ -237,5 +237,5 @@ MIT — see [LICENSE](LICENSE) if present.
 
 ---
 
-Part of the **[SHADDAI](https://github.com/IzzoIzzoIzzo)** ecosystem.
+Part of the **[SHADDAI](https://shaddai-g81x.onrender.com)** ecosystem.
 Follow [@ShaddaiAI](https://x.com/SHADDAIAI) on X · join [@ShaddaiCircle](https://t.me/ShaddaiCircle) on Telegram.
