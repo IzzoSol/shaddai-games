@@ -1,0 +1,15 @@
+{
+ "id": "turtle",
+ "name": "TURTLE",
+ "src": "turtle-council",
+ "cell": 256,
+ "frames": 8,
+ "clips": {
+  "walk": "walk.webp",
+  "run": "run.webp",
+  "action": "action.webp"
+ },
+ "standH": 215,
+ "footY": 235,
+ "centerX": 128
+}

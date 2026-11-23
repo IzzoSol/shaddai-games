@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ORBITBALL — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#04060f;--panel:#070c18;--border:rgba(0,255,136,.22);--cyan:#35e0ff;--gold:#ffd75e;--green:#00ff88;--red:#ff3860;--violet:#b78cff;--text:#c6d6ea;--dim:#5d6b82}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.09),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(5,8,18,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:820px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:140px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(2,6,15,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#070c18;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .abtns button{width:52px;height:52px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>ORBIT<span>BALL</span></h1><span class="tag">Pinball · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="760" height="920"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The ball hangs in the dark.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c"></button><button data-k="nudge">▲</button><button class="c"></button>
+        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
+        <button class="c"></button><button data-k="down2">▼</button><button class="c"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — toggle ball-cam">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — plunger / nudge">B</button>
+        <button id="btnA" title="A — right flipper">A</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">Station Nine is lit. Launch when ready.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ Play<small>1P — 3 balls, chase the high score</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>Bot pilot plays the table</small></button>
+    <button class="mbtn" id="btnDuel">⚔ 2P duel<small>Alternate balls, high score wins</small></button>
+    <button class="mbtn" id="btnFP">🎥 Ball-cam<small>V — ride the ball</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+  </div>
+  <div class="help">
+    <b>ORBITBALL</b> — Pilot <b>VEXA</b> rides the rim of Station Nine, a pinball table hung in orbit above a green world. Launch the ball up the plunger lane, keep it alive with the flippers, and light up the table: pop bumpers <b>+100</b>, slingshots <b>+50</b>, the spinner <b>+100 a spin</b>, rollover lanes spell <b>O-R-B-I-T</b> for <b>+250 a letter</b> — finish the word and the table opens <b>MULTIBALL</b>. Drop all four targets for <b>+5,000</b>, ride the orbit lane for <b>+1,000</b>. Three balls a game; a <b>ball save</b> guards you for six seconds after every launch. Nudge the table, but nudge too hard and it <b>TILTS</b>.<br/>
+    <b>Controls:</b> <span class="k">Z / ←</span> left flipper · <span class="k">/ or →</span> right flipper · hold <span class="k">SPACE</span> to charge the plunger, release to launch · <span class="k">X</span> nudge · <span class="k">V</span> ball-cam · <span class="k">P</span> pause · <span class="k">M</span> mute.<br/>
+    <b>WATCH</b> is a council bot pilot on the Fallible Engine — a different agent rides the flippers each ball, judging the ball's fall by personality, and learning from every drain. They misjudge on purpose — never frame-perfect. If the engine fails to load, the old ROOK / SPARK / DRIFT stand-ins play instead.<br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: <span class="k">◀</span> left flipper, <span class="k">A</span> right flipper, hold <span class="k">B</span> to charge the plunger, <span class="k">▲</span> nudge, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles ball-cam.<br/>
+    <b>Clean-room:</b> pinball formula, our own code, table, pilot and art — no copied assets, names or code. Space Cadet Pinball's MIT decompilation is a design reference only; nothing from it was run, copied or moved into this file.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   ORBITBALL — original pinball for the Shaddai Arcade.
+   Clean-room: the pinball FORMULA (gravity ball, flippers, bumpers, rollovers,
+   drop targets, multiball, tilt) re-implemented from documented behaviour in
+   our own code. All names, table layout, pilot, art and tuning are original.
+   No reference code or assets were copied, run or moved into this file.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var W=760, H=920;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function rnd(a,b){ return a+Math.random()*(b-a); }
+
+/* ---- audio: tiny blips, guarded so headless runs never break ---- */
+var AC=null, muted=false;
+try{ if(typeof localStorage!=='undefined'){ muted=localStorage.getItem('orbitball.mute')==='1'; } }catch(e){}
+function beep(f,d,type,g){
+  if(muted) return;
+  try{
+    if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return; AC=new C(); }
+    var o=AC.createOscillator(), gn=AC.createGain();
+    o.type=type||'square'; o.frequency.value=f;
+    gn.gain.setValueAtTime(g||0.05, AC.currentTime);
+    gn.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+(d||0.08));
+    o.connect(gn); gn.connect(AC.destination); o.start(); o.stop(AC.currentTime+(d||0.08));
+  }catch(e){}
+}
+
+/* ---- table geometry: wall segments, all original layout ---- */
+function seg(x1,y1,x2,y2,rest){
+  var s={x1:x1,y1:y1,x2:x2,y2:y2,rest:0.35};
+  if(typeof rest==='number') s.rest=rest;
+  if(rest&&typeof rest==='object'){ if(rest.laneExit) s.laneExit=true; }
+  return s;
+}
+var WALLS=[];
+(function buildWalls(){
+  WALLS.push(seg(30,880,30,240));                 // left outer wall
+  WALLS.push(seg(730,880,730,240));               // right outer wall
+  // top arch: ellipse centre (380,240) rx 350 ry 180
+  var prev=null;
+  for(var i=0;i<=12;i++){
+    var a=Math.PI+(Math.PI*i/12);
+    var x=380+350*Math.cos(a), y=240+180*Math.sin(a);
+    if(prev) WALLS.push(seg(prev.x,prev.y,x,y,0.3));
+    prev={x:x,y:y};
+  }
+  WALLS.push(seg(690,880,690,210));               // plunger lane inner guide
+  WALLS.push(seg(690,210,668,158,{laneExit:true})); // lane exit curve: one-way, ball rises over it
+  // bottom funnel to the drain (gap x 300..460 at y ~900)
+  WALLS.push(seg(30,880,300,902,0.2));
+  WALLS.push(seg(730,880,460,902,0.2));
+  // outlane / inlane guides
+  WALLS.push(seg(96,700,205,822,0.3));            // left guide
+  WALLS.push(seg(664,700,555,822,0.3));           // right guide
+  // rollover lane dividers
+  [180,260,340,420,500,580].forEach(function(x){ WALLS.push(seg(x,118,x,212,0.2)); });
+})();
+
+var BUMPERS=[
+  {x:280,y:300,r:26,flash:0,col:'#ff3860'},
+  {x:380,y:252,r:26,flash:0,col:'#ffd75e'},
+  {x:480,y:300,r:26,flash:0,col:'#35e0ff'}
+];
+var ROLLOVERS=[
+  {x:220,y:170,r:13,letter:'O',lit:false},
+  {x:300,y:170,r:13,letter:'R',lit:false},
+  {x:380,y:170,r:13,letter:'B',lit:false},
+  {x:460,y:170,r:13,letter:'I',lit:false},
+  {x:540,y:170,r:13,letter:'T',lit:false}
+];
+var TARGETS=[
+  {x:66,y:420,w:26,h:34,up:true},
+  {x:66,y:466,w:26,h:34,up:true},
+  {x:66,y:512,w:26,h:34,up:true},
+  {x:66,y:558,w:26,h:34,up:true}
+];
+var SPINNER={x:600,y:400,y2:460,angle:0,spin:0};
+var SLINGS=[
+  {pts:[[215,745],[295,745],[255,795]],flash:0},   // left
+  {pts:[[465,745],[545,745],[505,795]],flash:0}    // right
+];
+var ORBIT_SENSOR={x:630,y:165,r:20};
+var FLIP_L={px:300,py:838,len:72,rest:-0.45,fired:-1.10,ang:-0.45,active:false,firing:false};
+var FLIP_R={px:460,py:838,len:72,rest:Math.PI+0.45,fired:Math.PI+1.10,ang:Math.PI+0.45,active:false,firing:false};
+
+var state;
+function freshState(){
+  return {
+    phase:'title', mode:'solo', paused:false, fp:false, frame:0,
+    score:0, hi:0, balls:3, ballInPlay:false, multiball:false,
+    ball:{x:710,y:840,vx:0,vy:0,r:9,inLane:true,saveUntil:0,stuck:0},
+    plunger:0, charging:false,
+    letters:0, targetsUp:4, spinnerHits:0, orbitHits:0,
+    nudges:0, nudgeWindow:0, tiltUntil:0,
+    ballsLive:0,               // extra balls on the table (multiball)
+    p1score:0, p2score:0, p2turn:false,
+    watchBot:'ZEROX', watchFlips:0, watchDrains:0,
+    banner:'', bannerUntil:0, over:false, winner:null,
+    particles:[], trail:[]
+  };
+}
+state=freshState();
+try{ var s=localStorage.getItem('orbitball.hi'); if(s) state.hi=parseInt(s,10)||0; }catch(e){}
+var feAgentId=null, feAgent=null, feTraces=[];
+var feRecorded=false; // E46: exactly-once guard for the watch-bout record (marked BEFORE the no-engine early return)
+var WATCH_AGENTS=['ZEROX','TURTLE','NEXUS'];
+var watchIdx=0;
+// E46: persisted rotation cursor — seed from localStorage, advance + save only when the engine is present.
+try{ var _wi=localStorage.getItem('orbitball.watchIdx'); if(_wi!==null){ var _n=parseInt(_wi,10); if(isFinite(_n)&&_n>=0) watchIdx=_n; } }catch(e){}
+function saveWatchIdx(){ try{ localStorage.setItem('orbitball.watchIdx',String(watchIdx)); }catch(e){} }
+
+function setMsg(t){ if(msgEl) msgEl.textContent=t; }
+function setBanner(t,frames){ state.banner=t; state.bannerUntil=state.frame+(frames||150); }
+function addScore(n,why){
+  state.score+=n;
+  if(state.score>state.hi){
+    state.hi=state.score;
+    try{ localStorage.setItem('orbitball.hi',String(state.hi)); }catch(e){}
+  }
+  if(why) setMsg(why+'  +'+n);
+}
+function spawnParticles(x,y,col,n){
+  for(var i=0;i<(n||8);i++) state.particles.push({x:x,y:y,vx:rnd(-2.4,2.4),vy:rnd(-3,0.5),life:rnd(20,50),max:50,col:col});
+}
+function burst(x,y,col,n){ spawnParticles(x,y,col,n); beep(660,0.05,'square',0.03); }
+
+/* ---- physics: circle vs segment, circle vs circle ---- */
+function collideSegment(b,s){
+  var dx=s.x2-s.x1, dy=s.y2-s.y1;
+  var len2=dx*dx+dy*dy;
+  var t=len2?((b.x-s.x1)*dx+(b.y-s.y1)*dy)/len2:0;
+  t=clamp(t,0,1);
+  var cx=s.x1+dx*t, cy=s.y1+dy*t;
+  var nx=b.x-cx, ny=b.y-cy;
+  var d=Math.sqrt(nx*nx+ny*ny)||0.0001;
+  if(d>=b.r) return false;
+  nx/=d; ny/=d;
+  b.x=cx+nx*b.r; b.y=cy+ny*b.r;
+  var vn=b.vx*nx+b.vy*ny;
+  if(vn<0){ b.vx-= (1+s.rest)*vn*nx; b.vy-= (1+s.rest)*vn*ny; }
+  return true;
+}
+function flipperTip(f){ return {x:f.px+Math.cos(f.ang)*f.len, y:f.py+Math.sin(f.ang)*f.len}; }
+function collideFlipper(b,f,side){
+  var tip=flipperTip(f);
+  var s={x1:f.px,y1:f.py,x2:tip.x,y2:tip.y,rest:0.2};
+  var hit=collideSegment(b,s);
+  if(!hit) return false;
+  if(f.firing){
+    // the flipper is sweeping up: hurl the ball off the face
+    var dist=Math.hypot(b.x-f.px,b.y-f.py)/f.len;
+    var power=8+4*dist;
+    b.vy=-power;
+    b.vx+=(side==='L'?-1.6:1.6)+(b.x-f.px)*0.02;
+    b.vx=clamp(b.vx,-11,11);
+    beep(520,0.06,'square',0.05);
+  }
+  return true;
+}
+function collideCircle(b,c,rest,boost){
+  var dx=b.x-c.x, dy=b.y-c.y;
+  var d=Math.sqrt(dx*dx+dy*dy)||0.0001;
+  var min=b.r+c.r;
+  if(d>=min) return false;
+  dx/=d; dy/=d;
+  b.x=c.x+dx*min; b.y=c.y+dy*min;
+  var vn=b.vx*dx+b.vy*dy;
+  if(vn<0){
+    b.vx-= (1+rest)*vn*dx; b.vy-= (1+rest)*vn*dy;
+  }
+  if(boost){ var sp=Math.hypot(b.vx,b.vy)||1; var k=boost/sp; b.vx*=k; b.vy*=k; }
+  return true;
+}
+
+/* ---- game flow ---- */
+function startGame(mode){
+  var keepHi=state.hi;
+  state=freshState();
+  state.hi=keepHi;
+  state.mode=mode||'solo';
+  state.phase='play';
+  state.p1score=0; state.p2score=0; state.p2turn=false;
+  // reset the module-level table furniture (targets/rollovers live outside state)
+  TARGETS.forEach(function(t){ t.up=true; });
+  ROLLOVERS.forEach(function(r){ r.lit=false; });
+  BUMPERS.forEach(function(bp){ bp.flash=0; });
+  SLINGS.forEach(function(s){ s.flash=0; });
+  SPINNER.angle=0; SPINNER.spin=0;
+  FLIP_L.ang=FLIP_L.rest; FLIP_L.active=false; FLIP_L.firing=false;
+  FLIP_R.ang=FLIP_R.rest; FLIP_R.active=false; FLIP_R.firing=false;
+  feTraces=[]; feRecorded=false; // E46: fresh slate per game (mirrors gemshaft freshState)
+  if(mode==='watch'){
+    state.watchBot=WATCH_AGENTS[watchIdx%WATCH_AGENTS.length];
+    var _fe=(typeof window!=='undefined')?window.FallibleEngine:null;
+    if(_fe){ watchIdx++; saveWatchIdx(); }
+    feAgent=null; feAgentId=state.watchBot;
+  }
+  serveBall(true);
+  setBanner(mode==='watch'?('WATCH — '+state.watchBot+' RIDES THE TABLE'):'BALL 1 — LAUNCH!');
+  setMsg(mode==='watch'?('Watching '+state.watchBot+' play the table.'):(
+    mode==='duel'?'2P duel — Player 1 launches first. Highest score wins.':'Hold SPACE to charge the plunger, release to launch.'));
+  syncButtons();
+}
+function serveBall(first){
+  state.ball={x:710,y:840,vx:0,vy:0,r:9,inLane:true,saveUntil:0,stuck:0};
+  state.plunger=0; state.charging=false;
+  state.ballInPlay=false;
+  if(!first) setBanner('BALL '+(4-state.balls)+' — LAUNCH!');
+}
+function launchBall(){
+  var b=state.ball;
+  if(!b.inLane) return;
+  var power=state.plunger;
+  b.vy=-(13+power*11);
+  b.vx=0;
+  b.inLane=false;
+  state.ballInPlay=true;
+  state.ball.saveUntil=state.frame+360;   // 6s ball save
+  state.plunger=0; state.charging=false;
+  beep(880,0.12,'sawtooth',0.05);
+}
+function drainBall(){
+  var b=state.ball;
+  var saved = state.frame < b.saveUntil;
+  if(saved){
+    setBanner('BALL SAVED!');
+    setMsg('Ball save — back up the lane.');
+    beep(990,0.15,'sine',0.06);
+    serveBall(false);   // drain does not consume a ball while the save is live
+    return;
+  }
+  state.balls--;
+  state.ballsLive=Math.max(0,state.ballsLive-1);
+  if(state.mode==='watch') state.watchDrains++;
+  beep(180,0.25,'sawtooth',0.05);
+  if(state.ballsLive>0){
+    // multiball: another ball is still live on the table
+    serveBall(false);
+    return;
+  }
+  if(state.balls>0){
+    serveBall(false);
+  } else if(state.mode==='duel' && !state.p2turn){
+    switchTurn();   // P1's balls are done — hand the table to P2
+  } else {
+    endGame();
+  }
+}
+/* ---- E46: record the WATCH bout on the Fallible Engine (solo vs field) ---- */
+// A watch bout ends when the balls run out — the game has NO win signal in
+// watch mode, so a watch bout records 'loss' (same as gemshaft). No win
+// condition is invented. Guard marked BEFORE the no-engine early return.
+function recordWatchResult(){
+  if(state.mode!=='watch' || feRecorded) return;
+  feRecorded=true;
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  if(!FE || !feAgent) return;
+  try{ FE.recordResult(feAgent,'orbitball',null,'loss',feTraces); }catch(e){}
+}
+function endGame(){
+  state.phase='over'; state.over=true; state.ballInPlay=false;
+  var winner=null;
+  if(state.mode==='duel'){
+    state.p2score=state.score;
+    winner = state.p1score>=state.p2score ? 'PLAYER 1' : 'PLAYER 2';
+    state.winner=winner;
+    setBanner(winner+' WINS — '+Math.max(state.p1score,state.p2score));
+    setMsg('Duel over — P1 '+state.p1score+' · P2 '+state.p2score+'. Press R to play again.');
+  } else if(state.mode==='watch'){
+    recordWatchResult();
+    setBanner('WATCH OVER — '+state.watchBot+' SCORED '+state.score);
+    setMsg(state.watchBot+' finished with '+state.score+' (hi '+state.hi+'). Press R to watch again.');
+  } else {
+    setBanner('GAME OVER — '+state.score);
+    setMsg('Game over — '+state.score+' points (hi '+state.hi+'). Press R to play again.');
+  }
+  try{ localStorage.setItem('orbitball.hi',String(state.hi)); }catch(e){}
+}
+function completeOrbit(){
+  ROLLOVERS.forEach(function(r){ r.lit=false; });
+  state.letters=0;
+  state.multiball=true;
+  state.ballsLive=2;
+  addScore(2000,'ORBIT COMPLETE — MULTIBALL!');
+  setBanner('MULTIBALL — TWO BALLS LIVE!');
+  beep(1200,0.2,'sawtooth',0.06);
+  // the second ball enters from the plunger lane immediately
+  state.ball2={x:710,y:840,vx:0,vy:-(13+0.5*11),inLane:false,saveUntil:state.frame+360,r:9,stuck:0};
+}
+function switchTurn(){
+  // 2P duel: after a player's 3 balls, hand the table to the other player
+  if(state.mode!=='duel') return;
+  if(!state.p2turn){
+    state.p1score=state.score;
+    state.p2turn=true;
+    state.score=0; state.balls=3;
+    setBanner('PLAYER 2 — YOUR TABLE');
+    setMsg('Player 2 — beat '+state.p1score+'.');
+    serveBall(true);
+  }
+}
+
+/* ---- flippers / nudge ---- */
+function setFlipper(side,on){
+  var f=side==='L'?FLIP_L:FLIP_R;
+  f.active=on;
+  if(on && !f.firing){ f.firing=true; }
+}
+function updateFlippers(){
+  [FLIP_L,FLIP_R].forEach(function(f){
+    var target=f.active?f.fired:f.rest;
+    var speed=f.active?0.16:0.09;
+    var d=target-f.ang;
+    if(Math.abs(d)<=speed){ f.ang=target; f.firing=false; }
+    else { f.ang+=Math.sign(d)*speed; f.firing=f.active; }
+  });
+}
+function nudge(dir){
+  if(state.phase!=='play'||state.paused) return;
+  if(state.frame<state.tiltUntil) return;
+  var b=state.ball;
+  b.vx+=dir*3.2;
+  state.nudges++;
+  state.nudgeWindow=state.frame;
+  beep(300,0.05,'square',0.04);
+  if(state.nudges>=3){
+    state.tiltUntil=state.frame+180;
+    state.nudges=0;
+    FLIP_L.active=false; FLIP_R.active=false;
+    setBanner('TILT! FLIPPERS DEAD');
+    setMsg('Tilt — the table is angry. Flippers back in 3 seconds.');
+    beep(120,0.4,'sawtooth',0.07);
+  }
+}
+
+/* ---- WATCH bot: Fallible Engine decides, imperfect on purpose ---- */
+function botThink(){
+  if(state.mode!=='watch'||state.phase!=='play'||state.paused) return;
+  var b=state.ball;
+  // the bot launches the plunger on its own
+  if(b.inLane && !state.charging){
+    state.charging=true; state.plunger=0.3+Math.random()*0.6;
+    setTimeout(function(){ if(state.ball.inLane) launchBall(); }, 400+Math.random()*500);
+    return;
+  }
+  // the bot only acts when the ball is falling toward the flippers
+  if(b.vy<=0||b.y<560) return;
+  if(state.frame%6!==0) return;
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  var nearL=Math.abs(b.x-FLIP_L.px)<170, nearR=Math.abs(b.x-FLIP_R.px)<170;
+  var fallingFast=b.vy>5;
+  var options=[
+    {key:'left', score:(nearL?3:0.4)+(fallingFast?1:0), tag:'flip'},
+    {key:'right',score:(nearR?3:0.4)+(fallingFast?1:0), tag:'flip'},
+    {key:'both', score:(nearL&&nearR?3.4:0.6), tag:'flip'},
+    {key:'hold', score:(!nearL&&!nearR?2.4:0.3), tag:'wait'},
+    {key:'nudge',score:(b.x<120||b.x>640?2.2:0.2), tag:'nudge'}
+  ];
+  var choice=null;
+  if(FE){
+    try{
+      if(!feAgent) feAgent=FE.loadAgent(state.watchBot);
+      var res=FE.decide(feAgent,'orbitball',options,{timePressure:0});
+      choice={id:res.pick.key};
+      feTraces.push(res.trace);
+      if(!feAgentId) feAgentId=state.watchBot;
+    }catch(e){ choice=null; }
+  }
+  if(!choice){
+    // stand-in bots: ROOK / SPARK / DRIFT personalities by watchBot slot
+    var r=Math.random();
+    choice={id:(r<0.4?(nearL?'left':'right'):(r<0.7?'both':(r<0.85?'hold':'nudge')))};
+    feTraces.push({agent:state.watchBot,choice:choice.id,frame:state.frame,standin:true});
+  }
+  // imperfect reaction: the chosen flip lands a few frames late
+  var delay = state.watchBot==='ZEROX'?2:(state.watchBot==='TURTLE'?11:6);
+  var chosen=choice.id;
+  setTimeout(function(){
+    if(state.phase!=='play'||state.paused) return;
+    if(chosen==='left'){ setFlipper('L',true); setTimeout(function(){ setFlipper('L',false); },140); }
+    else if(chosen==='right'){ setFlipper('R',true); setTimeout(function(){ setFlipper('R',false); },140); }
+    else if(chosen==='both'){ setFlipper('L',true); setFlipper('R',true); setTimeout(function(){ setFlipper('L',false); setFlipper('R',false); },140); }
+    else if(chosen==='nudge'){ nudge(b.x<380?-1:1); }
+    state.watchFlips++;
+  }, delay*16);
+}
+
+/* ---- per-frame update ---- */
+function updateBall(b, isSecond){
+  if(!b) return 'gone';
+  if(b.inLane){
+    // plunger lane: ball rests until launched
+    b.x=clamp(b.x,692,728);
+    if(state.charging){ state.plunger=Math.min(1,state.plunger+0.02); }
+    return 'lane';
+  }
+  b.vy=Math.min(b.vy+0.28,16);           // gravity
+  b.vx*=0.999;
+  b.x+=b.vx; b.y+=b.vy;
+  // a rising ball at the top of the plunger lane steers left over the guide
+  if(b.x>660 && b.y<210 && b.vy<0) b.vx-=0.3;
+  // walls (the lane-exit curve is one-way: a rising ball passes over it)
+  for(var i=0;i<WALLS.length;i++){
+    if(WALLS[i].laneExit && b.vy<0) continue;
+    collideSegment(b,WALLS[i]);
+  }
+  // flippers
+  collideFlipper(b,FLIP_L,'L');
+  collideFlipper(b,FLIP_R,'R');
+  // pop bumpers
+  BUMPERS.forEach(function(bp){
+    if(collideCircle(b,bp,0.6,9.5)){
+      bp.flash=10;
+      addScore(100,'Bumper');
+      burst(bp.x,bp.y,bp.col,6);
+      beep(440,0.06,'square',0.05);
+    }
+  });
+  // slingshots: triangle kick
+  SLINGS.forEach(function(s){
+    var cx=(s.pts[0][0]+s.pts[1][0]+s.pts[2][0])/3;
+    var cy=(s.pts[0][1]+s.pts[1][1]+s.pts[2][1])/3;
+    var dx=b.x-cx, dy=b.y-cy, d=Math.hypot(dx,dy);
+    if(d<64 && b.y>720 && b.y<810){
+      var nx=dx/(d||1), ny=dy/(d||1);
+      b.x+=nx*4; b.y+=ny*4;
+      b.vx+=nx*3; b.vy-=3.2;
+      s.flash=8;
+      addScore(50,'Sling');
+      beep(330,0.05,'square',0.04);
+    }
+  });
+  // rollover lanes
+  ROLLOVERS.forEach(function(r){
+    if(!r.lit){
+      var dx=b.x-r.x, dy=b.y-r.y;
+      if(dx*dx+dy*dy < (r.r+b.r)*(r.r+b.r)){
+        r.lit=true; state.letters++;
+        addScore(250,'Lane '+r.letter);
+        burst(r.x,r.y,'#00ff88',6);
+        beep(760,0.07,'sine',0.05);
+        if(state.letters>=5) completeOrbit();
+      }
+    }
+  });
+  // drop targets
+  TARGETS.forEach(function(t){
+    if(!t.up) return;
+    if(b.x+b.r>t.x && b.x-b.r<t.x+t.w && b.y+b.r>t.y && b.y-b.r<t.y+t.h){
+      t.up=false; state.targetsUp--;
+      addScore(500,'Drop target');
+      burst(t.x+13,t.y+17,'#ffd75e',8);
+      beep(580,0.08,'square',0.05);
+      b.vy=-Math.abs(b.vy)*0.5;
+      if(state.targetsUp<=0){
+        addScore(5000,'ALL TARGETS DOWN!');
+        setBanner('TARGET BANK CLEARED +5,000');
+        TARGETS.forEach(function(t2){ t2.up=true; });
+        state.targetsUp=4;
+        // push the ball clear of the bank so it cannot re-break a fresh target
+        b.x=t.x+t.w+b.r+4; b.vx=Math.abs(b.vx)+3; b.vy=-3;
+      }
+    }
+  });
+  // spinner
+  (function(){
+    var dx=b.x-SPINNER.x;
+    if(Math.abs(dx)<b.r+8 && b.y>SPINNER.y-6 && b.y<SPINNER.y2+6){
+      SPINNER.spin=0.5;
+      state.spinnerHits++;
+      addScore(100,'Spinner');
+      b.vx+=(dx>0?1.2:-1.2);
+      beep(700+state.spinnerHits*10,0.04,'sine',0.03);
+    }
+  })();
+  // orbit sensor
+  (function(){
+    var dx=b.x-ORBIT_SENSOR.x, dy=b.y-ORBIT_SENSOR.y;
+    if(dx*dx+dy*dy < (ORBIT_SENSOR.r+b.r)*(ORBIT_SENSOR.r+b.r) && b.vx<0){
+      state.orbitHits++;
+      addScore(1000,'Orbit lane');
+      burst(ORBIT_SENSOR.x,ORBIT_SENSOR.y,'#35e0ff',10);
+      beep(900,0.1,'sine',0.05);
+      b.x=ORBIT_SENSOR.x-30; // push clear so it does not retrigger
+    }
+  })();
+  // anti-stuck: a ball that stops dead gets a nudge
+  var sp=Math.hypot(b.vx,b.vy);
+  if(sp<0.25 && b.y<800 && !b.inLane){ b.stuck++; if(b.stuck>120){ b.vx=rnd(-1,1); b.vy=-2; b.stuck=0; } }
+  else b.stuck=0;
+  // drain
+  if(b.y>H-14){
+    if(isSecond){ return 'drained2'; }
+    return 'drained';
+  }
+  return 'live';
+}
+function update(){
+  state.frame++;
+  if(state.paused||state.phase==='title') return;
+  if(state.phase==='over') return;
+  if(state.frame>state.bannerUntil) state.banner='';
+  if(state.frame-state.nudgeWindow>120) state.nudges=0;
+  BUMPERS.forEach(function(bp){ if(bp.flash>0) bp.flash--; });
+  SLINGS.forEach(function(s){ if(s.flash>0) s.flash--; });
+  if(SPINNER.spin>0){ SPINNER.angle+=SPINNER.spin; SPINNER.spin*=0.94; if(SPINNER.spin<0.02) SPINNER.spin=0; }
+  state.particles.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.life--; });
+  state.particles=state.particles.filter(function(p){ return p.life>0; });
+  updateFlippers();
+  var b=state.ball;
+  if(state.ballInPlay||!b.inLane){
+    var r=updateBall(b,false);
+    if(r==='drained'){ drainBall(); }
+  } else if(b.inLane && state.charging){
+    state.plunger=Math.min(1,state.plunger+0.02);
+  }
+  if(state.ball2){
+    var r2=updateBall(state.ball2,true);
+    if(r2==='drained2'){
+      state.ball2=null;
+      state.ballsLive=Math.max(0,state.ballsLive-1);
+      if(state.ballsLive<=0 && state.balls<=0) endGame();
+    }
+  }
+  if(state.trail.length>40) state.trail.shift();
+  if(state.ballInPlay) state.trail.push({x:b.x,y:b.y});
+  if(state.mode==='watch') botThink();
+  // 2P duel: when a player's balls run out, hand over (or end)
+  if(state.mode==='duel' && state.phase==='play' && state.balls<=0 && !state.ballInPlay){
+    if(!state.p2turn) switchTurn();
+    else endGame();
+  }
+}
+
+/* ---- render: layered table, backglass pilot, glow, particles ---- */
+function drawBackground(){
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#020617'); g.addColorStop(0.5,'#04101f'); g.addColorStop(1,'#010204');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // far layer: planet + stars
+  ctx.save();
+  ctx.fillStyle='rgba(0,255,136,0.10)';
+  ctx.beginPath(); ctx.arc(150,90,120,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(0,255,136,0.16)';
+  ctx.beginPath(); ctx.arc(150,90,86,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(0,255,136,0.35)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.ellipse(150,90,150,26,-0.35,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#cfe8ff';
+  for(var i=0;i<70;i++){
+    var sx=(i*97)%W, sy=(i*53)%300;
+    ctx.globalAlpha=0.25+((i*7)%10)/22;
+    ctx.fillRect(sx,sy,2,2);
+  }
+  ctx.restore();
+  // mid layer: neon orbit rings
+  ctx.save();
+  ctx.globalAlpha=0.14; ctx.strokeStyle='#00ff88'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(380,470,320,200,0,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(380,470,250,150,0,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+/* ---- CHAR-UPGRADE 2026-11-22: sprite-stack helpers (swarmstand standard) ----
+   obShade scales a #rrggbb colour; a character silhouette is repainted
+   several times stepping DOWN in dark shades (extruded slices), then once
+   on top with a full 3-tone palette {m,d,l,glow,rim,det} + detail pass. */
+function obShade(hex,f){
+  if(!hex||hex[0]!=='#') return hex;
+  var n=parseInt(hex.slice(1),16);
+  var r=Math.max(0,Math.min(255,Math.round(((n>>16)&255)*f)));
+  var g=Math.max(0,Math.min(255,Math.round(((n>>8)&255)*f)));
+  var b=Math.max(0,Math.min(255,Math.round((n&255)*f)));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function obPoly(pts){ ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]); ctx.closePath(); }
+/* VEXA bust painter — local coords, origin at helm centre, +y down.
+   Sleek zero-g pilot: angular helm + crest fin + beacon antenna, armoured
+   pauldrons (port side heavier, gold trim), chest reactor, chest name tag. */
+function vexaShape(P){
+  // pauldrons (behind torso): port heavier than starboard — her silhouette
+  ctx.fillStyle=P.d; obPoly([[-58,18],[-44,10],[-30,16],[-32,38],[-52,40],[-59,30]]); ctx.fill();
+  ctx.fillStyle=P.m; obPoly([[58,20],[45,13],[31,18],[33,36],[50,37],[58,29]]); ctx.fill();
+  if(P.det){
+    ctx.strokeStyle=P.accent; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(-56,22); ctx.lineTo(-45,14); ctx.stroke(); // gold trim, port pauldron only
+    ctx.strokeStyle=P.rim; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(56,23); ctx.lineTo(47,16); ctx.stroke();
+  }
+  // torso / chest plate: lit top, dark core at the base
+  ctx.fillStyle=P.m; obPoly([[-30,20],[30,20],[40,48],[-40,48]]); ctx.fill();
+  ctx.fillStyle=P.d; obPoly([[-40,48],[40,48],[34,34],[-34,34]]); ctx.fill();
+  ctx.fillStyle=P.l; obPoly([[-30,20],[30,20],[33,27],[-33,27]]); ctx.fill();
+  // neck ring + collar seam
+  ctx.fillStyle=P.d; ctx.fillRect(-11,14,22,9);
+  if(P.det){
+    ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-33,30); ctx.lineTo(33,30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,27); ctx.lineTo(0,32); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.beginPath(); ctx.arc(-24,42,1.6,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(24,42,1.6,0,7); ctx.fill(); // rivets
+  }
+  // chest reactor: emerald diamond core
+  if(P.det){
+    ctx.save(); ctx.shadowColor=P.glow; ctx.shadowBlur=9;
+    ctx.fillStyle=P.glow; obPoly([[0,20],[5,25],[0,30],[-5,25]]); ctx.fill(); ctx.restore();
+    ctx.fillStyle='#eafff3'; obPoly([[0,22.5],[2.4,25],[0,27.5],[-2.4,25]]); ctx.fill();
+  } else {
+    ctx.fillStyle=P.d; obPoly([[0,20],[5,25],[0,30],[-5,25]]); ctx.fill();
+  }
+  // helm: angular dome with tapered jaw — no round blob head
+  ctx.fillStyle=P.m; obPoly([[-24,16],[-27,-5],[-19,-23],[0,-30],[19,-23],[27,-5],[24,16],[12,21],[-12,21]]); ctx.fill();
+  ctx.fillStyle=P.d; obPoly([[24,16],[12,21],[-12,21],[-24,16],[-20,6],[20,6]]); ctx.fill(); // jaw shade
+  ctx.fillStyle=P.l; obPoly([[-19,-23],[0,-30],[19,-23],[13,-16],[-13,-16]]); ctx.fill(); // lit crown
+  // crest fin, swept back
+  ctx.fillStyle=P.d; obPoly([[-3,-29],[9,-41],[4,-28]]); ctx.fill();
+  if(P.det){
+    // dramatic rim light in her emerald, starboard edge of helm + crown
+    ctx.strokeStyle=P.rim; ctx.lineWidth=2.4;
+    ctx.beginPath(); ctx.moveTo(19,-23); ctx.lineTo(27,-5); ctx.lineTo(24,14); ctx.stroke();
+    ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(-13,-16); ctx.lineTo(13,-16); ctx.stroke();
+    // visor: angled slit, glowing, with a scan highlight that reads at mobile size
+    ctx.save(); ctx.shadowColor=P.glow; ctx.shadowBlur=11;
+    ctx.fillStyle=P.glow; obPoly([[-17,-8],[17,-8],[13,1],[-13,1]]); ctx.fill(); ctx.restore();
+    ctx.fillStyle='rgba(255,255,255,.9)'; ctx.fillRect(-13,-7,9,2.6);
+    ctx.fillStyle='rgba(4,18,10,.85)'; ctx.fillRect(6,-6,3,5); // visor pupil notch
+    // beacon antenna (starboard) + gold beacon
+    ctx.strokeStyle=P.accent; ctx.lineWidth=2.4;
+    ctx.beginPath(); ctx.moveTo(21,-20); ctx.lineTo(31,-36); ctx.stroke();
+    ctx.save(); ctx.shadowColor=P.accent; ctx.shadowBlur=8;
+    ctx.fillStyle=P.accent; ctx.beginPath(); ctx.arc(32,-38,3.4,0,7); ctx.fill(); ctx.restore();
+    // cheek vents
+    ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-19,8); ctx.lineTo(-14,8); ctx.moveTo(-19,12); ctx.lineTo(-15,12); ctx.stroke();
+  }
+  // chest name tag: a plate ON the armour
+  ctx.fillStyle='#0a111c'; ctx.fillRect(-37,33,74,14);
+  ctx.strokeStyle=P.det?P.accent:'rgba(0,0,0,.5)'; ctx.lineWidth=1.2; ctx.strokeRect(-37,33,74,14);
+  if(P.det){
+    ctx.fillStyle='#c6d6ea'; ctx.font='bold 10px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('V E X A',0,43.5);
+  }
+}
+function drawPilot(){
+  // VEXA, the rim-lit robot pilot, in the backglass strip — now a TRUE
+  // SPRITE STACK: bust silhouette extruded in dark steel slices, 3-tone
+  // top pass, emerald rim light, idle breathing + sway (frame-driven).
+  var x=380, y=62;
+  ctx.save();
+  // backglass strip: lit panel so the pilot reads at a glance
+  ctx.fillStyle='rgba(10,22,36,0.95)';
+  ctx.fillRect(240,14,280,104);
+  ctx.shadowColor='#00ff88'; ctx.shadowBlur=16;
+  ctx.strokeStyle='rgba(0,255,136,0.7)'; ctx.lineWidth=2;
+  ctx.strokeRect(240,14,280,104);
+  ctx.shadowBlur=0;
+  var fr=state.frame;
+  var bob=Math.sin(fr*0.045)*1.4;          // breathing
+  var sway=Math.sin(fr*0.03)*1.3;          // idle sway
+  // contact shadow: planted while the bust sways above it
+  ctx.fillStyle='rgba(0,0,0,0.5)';
+  ctx.beginPath(); ctx.ellipse(x,y+53,66,7,0,0,Math.PI*2); ctx.fill();
+  ctx.save();
+  ctx.translate(x+sway,y+bob);
+  var PAL={m:'#46586c',d:'#131c28',l:'#8fa9c2',glow:'#00ff88',rim:'#00ff88',accent:'#ffd75e',det:true};
+  for(var k=5;k>=1;k--){
+    var f=0.30+(5-k)*0.09;
+    ctx.save(); ctx.translate(0,k*1.7);
+    vexaShape({m:obShade(PAL.m,f),d:obShade(PAL.d,f),l:obShade(PAL.m,f),glow:obShade(PAL.m,f),rim:obShade(PAL.m,f),accent:obShade(PAL.accent,f),det:false});
+    ctx.restore();
+  }
+  vexaShape(PAL);
+  ctx.restore();
+  ctx.restore();
+}
+function drawTable(){
+  // table surface
+  ctx.save();
+  ctx.fillStyle='#0a0f1e';
+  ctx.beginPath();
+  ctx.moveTo(30,880); ctx.lineTo(30,240);
+  ctx.arc(380,240,350,Math.PI,0);
+  ctx.lineTo(730,880); ctx.lineTo(460,902); ctx.lineTo(300,902); ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='rgba(0,255,136,0.55)'; ctx.lineWidth=3; ctx.stroke();
+  // in-table decor: clipped starfield + orbit rings + centre glow (the
+  // background planet sits behind the table fill, so the table carries its own sky)
+  ctx.save();
+  ctx.clip();
+  var cg=ctx.createRadialGradient(380,480,40,380,480,420);
+  cg.addColorStop(0,'rgba(0,255,136,0.10)'); cg.addColorStop(1,'rgba(0,255,136,0)');
+  ctx.fillStyle=cg; ctx.fillRect(30,60,700,840);
+  ctx.fillStyle='#cfe8ff';
+  for(var si=0;si<46;si++){
+    var sx=40+((si*97)%680), sy=120+((si*53)%760);
+    ctx.globalAlpha=0.2+((si*7)%10)/25;
+    ctx.fillRect(sx,sy,2,2);
+  }
+  ctx.globalAlpha=1;
+  ctx.strokeStyle='rgba(0,255,136,0.30)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(380,470,320,200,0,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(380,470,250,150,0,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='rgba(255,215,94,0.18)';
+  ctx.beginPath(); ctx.ellipse(380,470,180,110,0,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+  // lane guides + floor
+  ctx.strokeStyle='rgba(255,215,94,0.35)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(690,880); ctx.lineTo(690,210); ctx.quadraticCurveTo(690,158,668,158); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(96,700); ctx.lineTo(205,822); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(664,700); ctx.lineTo(555,822); ctx.stroke();
+  // rollover lanes
+  ROLLOVERS.forEach(function(r){
+    ctx.fillStyle=r.lit?'#00ff88':'rgba(198,214,234,0.25)';
+    ctx.beginPath(); ctx.arc(r.x,r.y,r.r,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=r.lit?'#04120a':'#c6d6ea';
+    ctx.font='bold 12px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(r.letter,r.x,r.y+4);
+    if(r.lit){ ctx.strokeStyle='rgba(0,255,136,0.8)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(r.x,r.y,r.r+3,0,Math.PI*2); ctx.stroke(); }
+  });
+  // pop bumpers
+  BUMPERS.forEach(function(bp){
+    ctx.save();
+    if(bp.flash>0){ ctx.shadowColor=bp.col; ctx.shadowBlur=24; }
+    ctx.fillStyle=bp.flash>0?bp.col:'#1a2436';
+    ctx.beginPath(); ctx.arc(bp.x,bp.y,bp.r,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle=bp.col; ctx.lineWidth=3; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    ctx.beginPath(); ctx.arc(bp.x-7,bp.y-8,6,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#0a0f1e'; ctx.font='bold 11px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('100',bp.x,bp.y+4);
+    ctx.restore();
+  });
+  // drop targets
+  TARGETS.forEach(function(t){
+    ctx.fillStyle=t.up?'#ffd75e':'#232c3d';
+    ctx.fillRect(t.x,t.y,t.w,t.h);
+    ctx.strokeStyle=t.up?'#fff3c4':'#3a455c'; ctx.lineWidth=2;
+    ctx.strokeRect(t.x,t.y,t.w,t.h);
+    if(t.up){ ctx.fillStyle='#7a5b00'; ctx.font='bold 12px Orbitron, sans-serif'; ctx.textAlign='center'; ctx.fillText('◆',t.x+13,t.y+22); }
+  });
+  // spinner
+  ctx.save();
+  ctx.translate(SPINNER.x,(SPINNER.y+SPINNER.y2)/2);
+  ctx.rotate(SPINNER.angle);
+  ctx.fillStyle='#35e0ff';
+  ctx.fillRect(-4,-30,8,60);
+  ctx.fillStyle='#fff'; ctx.fillRect(-4,-30,8,8);
+  ctx.restore();
+  ctx.fillStyle='#5d6b82'; ctx.font='10px Share Tech Mono, monospace'; ctx.textAlign='center';
+  ctx.fillText('SPIN',SPINNER.x,SPINNER.y2+16);
+  // orbit sensor
+  ctx.strokeStyle='rgba(53,224,255,0.7)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(ORBIT_SENSOR.x,ORBIT_SENSOR.y,ORBIT_SENSOR.r,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#35e0ff'; ctx.font='bold 10px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('ORBIT',ORBIT_SENSOR.x,ORBIT_SENSOR.y+4);
+  // slingshots
+  SLINGS.forEach(function(s){
+    ctx.fillStyle=s.flash>0?'#ff3860':'#1c2942';
+    ctx.beginPath();
+    ctx.moveTo(s.pts[0][0],s.pts[0][1]); ctx.lineTo(s.pts[1][0],s.pts[1][1]); ctx.lineTo(s.pts[2][0],s.pts[2][1]);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#ff3860'; ctx.lineWidth=2; ctx.stroke();
+  });
+  // flippers
+  [FLIP_L,FLIP_R].forEach(function(f){
+    var tip=flipperTip(f);
+    ctx.save();
+    ctx.strokeStyle=f.active?'#00ff88':'#e8f4ff'; ctx.lineWidth=11; ctx.lineCap='round';
+    ctx.shadowColor='#00ff88'; ctx.shadowBlur=f.active?18:6;
+    ctx.beginPath(); ctx.moveTo(f.px,f.py); ctx.lineTo(tip.x,tip.y); ctx.stroke();
+    ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(f.px,f.py,8,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+  // plunger
+  if(state.ball.inLane){
+    ctx.fillStyle='#ffd75e';
+    var py=880-state.plunger*46;
+    ctx.fillRect(700,py,20,880-py);
+    ctx.fillStyle='#c6d6ea'; ctx.font='10px Share Tech Mono, monospace'; ctx.textAlign='center';
+    ctx.fillText(state.charging?'RELEASE!':'HOLD SPACE',710,868);
+  }
+  // ball trail + ball
+  function drawBall(b,second){
+    if(!b) return;
+    ctx.save();
+    if(!second){
+      ctx.globalAlpha=0.35;
+      ctx.strokeStyle='#e8f4ff'; ctx.lineWidth=2;
+      ctx.beginPath();
+      state.trail.forEach(function(p,i){ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
+      ctx.stroke();
+      ctx.globalAlpha=1;
+    }
+    /* CHAR-UPGRADE 2026-11-22: the ball is a TRUE SPRITE STACK — a layered
+       armoured shell extruded in dark slices, a 3-tone sphere pass (dark
+       core -> mid -> lit crown), rim light + glow core in its colour, spin
+       seams that roll with travel, and a velocity stretch when it flies.
+       Ball 1: silver shell, cyan core. Ball 2: segmented gold shell, amber
+       core — a different silhouette of seams, not a recolour. */
+    var rimC=second?'#ffd75e':'#35e0ff';
+    var darkC=second?'#4a3205':'#0d1622';
+    // contact shadow on the table, planted under the shell
+    ctx.fillStyle='rgba(0,0,0,0.45)';
+    ctx.beginPath(); ctx.ellipse(b.x+3,b.y+b.r*0.95,b.r*1.05,b.r*0.38,0,0,Math.PI*2); ctx.fill();
+    var sp=Math.hypot(b.vx||0,b.vy||0);
+    var stretch=clamp(sp*0.011,0,0.16);
+    ctx.save();
+    ctx.translate(b.x,b.y);
+    if(sp>2.5){ ctx.rotate(Math.atan2(b.vy,b.vx)); ctx.scale(1+stretch,1-stretch*0.55); ctx.rotate(-Math.atan2(b.vy,b.vx)); }
+    // extruded shell slices stepping down
+    for(var k=4;k>=1;k--){
+      ctx.fillStyle=obShade(second?'#8a6a1c':'#3d4c5e',0.34+(4-k)*0.10);
+      ctx.beginPath(); ctx.arc(0,k*1.5,b.r,0,Math.PI*2); ctx.fill();
+    }
+    // 3-tone sphere: lit crown upper-left, mid shell, dark core low-right
+    var sg=ctx.createRadialGradient(-b.r*0.35,-b.r*0.4,b.r*0.15,0,0,b.r*1.15);
+    if(second){ sg.addColorStop(0,'#fff3c4'); sg.addColorStop(0.45,'#ffd75e'); sg.addColorStop(1,'#7a5b00'); }
+    else { sg.addColorStop(0,'#ffffff'); sg.addColorStop(0.45,'#c9d9ea'); sg.addColorStop(1,'#5a718c'); }
+    ctx.fillStyle=sg;
+    ctx.shadowColor=rimC; ctx.shadowBlur=15;
+    ctx.beginPath(); ctx.arc(0,0,b.r,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    // shell seams, rolling with travel (phase from position — no state change)
+    ctx.save();
+    ctx.beginPath(); ctx.arc(0,0,b.r-0.5,0,Math.PI*2); ctx.clip();
+    var ph=((b.x+b.y)*0.045)%(Math.PI*2);
+    ctx.strokeStyle=second?'rgba(90,60,0,0.65)':'rgba(20,34,52,0.5)'; ctx.lineWidth=1.4;
+    for(var si2=0;si2<3;si2++){
+      var off=-b.r+((ph/(Math.PI*2)+si2/3)%1)*b.r*2;
+      ctx.beginPath(); ctx.ellipse(off,0,b.r*0.34,b.r*0.96,0,0,Math.PI*2); ctx.stroke();
+    }
+    if(second){ // gold ball: cross panels instead of meridians only
+      ctx.beginPath(); ctx.moveTo(-b.r,0); ctx.lineTo(b.r,0); ctx.stroke();
+    }
+    ctx.restore();
+    // glow core: a reactor window in the shell, pulsing with speed
+    ctx.save(); ctx.shadowColor=rimC; ctx.shadowBlur=8+sp*0.7;
+    ctx.fillStyle=second?'#ff9d2e':'#35e0ff';
+    ctx.beginPath(); ctx.arc(b.r*0.28,b.r*0.30,b.r*0.30,0,Math.PI*2); ctx.fill(); ctx.restore();
+    ctx.fillStyle='rgba(255,255,255,0.95)';
+    ctx.beginPath(); ctx.arc(b.r*0.20,b.r*0.22,b.r*0.11,0,Math.PI*2); ctx.fill();
+    // dramatic rim light in the ball's colour, low-right edge
+    ctx.strokeStyle=rimC; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(0,0,b.r-0.8,-0.5,1.15); ctx.stroke();
+    ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.arc(0,0,b.r-0.8,Math.PI*0.9,Math.PI*1.6); ctx.stroke();
+    ctx.restore();
+    ctx.restore();
+  }
+  drawBall(state.ball,false);
+  if(state.ball2) drawBall(state.ball2,true);
+  // particles
+  state.particles.forEach(function(p){
+    ctx.globalAlpha=Math.max(0,p.life/p.max);
+    ctx.fillStyle=p.col;
+    ctx.fillRect(p.x,p.y,3,3);
+  });
+  ctx.globalAlpha=1;
+  // drain label
+  ctx.fillStyle='rgba(255,56,96,0.6)'; ctx.font='bold 11px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('DRAIN',380,912);
+  ctx.restore();
+}
+function drawHUD(){
+  ctx.save();
+  ctx.textAlign='left';
+  ctx.fillStyle='#fff'; ctx.font='800 26px Orbitron, sans-serif';
+  ctx.fillText('SCORE '+state.score,36,34);
+  ctx.fillStyle='#ffd75e'; ctx.font='14px Share Tech Mono, monospace';
+  ctx.fillText('HI '+state.hi,36,56);
+  ctx.textAlign='right';
+  ctx.fillStyle='#00ff88'; ctx.font='800 20px Orbitron, sans-serif';
+  ctx.fillText('BALLS '+state.balls,724,32);
+  ctx.fillStyle='#c6d6ea'; ctx.font='14px Share Tech Mono, monospace';
+  var modeTxt=state.mode==='watch'?('WATCH · '+state.watchBot):(state.mode==='duel'?('DUEL · '+(state.p2turn?'P2':'P1')):'1P');
+  ctx.fillText(modeTxt,724,56);
+  if(state.multiball){ ctx.fillStyle='#ff3860'; ctx.font='bold 14px Orbitron, sans-serif'; ctx.fillText('MULTIBALL ×2',724,80); }
+  if(state.frame<state.ball.saveUntil && state.ballInPlay){
+    ctx.fillStyle='#35e0ff'; ctx.font='bold 13px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('BALL SAVE',380,140);
+  }
+  if(state.frame<state.tiltUntil){
+    ctx.fillStyle='#ff3860'; ctx.font='800 26px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('TILT!',380,460);
+  }
+  if(state.banner && state.frame<state.bannerUntil){
+    ctx.fillStyle='#ffd75e'; ctx.font='800 24px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.banner,380,470);
+  }
+  if(state.phase==='title'){
+    ctx.fillStyle='rgba(2,6,15,0.78)'; ctx.fillRect(0,300,W,330);
+    ctx.fillStyle='#fff'; ctx.font='900 54px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('ORBITBALL',380,380);
+    ctx.fillStyle='#00ff88'; ctx.font='16px Share Tech Mono, monospace';
+    ctx.fillText('STATION NINE · KEEP THE BALL ALIVE',380,412);
+    ctx.fillStyle='#c6d6ea'; ctx.font='15px Rajdhani, sans-serif';
+    ctx.fillText('Light O-R-B-I-T for MULTIBALL · drop the targets · ride the orbit lane',380,446);
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 16px Orbitron, sans-serif';
+    ctx.fillText('1P — click PLAY · WATCH — bot pilot · 2P — duel',380,490);
+    ctx.fillStyle='#5d6b82'; ctx.font='13px Share Tech Mono, monospace';
+    ctx.fillText('Z / ← left flipper · / or → right flipper · SPACE plunger · X nudge · V ball-cam',380,524);
+    ctx.fillText('HI '+state.hi,380,556);
+  }
+  if(state.phase==='over'){
+    ctx.fillStyle='rgba(2,6,15,0.8)'; ctx.fillRect(0,360,W,140);
+    ctx.fillStyle='#fff'; ctx.font='900 34px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.winner?state.winner+' WINS':'GAME OVER',380,410);
+    ctx.fillStyle='#ffd75e'; ctx.font='18px Share Tech Mono, monospace';
+    ctx.fillText('SCORE '+state.score+' · HI '+state.hi,380,446);
+    ctx.fillStyle='#c6d6ea'; ctx.font='15px Rajdhani, sans-serif';
+    ctx.fillText('Press R to play again',380,478);
+  }
+  ctx.restore();
+}
+function render(){
+  ctx.save();
+  ctx.clearRect(0,0,W,H);
+  if(state.fp && state.phase!=='title'){
+    // ball-cam: follow the ball, zoomed in, clamped inside the table
+    var b=state.ball;
+    var s=1.7;
+    var camX=clamp(b.x,(W/s)/2,W-(W/s)/2);
+    var camY=clamp(b.y,(H/s)/2,H-(H/s)/2);
+    ctx.translate(W/2,H/2);
+    ctx.scale(s,s);
+    ctx.translate(-camX,-camY);
+    drawBackground(); drawTable();   // ball-cam: no backglass pilot in the zoomed view
+    ctx.restore();
+    ctx.save();
+    drawHUD();
+    ctx.restore();
+  } else {
+    drawBackground(); drawTable(); drawPilot(); drawHUD();
+  }
+  ctx.restore();
+}
+function loop(){
+  update();
+  try{ render(); }catch(e){ /* headless stub contexts may lack gradients; logic still runs */ }
+  if(typeof requestAnimationFrame!=='function') return;
+  requestAnimationFrame(loop);
+}
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+
+/* ---- save / load / pause ---- */
+function saveState(){
+  try{
+    localStorage.setItem('orbitball.save', JSON.stringify({
+      score:state.score, hi:state.hi, balls:state.balls, mode:state.mode,
+      watchBot:state.watchBot, feAgentId:feAgentId, watchIdx:watchIdx, feRecorded:feRecorded,
+      letters:ROLLOVERS.map(function(r){ return r.lit; }),
+      targetsUp:state.targetsUp, p1score:state.p1score, p2score:state.p2score, p2turn:state.p2turn
+    }));
+    setMsg('State saved.');
+    return true;
+  }catch(e){ setMsg('Save failed.'); return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('orbitball.save');
+    if(!raw){ setMsg('No saved state yet.'); return false; }
+    var d=JSON.parse(raw);
+    state.score=d.score||0; state.hi=Math.max(state.hi,d.hi||0);
+    state.balls=d.balls==null?3:d.balls; state.mode=d.mode||'solo';
+    // E46: restore the watch agent + cursor + recorded flag for watch saves
+    // only (the latent gemshaft defect-3 pattern); traces reset on load.
+    if(d.mode==='watch' && typeof d.watchBot==='string'){
+      state.watchBot=d.watchBot; feAgentId=d.feAgentId||d.watchBot; feAgent=null;
+      if(typeof d.watchIdx==='number' && isFinite(d.watchIdx) && d.watchIdx>=0){ watchIdx=d.watchIdx; saveWatchIdx(); }
+      feRecorded=d.feRecorded===true; feTraces=[];
+    }
+    state.p1score=d.p1score||0; state.p2score=d.p2score||0; state.p2turn=!!d.p2turn;
+    state.phase='play'; state.over=false; state.paused=false;
+    ROLLOVERS.forEach(function(r,i){ r.lit=!!(d.letters&&d.letters[i]); });
+    state.letters=ROLLOVERS.filter(function(r){ return r.lit; }).length;
+    state.targetsUp=d.targetsUp==null?4:d.targetsUp;
+    TARGETS.forEach(function(t,i){ t.up=i<state.targetsUp; });
+    serveBall(true);
+    setMsg('State loaded.');
+    return true;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+function togglePause(){
+  if(state.phase!=='play' && state.phase!=='over') return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay');
+  if(ov) ov.style.display=state.paused?'flex':'none';
+  setMsg(state.paused?'Paused.':'Resumed.');
+}
+function toggleFP(){
+  state.fp=!state.fp;
+  setMsg(state.fp?'Ball-cam — riding the ball.':'Table view.');
+  syncButtons();
+}
+function toggleMute(){
+  muted=!muted;
+  try{ localStorage.setItem('orbitball.mute',muted?'1':'0'); }catch(e){}
+  setMsg(muted?'Muted.':'Sound on.');
+}
+function syncButtons(){
+  [['btnSolo','solo'],['btnWatch','watch'],['btnDuel','duel']].forEach(function(p){
+    var el=$(p[0]); if(el) el.classList.toggle('active',state.mode===p[1]&&state.phase==='play');
+  });
+  var fp=$('btnFP'); if(fp) fp.classList.toggle('active',state.fp);
+}
+
+/* ---- input ---- */
+function debugKey(k){
+  if(k==='p'||k==='P'){ togglePause(); return; }
+  if(k==='m'||k==='M'){ toggleMute(); return; }
+  if(k==='r'||k==='R'){ startGame(state.mode); return; }
+  if(k==='v'||k==='V'){ toggleFP(); return; }
+  if(state.phase!=='play'||state.paused) return;
+  if(k==='z'||k==='Z'||k==='ArrowLeft'){ setFlipper('L',true); }
+  if(k==='/'||k==='ArrowRight'){ setFlipper('R',true); }
+  if(k==='x'||k==='X'){ nudge(state.ball.x<380?-1:1); }
+  if(k===' '){
+    if(state.ball.inLane && !state.charging){ state.charging=true; state.plunger=0; }
+  }
+}
+function debugKeyUp(k){
+  if(k==='z'||k==='Z'||k==='ArrowLeft'){ setFlipper('L',false); }
+  if(k==='/'||k==='ArrowRight'){ setFlipper('R',false); }
+  if(k===' '){ if(state.ball.inLane && state.charging) launchBall(); }
+}
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('keydown',function(e){
+    if(e.key===' '){ e.preventDefault(); }
+    debugKey(e.key);
+  });
+  document.addEventListener('keyup',function(e){ debugKeyUp(e.key); });
+}
+function bindBtn(id,down,up){
+  var el=$(id); if(!el) return;
+  if(el.addEventListener){
+    el.addEventListener('pointerdown',function(e){ e.preventDefault(); down(); });
+    if(up){
+      el.addEventListener('pointerup',function(){ up(); });
+      el.addEventListener('pointerleave',function(){ up(); });
+    }
+  }
+}
+bindBtn('btnSolo',function(){ startGame('solo'); });
+bindBtn('btnWatch',function(){ startGame('watch'); });
+bindBtn('btnDuel',function(){ startGame('duel'); });
+bindBtn('btnFP',function(){ toggleFP(); });
+bindBtn('btnPause',function(){ togglePause(); });
+bindBtn('resumeBtn',function(){ togglePause(); });
+bindBtn('saveBtn',function(){ saveState(); });
+bindBtn('loadBtn',function(){ loadState(); });
+bindBtn('restartBtn',function(){ state.paused=false; var ov=$('pauseOverlay'); if(ov) ov.style.display='none'; startGame(state.mode); });
+bindBtn('quitArcadeBtn',function(){ if(typeof location!=='undefined') location.href='../arcade.html'; });
+bindBtn('startBtn',function(){ togglePause(); });
+bindBtn('selectBtn',function(){ toggleFP(); });
+// shell deck: D-pad + A/B
+if(typeof document!=='undefined' && document.querySelectorAll){
+  Array.prototype.forEach.call(document.querySelectorAll('#shellDeck [data-k]'),function(el){
+    var k=el.getAttribute('data-k');
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      if(k==='left') setFlipper('L',true);
+      else if(k==='right') setFlipper('R',true);
+      else if(k==='nudge') nudge(state.ball.x<380?-1:1);
+      else if(k==='down'||k==='down2'){ if(state.ball.inLane && !state.charging){ state.charging=true; state.plunger=0; } }
+    });
+    el.addEventListener('pointerup',function(){
+      if(k==='left') setFlipper('L',false);
+      if(k==='right') setFlipper('R',false);
+      if(k==='down'||k==='down2'){ if(state.ball.inLane && state.charging) launchBall(); }
+    });
+    el.addEventListener('pointerleave',function(){
+      if(k==='left') setFlipper('L',false);
+      if(k==='right') setFlipper('R',false);
+    });
+  });
+}
+bindBtn('btnA',function(){ setFlipper('R',true); },function(){ setFlipper('R',false); });
+bindBtn('btnB',function(){ if(state.ball.inLane && !state.charging){ state.charging=true; state.plunger=0; } },
+  function(){ if(state.ball.inLane && state.charging) launchBall(); });
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+
+/* ---- auto-start from query (?auto=play / ?auto=watch) ---- */
+if(q.get('auto')==='play') startGame('solo');
+else if(q.get('auto')==='watch') startGame('watch');
+else if(q.get('auto')==='duel') startGame('duel');
+
+/* ---- test/debug surface — same shape as the other arcade games ---- */
+window.__orbitball={
+  get state(){ return {
+    phase:state.phase, mode:state.mode, paused:state.paused, fp:state.fp, frame:state.frame,
+    score:state.score, hi:state.hi, balls:state.balls, over:state.over, winner:state.winner,
+    multiball:state.multiball, ballsLive:state.ballsLive, letters:state.letters,
+    targetsUp:state.targetsUp, spinnerHits:state.spinnerHits, orbitHits:state.orbitHits,
+    tiltUntil:state.tiltUntil, nudges:state.nudges,
+    ball:{x:state.ball.x,y:state.ball.y,vx:state.ball.vx,vy:state.ball.vy,inLane:state.ball.inLane,saveUntil:state.ball.saveUntil},
+    ball2: state.ball2?{x:state.ball2.x,y:state.ball2.y}:null,
+    plunger:state.plunger, charging:state.charging,
+    bumpers:BUMPERS.map(function(b){ return {x:b.x,y:b.y,flash:b.flash}; }),
+    rollovers:ROLLOVERS.map(function(r){ return {letter:r.letter,lit:r.lit}; }),
+    targets:TARGETS.map(function(t){ return t.up; }),
+    flippers:{L:{ang:FLIP_L.ang,active:FLIP_L.active},R:{ang:FLIP_R.ang,active:FLIP_R.active}},
+    watchBot:state.watchBot, watchFlips:state.watchFlips, watchDrains:state.watchDrains,
+    feAgent:feAgentId, feTraces:feTraces.length, feRecorded:feRecorded,
+    p1score:state.p1score, p2score:state.p2score, p2turn:state.p2turn,
+    banner:state.banner
+  }; },
+  startGame:startGame,
+  debugKey:debugKey, debugKeyUp:debugKeyUp,
+  debugSetFlipper:setFlipper,
+  debugPlaceBall:function(x,y,vx,vy,inLane){
+    state.ball.x=x; state.ball.y=y; state.ball.vx=vx||0; state.ball.vy=vy||0;
+    state.ball.inLane=!!inLane; state.ballInPlay=true; state.phase='play';
+  },
+  debugCharge:function(p){ state.charging=true; state.plunger=p; },
+  debugLaunch:launchBall,
+  debugNudge:nudge,
+  debugSetLetters:function(n){
+    ROLLOVERS.forEach(function(r,i){ r.lit=i<n; });
+    state.letters=n;
+  },
+  debugSetBalls:function(n){ state.balls=n; },
+  debugSetSave:function(frames){ state.ball.saveUntil=state.frame+frames; },
+  debugSave:saveState, debugLoad:loadState, debugToggleFP:toggleFP,
+  debugTogglePause:togglePause,
+  debugSetWatchBot:function(b){ state.watchBot=b; },
+  debugAgent:function(){ return state.watchBot; },
+  debugRecorded:function(){ return !!feRecorded; },
+  debugCursor:function(){ return watchIdx; },
+  debugTraces:function(){ return feTraces.slice(); },
+  step:function(){ update(); }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+ "id": "gaeli",
+ "name": "Gaeli",
+ "src": "gaeli",
+ "cell": 256,
+ "frames": 8,
+ "clips": {
+  "walk": "walk.webp",
+  "run": "run.webp",
+  "action": "action.webp"
+ },
+ "standH": 221,
+ "footY": 233,
+ "centerX": 124
+}

@@ -1,0 +1,15 @@
+{
+ "id": "quill",
+ "name": "QUILL",
+ "src": "quill-council",
+ "cell": 256,
+ "frames": 8,
+ "clips": {
+  "walk": "walk.webp",
+  "run": "run.webp",
+  "action": "action.webp"
+ },
+ "standH": 187,
+ "footY": 225,
+ "centerX": 129
+}

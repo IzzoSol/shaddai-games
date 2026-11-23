@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GHOSTLINE — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#04060a;--panel:#080b12;--border:rgba(120,150,200,.16);--cyan:#00f0ff;--green:#00ff88;--gold:#ffd700;--red:#ff3860;--text:#c6d2e4;--dim:#5d6b82}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.08),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(6,9,14,.9);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-wrap:nowrap}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px;white-space:nowrap;min-width:0;flex-shrink:1}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .topbar .spacer{margin-left:auto;flex-shrink:0}
+  .back{color:var(--cyan);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif;white-space:nowrap;flex-shrink:0}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.10)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--cyan);font-size:12px}
+  /* ---- handheld shell (MOBILE PLAY standard, same as Contention):
+     Original emerald/dark console frame — screen inside the shell, D-PAD left,
+     A/B right, START/SELECT pills below the screen. Never overlaps gameplay.
+     Replaces the old joystick-over-canvas touch controls. ---- */
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #stageWrap{border-radius:10px;overflow:hidden;border:1px solid rgba(0,255,136,.25)}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:0}
+  .dpad button{font-size:15px;padding:0}
+  .dpad .dp-u{grid-area:1/2}.dpad .dp-l{grid-area:2/1}.dpad .dp-c{grid-area:2/2;background:#0a1210;border:1px solid rgba(0,255,136,.2)}
+  .dpad .dp-r{grid-area:2/3}.dpad .dp-d{grid-area:3/2}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  .ab-cluster{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .ab-row{display:flex;gap:14px;align-items:flex-end}
+  .ab{width:58px;height:58px;border-radius:50%;font-size:19px;font-weight:900}
+  .ab-a{background:#00ff88!important;color:#04120a!important;border-color:#00ff88!important}
+  .ab-b{background:#ff3860!important;border-color:#ff3860!important}
+  .ab-sub{display:flex;gap:6px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
+  .ab-sub span{width:58px;text-align:center}
+  /* ---- fullscreen (FULLSCREEN standard): the shell — stage on desktop, the
+     whole handheld console on phones — fills the screen via the Fullscreen
+     API. F toggles, the button toggles, Esc exits (browser) before it can
+     pause. Label follows the real fullscreen state. ---- */
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*960/576));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*960/576))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(100vw,calc((100vh - 190px)*960/576))}
+  #pauseOverlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(4,6,10,.85);backdrop-filter:blur(2px);z-index:10}
+  #pauseOverlay h2{font-size:30px;color:#fff;letter-spacing:6px;text-shadow:0 0 22px rgba(0,255,136,.7);font-family:'Orbitron',sans-serif;margin:0}
+  #pauseOverlay .sub{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:2px}
+  #pauseOverlay .pbtn{min-width:240px;padding:12px 18px;background:var(--panel);border:1px solid var(--border);color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;text-transform:uppercase}
+  #pauseOverlay .pbtn:hover{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35)}
+  @media (max-width:560px){
+    .topbar{flex-wrap:nowrap;gap:10px;padding:10px 12px}
+    .topbar h1{font-size:17px}
+    .topbar .tag{display:none}
+    .wrap{padding:12px 8px 40px}
+    .mbtn{min-width:100px;font-size:11px;padding:10px 6px}
+    .help{font-size:13px;padding:10px 12px}
+    #msg{font-size:12px}
+    .dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .ab{width:52px;height:52px}
+    .ab-sub span{width:52px}
+    .shell-pills{padding-top:28px}
+    #pauseOverlay .pbtn{min-width:210px;padding:11px 14px;font-size:12px}
+    /* pause menu must fit the short mobile canvas (~211px tall at 390px wide) */
+    #pauseOverlay{gap:7px;justify-content:flex-start;padding:10px 0;overflow-y:auto}
+    #pauseOverlay h2{font-size:18px;letter-spacing:4px}
+    #pauseOverlay .sub{display:none}
+    #pauseOverlay .pbtn{min-width:200px;padding:7px 12px;font-size:11px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,240,255}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>GHOST<span>LINE</span></h1>
+  <div class="tag">Shaddai Arcade · Stealth Infiltration · Original IP</div>
+  <div class="spacer"></div>
+  <a class="back" href="../arcade.html">← Arcade</a>
+</div>
+<div class="wrap">
+  <div id="shell">
+  <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+  <div id="stageWrap"><canvas id="cv" width="960" height="576"></canvas>
+    <div id="pauseOverlay">
+      <h2>⏸ PAUSED</h2>
+      <div class="sub">ESC / P TO RESUME</div>
+      <button class="pbtn" id="resumeBtn">▶ Resume</button>
+      <button class="pbtn" id="saveBtn">💾 Save State</button>
+      <button class="pbtn" id="loadBtn">📂 Load State</button>
+      <button class="pbtn" id="restartBtn">↺ Restart Mission</button>
+      <button class="pbtn" id="quitArcadeBtn">✕ Quit to Arcade</button>
+    </div>
+  </div>
+  <div id="shellDeck">
+    <div class="dpad">
+      <button class="dp-u" data-k="up" aria-label="Up">▲</button>
+      <button class="dp-l" data-k="left" aria-label="Left">◀</button>
+      <span class="dp-c"></span>
+      <button class="dp-r" data-k="right" aria-label="Right">▶</button>
+      <button class="dp-d" data-k="down" aria-label="Down">▼</button>
+    </div>
+    <div class="shell-pills">
+      <button id="selectBtn" title="Select — sneak lock on/off">SELECT</button>
+      <button id="startBtn" title="Start — open menu">START</button>
+    </div>
+    <div class="ab-cluster">
+      <div class="ab-row"><button class="ab ab-b" data-k="ko" title="B — knock out">B</button><button class="ab ab-a" data-k="sneak" title="A — sneak (hold)">A</button></div>
+      <div class="ab-sub"><span>K.O.</span><span>SNEAK</span></div>
+    </div>
+  </div>
+  </div>
+  <div id="msg">Infiltrate. Take the keycard. Free the hostage bot. Reach extraction. Don't get seen.</div>
+  <div class="row" id="missionRow">
+    <button class="mbtn" id="btnMissionVault">🏛 Vault Compound<small>standard · 6 guards</small></button>
+    <button class="mbtn" id="btnMissionYard">🌙 Night Yard<small>hard · 7 guards</small></button>
+  </div>
+  <div class="row">
+    <button class="mbtn" id="btnPlay">▶ Play<small>you are the infiltrator</small></button>
+    <button class="mbtn" id="btnWatch">🤖 Watch<small>agent infiltrates</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>Esc / P to pause</small></button>
+    <button class="mbtn" id="btnReset">↺ Restart Mission</button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — stage fills the screen</small></button>
+  </div>
+  <div class="help">
+    <b>Move</b> <span class="k">WASD / Arrows</span> · <b>Sneak</b> <span class="k" id="bindSneak">SHIFT</span> · <b>Knock out</b> <span class="k" id="bindKO">SPACE</span> · <b>Pause</b> <span class="k" id="bindPause">P / ESC</span> · <b>Restart</b> <span class="k" id="bindRestart">R</span> <span style="color:var(--dim);font-size:12px">(click a key above to rebind it — saved on this device)</span><br/>
+    Guard vision cones are real: walls block sight. Yellow <b>?</b> = a guard is suspicious — it pauses, then comes and looks where it glimpsed or heard you. Red <b>!</b> = that guard has you and chases; break line of sight and it searches your last-seen spot, then gives up. Alarms spread guard to guard — only nearby units learn of you. Guards also <b>hear</b>: running and knockouts carry, sneaking is silent. Touch a guard awake and you're caught. The gold door needs the <b>keycard</b>. Structure follows the classic top-down stealth formula documented in the Metal Gear (MSX2) disassembly — every name, room and line of code here is original.<br/>
+    🗺️ <b>Missions:</b> <b>Vault Compound</b> (standard) and <b>Night Yard</b> (hard — 7 guards, faster patrols). Pick one above, then press PLAY — your pick is remembered on this device.<br/>
+    🎮 <b>Gamepad:</b> left stick / D-pad to move · <b>A / X</b> knock out · <b>LB</b> sneak · <b>START</b> pause<span id="padStatus"></span><br/>
+    💬 <b>Dialogue:</b> radio calls from LOOM, SCRIBE and HQ arrive in a typewriter box with a portrait chip — the speaker's name on the left, queued lines stack up to 3 deep.<br/>
+    🤖 <b>Watch:</b> a council agent infiltrates on its own — the camera follows the run, the name plate (top left) shows the agent's style and mission pips, the compound plate (top right) shows the alert state, and the feed logs the keycard, alerts and extraction.<br/>
+    🎬 <b>Cinematic camera:</b> the mission opens with a slow push-in, knockouts punch the camera in on the fallen guard, and extraction / capture hold a close-up on WRAITH.<br/>
+    ⛶ <b>Fullscreen:</b> <span class="k">F</span> or the Fullscreen button — the stage (on phones, the whole handheld shell) fills the screen; <span class="k">Esc</span> exits fullscreen.<br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: D-pad + A/B below the screen, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> locks sneak on/off. Hold <b>A</b> to sneak · tap <b>B</b> to knock out a guard next to you.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+"use strict";
+/* GHOSTLINE — original top-down stealth game for Shaddai Arcade.
+   Clean-room: structure informed by published disassembly documentation of the
+   MSX2 stealth formula (rooms, patrols, alert→evasion→reset). No code, maps,
+   names or art copied from any existing game. See reference-repos/REFERENCE_INDEX.md. */
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const T=32, COLS=30, ROWS=18, W=960, H=576;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+/* Legend: # wall · . floor · D keycard door · K keycard · H hostage · E extraction · S start
+   Two missions share one engine: VAULT COMPOUND (standard) and NIGHT YARD (hard —
+   7 guards, faster patrols). Pick one above, then PLAY. */
+const MAPS={
+ vault:{id:'vault',name:'VAULT COMPOUND',sub:'standard · 6 guards',speed:1.05,
+  wps:[[[7,2],[12,2],[12,5],[7,5]],[[16,1],[21,1],[21,4],[16,4]],[[24,5],[28,5],[28,1],[24,1]],[[3,10],[10,10],[10,13],[3,13]],[[13,10],[21,10],[21,15],[13,15]],[[24,13],[28,13],[28,16],[23,16]]],
+  rows:[
+"##############################",
+"#S....#........#......#......#",
+"#.....#..K.....#..##..#..H...#",
+"#.....#........#..##..#......#",
+"#.....###..#####......###..###",
+"#............................#",
+"##..#####....#######....#....#",
+"#...#...#....#.....#....#..E.#",
+"#...#...#....#..D..#....#....#",
+"#...#####....#.....#....####.#",
+"#............................#",
+"#....####......#####......#..#",
+"#....#..#......#...#......#..#",
+"#....#..#......#...#..##..#..#",
+"#....####......#####..##.....#",
+"#............................#",
+"#......##..........##........#",
+"##############################",
+ ]},
+ yard:{id:'yard',name:'NIGHT YARD',sub:'hard · 7 guards · faster patrols',speed:1.15,
+  wps:[[[9,5],[14,5],[14,1],[9,1]],[[17,5],[24,5],[24,2],[17,2]],[[5,11],[12,11],[12,16],[5,16]],[[18,11],[25,11],[25,16],[18,16]],[[2,5],[2,16],[10,16],[10,5]],[[26,5],[28,5],[28,11],[26,11]],[[17,2],[22,2],[22,5],[17,5]]],
+  rows:[
+"##############################",
+"#S.....#........#......#.....#",
+"#......#...K....#......#..E..#",
+"#......#........#......#.....#",
+"#..#####....#####..##..#.....#",
+"#............................#",
+"#..######....######....##....#",
+"#..#....#....#....#....#.....#",
+"#..#..D.#....#....#....#.....#",
+"#..#....#....#....#....#.....#",
+"#..######....######....##....#",
+"#............................#",
+"#....####.....####.....####..#",
+"#....#..#.....#..#.....#..#..#",
+"#....#..#.....#..#.....#..H..#",
+"#....####.....####.....####..#",
+"#............................#",
+"##############################",
+ ]},
+};
+let mission='vault';
+try{ const m=localStorage.getItem('ghostline-mission-v1'); if(m&&MAPS[m]) mission=m; }catch(e){}
+let CUR=MAPS[mission], MAP=CUR.rows, KEYP, HOSTP, EXITP, DOORP;
+const solidAt=(cx,cy,hasKey)=>{ if(cx<0||cy<0||cx>=COLS||cy>=ROWS) return true; const c=MAP[cy][cx]; return c==='#'||(c==='D'&&!hasKey); };
+const tileAt=(cx,cy)=> MAP[clamp(cy,0,ROWS-1)][clamp(cx,0,COLS-1)];
+function findTile(ch){ for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++) if(MAP[y][x]===ch) return {x:x*T+16,y:y*T+16,cx:x,cy:y}; return null; }
+function applyMission(id){ if(!MAPS[id]) return false; mission=id; CUR=MAPS[id]; MAP=CUR.rows;
+ KEYP=findTile('K'); HOSTP=findTile('H'); EXITP=findTile('E'); DOORP=findTile('D');
+ try{ localStorage.setItem('ghostline-mission-v1', mission); }catch(e){}
+ return true; }
+applyMission(mission);
+
+let frame=0, animT=0, phase='ready', /* ready|play|caught|done */ watch=false, paused=false, koBuf=0;
+/* GRAPHICS level 3 — LIGHT & JUICE (polish pass 2026-11-21): transient
+   particles (KO bursts, pickup rings) and a short screen shake. Purely
+   visual — never saved, never part of gameplay state; frozen while paused. */
+let particles=[], shakeT=0, shakeMag=0;
+function spawnBurst(x,y,color,n,spd){ for(let i=0;i<n;i++){ const a=Math.random()*6.283, s=(0.4+Math.random()*0.6)*(spd||3);
+  particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:26+Math.floor(Math.random()*14),maxLife:40,color,size:2.5+Math.random()*3}); } }
+function spawnRing(x,y,color){ particles.push({ring:true,x,y,life:24,maxLife:24,color}); }
+function shake(mag){ shakeMag=mag; shakeT=10; }
+let player, guards=[], hasKey=false, hostageFree=false, hostageFollow=false, hostage=null;
+let alert='calm', alertT=0, seeMeter=0, detections=0, missionT=0, dlg=null, dlgQueue=[], stunMsgT=0;
+/* ---- Fallible Engine state (E6): the WATCH infiltrator is a council agent.
+   WATCH missions rotate through all 8 (persisted counter), so the league
+   table fills with Ghostline Elo. The human side never gets an engine agent. */
+const FE_AGENTS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+let feAgentId=null, feAgent=null, feTrace=[], feRecorded=false, feWatchIdx=0;
+try{ feWatchIdx=parseInt(localStorage.getItem('ghostline-agent-rotation-v1')||'0',10)||0; if(!isFinite(feWatchIdx)||feWatchIdx<0) feWatchIdx=0; }catch(e){}
+function feNextAgentId(){ const id=FE_AGENTS[feWatchIdx%FE_AGENTS.length]; feWatchIdx++;
+ try{ localStorage.setItem('ghostline-agent-rotation-v1', String(feWatchIdx)); }catch(e){} return id; }
+/* E35 REPAIR D2: re-attach a saved watch agent WITHOUT consuming a rotation
+   cursor slot (the bout already took its slot when it was set up). Mirrors
+   the reset() agent pick minus the cursor advance, so a watch save resumes
+   as the same bout instead of converting to a fresh agent / solo. Called by
+   loadState for the saved agent id (and for a legacy save's fresh pick). */
+function feRestoreAgent(agentId){
+ feAgentId=FE_AGENTS.indexOf(agentId)>=0?agentId:null;
+ feAgent=null;
+ if(feAgentId){
+   const FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+   if(FE){ try{ feAgent=FE.loadAgent(feAgentId); }catch(e){ feAgent=null; } }
+ }
+}
+
+/* ---------------- SHARED DIALOGUE BOX (dim 7) ----------------
+   One shared dialogue style across the arcade — seeded from the Skylance
+   cutscene caption bar (same 1 char/frame typewriter): a bottom text box
+   with the speaker's name + a portrait chip (mini head with the speaker's
+   in-game look), queued lines playing in order. say(who,text) is the only
+   call-site API — every existing radio call works unchanged. The box is
+   presentation only: the world keeps running while a line types; the box
+   freezes while paused and lines are transient, never saved. Adapted
+   from ~/workspace/scratch/arcade-polish/dialogue-box-snippet.js —
+   only dlgColor()/drawDlgPortrait() are Ghostline-specific (LOOM/HQ/
+   SCRIBE/WRAITH/GUARD). Ghostline has no hexA(), so a local one is
+   included here; it has no cutscene phase, so stepDialogue() runs
+   whenever the game is unpaused, including caught/done. */
+function hexA(hex,a){ const n=parseInt(hex.slice(1),16); return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
+function dlgColor(who){
+ if(who==='LOOM') return '#ffd75e';
+ if(who==='HQ') return '#ff3860';
+ if(who==='SCRIBE') return '#ff5db1';
+ if(who==='WRAITH') return '#00ff88';
+ if(who==='GUARD') return '#ff7b3d';
+ return '#c6d2e4';
+}
+function say(who,text){ dlgQueue.push({who,text}); if(dlgQueue.length>3)dlgQueue.shift(); if(!dlg) dlgStart(); }
+function dlgStart(){
+ const next=dlgQueue.shift(); if(!next) return;
+ dlg={who:next.who,color:dlgColor(next.who),text:next.text,shown:0,hold:60*2.5}; /* hold ~2.5s after the line finishes typing */
+}
+function stepDialogue(){
+ if(!dlg){ if(dlgQueue.length) dlgStart(); return; }
+ if(dlg.shown<dlg.text.length){ dlg.shown=Math.min(dlg.text.length,dlg.shown+1); return; } /* 1 char/frame, same as the cutscene */
+ if(dlg.hold>0){ dlg.hold--; return; }
+ dlg=null; if(dlgQueue.length) dlgStart();
+}
+function drawDlgPortrait(who,color,cx,cy){
+ /* portrait chip: dark disc + speaker-colour ring, mini head inside —
+    each portrait matches the speaker's in-game look (see drawBotFig). */
+ ctx.fillStyle='#060a08'; ctx.beginPath(); ctx.arc(cx,cy,20,0,7); ctx.fill();
+ ctx.strokeStyle=hexA(color,0.7); ctx.lineWidth=2;
+ ctx.beginPath(); ctx.arc(cx,cy,20,0,7); ctx.stroke();
+ if(who==='LOOM'){
+   /* radio operator: headset band + mic boom + glowing eyes */
+   ctx.fillStyle='#0a1410'; ctx.beginPath(); ctx.arc(cx,cy+1,12,0,7); ctx.fill();
+   ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2.5;
+   ctx.beginPath(); ctx.arc(cx,cy+1,12,Math.PI*1.05,Math.PI*1.95); ctx.stroke();
+   ctx.fillStyle='#ffd75e'; ctx.fillRect(cx-13,cy-2,3,7); ctx.fillRect(cx+10,cy-2,3,7);
+   ctx.strokeStyle='#ffd75e'; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.moveTo(cx+11,cy+4); ctx.lineTo(cx+4,cy+10); ctx.stroke();
+   ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(cx+3,cy+10,2,0,7); ctx.fill();
+   ctx.fillStyle='#fff'; ctx.shadowColor='#fff'; ctx.shadowBlur=4;
+   ctx.beginPath(); ctx.arc(cx-4,cy,1.8,0,7); ctx.fill();
+   ctx.beginPath(); ctx.arc(cx+3,cy,1.8,0,7); ctx.fill(); ctx.shadowBlur=0;
+ } else if(who==='HQ'){
+   /* command voice: red broadcast chevron + antenna, no face */
+   ctx.strokeStyle='#ff3860'; ctx.lineWidth=2.5;
+   ctx.beginPath(); ctx.moveTo(cx-9,cy+6); ctx.lineTo(cx,cy-10); ctx.lineTo(cx+9,cy+6); ctx.closePath(); ctx.stroke();
+   ctx.fillStyle='#ff3860';
+   ctx.beginPath(); ctx.moveTo(cx-5,cy+2); ctx.lineTo(cx,cy-5); ctx.lineTo(cx+5,cy+2); ctx.closePath(); ctx.fill();
+   ctx.strokeStyle='#ff3860'; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.moveTo(cx,cy-10); ctx.lineTo(cx,cy-16); ctx.stroke();
+   ctx.shadowColor='#ff3860'; ctx.shadowBlur=6; ctx.fillStyle='#ff3860';
+   ctx.beginPath(); ctx.arc(cx,cy-17,2,0,7); ctx.fill(); ctx.shadowBlur=0;
+ } else if(who==='SCRIBE'){
+   /* hostage bot: pink halo ring + robe folds + two glowing pink eyes */
+   ctx.strokeStyle='#ff5db1'; ctx.lineWidth=1.5; ctx.globalAlpha=0.7;
+   ctx.beginPath(); ctx.arc(cx,cy+1,14.5,0,7); ctx.stroke(); ctx.globalAlpha=1;
+   ctx.fillStyle='#3a1030'; ctx.beginPath(); ctx.arc(cx,cy+1,11,0,7); ctx.fill();
+   ctx.strokeStyle='#ff5db1'; ctx.lineWidth=1.5;
+   for(const s of [-1,1]){ ctx.beginPath(); ctx.arc(cx,cy+1,7,s*0.15,s*0.75); ctx.stroke(); }
+   ctx.fillStyle='#ff5db1'; ctx.shadowColor='#ff5db1'; ctx.shadowBlur=6;
+   ctx.beginPath(); ctx.arc(cx-4,cy,2.2,0,7); ctx.fill();
+   ctx.beginPath(); ctx.arc(cx+4,cy,2.2,0,7); ctx.fill(); ctx.shadowBlur=0;
+ } else if(who==='WRAITH'){
+   /* player bot: dark cowl crescent + two glowing cyan eyes + scarf ribbon */
+   ctx.fillStyle='#062a1a'; ctx.beginPath(); ctx.arc(cx,cy+1,11,0,7); ctx.fill();
+   ctx.fillStyle='#04160e';
+   ctx.beginPath(); ctx.moveTo(cx,cy+1); ctx.arc(cx,cy+1,11,Math.PI-0.95,Math.PI+0.95); ctx.closePath(); ctx.fill();
+   ctx.strokeStyle='#00f0ff'; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.arc(cx,cy+1,11,Math.PI-0.95,Math.PI+0.95); ctx.stroke();
+   ctx.strokeStyle='#00f0ff'; ctx.lineWidth=2.5;
+   ctx.beginPath(); ctx.moveTo(cx-8,cy+12); ctx.quadraticCurveTo(cx-14,cy+16,cx-17,cy+13); ctx.stroke();
+   ctx.fillStyle='#00f0ff'; ctx.shadowColor='#00f0ff'; ctx.shadowBlur=6;
+   ctx.beginPath(); ctx.arc(cx-4,cy,2.2,0,7); ctx.fill();
+   ctx.beginPath(); ctx.arc(cx+4,cy,2.2,0,7); ctx.fill(); ctx.shadowBlur=0;
+ } else if(who==='GUARD'){
+   /* guard: amber visor band + helm crest bar + antenna tip */
+   ctx.fillStyle='#2a1408'; ctx.beginPath(); ctx.arc(cx,cy+1,11,0,7); ctx.fill();
+   ctx.strokeStyle='#ff7b3d'; ctx.lineWidth=3;
+   ctx.beginPath(); ctx.moveTo(cx-8,cy-7); ctx.lineTo(cx+8,cy-7); ctx.stroke();
+   ctx.strokeStyle='#ffd700'; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.moveTo(cx-9,cy-8); ctx.lineTo(cx-13,cy-15); ctx.stroke();
+   ctx.fillStyle='#ffd700'; ctx.shadowColor='#ffd700'; ctx.shadowBlur=5;
+   ctx.beginPath(); ctx.arc(cx-13,cy-16,1.8,0,7); ctx.fill(); ctx.shadowBlur=0;
+   ctx.strokeStyle='#ffd700'; ctx.lineWidth=4; ctx.shadowColor='#ffd700'; ctx.shadowBlur=6;
+   ctx.beginPath(); ctx.arc(cx,cy+1,6.5,-0.85,0.85); ctx.stroke(); ctx.shadowBlur=0;
+ } else {
+   /* unknown speaker: plain coloured head */
+   ctx.fillStyle='#0a1410'; ctx.beginPath(); ctx.arc(cx,cy+1,11,0,7); ctx.fill();
+   ctx.strokeStyle=color; ctx.lineWidth=2; ctx.stroke();
+   ctx.fillStyle='#fff';
+   ctx.beginPath(); ctx.arc(cx-4,cy,2,0,7); ctx.fill();
+   ctx.beginPath(); ctx.arc(cx+3,cy,2,0,7); ctx.fill();
+ }
+}
+function drawDialogue(){
+ if(!dlg) return;
+ const bx=90, by=H-72, bw=W-180, bh=60, col=dlg.color;
+ ctx.fillStyle='rgba(2,10,8,.92)'; ctx.fillRect(bx,by,bw,bh);
+ ctx.strokeStyle=hexA(col,0.55); ctx.lineWidth=1; ctx.strokeRect(bx,by,bw,bh);
+ ctx.fillStyle=hexA(col,0.8); ctx.fillRect(bx,by,bw,2); /* speaker-colour top accent */
+ drawDlgPortrait(dlg.who,col,bx+30,by+30);
+ ctx.textAlign='left';
+ ctx.fillStyle=col; ctx.font='bold 12px "Share Tech Mono"';
+ const typing=dlg.shown<dlg.text.length;
+ ctx.fillText((dlg.who==='LOOM'?'📻 ':'')+dlg.who+(typing&&(Math.floor(frame/15)%2===0)?' ▸':''), bx+60, by+20);
+ if(dlgQueue.length>0){ ctx.textAlign='right'; ctx.fillStyle='rgba(198,210,228,.7)';
+   ctx.font='11px "Share Tech Mono"'; ctx.fillText('+'+dlgQueue.length+' MORE', bx+bw-12, by+20); ctx.textAlign='left'; }
+ ctx.fillStyle='#dff'; ctx.font='12px "Share Tech Mono"';
+ wrapText(dlg.text.slice(0,dlg.shown), bx+60, by+38, bw-76, 15);
+}
+/* ---------------- AGENT MODES (dim 4): WATCH presentation ----------------
+   The WATCH infiltrator already runs on its own (Fallible Engine, imperfect
+   on purpose). This pass polishes how the mission READS to a spectator,
+   matching Skylance's 20:30 watch pass:
+   (a) a watch camera — a gentle 1.25x zoom following the infiltrator,
+       biased toward a chasing guard when one has the scent, clamped so
+       the view never leaves the compound;
+   (b) name plates under the HUD — the infiltrator's council agent (name,
+       style, portrait chip, mission pips) left, the compound (mission,
+       guards, alert state) right;
+   (c) a score feed (top right) logging the keycard, the hostage, alert
+       changes, extraction and a capture. Presentation only — no
+   gameplay-logic change; the feed and camera are transient, never saved. */
+const FE_STYLE={
+ ASIMOV:{color:'#39c2ff',style:'balanced · focused'},
+ SHADDAI:{color:'#ffd700',style:'patient · careful'},
+ ZEROX:{color:'#00ff88',style:'runs hot · dives in'},
+ ORACLE:{color:'#b06aff',style:'watches · waits'},
+ NEXUS:{color:'#00f0ff',style:'probes · curious'},
+ TURTLE:{color:'#7dff6a',style:'slow · never seen'},
+ QUILL:{color:'#ffb0d9',style:'improvises · curious'},
+ PIKADON:{color:'#ff7b3d',style:'cautious · precise'}};
+let watchFeed=[], watchCamOn=false, camX=W/2, camY=H/2;
+function watchLog(text,color){
+ if(!watch) return;
+ watchFeed.push({text,color,t:frame});
+ if(watchFeed.length>4) watchFeed.shift();
+}
+function stepWatchCam(){
+ if(!watch||phase!=='play'||!player){ watchCamOn=false; return; }
+ watchCamOn=true;
+ let tx=player.x, ty=player.y;
+ const chaser=guards.find(g=>g.mode==='chase'&&g.stun<=0);
+ if(chaser){ tx=(player.x+chaser.x)/2; ty=(player.y+chaser.y)/2; }
+ camX+=(tx-camX)*0.08; camY+=(ty-camY)*0.08;
+ const vw=W/1.25, vh=H/1.25;
+ camX=clamp(camX,vw/2,W-vw/2); camY=clamp(camY,vh/2,H-vh/2);
+}
+/* ---------------- GRAPHICS level 5 — CINEMATIC CAMERA (polish pass
+   2026-11-21): the first L5 layer anywhere. A cinematic zoom multiplier
+   (cinZ) and focus (cinX/cinY) ride on top of the WATCH camera — the
+   effective zoom is the WATCH base (1.25x) times cinZ, so outside beats
+   the frame is exactly the old WATCH framing (or the full map in play).
+   Beats (startCine): 'pushin' — the mission opens with a slow dolly
+   (play pulls back from 1.25x on the compound heart to the full map;
+   WATCH pushes in from the wide compound to the 1.25x follow framing);
+   'ko' — a fast punch to ~1.55x on the knocked-out guard, 14-frame hold,
+   gentle settle back; 'done' — a slow settle to ~1.5x on the infiltrator
+   at the extraction pad, held while the verdict shows; 'caught' — a
+   punch to ~1.4x on the player and the catching guard, held while the
+   scrubbed banner shows. Beats are transient, never saved; reset/load
+   clear them. stepCine runs in step() next to stepWatchCam, so it
+   freezes while paused and keeps easing through caught/done. */
+let cinZ=1, cinX=W/2, cinY=H/2, cinKind=null, cinTarget=1, cinTX=W/2, cinTY=H/2, cinHold=0, cinRate=0.08;
+function startCine(kind,tx,ty,zoom,hold,rate){
+ cinKind=kind; cinTX=tx; cinTY=ty; cinTarget=zoom; cinHold=hold; cinRate=rate;
+}
+function stepCine(){
+ const baseX= watchCamOn? camX : W/2, baseY= watchCamOn? camY : H/2;
+ if(cinKind){
+   if(cinHold>0) cinHold--;
+   else if(cinHold===0 && Math.abs(cinZ-cinTarget)<0.01) cinKind=null;
+   /* cinHold===-1: hold at target until reset/load clears the beat */
+ }
+ const tZ= cinKind? cinTarget : 1;
+ const rate= cinKind? cinRate : 0.1;
+ cinZ += (tZ-cinZ)*rate;
+ if(!cinKind && Math.abs(cinZ-1)<0.003){ cinZ=1; cinX=baseX; cinY=baseY; }
+ else {
+   const tX= cinKind? cinTX : baseX, tY= cinKind? cinTY : baseY;
+   cinX += (tX-cinX)*0.08; cinY += (tY-cinY)*0.08;
+ }
+}
+function drawWatchPlateLeft(){
+ const st=FE_STYLE[feAgentId]||{color:'#00ff88',style:'ghost'};
+ const x=12, y=38, w=300, h=34;
+ ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(x,y,w,h);
+ ctx.fillStyle=st.color; ctx.fillRect(x,y,4,h); /* agent-colour edge */
+ /* portrait chip — the shared dialogue portrait, scaled 0.55 (same as Skylance) */
+ ctx.save(); ctx.translate(x+22,y+h/2); ctx.scale(0.55,0.55);
+ drawDlgPortrait('WRAITH',st.color,0,0); ctx.restore();
+ /* mission pips — keycard, hostage, extraction (filled = done) */
+ const done=[hasKey,hostageFollow,phase==='done'];
+ for(let i=0;i<3;i++){
+   const px=x+w-16-i*15;
+   ctx.fillStyle= done[i]? st.color : 'rgba(255,255,255,0.25)';
+   ctx.beginPath(); ctx.arc(px,y+11,4,0,7); ctx.fill();
+ }
+ ctx.textAlign='left';
+ ctx.fillStyle=st.color; ctx.font='bold 13px "Share Tech Mono"';
+ ctx.fillText(feAgentId||'WRAITH', x+40, y+15);
+ ctx.fillStyle='#c6d2e4'; ctx.font='10px "Share Tech Mono"';
+ ctx.fillText(st.style, x+40, y+28);
+ ctx.textAlign='center';
+}
+function drawWatchPlateRight(){
+ const x=W-312, y=38, w=300, h=34;
+ const stunned=guards.filter(g=>g.stun>0).length;
+ const alertCol= alert==='alert'?'#ff3860': alert==='suspicious'?'#ffd700': alert==='evasion'?'#ff9d3d':'#00ff88';
+ const alertWord= alert==='alert'?'ALERT': alert==='suspicious'?'SUSPICIOUS': alert==='evasion'?'EVASION':'UNSEEN';
+ ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(x,y,w,h);
+ ctx.fillStyle=alertCol; ctx.fillRect(x+w-4,y,4,h); /* alert-colour edge */
+ ctx.textAlign='right';
+ ctx.fillStyle='#c6d2e4'; ctx.font='bold 13px "Share Tech Mono"';
+ ctx.fillText(CUR.name+' · '+guards.length+' GUARDS', x+w-12, y+15);
+ ctx.fillStyle=alertCol; ctx.font='10px "Share Tech Mono"';
+ ctx.fillText(alertWord+' · '+stunned+' STUNNED · ALERTS '+detections, x+w-12, y+28);
+ ctx.textAlign='center';
+}
+function drawWatchFeed(){
+ if(!watchFeed.length) return;
+ /* score feed — newest at the bottom, older lines fade (never below 0.45
+    while the mission runs; the log caps at 4). A dark backing panel keeps
+    the lines readable over the compound — the first Skylance pass drew
+    them bare and the gold match line washed out on the moon disc. */
+ ctx.fillStyle='rgba(0,0,0,0.45)';
+ ctx.fillRect(W-12-268, 80, 268, watchFeed.length*15+8);
+ ctx.textAlign='right'; ctx.font='11px "Share Tech Mono"';
+ for(let i=0;i<watchFeed.length;i++){
+   const f=watchFeed[i];
+   const a=clamp(1-(frame-f.t)/(60*6),0.45,1);
+   ctx.fillStyle=hexA(f.color,a);
+   ctx.fillText('▸ '+f.text, W-12, 88+i*15);
+ }
+ ctx.textAlign='center';
+}
+function drawWatchHud(){
+ drawWatchPlateLeft(); drawWatchPlateRight(); drawWatchFeed();
+}
+function showPauseOverlay(on){ const ov=document.getElementById('pauseOverlay'); if(ov&&ov.style) ov.style.display=on?'flex':'none'; }
+function togglePause(){
+ if(phase!=='play') return;
+ paused=!paused;
+ showPauseOverlay(paused);
+ document.getElementById('msg').textContent= paused? '⏸ PAUSED — Esc/P resume · R restart · Q quit to arcade' : 'Mission live. WASD move · SHIFT sneak · SPACE knock out.';
+}
+function reset(){
+ paused=false;
+ applyMission(mission);
+ const s=findTile('S');
+ player={x:s.x,y:s.y,r:11,dir:0,stunCD:0,path:[],pathT:0,reached:''};
+ guards=CUR.wps.map(w=>mkGuard(w, CUR.speed));
+ hasKey=false; hostageFree=false; hostageFollow=false;
+ hostage={x:HOSTP.x,y:HOSTP.y,r:10};
+ alert='calm'; alertT=0; seeMeter=0; detections=0; missionT=0; phase='play'; dlg=null; dlgQueue=[]; pendingShouts=[];
+ say('LOOM','WRAITH, you are inside the '+CUR.name.toLowerCase()+'. Keycard first — north vault room. Then free the hostage bot and reach extraction east. Stay out of the cones.');
+ /* Fallible Engine (E6): a WATCH mission gets the next council agent in
+    rotation (ASIMOV first); a human mission gets no engine agent. */
+ feTrace=[]; feRecorded=false;
+ if(watch){ feAgentId=feNextAgentId();
+   const FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+   feAgent=FE?FE.loadAgent(feAgentId):null;
+ } else { feAgentId=null; feAgent=null; }
+ /* AGENT MODES (dim 4): a fresh mission starts with a fresh (empty) watch
+    feed, and the camera snaps to the infiltrator's spawn. */
+ watchFeed=[]; camX=player.x; camY=player.y;
+ if(watch) watchLog(feAgentId+' infiltrates — '+CUR.name.toLowerCase(), '#ffd75e');
+ /* GRAPHICS L5: mission-start push-in — play pulls back from 1.25x on the
+    compound heart to the full map; WATCH pushes in from the wide compound
+    (cinZ 0.8 = 1.25x base × 0.8 = 1.0x, full map) to the follow framing. */
+ cinKind=null; cinZ= watch?0.8:1.25; cinX= watch?player.x:W/2; cinY= watch?player.y:H/2;
+ startCine('pushin', watch?player.x:W/2, watch?player.y:H/2, 1, 0, 0.03);
+}
+function mkGuard(wps,speed){ return {wps, wi:0, x:wps[0][0]*T+16, y:wps[0][1]*T+16, r:11, dir:0, speed: speed||1.05, stun:0, mode:'patrol', tx:0, ty:0, loseT:0,
+ susp:0, scanT:0, scanBase:0, faceT:0, aware:false, counted:false, shouted:false}; }
+
+/* ---------------- GUARD AI v2 — per-guard cognition (2026-11-21) ----------------
+   Modelled on the documented behaviour of classic 3D stealth guards
+   (scan 8 §A4): a hearing radius vs noise, investigate-last-seen, alarm
+   propagation that only reaches guards who learn of you, and a suspicion
+   build before full alert. SPEC LANE: behaviour re-implemented here in
+   our own code and names — no external code, names or assets.
+   Each guard carries its own brain: mode patrol|suspect|chase|hunt,
+   susp 0..100, tx/ty = its current stimulus / last-seen point. The old
+   global alert/seeMeter survive as DERIVED values (max suspicion, worst
+   mode) so the HUD, the WATCH bot and save format keep their meaning.
+   Tuned numbers: vision build 2.6/frame far · 5.2 close (sneak ×0.45),
+   ×1.6 re-acquire for an already-alert guard; suspicion ≥22 = pause and
+   face the stimulus ("?"), ≥55 = walk over and scan 120 frames (~2s),
+   100 = chase ("!") + shout. Hearing: running footsteps radius 46,
+   a knockout radius 130. Alarm shout: radius 175, one relay hop per
+   15 frames, so the word ripples guard-to-guard instead of switching
+   the whole compound on at once. Chase gives up after 75 frames without
+   sight → hunt: go to the last-seen point and scan 120 frames, then
+   stand down to patrol with suspicion held at 40 (a fresh glimpse
+   re-alerts fast). KO'd guards wake into hunt, not instant chase. */
+const HEAR_FOOT=46, HEAR_KO=130, SHOUT_R=175, SHOUT_HOP=15, SUSP_FACE=22, SUSP_INVEST=55, SCAN_FRAMES=120, CHASE_LOSE=75;
+let pendingShouts=[]; /* {x,y,px,py,at,src} — alarm words in flight */
+function scheduleShout(g){ if(g.shouted) return; g.shouted=true;
+ pendingShouts.push({x:g.x, y:g.y, px:g.tx, py:g.ty, at:frame+SHOUT_HOP, src:g}); }
+function deliverShout(s){
+ for(const o of guards){ if(o===s.src||o.stun>0||o.mode==='chase'||o.aware) continue;
+   if(Math.hypot(o.x-s.x,o.y-s.y)<=SHOUT_R){ o.aware=true; o.tx=s.px; o.ty=s.py;
+     o.susp=Math.max(o.susp,80);
+     if(o.mode==='patrol'||o.mode==='suspect'){ o.mode='hunt'; o.scanT=0; o.faceT=0; }
+     scheduleShout(o); /* relay: this guard passes the word one hop further */ } }
+}
+function enterChase(g){
+ const othersAlert=guards.some(o=>o!==g&&(o.mode==='chase'||o.mode==='hunt'));
+ g.mode='chase'; g.susp=100; g.loseT=0; g.scanT=0; g.faceT=0;
+ if(!g.counted){ g.counted=true; detections++; }
+ scheduleShout(g);
+ if(!othersAlert) say('HQ','!! INTRUDER SPOTTED — NEARBY UNITS CONVERGE !!');
+ watchLog('🚨 SPOTTED — '+(feAgentId||'WRAITH')+' made', '#ff3860');
+}
+function hearStimulus(g,x,y,loud){
+ /* a sound turns the guard's head; a loud one (a knockout) sends it to look */
+ if(g.mode==='chase'||g.mode==='hunt') return;
+ if(g.mode==='patrol'){ g.mode='suspect'; g.faceT=45; g.scanT=0; }
+ g.tx=x; g.ty=y; g.susp=Math.max(g.susp, loud?70:30);
+}
+function emitNoise(x,y,r,loud){
+ for(const g of guards){ if(g.stun>0) continue;
+   if(Math.hypot(g.x-x,g.y-y)<=r) hearStimulus(g,x,y,loud); }
+}
+function giveUp(g){ const wasAware=g.aware;
+ g.mode='patrol'; g.scanT=0; g.faceT=0; g.aware=false; g.counted=false; g.shouted=false;
+ g.susp=Math.min(g.susp, wasAware?40:18); }
+function guardMoveTo(g,tx,ty,sp){
+ const dx=tx-g.x, dy=ty-g.y, d=Math.hypot(dx,dy)||1;
+ if(d<2) return d;
+ g.dir=Math.atan2(dy,dx); moveEntity(g, dx/d*Math.min(sp,d), dy/d*Math.min(sp,d)); return d;
+}
+function guardScanStep(g){ g.dir=g.scanBase+Math.sin((SCAN_FRAMES-g.scanT)*0.055)*0.95; g.scanT--; }
+
+/* line of sight on the tile grid */
+function los(x0,y0,x1,y1){
+ const steps=Math.ceil(Math.hypot(x1-x0,y1-y0)/8);
+ for(let i=1;i<steps;i++){ const x=x0+(x1-x0)*i/steps, y=y0+(y1-y0)*i/steps;
+   if(solidAt(Math.floor(x/T),Math.floor(y/T),true)) return false; }
+ return true;
+}
+function canSee(g,p){
+ if(g.stun>0) return false;
+ const d=Math.hypot(p.x-g.x,p.y-g.y); if(d>118) return false;
+ let da=Math.atan2(p.y-g.y,p.x-g.x)-g.dir;
+ while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
+ if(Math.abs(da)>1.05 && d>26) return false;
+ return los(g.x,g.y,p.x,p.y);
+}
+function moveEntity(e,dx,dy){
+ const nx=e.x+dx, ny=e.y+dy;
+ if(!solidAt(Math.floor((nx+Math.sign(dx)*e.r)/T), Math.floor(e.y/T), hasKey) && !solidAt(Math.floor(nx/T),Math.floor((e.y)/T),hasKey)) e.x=nx;
+ if(!solidAt(Math.floor(e.x/T), Math.floor((ny+Math.sign(dy)*e.r)/T), hasKey)) e.y=ny;
+ e.x=clamp(e.x,20,W-20); e.y=clamp(e.y,20,H-20);
+}
+
+/* ---------------- input: keyboard, remappable bindings, pause ---------------- */
+/* Bindings persist in localStorage; Esc always pauses (same as Contention)
+   and R always restarts, even if the pause/restart keys were remapped. */
+const DEFAULT_BIND={sneak:'ShiftLeft',ko:'Space',pause:'KeyP',restart:'KeyR'};
+let BIND={...DEFAULT_BIND};
+try{ const saved=JSON.parse(localStorage.getItem('ghostline-bindings-v1')||'null'); if(saved&&typeof saved==='object') BIND={...DEFAULT_BIND,...saved}; }catch(e){}
+function saveBind(){ try{ localStorage.setItem('ghostline-bindings-v1', JSON.stringify(BIND)); }catch(e){} }
+function keyName(code){ return String(code||'').replace(/^Key/,'').replace(/^Digit/,'').replace(/^ShiftLeft$/,'SHIFT').replace(/^ShiftRight$/,'SHIFT').replace(/^Escape$/,'ESC').replace(/^ArrowUp$/,'↑').replace(/^ArrowDown$/,'↓').replace(/^ArrowLeft$/,'←').replace(/^ArrowRight$/,'→').replace(/^Space$/,'SPACE'); }
+const keys={};
+let rebinding=null; /* action name currently awaiting a key press, or null */
+const bindEls={sneak:'bindSneak',ko:'bindKO',pause:'bindPause',restart:'bindRestart'};
+function refreshBinds(){ for(const k in bindEls){ const el=document.getElementById(bindEls[k]); if(el) el.textContent= rebinding===k? 'press a key…' : keyName(BIND[k]); } }
+for(const k in bindEls){ const el=document.getElementById(bindEls[k]);
+  if(el&&el.addEventListener){ el.style.cursor='pointer'; el.title='Click to rebind'; el.addEventListener('click',()=>{ rebinding=k; refreshBinds(); }); } }
+refreshBinds();
+addEventListener('keydown',e=>{
+ if(rebinding){ BIND[rebinding]=e.code; saveBind(); rebinding=null; refreshBinds(); e.preventDefault(); return; }
+ keys[e.code]=true;
+ if(e.code==='Escape'&&isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ return; }
+ if(e.code==='Escape'||e.code===BIND.pause){ togglePause(); }
+ else if(e.code===BIND.restart||e.code==='KeyR'){ if(phase==='caught'||phase==='done'||phase==='play') reset(); }
+ else if(e.code==='KeyF'){ toggleFullscreen(); }
+ else if(e.code==='KeyQ'&&paused){ location.href='../arcade.html'; }
+ if(e.code===BIND.ko) koBuf=10; /* input buffer: a KO pressed just before reaching a guard still lands */
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); });
+addEventListener('keyup',e=>{ keys[e.code]=false; });
+
+/* ---------------- fullscreen (FULLSCREEN standard): the shell — stage on
+   desktop, the whole handheld console on phones — fills the screen via the
+   Fullscreen API. F toggles, the button toggles, Esc exits (browser) before
+   it can pause. Label follows the real fullscreen state. ---- */
+const fsShell=document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ const b=document.getElementById('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — stage fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+  updateFsBtn();
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+
+function sneakHeld(){ return !!(keys[BIND.sneak]||keys.ShiftLeft||keys.ShiftRight||touch.sneak||pad.sneak||sneakLock); }
+function koHeld(){ return koBuf>0 || !!keys[BIND.ko] || pad.ko; }
+
+/* ---------------- gamepad ---------------- */
+const pad={x:0,y:0,sneak:false,ko:false,connected:false,id:'',startEdge:false};
+function pollPad(){
+ let gp=null;
+ try{ const pads=(typeof navigator!=='undefined'&&navigator.getGamepads)?navigator.getGamepads():null;
+   if(pads) for(const p of pads){ if(p&&p.connected){ gp=p; break; } } }catch(e){}
+ if(!gp){ if(pad.connected){ pad.connected=false; const st=document.getElementById('padStatus'); if(st) st.textContent=''; }
+   pad.x=pad.y=0; pad.sneak=false; pad.ko=false; return; }
+ if(!pad.connected){ pad.connected=true; pad.id=gp.id||'gamepad';
+   const st=document.getElementById('padStatus'); if(st) st.textContent=' — connected: '+(pad.id||'').slice(0,28); }
+ const dz=v=>Math.abs(v)<0.25?0:v;
+ let ax=dz(gp.axes[0]||0), ay=dz(gp.axes[1]||0);
+ const b=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
+ if(b(14))ax-=1; if(b(15))ax+=1; if(b(12))ay-=1; if(b(13))ay+=1;
+ pad.x=clamp(ax,-1,1); pad.y=clamp(ay,-1,1);
+ pad.sneak=b(4)||b(6); /* LB / LT hold to sneak */
+ const koNow=b(0)||b(2); /* A / X */
+ if(koNow&&!pad.ko) koBuf=10; pad.ko=koNow;
+ const st=b(9); /* START */
+ if(st&&!pad.startEdge) togglePause(); pad.startEdge=st;
+}
+addEventListener('gamepadconnected',e=>{ document.getElementById('msg').textContent='🎮 Gamepad connected: '+String(e.gamepad.id||'').slice(0,28)+' — stick / D-pad move · A/X knock out · LB sneak · START pause'; });
+
+/* ---------------- touch controls: handheld shell (MOBILE PLAY standard) ----------------
+   D-PAD + A/B live in #shellDeck, BELOW the screen — never overlapping gameplay
+   or the radio box (the old joystick-over-canvas layout is gone). Shown when
+   the device reports a coarse pointer, or ?touch=1 forces it (headless check).
+   A = sneak (hold), B = knock out, START = pause menu, SELECT = sneak lock. */
+const touch={dx:0,dy:0,sneak:false};
+let isTouch=false, sneakLock=false;
+try{ isTouch=(typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches)||(typeof navigator!=='undefined'&&navigator.maxTouchPoints>0)||new URLSearchParams(location.search).get('touch')==='1'; }catch(e){ isTouch=false; }
+if(isTouch && document.body && document.body.classList) document.body.classList.add('touch');
+const touchDir={up:false,left:false,right:false,down:false};
+function syncTouchDir(){ touch.dx=(touchDir.right?1:0)-(touchDir.left?1:0); touch.dy=(touchDir.down?1:0)-(touchDir.up?1:0); }
+function wireShellBtn(b){
+ const k=b.dataset.k; if(!k) return;
+ const down=e=>{ if(e&&e.preventDefault)e.preventDefault();
+   if(k==='ko'){ koBuf=10; }
+   else if(k==='sneak'){ touch.sneak=true; }
+   else if(touchDir.hasOwnProperty(k)){ touchDir[k]=true; syncTouchDir(); } };
+ const up=()=>{ if(k==='sneak') touch.sneak=false; else if(touchDir.hasOwnProperty(k)){ touchDir[k]=false; syncTouchDir(); } };
+ b.addEventListener('pointerdown',down);
+ b.addEventListener('pointerup',up); b.addEventListener('pointerleave',up); b.addEventListener('pointercancel',up);
+}
+document.querySelectorAll('#shellDeck button[data-k]').forEach(wireShellBtn);
+function toggleSneakLock(){ sneakLock=!sneakLock;
+ document.getElementById('msg').textContent= sneakLock? 'SNEAK LOCKED — WRAITH creeps until SELECT again.' : 'Sneak lock off — hold SHIFT or shell A to creep.'; }
+const _startBtn=document.getElementById('startBtn'); if(_startBtn) _startBtn.onclick=()=>{ togglePause(); };
+const _selectBtn=document.getElementById('selectBtn'); if(_selectBtn) _selectBtn.onclick=()=>{ toggleSneakLock(); };
+
+/* ---------------- save / load state (handheld shell START menu) ----------------
+   Full mission state serialised to localStorage under a per-game key, 1 slot.
+   Loading restores the exact positions, alert state, keycard/hostage progress,
+   guard stuns and mission clock. No gameplay-logic change. */
+const SAVE_KEY='ghostline-save-v1';
+function saveState(){
+ if(phase!=='play') return false;
+ /* E35 REPAIR D1: flush the engine's unpersisted traces first, then persist
+    the Fallible Engine bout state (trace history, agent, recorded flag)
+    with the mission state, so a mid-watch save survives a fresh load. */
+ const FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+ if(FE&&FE.flush){ try{ FE.flush(); }catch(e){} }
+ const s={v:1,frame,phase,watch,mission,alert,alertT,seeMeter,detections,missionT,
+  hasKey,hostageFollow,
+  feTrace:feTrace.slice(), feAgentId:feAgentId, feRecorded:feRecorded,
+  player:{x:player.x,y:player.y,r:player.r,dir:player.dir,stunCD:player.stunCD,path:[],pathT:0,reached:player.reached},
+  hostage:{x:hostage.x,y:hostage.y,r:hostage.r},
+  guards:guards.map(g=>({wps:g.wps,wi:g.wi,x:g.x,y:g.y,r:g.r,dir:g.dir,speed:g.speed,stun:g.stun,mode:g.mode,tx:g.tx,ty:g.ty,loseT:g.loseT,susp:g.susp,scanT:g.scanT,scanBase:g.scanBase,faceT:g.faceT,aware:g.aware,counted:g.counted,shouted:g.shouted}))};
+ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(s)); }catch(e){ return false; }
+ return true;
+}
+function loadState(){
+ let raw=null; try{ raw=localStorage.getItem(SAVE_KEY); }catch(e){}
+ if(!raw) return false;
+ let s; try{ s=JSON.parse(raw); }catch(e){ return false; }
+ if(!s||s.v!==1||!s.player||!Array.isArray(s.guards)) return false;
+ if(s.mission&&MAPS[s.mission]) applyMission(s.mission);
+ /* E35 REPAIR D2: capture the saved Fallible Engine bout state BEFORE
+    reset() — reset() clears feTrace/feRecorded and, when watch, picks a
+    FRESH rotation agent. Run reset() with watch off so the load consumes
+    no rotation slot; the saved agent is re-attached below via FE.loadAgent
+    (no cursor). An ended bout (done/caught) loads inert: recorded defaults
+    true when the save carries no flag, so it can never re-record. */
+ const _feSave={agentId:(typeof s.feAgentId==='string'&&FE_AGENTS.indexOf(s.feAgentId)>=0)?s.feAgentId:null,
+  traces:Array.isArray(s.feTrace)?s.feTrace.slice():null,
+  /* E35 REPAIR E: an ended bout (done/caught) is ALWAYS recorded=true on
+     load, even if the blob still carries feRecorded=false — a crafted
+     over-save mutates phase only, and must load inert, never re-record. */
+  recorded:(s.phase==='done'||s.phase==='caught')?true:((typeof s.feRecorded==='boolean')?s.feRecorded:false),
+  phase:(s.phase==='done'||s.phase==='caught')?s.phase:'play', watch:!!s.watch};
+ watch=false;
+ reset(); /* rebuilds player/guards/hostage, sets phase='play' */
+ refreshMissionBtns();
+ frame=s.frame; watch=_feSave.watch; alert=s.alert; alertT=s.alertT; seeMeter=s.seeMeter;
+ detections=s.detections; missionT=s.missionT; hasKey=!!s.hasKey; hostageFollow=!!s.hostageFollow;
+ /* dialogue is transient: a load starts with a clean box (old saves may
+    still carry a radio field — ignored, never read back) */
+ dlg=null; dlgQueue=[];
+ Object.assign(player,s.player); player.path=[]; player.pathT=0;
+ Object.assign(hostage,s.hostage); hostage.path=[]; hostage.pathT=0;
+ guards=s.guards.map(gs=>{ const g=mkGuard(gs.wps||[[7,2]]); return Object.assign(g,gs); });
+ /* E35 REPAIR D2: restore the saved watch bout — same agent (feRestoreAgent
+    re-attaches via FE.loadAgent with NO rotation slot), full trace history,
+    recorded flag, saved phase. Legacy saves with no feAgentId keep the old
+    behaviour for a live bout (fresh rotation agent); an ended legacy bout
+    restores with no agent, since the bout is over and must stay inert. */
+ if(_feSave.watch){
+   if(_feSave.agentId){ feRestoreAgent(_feSave.agentId); }
+   else if(_feSave.phase==='play'){ feRestoreAgent(feNextAgentId()); }
+   else { feAgentId=null; feAgent=null; }
+   feTrace=_feSave.traces||[];
+   feRecorded=_feSave.recorded;
+ } else { feAgentId=null; feAgent=null; feTrace=[]; feRecorded=false; }
+ phase=_feSave.phase;
+ paused=false; showPauseOverlay(false);
+ /* AGENT MODES (dim 4): the feed is transient — a load starts with a
+    fresh feed, and the camera snaps to the restored position. */
+ watchFeed=[]; camX=player.x; camY=player.y;
+ /* GRAPHICS L5: cinematic beats are transient too — a load lands exactly,
+    with no push-in or held close-up. */
+ cinKind=null; cinZ=1; cinX=player.x; cinY=player.y;
+ if(watch) watchLog((feAgentId||'WRAITH')+' — state loaded', '#ffd75e');
+ document.getElementById('msg').textContent='State loaded — '+(hasKey?'keycard in hand':'keycard still north')+(hostageFollow?' · SCRIBE with you':'')+' · ⏱ '+Math.floor(missionT/60)+'s · alerts '+detections;
+ return true;
+}
+const _resumeBtn=document.getElementById('resumeBtn'); if(_resumeBtn) _resumeBtn.onclick=()=>{ if(phase==='play'){ paused=false; showPauseOverlay(false); document.getElementById('msg').textContent='Mission live. WASD move · SHIFT sneak · SPACE knock out.'; } };
+const _saveBtn=document.getElementById('saveBtn'); if(_saveBtn) _saveBtn.onclick=()=>{ const ok=saveState(); document.getElementById('msg').textContent= ok?'💾 State saved — START menu → Load State brings this exact moment back.':'Save works mid-mission only — press Play first.'; };
+const _loadBtn=document.getElementById('loadBtn'); if(_loadBtn) _loadBtn.onclick=()=>{ const ok=loadState(); if(!ok) document.getElementById('msg').textContent='No saved state yet — save one from the START menu mid-mission first.'; };
+const _restartBtn=document.getElementById('restartBtn'); if(_restartBtn) _restartBtn.onclick=()=>{ paused=false; showPauseOverlay(false); reset(); };
+const _quitArcadeBtn=document.getElementById('quitArcadeBtn'); if(_quitArcadeBtn) _quitArcadeBtn.onclick=()=>{ location.href='../arcade.html'; };
+
+/* ---------------- BFS pathfinding (watch-mode bot + hostage follow) ---------------- */
+function bfs(sx,sy,tx,ty){
+ const key=(x,y)=>y*COLS+x, prev=new Map(), q=[[sx,sy]]; prev.set(key(sx,sy),null);
+ while(q.length){ const [x,y]=q.shift(); if(x===tx&&y===ty) break;
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=x+dx,ny=y+dy,k=key(nx,ny);
+   if(!prev.has(k) && !solidAt(nx,ny,hasKey)){ prev.set(k,[x,y]); q.push([nx,ny]); } } }
+ if(!prev.has(key(tx,ty))) return [];
+ const path=[]; let cur=[tx,ty]; while(cur){ path.unshift(cur); cur=prev.get(key(cur[0],cur[1])); }
+ return path;
+}
+/* guard-aware routing for the watch bot: same BFS, but tiles inside a patrolling
+   guard's bubble are avoided unless they are the goal itself — the bot routes
+   AROUND patrols instead of through them. Falls back to plain BFS when the
+   safe route does not exist (a guarded chokepoint must still be threaded). */
+function nearGuard(cx,cy){
+ for(const g of guards){ if(g.stun>0) continue;
+   if(Math.hypot(cx*T+16-g.x, cy*T+16-g.y)<36) return true; }
+ return false;
+}
+function bfsSafe(sx,sy,tx,ty){
+ const key=(x,y)=>y*COLS+x, prev=new Map(), q=[[sx,sy]]; prev.set(key(sx,sy),null);
+ while(q.length){ const [x,y]=q.shift(); if(x===tx&&y===ty) break;
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=x+dx,ny=y+dy,k=key(nx,ny);
+   if(!prev.has(k) && !solidAt(nx,ny,hasKey) && ((nx===tx&&ny===ty)||!nearGuard(nx,ny))){ prev.set(k,[x,y]); q.push([nx,ny]); } } }
+ if(!prev.has(key(tx,ty))) return [];
+ const path=[]; let cur=[tx,ty]; while(cur){ path.unshift(cur); cur=prev.get(key(cur[0],cur[1])); }
+ return path;
+}
+/* ---------------- Fallible Engine wiring (E6) ----------------
+   The WATCH infiltrator's ROUTE choice runs through FallibleEngine.decide:
+   the game scores three options from its own heuristic (safe route around
+   patrols, direct shortest route, hold and wait), the engine samples by
+   softmax at the bot's personality temperature and records the trace.
+   Engine absent -> legacyRoute below (the original deterministic pick), so
+   the game plays exactly as before. The reactive dodge stays a reflex (not
+   a choice), KO stays player-only, and no rule, map, speed or guard
+   behaviour is touched — only how the WATCH bot CHOOSES its route. */
+function dodgeVec(p){
+ let threat=null, td=1e9;
+ for(const g of guards){ if(g.stun>0) continue; const d=Math.hypot(p.x-g.x,p.y-g.y); if(d<td){ td=d; threat=g; } }
+ if(threat && td<44){ const dx=p.x-threat.x, dy=p.y-threat.y, d=Math.hypot(dx,dy)||1; return {dx:dx/d, dy:dy/d}; }
+ return null;
+}
+function legacyRoute(p,goal){
+ return bfsSafe(Math.floor(p.x/T),Math.floor(p.y/T), goal.cx, goal.cy)
+     || bfs(Math.floor(p.x/T),Math.floor(p.y/T), goal.cx, goal.cy);
+}
+function engineRoute(p,goal){
+ const FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+ if(!FE||!watch||!feAgent) return null;
+ const sx=Math.floor(p.x/T), sy=Math.floor(p.y/T);
+ const safe=bfsSafe(sx,sy,goal.cx,goal.cy), direct=bfs(sx,sy,goal.cx,goal.cy);
+ /* cone threat on the next direct step: a guard cone covering where the bot
+    is about to walk, while things are calm, is the reason to wait. */
+ let coneThreat=false, nearest=1e9;
+ const nxT= direct.length>1? direct[1][0] : sx, nyT= direct.length>1? direct[1][1] : sy;
+ for(const g of guards){ if(g.stun>0) continue;
+   const dg=Math.hypot(p.x-g.x,p.y-g.y); if(dg<nearest) nearest=dg;
+   if(Math.hypot(nxT*T+16-g.x,nyT*T+16-g.y)<70 && canSee(g,{x:nxT*T+16,y:nyT*T+16}) && alert==='calm') coneThreat=true; }
+ const options=[
+  {key:'safe-route', tag:'safe-route', score: 0.50 + (alert!=='calm'?0.15:0) + (nearest<80?0.15:0) + (safe.length?0:-0.50)},
+  {key:'direct-route', tag:'direct-route', score: 0.55 + (alert==='calm'?0.10:-0.10) + (direct.length?0:-0.50)},
+  {key:'wait', tag:'wait', score: 0.12 + (coneThreat?0.45:0) + (alert==='alert'?0.25: alert==='suspicious'?0.12:0) + (seeMeter>50?0.10:0)}
+ ];
+ const res=FE.decide(feAgent,'ghostline',options,
+   { timePressure: missionT>60*120?0.5 : missionT>60*60?0.25:0, alert, detections, missionT });
+ feTrace.push(res.trace);
+ if(res.pick.key==='wait') return 'wait';
+ let path= res.pick.key==='safe-route'? safe : direct;
+ if(!path.length) path= res.pick.key==='safe-route'? direct : safe;
+ return path.length? path : null;
+}
+function botControl(){
+ const p=player; p.pathT--;
+ /* engine 'wait' hold: the bot stands, but the dodge reflex still applies. */
+ if(p.waitT>0){ p.waitT--; const dv=dodgeVec(p); if(dv) return dv; return {dx:0,dy:0,wait:true}; }
+ let goal=null;
+ if(!hasKey) goal=KEYP; else if(!hostageFollow) goal=HOSTP; else goal=EXITP;
+ if(p.pathT<=0 || !p.path.length){
+   const r=engineRoute(p,goal);
+   if(r==='wait'){ p.waitT=50; p.path=[]; p.pathT=50; const dv=dodgeVec(p); if(dv) return dv; return {dx:0,dy:0,wait:true}; }
+   p.path= r || legacyRoute(p,goal); p.pathT=50;
+ }
+ if(!p.path.length) return {dx:0,dy:0};
+ const [tx,ty]=p.path[Math.min(1,p.path.length-1)];
+ const gx=tx*T+16, gy=ty*T+16, dx=gx-p.x, dy=gy-p.y, d=Math.hypot(dx,dy);
+ if(d<4){ p.path.shift(); return {dx:0,dy:0}; }
+ /* never stand on a patrol route: if a guard closes on WRAITH, step away from it
+    (checked BEFORE the cone-wait, so a waiting bot still dodges a guard walking in;
+    applies in any alert state — a converging guard is dodged, not walked into) */
+ const dv=dodgeVec(p); if(dv) return dv;
+ /* caution: pause briefly if a guard cone points at the next step */
+ for(const g of guards){ if(g.stun<=0 && Math.hypot(gx-g.x,gy-g.y)<70 && canSee(g,{x:gx,y:gy}) && alert==='calm') return {dx:0,dy:0,wait:true}; }
+ return {dx:dx/d, dy:dy/d};
+}
+
+/* ---------------- guards + alert phases (AI v2: per-guard brain) ---------------- */
+function stepGuards(){
+ /* alarm words in flight land one hop at a time */
+ for(let i=pendingShouts.length-1;i>=0;i--){ if(frame>=pendingShouts[i].at){ deliverShout(pendingShouts[i]); pendingShouts.splice(i,1); } }
+ for(const g of guards){
+   if(g.stun>0){ g.stun--;
+     if(g.stun===0 && g.mode==='chase'){ g.mode='hunt'; g.scanT=0; g.susp=Math.min(g.susp,80); } /* wakes up searching, not psychic */
+     continue; }
+   const sees=canSee(g,player);
+   if(sees){ g.tx=player.x; g.ty=player.y; g.loseT=0;
+     const distP=Math.hypot(player.x-g.x,player.y-g.y);
+     const rate=(distP<55? 5.2 : 2.6) * (sneakHeld()? .45:1) * ((g.mode==='chase'||g.mode==='hunt')? 1.6 : 1);
+     g.susp=Math.min(100, g.susp+rate);
+     if(g.susp>=100 && g.mode!=='chase') enterChase(g);
+     else if(g.mode==='patrol' && g.susp>=SUSP_FACE){ g.mode='suspect'; g.faceT=45; g.scanT=0; }
+     else if(g.mode==='suspect') g.faceT=45; /* still watching you: suspicion keeps building */
+   }
+   /* movement by per-guard mode */
+   if(g.mode==='chase'){
+     guardMoveTo(g,g.tx,g.ty,1.55);
+     if(!sees){ g.loseT++; if(g.loseT>CHASE_LOSE){ g.mode='hunt'; g.scanT=0; } }
+   } else if(g.mode==='hunt'){
+     if(g.scanT>0){ guardScanStep(g); if(g.scanT<=0) giveUp(g); }
+     else if(Math.hypot(g.tx-g.x,g.ty-g.y)>22) guardMoveTo(g,g.tx,g.ty,1.4);
+     else { g.scanT=SCAN_FRAMES; g.scanBase=g.dir; }
+   } else if(g.mode==='suspect'){
+     if(g.scanT>0){ guardScanStep(g); if(g.scanT<=0) giveUp(g); }
+     else if(g.susp>=SUSP_INVEST && Math.hypot(g.tx-g.x,g.ty-g.y)>26) guardMoveTo(g,g.tx,g.ty,1.2);
+     else if(g.susp>=SUSP_INVEST){ g.scanT=SCAN_FRAMES; g.scanBase=g.dir; }
+     else { /* pause and face the stimulus ("?") until it writes it off —
+       the write-off clock only runs while the stimulus is out of sight */
+       const want=Math.atan2(g.ty-g.y,g.tx-g.x); let da=want-g.dir;
+       while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
+       g.dir+=da*0.2;
+       if(!sees){ if(g.faceT>0) g.faceT--; else giveUp(g); } }
+   } else { /* patrol */
+     const [wx,wy]=g.wps[g.wi]; const gx=wx*T+16, gy=wy*T+16, dx=gx-g.x, dy=gy-g.y, d=Math.hypot(dx,dy);
+     if(d<5) g.wi=(g.wi+1)%g.wps.length; else { g.dir=Math.atan2(dy,dx); moveEntity(g, dx/d*g.speed, dy/d*g.speed); } }
+   /* suspicion cools when the stimulus is gone */
+   if(!sees){ if(g.mode==='patrol') g.susp=Math.max(0,g.susp-0.8);
+     else if(g.mode==='suspect') g.susp=Math.max(SUSP_FACE-4,g.susp-0.15); }
+   /* caught */
+   if(Math.hypot(player.x-g.x,player.y-g.y) < g.r+player.r-2 && phase==='play'){ phase='caught'; spawnBurst(player.x,player.y,'#ff3860',24,3.0); shake(8); startCine('caught',(player.x+g.x)/2,(player.y+g.y)/2, watch?1.6/1.25:1.4, -1, 0.1); say('LOOM','WRAITH is down. Mission scrubbed — press R and go again, quieter.'); watchLog((feAgentId||'WRAITH')+' caught — mission scrubbed', '#ff3860'); }
+ }
+ /* derived global state: HUD, WATCH bot heuristics and saves keep the old
+    meanings — seeMeter is the most-aware guard's suspicion, alert is the
+    worst guard mode (chase > hunt/evasion > suspect > calm). */
+ const prevAlert=alert;
+ let anyChase=false, anyHunt=false, anySusp=false, maxSusp=0, maxScan=0;
+ for(const g of guards){ if(g.stun>0) continue; maxSusp=Math.max(maxSusp,g.susp);
+   if(g.mode==='chase') anyChase=true;
+   else if(g.mode==='hunt'){ anyHunt=true; maxScan=Math.max(maxScan,g.scanT); }
+   else if(g.mode==='suspect') anySusp=true; }
+ seeMeter=maxSusp;
+ alert= anyChase? 'alert' : anyHunt? 'evasion' : anySusp? 'suspicious' : 'calm';
+ alertT= anyChase? 60*5 : anyHunt? Math.max(60,maxScan) : anySusp? 60*3 : 0;
+ if(alert!==prevAlert){
+   if(alert==='suspicious'&&prevAlert==='calm'){ say('LOOM','Movement on a guard feed — someone is suspicious. Freeze or break sight.'); watchLog('suspicion — a guard is watching', '#ffd700'); }
+   else if(alert==='evasion'&&prevAlert==='alert'){ say('LOOM','You broke their sightline. They are searching where they last saw you — stay dark.'); watchLog('broke sight — guards hunting', '#ff9d3d'); }
+   else if(alert==='calm'&&prevAlert==='evasion'){ say('LOOM','Feeds are calm. Move.'); watchLog('feeds calm — ghost again', '#00ff88'); }
+   else if(alert==='calm'&&prevAlert==='suspicious'){ say('LOOM','Guard wrote it off. You are a ghost again.'); watchLog('written off — ghost again', '#00ff88'); }
+ }
+}
+
+/* ---------------- player + mission ---------------- */
+function stepPlayer(){
+ let dx=0,dy=0;
+ if(watch){ const b=botControl(); dx=b.dx; dy=b.dy; }
+ else {
+   if(keys.KeyA||keys.ArrowLeft)dx-=1; if(keys.KeyD||keys.ArrowRight)dx+=1;
+   if(keys.KeyW||keys.ArrowUp)dy-=1; if(keys.KeyS||keys.ArrowDown)dy+=1;
+   dx+=touch.dx+pad.x; dy+=touch.dy+pad.y;
+ }
+ const sneak = !watch && sneakHeld();
+ const sp = watch? 2.0 : sneak? 1.25 : 2.25;
+ const d=Math.hypot(dx,dy); if(d>0){ player.dir=Math.atan2(dy,dx); moveEntity(player, dx/d*sp, dy/d*sp); }
+ /* AI v2 hearing: a RUNNING human is audible (radius HEAR_FOOT, a ping
+    every 16 frames); sneaking is silent. The WATCH infiltrator moves at a
+    trained pace and makes no footstep noise — vision, suspicion and the
+    alarm relay apply to it exactly as to the human. */
+ player._noiseCd=Math.max(0,(player._noiseCd||0)-1);
+ if(!watch && d>0 && !sneak && player._noiseCd<=0){ emitNoise(player.x,player.y,HEAR_FOOT,false); player._noiseCd=16; }
+ player.stunCD=Math.max(0,player.stunCD-1);
+ /* knockout (buffered: koBuf set on key/button press, consumed on landing).
+    A knockout is LOUD: guards within HEAR_KO come to look at the spot. */
+ if(!watch && koHeld() && player.stunCD<=0){
+   for(const g of guards){ if(g.stun<=0 && Math.hypot(g.x-player.x,g.y-player.y)<34){ g.stun=60*8; player.stunCD=30; spawnBurst(g.x,g.y,'#ff7b3d',26,3.2); spawnRing(g.x,g.y,'#ffd27b'); shake(6); startCine('ko',g.x,g.y, watch?1.55/1.25:1.55, 14, 0.25); emitNoise(g.x,g.y,HEAR_KO,true); break; } }
+ }
+ /* pickups + goals */
+ if(!hasKey && Math.hypot(player.x-KEYP.x,player.y-KEYP.y)<22){ hasKey=true; player.reached='key'; spawnBurst(KEYP.x,KEYP.y,'#ffd700',22,2.6); spawnRing(KEYP.x,KEYP.y,'#ffd700'); say('LOOM','Keycard in hand. The gold door in the middle vault is open to you now — hostage is north-east.'); watchLog('🔑 keycard taken', '#ffd700'); document.getElementById('msg').textContent='KEYCARD ACQUIRED — the gold door will open.'; }
+ if(!hasKey && !hostageFollow && Math.hypot(player.x-hostage.x,player.y-hostage.y)<26 && !player.cellHint){ player.cellHint=true; say('SCRIBE','My cell is keyed to a guard keycard — north vault room, WRAITH. Hurry.'); }
+ if(hasKey && !hostageFollow && Math.hypot(player.x-hostage.x,player.y-hostage.y)<24){ hostageFollow=true; player.reached='hostage'; spawnBurst(hostage.x,hostage.y,'#ff5db1',20,2.4); spawnRing(hostage.x,hostage.y,'#ff5db1'); say('SCRIBE','You came! I will follow your exact steps — just get me to the green extraction pad.'); watchLog('SCRIBE freed — to extraction', '#ff5db1'); document.getElementById('msg').textContent='HOSTAGE FREE — lead SCRIBE to extraction (east).'; }
+ if(hostageFollow){ /* SCRIBE pathfinds to you (BFS) — straight-line following wedges on walls */
+   hostage.pathT=(hostage.pathT||0)-1;
+   if(hostage.pathT<=0 || !hostage.path || !hostage.path.length){
+     hostage.path=bfs(Math.floor(hostage.x/T),Math.floor(hostage.y/T), Math.floor(player.x/T), Math.floor(player.y/T)); hostage.pathT=45; }
+   if(hostage.path && hostage.path.length>1){ const [tx,ty]=hostage.path[1]; const gx=tx*T+16, gy=ty*T+16;
+     const dx=gx-hostage.x, dy=gy-hostage.y, dd=Math.hypot(dx,dy);
+     if(dd<4) hostage.path.shift(); else if(Math.hypot(player.x-hostage.x,player.y-hostage.y)>14) moveEntity(hostage, dx/dd*2.1, dy/dd*2.1); }
+   if(Math.hypot(hostage.x-EXITP.x,hostage.y-EXITP.y)<30 && Math.hypot(player.x-EXITP.x,player.y-EXITP.y)<40){
+     phase='done'; player.reached='exit'; spawnBurst(player.x,player.y,'#00ff88',30,3.0); spawnRing(EXITP.x,EXITP.y,'#00ff88'); shake(4); startCine('done',player.x,player.y, watch?1.6/1.25:1.5, -1, 0.06);
+     const secs=Math.round(missionT/60), rank= detections===0? 'GHOST — never truly seen' : detections<=2? 'SHADOW — mission clean enough':'LOUD — but alive';
+     say('LOOM','Extraction confirmed. Rank: '+rank+'. Time '+secs+'s, alerts '+detections+'.');
+     watchLog('🏆 extraction — '+rank, '#00ff88');
+     document.getElementById('msg').textContent='🏆 MISSION COMPLETE — '+rank+' · '+secs+'s · alerts: '+detections+' · press R to run it again';
+   }
+ }
+}
+function step(){
+ pollPad(); /* START on the pad must unpause even while paused */
+ if(paused) return;
+ stepWatchCam(); /* AGENT MODES (dim 4): camera follows the infiltrator in WATCH; frozen while paused */
+ stepCine(); /* GRAPHICS L5: cinematic beats ease here — frozen while paused, runs through caught/done */
+ stepDialogue(); /* dialogue types whenever unpaused (even caught/done); frozen only while paused */
+ if(phase!=='play') return;
+ koBuf=Math.max(0,koBuf-1);
+ if(shakeT>0) shakeT--;
+ for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.life--; if(p.life<=0){ particles.splice(i,1); continue; } if(!p.ring){ p.x+=p.vx; p.y+=p.vy; p.vx*=0.92; p.vy*=0.92; } }
+ missionT++; stepPlayer(); if(phase==='play') stepGuards();
+ /* dialogue lines are transient — never saved, never part of gameplay state */
+ /* E6: a finished WATCH mission is recorded once, win or caught.
+    Solo game -> vs the field (opponentId null); no natural draw here. */
+ if(watch && (phase==='done'||phase==='caught')) recordGhostlineResult();
+}
+
+/* ---- Fallible Engine results (E6) ---- */
+function recordGhostlineResult(){
+ if(feRecorded) return; feRecorded=true;
+ const FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+ if(!FE||!feAgent) return;
+ FE.recordResult(feAgent,'ghostline',null, phase==='done'?'win':'loss', feTrace);
+}
+
+/* ---------------- drawing ---------------- */
+/* GRAPHICS level 1 — STRUCTURE (polish pass 2026-11-21): the compound is no
+   longer flat colour + outline. Floors are plated panels with seams, rivets
+   and set dressing (vents, cable runs, drains, wear); walls read as solid
+   blocks with a lit top face and a shadowed base; the outer ring is armored
+   perimeter plating; the keycard door and extraction pad carry hazard
+   striping / corner brackets. All deterministic per-tile hash — same every
+   run, no RNG state. Drawing only; no gameplay logic touched. */
+function tileHash(x,y){ let h=(x*374761393+y*668265263)|0; h=(h^(h>>13))*1274126177; return ((h^(h>>16))>>>0)/4294967295; }
+function drawFloorTile(x,y,c){
+ const h=tileHash(x,y), px=x*T, py=y*T;
+ ctx.fillStyle= h<0.33? '#0a1210' : h<0.66? '#0b1413' : '#0a0f14';
+ ctx.fillRect(px,py,T,T);
+ /* panel seam */
+ ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=1;
+ ctx.strokeRect(px+.5,py+.5,T-1,T-1);
+ /* L4 RICHNESS — textured surface over the flat fill: deterministic speckle
+    (metal pitting) + a faint top sheen, same every run, no RNG state */
+ for(let i=0;i<3;i++){
+   const sx=px+4+tileHash(x*3+i+11,y*5+i)*24, sy=py+4+tileHash(x*7+i,y*3+i+5)*24;
+   ctx.fillStyle='rgba(170,210,200,'+(0.04+0.05*tileHash(x+i*13,y+i*7)).toFixed(3)+')';
+   ctx.fillRect(sx,sy,1.5,1.5); }
+ if(h<0.5){ ctx.fillStyle='rgba(255,255,255,.02)'; ctx.fillRect(px,py,T,6); }
+ if(h>0.76){ /* worn plate — scratch strokes across the wear patch */
+   ctx.strokeStyle='rgba(200,220,210,.08)'; ctx.lineWidth=1;
+   ctx.beginPath(); ctx.moveTo(px+6,py+12); ctx.lineTo(px+20,py+9); ctx.stroke();
+   ctx.beginPath(); ctx.moveTo(px+9,py+20); ctx.lineTo(px+24,py+17); ctx.stroke(); }
+ /* rivets on some plates */
+ if(h>0.72){ ctx.fillStyle='rgba(140,200,180,.28)';
+   ctx.fillRect(px+3,py+3,2,2); ctx.fillRect(px+T-5,py+3,2,2);
+   ctx.fillRect(px+3,py+T-5,2,2); ctx.fillRect(px+T-5,py+T-5,2,2); }
+ /* set dressing — flat floor decals, never on objective tiles */
+ const nearObj=(Math.abs(x-KEYP.cx)<2&&Math.abs(y-KEYP.cy)<2)||(Math.abs(x-HOSTP.cx)<2&&Math.abs(y-HOSTP.cy)<2)||(Math.abs(x-EXITP.cx)<2&&Math.abs(y-EXITP.cy)<2);
+ if(!nearObj){
+   if(h>0.90){ /* vent grate */
+     ctx.fillStyle='rgba(0,0,0,.4)'; ctx.fillRect(px+6,py+6,T-12,T-12);
+     ctx.strokeStyle='rgba(120,180,200,.35)';
+     for(let i=0;i<4;i++){ ctx.beginPath(); ctx.moveTo(px+9,py+10+i*5); ctx.lineTo(px+T-9,py+10+i*5); ctx.stroke(); }
+   } else if(h>0.84){ /* cable run along the north edge */
+     ctx.strokeStyle='rgba(0,240,255,.22)'; ctx.lineWidth=2;
+     ctx.beginPath(); ctx.moveTo(px+2,py+5); ctx.lineTo(px+T-2,py+5); ctx.stroke(); ctx.lineWidth=1;
+   } else if(h>0.80){ /* floor drain */
+     ctx.strokeStyle='rgba(120,180,200,.3)';
+     ctx.beginPath(); ctx.arc(px+16,py+16,6,0,7); ctx.stroke();
+     ctx.fillStyle='rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(px+16,py+16,3,0,7); ctx.fill();
+   } else if(h>0.76){ /* worn patch */
+     ctx.fillStyle='rgba(180,200,190,.05)'; ctx.fillRect(px+5,py+8,14,10);
+   }
+ }
+ if(c==='D'){ /* light pool spilling from the keycard door — gold while locked, green once open */
+   const dcol= hasKey? '0,255,136' : '255,215,0';
+   const dg=ctx.createRadialGradient(x*T+16,y*T+16,0,x*T+16,y*T+16,46);
+   dg.addColorStop(0,'rgba('+dcol+','+(hasKey?0.07:0.10+0.03*Math.sin(animT/18)).toFixed(3)+')'); dg.addColorStop(1,'rgba('+dcol+',0)');
+   ctx.fillStyle=dg; ctx.fillRect(x*T-30,y*T-30,92,92);
+   ctx.fillStyle= hasKey? 'rgba(0,255,136,.25)':'rgba(255,215,0,.5)'; ctx.fillRect(x*T+2,y*T+2,T-4,T-4);
+   /* hazard chevron frame around the keycard door — breathes while locked */
+   ctx.strokeStyle= hasKey? 'rgba(0,255,136,.65)':'rgba(255,215,0,'+(0.55+0.25*Math.sin(animT/22)).toFixed(3)+')'; ctx.lineWidth=2;
+   ctx.strokeRect(x*T+2.5,y*T+2.5,T-5,T-5); ctx.lineWidth=1;
+   ctx.fillStyle='#000'; ctx.font='bold 13px Orbitron'; ctx.textAlign='center'; ctx.fillText(hasKey?'✓':'🔒', x*T+16, y*T+21); }
+ if(c==='E'){ /* light pool under the extraction pad, pulsing with the pad glow */
+   const eg=ctx.createRadialGradient(x*T+16,y*T+16,0,x*T+16,y*T+16,44);
+   eg.addColorStop(0,'rgba(0,255,136,'+(0.10+0.04*Math.sin(animT/20)).toFixed(3)+')'); eg.addColorStop(1,'rgba(0,255,136,0)');
+   ctx.fillStyle=eg; ctx.fillRect(x*T-28,y*T-28,88,88);
+   ctx.fillStyle='rgba(0,255,136,'+(0.22+0.10*Math.sin(animT/20)).toFixed(3)+')'; ctx.fillRect(x*T+2,y*T+2,T-4,T-4);
+   /* corner brackets on the extraction pad — pulse with the pad glow */
+   ctx.strokeStyle='rgba(0,255,136,'+(0.45+0.25*Math.sin(animT/20)).toFixed(3)+')'; ctx.lineWidth=2;
+   const b=3, L=8;
+   ctx.beginPath();
+   ctx.moveTo(px+b,py+b+L); ctx.lineTo(px+b,py+b); ctx.lineTo(px+b+L,py+b);
+   ctx.moveTo(px+T-b-L,py+b); ctx.lineTo(px+T-b,py+b); ctx.lineTo(px+T-b,py+b+L);
+   ctx.moveTo(px+T-b,py+T-b-L); ctx.lineTo(px+T-b,py+T-b); ctx.lineTo(px+T-b-L,py+T-b);
+   ctx.moveTo(px+b+L,py+T-b); ctx.lineTo(px+b,py+T-b); ctx.lineTo(px+b,py+T-b-L);
+   ctx.stroke(); ctx.lineWidth=1;
+   ctx.fillStyle='#00ff88'; ctx.font='bold 11px Orbitron'; ctx.textAlign='center'; ctx.fillText('EXIT', x*T+16, y*T+20); }
+}
+function drawWallTile(x,y){
+ const h=tileHash(x,y), px=x*T, py=y*T;
+ const outer = x===0||y===0||x===COLS-1||y===ROWS-1;
+ ctx.fillStyle= outer? '#12222e' : (h<0.5? '#101c26' : '#0e1a24');
+ ctx.fillRect(px,py,T,T);
+ /* L4 RICHNESS — textured wall: course lines + metal pitting speckle */
+ ctx.fillStyle='rgba(0,0,0,.28)'; ctx.fillRect(px,py+10,T,1); ctx.fillRect(px,py+21,T,1);
+ for(let i=0;i<3;i++){
+   const sx=px+5+tileHash(x*5+i+3,y*11+i)*22, sy=py+5+tileHash(x*9+i,y*7+i+2)*22;
+   ctx.fillStyle='rgba(160,220,255,'+(0.04+0.04*tileHash(x+i*17,y+i*3)).toFixed(3)+')';
+   ctx.fillRect(sx,sy,1.5,1.5); }
+ /* hazard striping on walls flanking the keycard door / extraction pad */
+ const nearHaz = (DOORP && Math.abs(x-DOORP.cx)<=1 && Math.abs(y-DOORP.cy)<=1) || (EXITP && Math.abs(x-EXITP.cx)<=1 && Math.abs(y-EXITP.cy)<=1);
+ if(nearHaz){ ctx.save(); ctx.beginPath(); ctx.rect(px,py,T,T); ctx.clip();
+   ctx.strokeStyle='rgba(255,183,0,.40)'; ctx.lineWidth=3;
+   for(let i=-1;i<3;i++){ ctx.beginPath(); ctx.moveTo(px+i*12,py+T); ctx.lineTo(px+i*12+T,py); ctx.stroke(); }
+   ctx.restore(); ctx.lineWidth=1; }
+ /* top face catches the light, base falls into shadow — reads as a solid block */
+ ctx.fillStyle='rgba(150,220,255,.20)'; ctx.fillRect(px,py,T,2);
+ ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(px,py+T-3,T,3);
+ ctx.fillStyle='rgba(0,0,0,.25)'; ctx.fillRect(px,py,2,T);
+ /* wall edge light flickers faintly — the compound hums */
+ ctx.strokeStyle='rgba(0,240,255,'+(0.16+0.05*Math.sin(animT/47+x*1.7+y*0.9)).toFixed(3)+')'; ctx.strokeRect(px+.5,py+.5,T-1,T-1);
+ if(outer){ /* armored perimeter: rivets down the face */
+   ctx.fillStyle='rgba(160,220,255,.35)';
+   ctx.fillRect(px+5,py+6,2,2); ctx.fillRect(px+T-7,py+6,2,2);
+   ctx.fillRect(px+5,py+T-8,2,2); ctx.fillRect(px+T-7,py+T-8,2,2); }
+}
+function drawLightPools(){
+ /* L3 LIGHT & JUICE: ceiling light pools on the floor — soft cool pools that
+    breathe, and a few dying fluorescents that flicker. Deterministic tile
+    hash picks the fixtures; animT drives the flicker (frozen while paused).
+    Visual only — no gameplay effect. */
+ for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+   const c=MAP[y][x]; if(c==='#'||c==='D'||c==='E') continue;
+   const h=tileHash(x,y); if(h<0.90||h>=0.95) continue;
+   const cx=x*T+16, cy=y*T+16;
+   let a=0.07+0.025*Math.sin(animT/31 + x*1.3 + y*2.1);
+   if(tileHash(x*5+1,y*3+2)>0.86){ /* dying fluorescent — hard flicker */
+     a= Math.sin(animT*0.35 + x*1.3 + y*2.1) > 0.55 ? 0.12 : 0.015; }
+   const g=ctx.createRadialGradient(cx,cy,0,cx,cy,46);
+   g.addColorStop(0,'rgba(150,220,255,'+a.toFixed(3)+')'); g.addColorStop(1,'rgba(150,220,255,0)');
+   ctx.fillStyle=g; ctx.fillRect(cx-46,cy-46,92,92);
+   /* the fixture itself — a small bright dot with bloom */
+   ctx.shadowColor='#bfe8ff'; ctx.shadowBlur=6;
+   ctx.fillStyle='rgba(210,240,255,'+(0.35+a*4).toFixed(3)+')';
+   ctx.fillRect(cx-1.5,cy-1.5,3,3); ctx.shadowBlur=0;
+ }
+}
+function glowPool(x,y,r,col,a){ const g=ctx.createRadialGradient(x,y,0,x,y,r);
+ g.addColorStop(0,'rgba('+col+','+a+')'); g.addColorStop(1,'rgba('+col+',0)');
+ ctx.fillStyle=g; ctx.fillRect(x-r,y-r,r*2,r*2); }
+function drawParticles(){
+ for(const p of particles){
+   if(p.ring){ const t=1-p.life/p.maxLife;
+     ctx.strokeStyle=p.color; ctx.globalAlpha=(1-t)*0.9; ctx.lineWidth=3.5;
+     ctx.beginPath(); ctx.arc(p.x,p.y,6+t*34,0,7); ctx.stroke(); ctx.globalAlpha=1; ctx.lineWidth=1; continue; }
+   const a=Math.max(0,p.life/p.maxLife);
+   ctx.shadowColor=p.color; ctx.shadowBlur=8;
+   ctx.fillStyle=p.color; ctx.globalAlpha=a;
+   ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,7); ctx.fill();
+   ctx.globalAlpha=1; ctx.shadowBlur=0;
+ }
+}
+function drawCone(g){
+ const a0=g.dir-1.05, a1=g.dir+1.05;
+ const pts=[]; const steps=14;
+ for(let i=0;i<=steps;i++){ const a=a0+(a1-a0)*i/steps; let r=118;
+   for(let rr=10;rr<118;rr+=9){ if(solidAt(Math.floor((g.x+Math.cos(a)*rr)/T),Math.floor((g.y+Math.sin(a)*rr)/T),true)){ r=rr; break; } }
+   pts.push([g.x+Math.cos(a)*r, g.y+Math.sin(a)*r]); }
+ /* AI v2: cone colour is per-guard — red only for the guard who has you,
+    amber for one who is suspicious or hunting, pale on patrol */
+ const cm = g.mode==='chase'? '255,56,96' : (g.mode==='suspect'||g.mode==='hunt')? '255,215,0' : '255,240,170';
+ ctx.fillStyle = g.stun>0? 'rgba(120,120,120,.05)' : 'rgba('+cm+','+(g.mode==='patrol'?'.13':'.20')+')';
+ ctx.beginPath(); ctx.moveTo(g.x,g.y);
+ for(const p of pts) ctx.lineTo(p[0],p[1]);
+ ctx.closePath(); ctx.fill();
+ /* L3: bloom — the cone is brightest at the guard's lamp and falls off with
+    distance, so the cone reads as projected light instead of a flat wedge */
+ if(g.stun<=0){ const cg=ctx.createRadialGradient(g.x,g.y,0,g.x,g.y,118);
+   cg.addColorStop(0,'rgba('+cm+',.18)'); cg.addColorStop(1,'rgba('+cm+',0)');
+   ctx.fillStyle=cg; ctx.beginPath(); ctx.moveTo(g.x,g.y);
+   for(const p of pts) ctx.lineTo(p[0],p[1]);
+   ctx.closePath(); ctx.fill(); }
+ /* rim shimmer — the cone edge breathes, visual only */
+ ctx.strokeStyle = g.stun>0? 'rgba(160,160,160,.08)' : 'rgba('+cm+','+((g.mode==='chase'?0.16:0.12)+0.05*Math.sin(animT/24)).toFixed(3)+')';
+ ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+ for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+ ctx.stroke(); ctx.lineWidth=1;
+}
+function shadeCol(hex,f){ /* lighten (f>1) or darken (f<1) a #rgb / #rrggbb colour */
+ let h=String(hex||'#888888').replace('#','');
+ if(h.length===3) h=h.split('').map(c=>c+c).join('');
+ const n=parseInt(h,16)||0x888888;
+ const c=v=>Math.max(0,Math.min(255,Math.round(v*f)));
+ return 'rgb('+c(n>>16&255)+','+c(n>>8&255)+','+c(n&255)+')'; }
+function drawBotFig(x,y,r,body,trim,dir,eye,kind,ent){
+ const bob=Math.sin(animT/16 + x*0.11 + y*0.07)*1.4; /* idle hover — visual only, radius/position untouched */
+ const by=y+bob;
+ if(!ent) ent={};
+ /* walk tracking (drawing-side only): feet stride when the figure actually moves */
+ const moved=Math.hypot(x-(ent._px==null?x:ent._px), y-(ent._py==null?y:ent._py));
+ ent._px=x; ent._py=y;
+ ent._mv=((ent._mv||0)*0.75)+Math.min(moved,3)*0.25;
+ ent._walk=(ent._walk||0)+ent._mv*0.14;
+ const feetA=Math.max(0,Math.min(1,ent._mv/1.2));
+ const px=-Math.sin(dir), py=Math.cos(dir); /* perpendicular to facing */
+ const cx=Math.cos(dir), cy=Math.sin(dir);  /* facing unit vector */
+ /* boots — stride fore/aft along the facing, only while moving */
+ if(feetA>0.02){ const sw=Math.sin(ent._walk)*3.5;
+   ctx.globalAlpha=feetA*0.95; ctx.fillStyle='#070b09';
+   for(const s of [-1,1]){ const bx=x+px*s*r*0.48+cx*sw*s, bby=y+py*s*r*0.48+cy*sw*s; /* boots stay grounded (y, not bobbed by) while the stack bobs above them */
+     ctx.beginPath(); ctx.ellipse(bx,bby,3.1,4.4,dir,0,7); ctx.fill();
+     ctx.strokeStyle=trim; ctx.lineWidth=1; ctx.stroke(); }
+   ctx.globalAlpha=1; }
+ /* WRAITH scarf — CHAR2 slice ribbons: three tapered ribbon slices stepping
+    down behind the figure (dark base -> lit top edge), swaying; tucked under
+    the body so the stack rises out of them */
+ if(kind==='wraith'){ const sway=Math.sin(animT/9+x*0.05)*2.5;
+   for(let sl=2;sl>=0;sl--){ const lift=sl*1.6, wdt=2.7-sl*0.55;
+     ctx.fillStyle= sl===0? shadeCol(trim,0.9) : shadeCol(body,0.35+sl*0.22);
+     ctx.globalAlpha=0.92-sl*0.18;
+     for(const s of [-1,1]){ const bx0=x-cx*r*0.6+px*s*r*0.28, by0=by-cy*r*0.6+py*s*r*0.28-lift;
+       const bx1=x-cx*r*1.05+px*s*r*0.48+sway, by1=by-cy*r*1.05+py*s*r*0.48-lift;
+       const bx2=x-cx*r*(1.38+sl*0.1)+px*s*r*0.42+sway*1.5, by2=by-cy*r*(1.38+sl*0.1)+py*s*r*0.42-lift;
+       ctx.beginPath(); ctx.moveTo(bx0+px*wdt,by0+py*wdt);
+       ctx.quadraticCurveTo(bx1+px*wdt,by1+py*wdt,bx2,by2);
+       ctx.quadraticCurveTo(bx1-px*wdt,by1-py*wdt,bx0-px*wdt,by0-py*wdt);
+       ctx.closePath(); ctx.fill(); } }
+   ctx.globalAlpha=1; }
+ /* L3 LIGHT & JUICE: soft radial contact shadow + a faint directional offset
+    (light from the top-left, shadow falls down-right) so bots sit ON the floor */
+ const sg=ctx.createRadialGradient(x+2,y+r+1,0,x+2,y+r+1,r+5);
+ sg.addColorStop(0,'rgba(0,0,0,.55)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+ ctx.fillStyle=sg; ctx.beginPath(); ctx.ellipse(x+2,y+r+1,r+5,5.5,0,0,7); ctx.fill();
+ /* CHAR2 SPRITE STACK (2026-11-22): TRUE layered stack — each kit's own
+    silhouette repainted as 8 slices stepping down from the lit top to a dark
+    core at the floor, wider at the base and tapering up, so figures carry
+    extruded volume and a distinct outline per cast member:
+      guard/stunned = plated octagon torso + shoulder-pad discs
+      wraith        = hooded teardrop, pointed cowl trailing behind facing
+      scribe        = flared robe bell + halo rings stacked at 3 heights
+    Detail lives only on the top face (drawn raised by STKH below); slices
+    are flat dark->mid tones. Shadow/light pool above stay on the floor. */
+ const STKN=8, STKH=r*0.88, STKS=STKH/STKN;
+ const silPath=(sx,sy,sc)=>{ /* silhouette in facing frame: +cx is forward */
+   ctx.beginPath();
+   if(kind==='guard'||kind==='stunned'){
+     /* plated torso: octagon plate + two shoulder pads */
+     for(let i=0;i<8;i++){ const a=dir+i*Math.PI/4+Math.PI/8, vx=sx+Math.cos(a)*r*1.04*sc, vy=sy+Math.sin(a)*r*1.04*sc;
+       if(i===0) ctx.moveTo(vx,vy); else ctx.lineTo(vx,vy); }
+     ctx.closePath();
+     for(const s of [-1,1]){ ctx.moveTo(sx+px*s*r*0.84+ r*0.36*sc, sy+py*s*r*0.84);
+       ctx.arc(sx+px*s*r*0.84, sy+py*s*r*0.84, r*0.36*sc,0,7); }
+   } else if(kind==='wraith'){
+     /* hooded teardrop: round face front, cowl point trailing behind */
+     ctx.moveTo(sx-cx*r*1.38*sc, sy-cy*r*1.38*sc);
+     ctx.quadraticCurveTo(sx+px*r*1.02*sc-cx*r*0.2*sc, sy+py*r*1.02*sc-cy*r*0.2*sc, sx+cx*r*0.72*sc, sy+cy*r*0.72*sc);
+     ctx.quadraticCurveTo(sx+cx*r*1.06*sc, sy+cy*r*1.06*sc, sx-cx*r*0.2*sc-px*r*1.02*sc, sy-cy*r*0.2*sc-py*r*1.02*sc);
+     ctx.quadraticCurveTo(sx-px*r*1.02*sc, sy-py*r*1.02*sc, sx-cx*r*1.38*sc, sy-cy*r*1.38*sc);
+     ctx.closePath();
+   } else if(kind==='scribe'){
+     /* robe bell: flared skirt behind/sides, round front */
+     ctx.ellipse(sx-cx*r*0.18*sc, sy-cy*r*0.18*sc, r*1.14*sc, r*1.02*sc, dir,0,7);
+   } else {
+     ctx.arc(sx,sy,r*sc,0,7);
+   }
+ };
+ for(let k=STKN;k>=1;k--){ const sy=by-k*STKS, sc=1+(k/STKN)*0.10; /* base wider, tapering up */
+   const f=0.20+(STKN-k)*0.075; /* dark core 0.20 -> mid 0.72 toward the top */
+   ctx.fillStyle=shadeCol(body,f);
+   silPath(x,sy,sc); ctx.fill();
+   ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.stroke();
+   /* rim slice: a trim-coloured sliver on the lit side of every 3rd slice */
+   if(k%3===0){ ctx.strokeStyle=trim; ctx.globalAlpha=0.28; ctx.lineWidth=1.4;
+     ctx.beginPath(); ctx.arc(x,sy,r*sc,2.35,3.35); ctx.stroke(); ctx.globalAlpha=1; ctx.lineWidth=1; } }
+ /* SCRIBE halo stack: rings at three heights under the top halo */
+ if(kind==='scribe'){ for(let hi=0;hi<3;hi++){ const hy=by-STKH*(0.35+hi*0.3);
+     ctx.strokeStyle=trim; ctx.globalAlpha=0.16+hi*0.13; ctx.lineWidth=1.4;
+     ctx.beginPath(); ctx.ellipse(x,hy,r+4.5-hi*0.8, (r+4.5-hi*0.8)*0.82,0,0,7); ctx.stroke(); }
+   ctx.globalAlpha=1; ctx.lineWidth=1; }
+ ctx.strokeStyle=trim; ctx.globalAlpha=0.55; ctx.lineWidth=1.5;
+ ctx.beginPath(); ctx.arc(x,by-STKH,r*0.99,2.4,3.9); ctx.stroke(); ctx.globalAlpha=1; ctx.lineWidth=1;
+ /* top pass leans into movement + breathes at idle (drawing only) */
+ const lean=Math.max(-3.2,Math.min(3.2,ent._mv*2.4)), swayP=Math.sin(ent._walk||0)*feetA*1.3;
+ const breathe= feetA>0.05? 0 : Math.sin(animT/22 + x*0.11 + y*0.07)*0.5;
+ ctx.save(); ctx.translate(cx*lean+px*swayP, -STKH+breathe);
+ /* shaded body — radial gradient, lit top-left, dark edge (not a flat blob) */
+ const bg=ctx.createRadialGradient(x-r*0.35,by-r*0.4,r*0.1, x,by,r*1.05);
+ bg.addColorStop(0,shadeCol(body,1.55)); bg.addColorStop(0.55,body); bg.addColorStop(1,shadeCol(body,0.5));
+ ctx.fillStyle=bg; ctx.beginPath(); ctx.arc(x,by,r,0,7); ctx.fill();
+ ctx.strokeStyle=trim; ctx.lineWidth=2; ctx.stroke();
+ /* rim light — glow edge in the character's colour on the far side (away
+    from the top-left key light), plus the pale key-light edge upper-left */
+ ctx.strokeStyle=trim; ctx.lineWidth=2; ctx.shadowColor=trim; ctx.shadowBlur=6;
+ ctx.beginPath(); ctx.arc(x,by,r-1,0.35,1.9); ctx.stroke(); ctx.shadowBlur=0;
+ ctx.strokeStyle='rgba(255,255,255,.38)'; ctx.lineWidth=2;
+ ctx.beginPath(); ctx.arc(x,by,r-1,-2.5,-0.7); ctx.stroke();
+ /* chest plate seam — a lit arc across the front */
+ ctx.strokeStyle=trim; ctx.globalAlpha=0.8; ctx.lineWidth=2;
+ ctx.beginPath(); ctx.arc(x,by,r*0.55,dir-0.7,dir+0.7); ctx.stroke(); ctx.globalAlpha=1; ctx.lineWidth=1;
+ if(kind==='guard'){
+   /* shoulder pads — broader silhouette, armoured */
+   for(const s of [-1,1]){ ctx.fillStyle=shadeCol(body,0.75);
+     ctx.beginPath(); ctx.arc(x+px*s*r*0.82, by+py*s*r*0.82, r*0.34,0,7); ctx.fill();
+     ctx.strokeStyle=trim; ctx.lineWidth=1.5; ctx.stroke(); ctx.lineWidth=1; }
+   /* helm crest — a ridge bar across the crown, perpendicular to facing */
+   ctx.strokeStyle=trim; ctx.lineWidth=3;
+   ctx.beginPath(); ctx.moveTo(x+px*r*0.55-cx*r*0.15, by+py*r*0.55-cy*r*0.15);
+   ctx.lineTo(x-px*r*0.55-cx*r*0.15, by-py*r*0.55-cy*r*0.15); ctx.stroke(); ctx.lineWidth=1;
+   /* antenna trailing off the rear-left, glowing tip */
+   ctx.strokeStyle=trim; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.moveTo(x-cx*r*0.7-px*r*0.4, by-cy*r*0.7-py*r*0.4);
+   ctx.lineTo(x-cx*r*1.25-px*r*0.65, by-cy*r*1.25-py*r*0.65); ctx.stroke(); ctx.lineWidth=1;
+   ctx.shadowColor=eye; ctx.shadowBlur=6; ctx.fillStyle=eye;
+   ctx.beginPath(); ctx.arc(x-cx*r*1.25-px*r*0.65, by-cy*r*1.25-py*r*0.65, 1.8,0,7); ctx.fill(); ctx.shadowBlur=0;
+   /* visor band — wide glowing slit across the front, reads at mobile size */
+   ctx.shadowColor=eye; ctx.shadowBlur=7; ctx.strokeStyle=eye; ctx.lineWidth=4.5;
+   ctx.beginPath(); ctx.arc(x,by,r*0.55,dir-0.85,dir+0.85); ctx.stroke(); ctx.shadowBlur=0; ctx.lineWidth=1;
+   /* plated torso detail (top face only): segmented plate seams + amber core */
+   ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=1.4;
+   for(const s of [-1,1]){ ctx.beginPath(); ctx.arc(x,by,r*0.78,dir+s*0.25,dir+s*1.05); ctx.stroke(); }
+   ctx.lineWidth=1;
+   ctx.save(); ctx.translate(x-cx*r*0.12,by-cy*r*0.12); ctx.rotate(dir);
+   ctx.fillStyle=shadeCol(body,1.5); ctx.beginPath();
+   ctx.moveTo(0,-r*0.34); ctx.lineTo(r*0.24,0); ctx.lineTo(0,r*0.34); ctx.lineTo(-r*0.24,0); ctx.closePath(); ctx.fill();
+   ctx.strokeStyle=trim; ctx.lineWidth=1.2; ctx.stroke();
+   ctx.shadowColor=eye; ctx.shadowBlur=6; ctx.fillStyle=eye;
+   ctx.beginPath(); ctx.arc(0,0,2.1,0,7); ctx.fill(); ctx.shadowBlur=0; ctx.restore();
+ } else if(kind==='wraith'){
+   /* hooded cowl — a darker crescent at the back reads as a pointed hood */
+   ctx.fillStyle=shadeCol(body,0.55);
+   ctx.beginPath(); ctx.moveTo(x,by);
+   ctx.arc(x,by,r*0.98,dir+Math.PI-0.95,dir+Math.PI+0.95); ctx.closePath(); ctx.fill();
+   ctx.strokeStyle=trim; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.arc(x,by,r*0.98,dir+Math.PI-0.95,dir+Math.PI+0.95); ctx.stroke(); ctx.lineWidth=1;
+   /* face void under the cowl — a dark pit the eyes burn out of */
+   ctx.fillStyle='#010403';
+   ctx.beginPath(); ctx.ellipse(x+cx*r*0.34,by+cy*r*0.34,r*0.52,r*0.44,dir,0,7); ctx.fill();
+   ctx.strokeStyle='rgba(0,255,136,.35)'; ctx.lineWidth=1;
+   ctx.beginPath(); ctx.ellipse(x+cx*r*0.34,by+cy*r*0.34,r*0.52,r*0.44,dir,dir-0.9,dir+0.9); ctx.stroke(); ctx.lineWidth=1;
+   /* two glowing eyes — bigger than the old single rect, reads at mobile size */
+   ctx.shadowColor=eye; ctx.shadowBlur=8; ctx.fillStyle=eye;
+   for(const s of [-1,1]){ ctx.beginPath();
+     ctx.arc(x+cx*r*0.5+px*s*r*0.27, by+cy*r*0.5+py*s*r*0.27, 2.6,0,7); ctx.fill(); }
+   ctx.shadowBlur=0;
+   /* cowl point tip — a lit spike trailing off the hood point */
+   ctx.shadowColor=trim; ctx.shadowBlur=5; ctx.fillStyle=trim;
+   ctx.beginPath(); ctx.arc(x-cx*r*1.18,by-cy*r*1.18,1.7,0,7); ctx.fill(); ctx.shadowBlur=0;
+ } else if(kind==='scribe'){
+   /* halo ring — the hostage bot reads as SCRIBE at a glance */
+   ctx.strokeStyle=trim; ctx.globalAlpha=0.7; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.arc(x,by,r+3.5,0,7); ctx.stroke(); ctx.globalAlpha=1; ctx.lineWidth=1;
+   /* robe folds — two short arcs fanning from the chest */
+   ctx.strokeStyle=trim; ctx.globalAlpha=0.75; ctx.lineWidth=1.5;
+   for(const s of [-1,1]){ ctx.beginPath(); ctx.arc(x,by,r*0.62,dir+s*0.15,dir+s*0.75); ctx.stroke(); }
+   ctx.globalAlpha=1; ctx.lineWidth=1;
+   /* two glowing pink eyes */
+   ctx.shadowColor=eye; ctx.shadowBlur=7; ctx.fillStyle=eye;
+   for(const s of [-1,1]){ ctx.beginPath();
+     ctx.arc(x+cx*r*0.55+px*s*r*0.28, by+cy*r*0.55+py*s*r*0.28, 2.4,0,7); ctx.fill(); }
+   ctx.shadowBlur=0;
+   /* robe brooch — glowing pink core at the chest, halo echoes it */
+   ctx.shadowColor=eye; ctx.shadowBlur=7; ctx.fillStyle=eye;
+   ctx.beginPath(); ctx.arc(x-cx*r*0.1,by-cy*r*0.1,2.3,0,7); ctx.fill(); ctx.shadowBlur=0;
+   ctx.strokeStyle=trim; ctx.lineWidth=1.2;
+   ctx.beginPath(); ctx.arc(x-cx*r*0.1,by-cy*r*0.1,4.4,0,7); ctx.stroke(); ctx.lineWidth=1;
+ } else { /* stunned guard — dim visor, no glow; the 'z z' text above stays */
+   ctx.strokeStyle='#5a5a5a'; ctx.lineWidth=3;
+   ctx.beginPath(); ctx.arc(x,by,r*0.55,dir-0.7,dir+0.7); ctx.stroke(); ctx.lineWidth=1;
+ }
+ ctx.restore(); /* SPRITE STACK: undo the raised-top translate */
+}
+/* GRAPHICS level 2 — LIFE (polish pass 2026-11-21): drifting fog banks in two
+   parallax layers, ambient dust motes, and a faint sweeping security light.
+   All deterministic (tileHash seeds + animT clock, which freezes while
+   paused); drawing only, no gameplay logic touched. */
+function drawFog(){
+ for(let l=0;l<2;l++){
+   const n= l===0?3:4, sp= l===0?0.00012:0.00030, r= l===0?260:170, a= l===0?0.09:0.12;
+   for(let i=0;i<n;i++){
+     const h=tileHash(i*7+l*13, 5+l);
+     const bx=h*W, by=tileHash(i*3+l*29,11)*H;
+     const cx=((bx + animT*sp*W*(0.6+h*0.8)) % (W+2*r)) - r;
+     const cy=by + Math.sin(animT*0.004 + i*2.1 + l)*18;
+     const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+     g.addColorStop(0,'rgba(140,200,220,'+a+')'); g.addColorStop(1,'rgba(140,200,220,0)');
+     ctx.fillStyle=g; ctx.fillRect(cx-r,cy-r,r*2,r*2);
+   }
+ }
+}
+function drawSweep(){
+ /* faint security light sweeping the compound, visual only — never a cone */
+ const period=60*14; /* ~14s sweep */
+ const t=(animT%period)/period;
+ const x=-160 + t*(W+320);
+ const g=ctx.createLinearGradient(x-70,0,x+70,0);
+ g.addColorStop(0,'rgba(0,240,255,0)'); g.addColorStop(0.5,'rgba(0,240,255,0.07)'); g.addColorStop(1,'rgba(0,240,255,0)');
+ ctx.fillStyle=g; ctx.fillRect(x-70,0,140,H);
+}
+function drawMotes(){
+ for(let i=0;i<64;i++){
+   const h1=tileHash(i,101), h2=tileHash(i,202), h3=tileHash(i,303);
+   const x=(h1*W + animT*(0.08+h2*0.25)) % W;
+   const y=(h2*H + Math.sin(animT*0.006+h3*6.28)*10 + animT*0.02) % H;
+   const a=0.16+0.18*Math.abs(Math.sin(animT*0.02+h3*6.28));
+   ctx.fillStyle='rgba(180,230,220,'+a.toFixed(3)+')';
+   const s= h3>0.7?2:1; ctx.fillRect(x,y,s,s);
+ }
+}
+function draw(){
+ ctx.fillStyle='#05080c'; ctx.fillRect(0,0,W,H);
+ /* L3: screen shake — the whole world translates a few px while shakeT runs;
+    the HUD below stays steady. Purely visual. */
+ const shx= shakeT>0? (Math.random()*2-1)*shakeMag*shakeT/10 : 0;
+ const shy= shakeT>0? (Math.random()*2-1)*shakeMag*shakeT/10 : 0;
+ ctx.save(); ctx.translate(shx,shy);
+ /* GRAPHICS L5: the cinematic camera — effective zoom is the WATCH base
+    (1.25x) times the cinematic multiplier; the focus is the cinematic
+    focus while a beat runs and eases back to the follow point / map
+    centre when the beat ends. Outside beats the transform is exactly
+    the old WATCH transform (or none in play). */
+ const effZ=(watchCamOn?1.25:1)*cinZ;
+ if(effZ>1.001){
+   const vw=W/effZ, vh=H/effZ;
+   const fx=clamp(cinX,vw/2,W-vw/2), fy=clamp(cinY,vh/2,H-vh/2);
+   ctx.translate(W/2,H/2); ctx.scale(effZ,effZ); ctx.translate(-fx,-fy);
+ }
+ for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){ const c=MAP[y][x];
+   if(c==='#') drawWallTile(x,y); else drawFloorTile(x,y,c);
+ }
+ drawLightPools(); /* L3: ceiling light pools + flickering fluorescents */
+ drawFog(); drawSweep(); /* L2 LIFE: drifting fog + sweeping security light */
+ if(!hasKey){ const kp=14+7*Math.sin(animT/18); /* keycard glow breathes */
+   /* soft light pool under the keycard — it reads as a lit objective */
+   const kg=ctx.createRadialGradient(KEYP.x,KEYP.y,0,KEYP.x,KEYP.y,52);
+   kg.addColorStop(0,'rgba(255,215,0,'+(0.10+0.05*Math.sin(animT/18)).toFixed(3)+')'); kg.addColorStop(1,'rgba(255,215,0,0)');
+   ctx.fillStyle=kg; ctx.fillRect(KEYP.x-52,KEYP.y-52,104,104);
+   ctx.fillStyle='#ffd700'; ctx.shadowColor='#ffd700'; ctx.shadowBlur=kp; ctx.fillRect(KEYP.x-7,KEYP.y-5,14,10); ctx.shadowBlur=0;
+   ctx.strokeStyle='rgba(255,215,0,'+(0.35+0.25*Math.sin(animT/18)).toFixed(3)+')'; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.arc(KEYP.x,KEYP.y,14+2*Math.sin(animT/18),0,7); ctx.stroke(); ctx.lineWidth=1;
+   ctx.fillStyle='#000'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('KEY', KEYP.x, KEYP.y+3); }
+ for(const g of guards) drawCone(g);
+ /* L3: each bot carries its own soft light pool — guards amber, SCRIBE pink,
+    WRAITH emerald — so the cast glows against the dark compound */
+ if(hostage&&player){ glowPool(hostage.x,hostage.y,30,'255,93,177',0.12); drawBotFig(hostage.x,hostage.y,hostage.r,'#3a1030','#ff5db1',Math.atan2(player.y-hostage.y,player.x-hostage.x),'#ff5db1','scribe',hostage); }
+ for(const g of guards){ glowPool(g.x,g.y,32, g.stun>0?'120,120,120':'255,123,61', g.stun>0?0.05:0.12); drawBotFig(g.x,g.y,g.r, g.stun>0?'#222':'#2a1408', g.stun>0?'#666':'#ff7b3d', g.dir, '#ffd700', g.stun>0?'stunned':'guard', g);
+   if(g.stun>0){ ctx.fillStyle='#9ad'; ctx.font='12px monospace'; ctx.textAlign='center'; ctx.fillText('z z', g.x, Math.max(42, g.y-18)); }
+   else if(g.mode==='chase'){ ctx.fillStyle='#ff3860'; ctx.font='900 18px Orbitron'; ctx.textAlign='center'; ctx.fillText('!', g.x, Math.max(46, g.y-18)); }
+   else if(g.mode==='suspect'||g.mode==='hunt'){ ctx.fillStyle='#ffd700'; ctx.font='900 18px Orbitron'; ctx.textAlign='center'; ctx.fillText('?', g.x, Math.max(46, g.y-18)); } }
+ if(player){ glowPool(player.x,player.y,28,'0,255,136',0.12); drawBotFig(player.x,player.y,player.r,'#062a1a','#00ff88',player.dir,'#00f0ff','wraith',player);
+ ctx.fillStyle='#00ff88'; ctx.font='10px "Share Tech Mono"'; ctx.textAlign='center'; ctx.fillText('WRAITH', player.x, Math.max(42, player.y-18)); }
+ drawParticles(); /* L3: KO bursts / pickup rings, fading over ~0.5s */
+ drawMotes(); /* L2 LIFE: ambient dust motes drifting over the scene */
+ ctx.restore(); /* end of the shake-wrapped world — HUD below stays steady */
+ /* vignette (screen-space, after the camera restore so it always frames
+    the viewport, never the world): the compound sits in the dark — the
+    edges fall away */
+ const vg=ctx.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,W*0.62);
+ vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.38)');
+ ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+ /* HUD */
+ ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(0,0,W,30);
+ ctx.font='12px "Share Tech Mono"'; ctx.textAlign='left';
+ ctx.fillStyle= alert==='alert'?'#ff3860': alert==='suspicious'?'#ffd700': alert==='evasion'?'#ff9d3d':'#00ff88';
+ ctx.fillText('● '+(alert==='alert'?'ALERT — RUN / HIDE':alert==='suspicious'?'SUSPICIOUS':alert==='evasion'?'EVASION — STAY DARK':'UNSEEN')+(alert==='alert'||alert==='evasion'?' · '+Math.ceil(alertT/60)+'s':''), 12, 19);
+ ctx.fillStyle='#c6d2e4'; ctx.textAlign='center';
+ ctx.fillText((hasKey?'🔑 KEYCARD ✓':'🔑 —')+'   '+(hostageFollow?'SCRIBE WITH YOU ✓':'HOSTAGE CELL: '+(hasKey?'OPEN IT':'NEEDS KEYCARD'))+'   ⏱ '+Math.floor(missionT/3600)+':'+String(Math.floor(missionT/60)%60).padStart(2,'0')+'   ALERTS '+detections, W/2+60, 19);
+ if(seeMeter>1 && alert!=='alert' && player){ ctx.fillStyle='rgba(255,215,0,.85)'; ctx.fillRect(player.x-20, Math.max(34, player.y-30), 40*seeMeter/100, 4); }
+ /* AGENT MODES (dim 4): WATCH plates + feed sit under the HUD strip, on
+    top of the world — drawn in screen space, never zoomed. */
+ if(watch&&phase!=='ready') drawWatchHud();
+ /* dialogue box — shared typewriter style (dim 7); sits at the canvas
+    bottom, controls live in the shell BELOW the screen, never overlapped */
+ drawDialogue();
+ if(phase==='caught'||phase==='done'){ ctx.fillStyle='rgba(0,0,0,.62)'; ctx.fillRect(0,0,W,H);
+   ctx.textAlign='center'; ctx.fillStyle= phase==='done'?'#00ff88':'#ff3860'; ctx.font='900 44px Orbitron';
+   ctx.fillText(phase==='done'?'MISSION COMPLETE':'CAUGHT', W/2, H/2-8);
+   ctx.fillStyle='#fff'; ctx.font='15px "Share Tech Mono"'; ctx.fillText('press R to run it again', W/2, H/2+26); }
+ if(phase==='ready'){ ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(0,0,W,H); ctx.textAlign='center';
+   ctx.fillStyle='#fff'; ctx.font='900 46px Orbitron'; ctx.fillText('GHOSTLINE', W/2, H/2-16);
+   ctx.fillStyle='#00ff88'; ctx.font='15px "Share Tech Mono"'; ctx.fillText('press PLAY — or WATCH a bot run it', W/2, H/2+16); }
+}
+function wrapText(text,x,y,maxW,lh){ const words=text.split(' '); let line='',yy=y;
+ for(const w of words){ const t=line? line+' '+w : w; if(ctx.measureText(t).width>maxW){ ctx.fillText(line,x,yy); line=w; yy+=lh; } else line=t; }
+ ctx.fillText(line,x,yy); }
+function loop(){ frame++; if(!paused) animT++; step(); draw(); requestAnimationFrame(loop); }
+document.getElementById('btnPlay').onclick=()=>{ watch=false; reset(); document.getElementById('msg').textContent= isTouch? 'Mission live. D-pad to move · hold A to sneak · B knocks out a guard next to you.' : 'Mission live. WASD move · SHIFT sneak · SPACE knock out.'; };
+document.getElementById('btnWatch').onclick=()=>{ watch=true; reset(); document.getElementById('msg').textContent='WATCH: '+feAgentId+' infiltrates — the camera follows · plate + feed track the run.'; };
+document.getElementById('btnFs').onclick=()=>{ toggleFullscreen(); }; /* ⛶ Fullscreen — same as Skylance / Contention */
+document.getElementById('btnReset').onclick=()=>{ reset(); };
+document.getElementById('btnPause').onclick=()=>{ togglePause(); };
+/* ---------------- mission picker ---------------- */
+function refreshMissionBtns(){ const v=document.getElementById('btnMissionVault'), y=document.getElementById('btnMissionYard');
+ if(v)v.classList.toggle('active',mission==='vault'); if(y)y.classList.toggle('active',mission==='yard'); }
+function setMission(id){ if(!applyMission(id)) return false; refreshMissionBtns();
+ document.getElementById('msg').textContent='Mission: '+CUR.name+' — '+CUR.sub+'. Press PLAY.';
+ if(phase==='play'||phase==='caught'||phase==='done') reset(); return true; }
+const _mv=document.getElementById('btnMissionVault'); if(_mv)_mv.onclick=()=>setMission('vault');
+const _my=document.getElementById('btnMissionYard'); if(_my)_my.onclick=()=>setMission('yard');
+refreshMissionBtns();
+const q=new URLSearchParams(location.search);
+if(q.get('auto')==='watch'){ watch=true; reset(); }
+if(q.get('auto')==='play'){ watch=false; reset(); }
+if(q.get('mission')) setMission(q.get('mission')); /* deep-link: ?mission=yard */
+window.__ghostline={get state(){return {phase,paused,fs:isFullscreen(),mission,alert,hasKey,hostageFollow,detections,missionT,koBuf,sneakLock,particles:particles.length,shake:shakeT,agent:feAgentId,agentStyle:feAgentId?(FE_STYLE[feAgentId]||{}).style:null,watchFeed:watchFeed.map(f=>({text:f.text,color:f.color})),watchCam:watchCamOn,cam:{x:Math.round(camX),y:Math.round(camY)},cine:{kind:cinKind,z:Math.round(cinZ*1000)/1000,hold:cinHold},bindings:{...BIND},gamepad:pad.connected,dlg:dlg?{who:dlg.who,shown:dlg.shown,len:dlg.text.length,queue:dlgQueue.length}:null,walk:{player:player&&(player._walk||0),guard0:guards[0]&&(guards[0]._walk||0)},player:player&&{x:Math.round(player.x),y:Math.round(player.y),reached:player.reached},hostage:hostage&&{x:Math.round(hostage.x),y:Math.round(hostage.y)},guards:guards.map(g=>({stun:g.stun,x:Math.round(g.x),y:Math.round(g.y),mode:g.mode,susp:Math.round(g.susp),aware:g.aware}))};}, reset, togglePause, saveState, loadState, toggleSneakLock, setMission, say, toggleFullscreen, isFullscreen,
+ debugDlgStep(){ stepDialogue(); },
+ debugWatchLog(t,c){ watchLog(t,c); }, /* AGENT MODES test hook: feed entries without staging a mission */
+ debugPlace(x,y){ player.x=x; player.y=y; },
+ debugSpot(){ const g=guards[0]; player.x=g.x+Math.cos(g.dir)*58; player.y=g.y+Math.sin(g.dir)*58; },
+ debugStun(){ const g=guards[0]; player.x=g.x-20; player.y=g.y; koBuf=10; },
+ /* GRAPHICS L5 test hook: stage the extraction (keycard + hostage in hand,
+    both on the pad) so the next step completes the mission and the
+    'done' close-up runs. */
+ debugWin(){ hasKey=true; hostageFollow=true; player.x=EXITP.x-10; player.y=EXITP.y; hostage.x=EXITP.x+10; hostage.y=EXITP.y; },
+ /* AI v2 test hooks */
+ debugNoise(x,y,r,loud){ emitNoise(x,y,r,!!loud); },
+ debugSetGuard(i,x,y,dir){ const g=guards[i]; if(!g) return; g.x=x; g.y=y; if(dir!=null) g.dir=dir; },
+ debugGuard(i){ const g=guards[i]; return g? {mode:g.mode,susp:Math.round(g.susp*10)/10,aware:g.aware,x:Math.round(g.x),y:Math.round(g.y),tx:Math.round(g.tx),ty:Math.round(g.ty),scanT:g.scanT,stun:g.stun} : null; } };
+loop();
+</script>
+</body>
+</html>

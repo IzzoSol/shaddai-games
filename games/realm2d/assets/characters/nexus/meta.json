@@ -1,0 +1,15 @@
+{
+ "id": "nexus",
+ "name": "NEXUS",
+ "src": "nexus-council",
+ "cell": 256,
+ "frames": 8,
+ "clips": {
+  "walk": "walk.webp",
+  "run": "run.webp",
+  "action": "action.webp"
+ },
+ "standH": 163,
+ "footY": 213,
+ "centerX": 130.5
+}

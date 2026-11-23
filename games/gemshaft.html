@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GEMSHAFT — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#0c0714;--panel:#170e22;--border:rgba(0,255,136,.22);--gold:#ffb347;--green:#00ff88;--cyan:#35e0ff;--violet:#b78cff;--red:#ff3860;--text:#e8dcf5;--dim:#8a7ba8}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.08),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(12,7,20,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12)}
+  canvas{display:block;width:100%;height:auto}
+  .hud{display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid var(--border);border-top:none;background:var(--panel);font-family:'Share Tech Mono',monospace;font-size:13px}
+  .hud b{color:#fff}.hud .q{color:var(--cyan)}.hud .t{color:var(--gold)}.hud .lv{color:var(--violet)}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(12,7,20,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#170e22;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .abtns button{width:52px;height:52px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>GEM<span>SHAFT</span></h1><span class="tag">Falling-rock gem dig · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="640"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The shaft waits. The boulders do not.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart level</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to Arcade</button>
+      </div></div>
+    </div>
+    <div class="hud" id="hud">
+      <span>SCORE <b id="hudScore">0</b></span>
+      <span class="q">GEMS <b id="hudGems">0/8</b></span>
+      <span class="lv">LEVEL <b id="hudLevel">1 · FIRST CUT</b></span>
+      <span class="t">TIME <b id="hudTime">150</b></span>
+      <span>LIVES <b id="hudLives">●●●</b></span>
+      <span>HI <b id="hudHi">0</b></span>
+    </div>
+    <div id="msg">Dig the shaft. Mind the boulders.</div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c">·</button><button id="dUp">▲</button><button class="c">·</button>
+        <button id="dLeft">◀</button><button class="c">·</button><button id="dRight">▶</button>
+        <button class="c">·</button><button id="dDown">▼</button><button class="c">·</button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn">START</button>
+        <button id="selectBtn">CAM</button>
+      </div>
+      <div class="abtns">
+        <button id="btnB" class="b">B</button>
+        <button id="btnA">A</button>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">⛏️ Solo<small>PIKE digs the shaft — 3 lives</small></button>
+    <button class="mbtn" id="btnWatch">👁️ Watch<small>council bot works the shaft</small></button>
+    <button class="mbtn" id="btnDuel">⚔️ Duel<small>2P — alternate shafts, high score wins</small></button>
+    <button class="mbtn" id="btnFP">🔦 Lantern Cam<small>V — miner-cam + lantern light</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+  </div>
+  <div class="help">
+    <b>How to play:</b> You are <b>PIKE</b>, a shaft-runner bot. Dig dirt (<span class="k">+10</span>), collect <b>SPARK-GEMS</b> (<span class="k">+50</span>) until the quota is met — then the <b>EXIT PORTAL</b> opens and you run for it before the timer seals the shaft. Boulders and gems obey gravity: they <b>fall</b> when unsupported and <b>roll off</b> round things. A falling rock on your head ends a life. Push boulders sideways to drop them on pests: a <b>SPARKFLY</b> pops, a <b>GEMMOTH</b> bursts into gems. <b>GLOAM</b> grows through dirt — box it in and it turns to gems.<br/>
+    <b>Controls:</b> <span class="k">arrows / WASD</span> dig + steer · <span class="k">SHIFT / SPACE</span> dash-step · <span class="k">V</span> lantern cam · <span class="k">P</span> pause · <span class="k">M</span> mute · <span class="k">R</span> restart.<br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: <span class="k">D-pad</span> steers PIKE, <span class="k">A</span> dash-steps, <span class="k">B</span> toggles lantern cam, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles lantern cam.<br/>
+    <b>WATCH</b> is a council bot miner on the Fallible Engine — ZEROX rushes gems and ignores falling rock, TURTLE digs safe and slow, NEXUS balances the two. They misjudge on purpose — never frame-perfect. If the engine fails to load, the old ROOK / SPARK / DRIFT stand-ins dig instead.<br/>
+    <b>Clean-room:</b> the falling-rock gem-dig formula re-implemented from documented behaviour in our own code (GPL lane — the Rocks'n'Diamonds engine, a complete 30-year-maintained implementation of the Boulder Dash ruleset, read as spec only; see scan3.md §10 — our own levels, art and code; licence: GPL-2.0-or-later, see repo LICENSE). All names, levels, characters and art are original — no copied code, assets or names.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   GEMSHAFT — original falling-rock gem-dig arcade game for the Shaddai Arcade.
+   Clean-room: the FORMULA (grid digging, falling/rolling boulders and gems,
+   gem quota + exit, wall-following pests, growing gloam that turns to gems)
+   re-implemented from documented behaviour in our own code. All names,
+   levels, characters, art and tuning are original. No reference code or
+   assets were copied, run or moved in.
+   GPL lane: Rocks'n'Diamonds (GPL-2.0-or-later) is a complete engine for the
+   Boulder Dash ruleset — engine rules only, our own levels/art/code; the
+   shipped result stays GPL-compliant (repo LICENSE file; source is the
+   shipped JS). See scan3.md §10.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var TILE=32, COLS=40, ROWS=26, W=960, H=640;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function rnd(a,b){ return a+Math.random()*(b-a); }
+function seedRand(r,c){ var s=(r*31+c*17)%100; return s/100; }
+
+/* ---- audio (WebAudio beeps, mutable) ---- */
+var AC=null, muted=false;
+try{ if(typeof localStorage!=='undefined'){ muted=localStorage.getItem('gemshaft.mute')==='1'; } }catch(e){}
+function beep(f,d,type,g){
+  if(muted) return;
+  try{
+    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    var o=AC.createOscillator(), gn=AC.createGain();
+    o.type=type||'square'; o.frequency.value=f; gn.gain.value=g||0.05;
+    o.connect(gn); gn.connect(AC.destination);
+    o.start(); gn.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+(d||0.08));
+    o.stop(AC.currentTime+(d||0.08));
+  }catch(e){}
+}
+function sfx(name){
+  if(name==='dig') beep(180,0.05,'square',0.03);
+  else if(name==='gem') beep(880,0.12,'sine',0.06);
+  else if(name==='crush') beep(90,0.25,'sawtooth',0.08);
+  else if(name==='pop') beep(520,0.1,'triangle',0.06);
+  else if(name==='burst') { beep(660,0.1,'sine',0.06); beep(990,0.14,'sine',0.05); }
+  else if(name==='exit') { beep(523,0.12,'sine',0.06); beep(784,0.2,'sine',0.06); }
+  else if(name==='die') beep(140,0.4,'sawtooth',0.08);
+  else if(name==='dash') beep(300,0.06,'triangle',0.04);
+}
+
+/* ---- level specs: handcrafted, built from carve/gem/boulder lists ---- */
+/* Legend in the builder: '#' steel, '.' dirt, ' ' empty, 'O' boulder,
+   '*' gem, 'P' player, 'F' sparkfly, 'M' gemmoth, 'G' gloam, 'E' exit. */
+var LEVELS=[
+  { name:'FIRST CUT', quota:8, time:150, speed:1,
+    carve:[ [2,2,12,1],[6,2,1,7],[2,8,14,1],[16,8,1,6],[16,13,12,1],[28,13,1,6],[28,18,10,1],[10,18,1,5],[10,22,14,1],[24,22,1,2] ],
+    gems:[[4,2],[8,2],[6,5],[10,8],[14,8],[20,13],[26,13],[30,18],[34,18],[12,22],[18,22],[26,22]],
+    boulders:[[8,7],[12,7],[18,12],[30,17],[16,21]],
+    flies:[[22,13],[32,18]], moths:[[24,13]], gloam:[[36,20],[37,20],[36,21],[37,21]],
+    exit:[38,24], player:[3,2] },
+  { name:'EMBER DEEP', quota:12, time:150, speed:1.25,
+    carve:[ [2,2,10,1],[12,2,1,5],[12,6,16,1],[28,6,1,5],[28,10,8,1],[4,12,10,1],[14,12,1,6],[14,17,14,1],[28,17,1,5],[28,21,8,1],[4,21,1,3],[4,23,10,1] ],
+    gems:[[3,2],[9,2],[12,4],[16,6],[22,6],[30,10],[34,10],[6,12],[12,12],[16,17],[22,17],[30,21],[34,21],[6,23],[12,23]],
+    boulders:[[10,5],[20,5],[32,9],[8,16],[26,16],[10,22]],
+    flies:[[18,6],[34,10],[20,17]], moths:[[26,6],[6,12]], gloam:[[36,4],[37,4],[36,5],[37,5],[2,18],[3,18]],
+    exit:[38,24], player:[3,2] },
+  { name:'THE HOLLOW VAULT', quota:16, time:180, speed:1.5,
+    carve:[ [2,2,8,1],[10,2,1,4],[10,5,12,1],[22,5,1,4],[22,8,14,1],[2,10,8,1],[10,10,1,5],[10,14,10,1],[20,14,1,5],[20,18,12,1],[32,18,1,4],[32,21,6,1],[4,21,1,3],[4,23,12,1],[16,23,1,2] ],
+    gems:[[3,2],[8,2],[10,3],[14,5],[20,5],[24,8],[30,8],[34,8],[4,10],[8,10],[12,14],[18,14],[22,18],[28,18],[34,21],[6,23],[12,23],[16,24]],
+    boulders:[[8,4],[18,4],[26,7],[6,13],[16,13],[28,17],[10,22],[30,20]],
+    flies:[[16,5],[28,8],[14,14],[26,18]], moths:[[20,5],[8,23]], gloam:[[36,2],[37,2],[36,3],[37,3],[2,16],[3,16],[38,12],[38,13]],
+    exit:[38,24], player:[3,2] }
+];
+
+function freshState(){
+  return {
+    phase:'title', mode:'solo', paused:false, fp:false, frame:0,
+    level:1, score:0, hi:0, lives:3, gems:0, quota:8, timeLeft:150,
+    grid:[], dirt:[], exitOpen:false, exitX:0, exitY:0,
+    player:null, enemies:[], gloam:[], gloamStall:0, gloamMax:60,
+    particles:[], floaters:[], motes:[], banner:'', bannerUntil:0,
+    respawnT:0, levelClearT:0, over:false, winner:'',
+    watchBot:'ZEROX', feAgent:null, feTraces:[], feAgentId:'', feRecorded:false,
+    duel:{p1:0,p2:0,turn:0,rounds:[],turnScore:0,turnLives:3},
+    moveCd:0, dashCd:0, physT:0, camX:0, camY:0, lastFall:0
+  };
+}
+var state=freshState();
+try{ var s=localStorage.getItem('gemshaft.hi'); if(s) state.hi=parseInt(s,10)||0; }catch(e){}
+/* ---- WATCH rotation cursor (E45): persisted, advances only when FE is present ---- */
+var WATCH_BOTS=['ZEROX','TURTLE','NEXUS'];
+var watchIdx=0;
+try{ var _wi=localStorage.getItem('gemshaft.watchIdx'); if(_wi!==null){ watchIdx=parseInt(_wi,10)||0; if(!isFinite(watchIdx)||watchIdx<0) watchIdx=0; } }catch(e){}
+function saveWatchIdx(){ try{ localStorage.setItem('gemshaft.watchIdx',String(watchIdx)); }catch(e){} }
+function setMsg(t){ if(msgEl) msgEl.textContent=t; }
+function setBanner(t,frames){ state.banner=t; state.bannerUntil=state.frame+(frames||150); }
+function addScore(n,why,x,y){
+  state.score+=n;
+  if(state.mode==='duel') state.duel.turnScore+=n;
+  if(state.score>state.hi){ state.hi=state.score; try{ localStorage.setItem('gemshaft.hi',String(state.hi)); }catch(e){} }
+  if(x!==undefined) state.floaters.push({x:x,y:y,txt:(n>0?'+':'')+n+' '+(why||''),life:70,col:n>0?'#00ff88':'#ff3860'});
+}
+function spawnParticles(x,y,col,n,spread){
+  for(var i=0;i<n;i++) state.particles.push({x:x,y:y,vx:rnd(-spread,spread),vy:rnd(-spread,spread),life:rnd(20,50),col:col,r:rnd(1.5,4)});
+}
+function inBounds(tx,ty){ return tx>=0 && tx<COLS && ty>=0 && ty<ROWS; }
+function cellAt(tx,ty){ if(!inBounds(tx,ty)) return '#'; return state.grid[ty][tx]; }
+function setCell(tx,ty,c){ if(inBounds(tx,ty)) state.grid[ty][tx]=c; }
+function dirtAt(tx,ty){ if(!inBounds(tx,ty)) return false; return state.dirt[ty][tx]; }
+function enemyAt(tx,ty){ for(var i=0;i<state.enemies.length;i++){ var e=state.enemies[i]; if(e.alive && e.tx===tx && e.ty===ty) return e; } return null; }
+function isBoulder(c){ return c==='O'; }
+function isGem(c){ return c==='*'; }
+function isFallable(c){ return c==='O' || c==='*'; }
+
+/* ---- level build ---- */
+function buildLevel(n){
+  var spec=LEVELS[(n-1)%LEVELS.length];
+  var loop=Math.floor((n-1)/LEVELS.length);
+  state.grid=[]; state.dirt=[]; state.enemies=[]; state.gloam=[]; state.particles=[]; state.floaters=[];
+  for(var y=0;y<ROWS;y++){
+    var row=[], drow=[];
+    for(var x=0;x<COLS;x++){
+      var edge=(x===0||y===0||x===COLS-1||y===ROWS-1);
+      row.push(edge?'#':' '); drow.push(!edge);
+    }
+    state.grid.push(row); state.dirt.push(drow);
+  }
+  spec.carve.forEach(function(r){
+    for(var yy=r[1];yy<r[1]+r[3];yy++) for(var xx=r[0];xx<r[0]+r[2];xx++){
+      if(inBounds(xx,yy) && !(xx===0||yy===0||xx===COLS-1||yy===ROWS-1)){ state.dirt[yy][xx]=false; }
+    }
+  });
+  spec.gems.forEach(function(p){ if(inBounds(p[0],p[1])){ setCell(p[0],p[1],'*'); state.dirt[p[1]][p[0]]=false; } });
+  spec.boulders.forEach(function(p){ if(inBounds(p[0],p[1])){ setCell(p[0],p[1],'O'); state.dirt[p[1]][p[0]]=false; } });
+  spec.flies.forEach(function(p,i){ state.enemies.push(makeEnemy('fly',p[0],p[1],i)); state.dirt[p[1]][p[0]]=false; setCell(p[0],p[1],' '); });
+  spec.moths.forEach(function(p,i){ state.enemies.push(makeEnemy('moth',p[0],p[1],100+i)); state.dirt[p[1]][p[0]]=false; setCell(p[0],p[1],' '); });
+  spec.gloam.forEach(function(p){ if(inBounds(p[0],p[1])){ state.gloam.push({tx:p[0],ty:p[1]}); state.dirt[p[1]][p[0]]=false; setCell(p[0],p[1],'G'); } });
+  state.exitX=spec.exit[0]; state.exitY=spec.exit[1];
+  setCell(state.exitX,state.exitY,'E'); state.dirt[state.exitY][state.exitX]=false;
+  state.player={tx:spec.player[0],ty:spec.player[1],rx:spec.player[0]*TILE,ry:spec.player[1]*TILE,dir:{x:1,y:0},want:null,invuln:0,alive:true,walk:0};
+  state.dirt[spec.player[1]][spec.player[0]]=false; setCell(spec.player[0],spec.player[1],' ');
+  state.quota=spec.quota+loop*2; state.gems=0; state.timeLeft=spec.time;
+  state.exitOpen=false; state.gloamStall=0;
+  state.level=n; state.levelClearT=0; state.respawnT=0;
+  state.motes=[];
+  for(var m=0;m<70;m++) state.motes.push({x:rnd(0,COLS*TILE),y:rnd(0,ROWS*TILE),r:rnd(0.6,2),s:rnd(0.1,0.4),ph:rnd(0,6.28)});
+  setBanner('LEVEL '+n+' — '+spec.name);
+  setMsg('Level '+n+' — '+spec.name+'. Quota: '+state.quota+' gems. Mind the boulders.');
+}
+function makeEnemy(type,tx,ty,i){
+  return {type:type,tx:tx,ty:ty,dir:{x:1,y:0},alive:true,moveCd:(i%3),ph:rnd(0,6.28)};
+}
+function startGame(mode){
+  var keepHi=state.hi;
+  state=freshState(); state.hi=keepHi;
+  state.mode=mode||'solo';
+  if(mode==='watch'){
+    state.watchBot=WATCH_BOTS[watchIdx%WATCH_BOTS.length];
+    var _fe=(typeof window!=='undefined')?window.FallibleEngine:null;
+    if(_fe){ watchIdx++; saveWatchIdx(); }
+  }
+  state.phase='play';
+  buildLevel(1);
+  setMsg(mode==='watch' ? ('WATCH — '+state.watchBot+' works the shaft. Imperfect on purpose.') :
+        mode==='duel' ? 'DUEL — Player 1 digs first. High score takes the round.' :
+        'PIKE digs the shaft. Quota '+state.quota+' gems.');
+  syncButtons();
+}
+/* ---- E45: record the WATCH bout once, solo-vs-field (FE.recordResult) ----
+   Outcome is the game's own endGame(win) signal: in watch mode endGame is
+   only ever reached with win='' (lives-out — level clears advance, they
+   never end a bout), so a watch bout records 'loss'. No win condition is
+   invented here. Guard is marked BEFORE the no-engine early return, so a
+   fallback bout can never record later. */
+function recordWatchResult(){
+  if(state.mode!=='watch' || state.feRecorded) return;
+  state.feRecorded=true;
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  if(!FE) return;
+  try{
+    if(!state.feAgent) state.feAgent=FE.loadAgent(state.watchBot);
+    FE.recordResult(state.feAgent,'gemshaft',null, state.winner?'win':'loss', state.feTraces);
+  }catch(err){}
+}
+function endGame(win){
+  state.phase='over'; state.over=true; state.winner=win||'';
+  if(state.mode==='watch') recordWatchResult();
+  setMsg(win ? win+' — final score '+state.score+' (HI '+state.hi+').' : 'GAME OVER — final score '+state.score+' (HI '+state.hi+').');
+  setBanner(win||'GAME OVER',200);
+  if(state.mode==='duel' && !win){
+    var w=state.duel.p1>state.duel.p2?'PLAYER 1':(state.duel.p2>state.duel.p1?'PLAYER 2':'DRAW');
+    state.winner=w; setMsg('DUEL OVER — '+w+' wins '+Math.max(state.duel.p1,state.duel.p2)+' to '+Math.min(state.duel.p1,state.duel.p2)+'.');
+    setBanner(w+' WINS',200);
+  }
+}
+function die(cause){
+  var p=state.player; if(!p || !p.alive) return;
+  p.alive=false; sfx('die');
+  spawnParticles(p.tx*TILE+16,p.ty*TILE+16,'#ff3860',26,3.2);
+  spawnParticles(p.tx*TILE+16,p.ty*TILE+16,'#00ff88',14,2.4);
+  state.lives--;
+  setMsg('PIKE crushed — '+cause+'. '+(state.lives>0?state.lives+' lives left.':'Last life.'));
+  if(state.mode==='duel'){
+    state.duel.turnScore=state.score; // bank attempt score into turn total is handled at switch
+    state.duel.turnLives--;
+    if(state.duel.turnLives<=0){
+      // bank this player's round score and switch
+      if(state.duel.turn===0){ state.duel.p1+=state.duel.turnScore; }
+      else { state.duel.p2+=state.duel.turnScore; }
+      state.duel.rounds.push({p1:state.duel.p1,p2:state.duel.p2});
+      if(state.duel.turn===0){
+        state.duel.turn=1; state.duel.turnScore=0; state.duel.turnLives=3;
+        state.score=0; state.lives=3;
+        setMsg('Player 1 banked '+state.duel.p1+'. Player 2 digs now.');
+        setBanner('PLAYER 2',150);
+        buildLevel(state.level);
+        state.player.invuln=120;
+        return;
+      }
+      var w=state.duel.p1>state.duel.p2?'PLAYER 1':(state.duel.p2>state.duel.p1?'PLAYER 2':'DRAW');
+      endGame(w==='DRAW'?'DRAW':w+' WINS THE DUEL');
+      return;
+    }
+  }
+  if(state.lives<=0){ endGame(''); return; }
+  state.respawnT=90;
+}
+function respawn(){
+  var spec=LEVELS[(state.level-1)%LEVELS.length];
+  state.player.tx=spec.player[0]; state.player.ty=spec.player[1];
+  state.player.rx=spec.player[0]*TILE; state.player.ry=spec.player[1]*TILE;
+  state.player.alive=true; state.player.invuln=120; state.player.want=null;
+  setCell(spec.player[0],spec.player[1],' '); state.dirt[spec.player[1]][spec.player[0]]=false;
+  setMsg('PIKE is back in the shaft. '+state.lives+' lives left.');
+}
+function levelClear(){
+  var bonus=state.timeLeft*5;
+  addScore(bonus,'TIME BONUS');
+  setBanner('SHAFT CLEAR! +'+bonus,180); sfx('exit');
+  state.levelClearT=100;
+}
+function nextLevel(){
+  buildLevel(state.level+1);
+  state.player.invuln=60;
+}
+
+/* ---- save / load ---- */
+function saveGame(){
+  try{
+    var rows=state.grid.map(function(r){ return r.join(''); });
+    var dirtRows=state.dirt.map(function(r){ return r.map(function(d){ return d?'1':'0'; }).join(''); });
+    localStorage.setItem('gemshaft.save.v1', JSON.stringify({
+      level:state.level, score:state.score, lives:state.lives, gems:state.gems,
+      timeLeft:state.timeLeft, grid:rows, dirt:dirtRows,
+      player:{tx:state.player.tx,ty:state.player.ty},
+      enemies:state.enemies.map(function(e){ return {type:e.type,tx:e.tx,ty:e.ty,alive:e.alive}; }),
+      gloam:state.gloam, exitOpen:state.exitOpen, mode:state.mode, hi:state.hi,
+      watchBot:state.watchBot, feAgentId:state.feAgentId, watchIdx:watchIdx, feRecorded:!!state.feRecorded
+    }));
+    setMsg('State saved — level '+state.level+', score '+state.score+'.');
+    return true;
+  }catch(e){ setMsg('Save failed.'); return false; }
+}
+function loadGame(){
+  try{
+    var raw=localStorage.getItem('gemshaft.save.v1');
+    if(!raw){ setMsg('No saved state.'); return false; }
+    var d=JSON.parse(raw);
+    var keepHi=state.hi; state=freshState(); state.hi=Math.max(keepHi,d.hi||0);
+    state.mode=d.mode||'solo'; state.phase='play';
+    state.level=d.level; state.score=d.score; state.lives=d.lives; state.gems=d.gems; state.timeLeft=d.timeLeft;
+    state.grid=d.grid.map(function(r){ return r.split(''); });
+    state.dirt=d.dirt.map(function(r){ return r.split('').map(function(c){ return c==='1'; }); });
+    state.exitX=LEVELS[(d.level-1)%LEVELS.length].exit[0]; state.exitY=LEVELS[(d.level-1)%LEVELS.length].exit[1];
+    state.quota=LEVELS[(d.level-1)%LEVELS.length].quota+Math.floor((d.level-1)/LEVELS.length)*2;
+    state.player={tx:d.player.tx,ty:d.player.ty,rx:d.player.tx*TILE,ry:d.player.ty*TILE,dir:{x:1,y:0},want:null,invuln:60,alive:true,walk:0};
+    state.enemies=d.enemies.map(function(e){ return {type:e.type,tx:e.tx,ty:e.ty,dir:{x:1,y:0},alive:e.alive,moveCd:0,ph:0}; });
+    state.gloam=d.gloam||[]; state.exitOpen=!!d.exitOpen;
+    /* E45: restore the watch agent + cursor + recorded flag for watch saves
+       only (freshState already reset feTraces to [] — traces reset on load).
+       A solo/duel save keeps the fresh defaults. */
+    if(d.mode==='watch' && typeof d.watchBot==='string' && WATCH_BOTS.indexOf(d.watchBot)!==-1){
+      state.watchBot=d.watchBot; state.feAgentId=d.watchBot;
+      if(typeof d.watchIdx==='number' && isFinite(d.watchIdx) && d.watchIdx>=0){ watchIdx=d.watchIdx; saveWatchIdx(); }
+      state.feRecorded=d.feRecorded===true;
+    }
+    state.motes=[]; for(var m=0;m<70;m++) state.motes.push({x:rnd(0,COLS*TILE),y:rnd(0,ROWS*TILE),r:rnd(0.6,2),s:rnd(0.1,0.4),ph:rnd(0,6.28)});
+    setMsg('State loaded — level '+state.level+', score '+state.score+'.');
+    syncButtons(); return true;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+
+/* ---- player movement ---- */
+function tryStep(dx,dy){
+  var p=state.player; if(!p || !p.alive) return false;
+  var nx=p.tx+dx, ny=p.ty+dy;
+  if(!inBounds(nx,ny)) return false;
+  p.dir={x:dx,y:dy};
+  var c=cellAt(nx,ny);
+  if(c==='#') return false;
+  if(c==='E' && !state.exitOpen) return false; // closed exit is solid
+  if(c==='G') return false; // gloam is solid — box it in, don't walk through it
+  if(c==='O'){
+    // push sideways only
+    if(dy!==0) return false;
+    var bx=nx+dx;
+    if(!inBounds(bx,ny) || cellAt(bx,ny)!==' ' || dirtAt(bx,ny) || enemyAt(bx,ny)) return false;
+    setCell(nx,ny,' '); setCell(bx,ny,'O');
+    p.tx=nx; p.ty=ny; p.walk++; sfx('dig');
+    return true;
+  }
+  if(c==='*'){
+    setCell(nx,ny,' ');
+    state.gems++; addScore(50,'GEM',nx*TILE+16,ny*TILE+16); sfx('gem');
+    spawnParticles(nx*TILE+16,ny*TILE+16,'#35e0ff',10,2);
+    p.tx=nx; p.ty=ny; p.walk++;
+    checkQuota();
+    return true;
+  }
+  if(c==='E' && state.exitOpen){
+    p.tx=nx; p.ty=ny; p.walk++;
+    levelClear();
+    return true;
+  }
+  if(enemyAt(nx,ny)){ die('walked into a pest'); return false; }
+  if(dirtAt(nx,ny)){
+    state.dirt[ny][nx]=false;
+    addScore(10,'DIG',nx*TILE+16,ny*TILE+16); sfx('dig');
+    spawnParticles(nx*TILE+16,ny*TILE+16,'#8a6a3a',6,1.6);
+  }
+  p.tx=nx; p.ty=ny; p.walk++;
+  return true;
+}
+function checkQuota(){
+  if(!state.exitOpen && state.gems>=state.quota){
+    state.exitOpen=true;
+    setBanner('EXIT OPEN — RUN FOR IT!',180); sfx('exit');
+    setMsg('Quota met! The exit portal is open — reach it before the timer seals the shaft.');
+  }
+}
+function dashStep(){
+  var p=state.player; if(!p || !p.alive || state.dashCd>0) return false;
+  var dx=p.dir.x, dy=p.dir.y, moved=false;
+  for(var i=0;i<2;i++){
+    var nx=p.tx+dx, ny=p.ty+dy;
+    if(!inBounds(nx,ny)) break;
+    var c=cellAt(nx,ny);
+    if(c==='#'||c==='O'||c==='G') break;
+    if(c==='E' && !state.exitOpen) break;
+    if(enemyAt(nx,ny)) break;
+    if(dirtAt(nx,ny)){ state.dirt[ny][nx]=false; addScore(10,'DIG',nx*TILE+16,ny*TILE+16); }
+    if(c==='*'){ setCell(nx,ny,' '); state.gems++; addScore(50,'GEM',nx*TILE+16,ny*TILE+16); checkQuota(); }
+    if(c==='E' && state.exitOpen){ p.tx=nx; p.ty=ny; levelClear(); moved=true; break; }
+    p.tx=nx; p.ty=ny; moved=true;
+  }
+  if(moved){ state.dashCd=45; sfx('dash'); spawnParticles(p.tx*TILE+16,p.ty*TILE+16,'#00ff88',8,2); }
+  return moved;
+}
+
+/* ---- falling-rock physics: fall when unsupported, roll off round things ---- */
+function physicsTick(){
+  var fellAny=false;
+  for(var y=ROWS-2;y>=0;y--){
+    for(var x=0;x<COLS;x++){
+      var c=cellAt(x,y);
+      if(!isFallable(c)) continue;
+      var below=cellAt(x,y+1);
+      // crush: player or enemy directly below
+      var p=state.player;
+      if(p && p.alive && p.tx===x && p.ty===y+1){
+        if(p.invuln>0) continue; // invulnerable miner holds the rock up
+        setCell(x,y,' '); setCell(x,y+1,c);
+        die('crushed by a falling '+(c==='O'?'boulder':'gem'));
+        fellAny=true; continue;
+      }
+      var en=enemyAt(x,y+1);
+      if(en){
+        setCell(x,y,' '); setCell(x,y+1,c);
+        crushEnemy(en,x,y+1);
+        fellAny=true; continue;
+      }
+      if(below===' ' && !dirtAt(x,y+1)){
+        setCell(x,y,' '); setCell(x,y+1,c);
+        state.lastFall=state.frame; fellAny=true;
+        continue;
+      }
+      // roll off a round support (boulder / gem / steel), not off dirt
+      if(below==='O' || below==='*' || below==='#'){
+        var rolled=false;
+        var dirs=(state.frame%2===0)?[-1,1]:[1,-1];
+        for(var d=0;d<2;d++){
+          var sx=x+dirs[d];
+          if(inBounds(sx,y) && cellAt(sx,y)===' ' && !dirtAt(sx,y) &&
+             inBounds(sx,y+1) && cellAt(sx,y+1)===' ' && !dirtAt(sx,y+1) &&
+             !(p && p.alive && p.tx===sx && p.ty===y) && !enemyAt(sx,y)){
+            setCell(x,y,' '); setCell(sx,y,c);
+            rolled=true; fellAny=true; break;
+          }
+        }
+        if(rolled) continue;
+      }
+    }
+  }
+  return fellAny;
+}
+function crushEnemy(e,tx,ty){
+  e.alive=false;
+  if(e.type==='moth'){
+    // GEMMOTH bursts into gems around the crush point
+    sfx('burst');
+    var made=0;
+    for(var dy=-1;dy<=1;dy++) for(var dx=-1;dx<=1;dx++){
+      var gx=tx+dx, gy=ty+dy;
+      if(inBounds(gx,gy) && cellAt(gx,gy)===' ' && !dirtAt(gx,gy) && !(state.player&&state.player.tx===gx&&state.player.ty===gy)){
+        setCell(gx,gy,'*'); made++;
+      }
+    }
+    addScore(250,'GEMMOTH BURST +'+made+' GEMS',tx*TILE+16,ty*TILE+16);
+    spawnParticles(tx*TILE+16,ty*TILE+16,'#b78cff',22,3);
+  } else {
+    sfx('pop');
+    addScore(100,'SPARKFLY POPPED',tx*TILE+16,ty*TILE+16);
+    spawnParticles(tx*TILE+16,ty*TILE+16,'#ffb347',18,3);
+  }
+}
+
+/* ---- enemies: wall-following pests ---- */
+function moveEnemy(e){
+  if(!e.alive) return;
+  if(e.moveCd===undefined) e.moveCd=0;
+  if(e.moveCd>0){ e.moveCd--; return; }
+  var spec=LEVELS[(state.level-1)%LEVELS.length];
+  e.moveCd=Math.max(1,Math.round(4/spec.speed));
+  var dirs=[{x:1,y:0},{x:0,y:1},{x:-1,y:0},{x:0,y:-1}];
+  var di=dirs.findIndex(function(d){ return d.x===e.dir.x && d.y===e.dir.y; });
+  // try: keep direction; else turn (fly: right-hand rule, moth: left-hand rule)
+  var order=[];
+  order.push(di);
+  if(e.type==='fly'){ order.push((di+1)%4); order.push((di+3)%4); order.push((di+2)%4); }
+  else { order.push((di+3)%4); order.push((di+1)%4); order.push((di+2)%4); }
+  for(var i=0;i<order.length;i++){
+    var d=dirs[order[i]];
+    var nx=e.tx+d.x, ny=e.ty+d.y;
+    if(!inBounds(nx,ny)) continue;
+    if(cellAt(nx,ny)!==' ' || dirtAt(nx,ny)) continue;
+    if(state.player && state.player.alive && state.player.tx===nx && state.player.ty===ny){
+      if(state.player.invuln<=0){ die(e.type==='fly'?'stung by a SPARKFLY':'caught by a GEMMOTH'); }
+      continue;
+    }
+    if(enemyAt(nx,ny)) continue;
+    e.tx=nx; e.ty=ny; e.dir=d;
+    return;
+  }
+}
+
+/* ---- gloam: grows through dirt; boxed in, it turns to gems ---- */
+function gloamTick(){
+  if(!state.gloam.length) return;
+  var grew=false;
+  if(state.gloam.length<state.gloamMax){
+    for(var i=state.gloam.length-1;i>=0;i--){
+      var g=state.gloam[i];
+      var opts=[];
+      [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].forEach(function(d){
+        var nx=g.tx+d.x, ny=g.ty+d.y;
+        if(inBounds(nx,ny) && dirtAt(nx,ny) && cellAt(nx,ny)===' ') opts.push({x:nx,y:ny});
+      });
+      if(opts.length){
+        var pick=opts[Math.floor(Math.random()*opts.length)];
+        state.gloam.push({tx:pick.x,ty:pick.y});
+        state.dirt[pick.y][pick.x]=false; setCell(pick.x,pick.y,'G');
+        grew=true;
+        break; // one cell per tick keeps it slow and readable
+      }
+    }
+  }
+  if(grew){ state.gloamStall=0; }
+  else {
+    state.gloamStall++;
+    if(state.gloamStall>240){
+      var n=state.gloam.length;
+      state.gloam.forEach(function(g){ setCell(g.tx,g.ty,'*'); });
+      state.gloam=[];
+      addScore(n*25,'GLOAM BLOOMS +'+n+' GEMS');
+      setBanner('GLOAM BLOOMS INTO GEMS!',150); sfx('burst');
+    }
+  }
+}
+
+/* ---- WATCH bot: scored options through the Fallible Engine ---- */
+function nearestGem(tx,ty){
+  var best=null, bd=1e9;
+  for(var y=0;y<ROWS;y++) for(var x=0;x<COLS;x++){
+    if(cellAt(x,y)==='*'){ var d=Math.abs(x-tx)+Math.abs(y-ty); if(d<bd){ bd=d; best={x:x,y:y}; } }
+  }
+  return {pt:best,dist:bd};
+}
+function botThink(){
+  var p=state.player; if(!p || !p.alive) return;
+  if(state.frame%8!==0) return;
+  var dirs={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}};
+  var ng=nearestGem(p.tx,p.ty);
+  var options=[];
+  Object.keys(dirs).forEach(function(k){
+    var d=dirs[k], nx=p.tx+d.x, ny=p.ty+d.y;
+    var score=-2;
+    if(!inBounds(nx,ny)){ options.push({key:k,score:-10,tag:'wall'}); return; }
+    var c=cellAt(nx,ny);
+    if(c==='#'){ options.push({key:k,score:-10,tag:'wall'}); return; }
+    if(c==='E' && !state.exitOpen){ options.push({key:k,score:-10,tag:'closed-exit'}); return; }
+    if(c==='E' && state.exitOpen){ score+=12; }
+    if(c==='*'){ score+=7; }
+    else if(dirtAt(nx,ny)){ score+=1.5; }
+    else if(c==='O'){
+      if(d.y===0 && inBounds(nx+d.x,ny) && cellAt(nx+d.x,ny)===' ' && !dirtAt(nx+d.x,ny)) score+=0.5;
+      else score-=3;
+    }
+    // danger: a fallable thing above the target cell
+    for(var a=1;a<=2;a++){
+      var above=cellAt(nx,ny-a);
+      if(isFallable(above)){ score-=8; break; }
+    }
+    // danger: enemy adjacent to target
+    for(var ey=-1;ey<=1;ey++) for(var ex=-1;ex<=1;ex++){
+      if(enemyAt(nx+ex,ny+ey)) score-=4;
+    }
+    // progress toward the nearest gem
+    if(ng.pt){
+      var nd=Math.abs(ng.pt.x-nx)+Math.abs(ng.pt.y-ny);
+      score+=(ng.dist-nd)*1.2;
+    }
+    // don't walk under a boulder that is about to drop
+    var aboveMe=cellAt(p.tx,p.ty-1);
+    if(isFallable(aboveMe)) score-=1;
+    options.push({key:k,score:score,tag:c==='*'?'gem':(dirtAt(nx,ny)?'dig':'move')});
+  });
+  // wait is good when something is falling above us, bad otherwise
+  var waitScore=(isFallable(cellAt(p.tx,p.ty-1))||isFallable(cellAt(p.tx,p.ty-2)))?2.5:-0.5;
+  options.push({key:'wait',score:waitScore,tag:'wait'});
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  var choice=null;
+  if(FE){
+    try{
+      if(!state.feAgent) state.feAgent=FE.loadAgent(state.watchBot);
+      var res=FE.decide(state.feAgent,'gemshaft',options,{timePressure:0});
+      choice={id:res.pick.key};
+      state.feTraces.push(res.trace);
+      if(!state.feAgentId) state.feAgentId=state.watchBot;
+    }catch(err){ choice=null; }
+  }
+  if(!choice){
+    var r=Math.random(), best=options[0];
+    options.forEach(function(o){ if(o.score+r*0.8>best.score) best=o; });
+    choice={id:best.key};
+    state.feTraces.push({agent:state.watchBot,choice:choice.id,frame:state.frame,standin:true});
+  }
+  if(choice.id==='wait'){ p.want=null; return; }
+  if(dirs[choice.id]) p.want=dirs[choice.id];
+}
+
+/* ---- per-frame update ---- */
+function update(){
+  state.frame++;
+  if(state.paused||state.phase==='title') return;
+  if(state.phase==='over') return;
+  if(state.frame>state.bannerUntil) state.banner='';
+  if(state.respawnT>0){
+    state.respawnT--;
+    if(state.respawnT===0) respawn();
+    return;
+  }
+  if(state.levelClearT>0){
+    state.levelClearT--;
+    if(state.levelClearT===0) nextLevel();
+    return;
+  }
+  // timer: 1 second per 60 frames
+  if(state.frame%60===0){
+    state.timeLeft--;
+    if(state.timeLeft<=0){
+      state.timeLeft=0;
+      die('the shaft sealed — time ran out');
+      return;
+    }
+  }
+  var p=state.player;
+  if(p && p.invuln>0) p.invuln--;
+  if(state.moveCd>0) state.moveCd--;
+  if(state.dashCd>0) state.dashCd--;
+  if(state.mode==='watch') botThink();
+  // player step from held/wanted direction
+  if(p && p.alive && state.moveCd<=0 && p.want){
+    if(tryStep(p.want.x,p.want.y)) state.moveCd=6;
+    else state.moveCd=3;
+  }
+  // physics every 3 frames
+  if(state.frame%3===0) physicsTick();
+  // enemies every 4 physics ticks (12 frames)
+  if(state.frame%12===0) state.enemies.forEach(moveEnemy);
+  // gloam every 30 frames
+  if(state.frame%30===0) gloamTick();
+  // particles + motes
+  state.particles.forEach(function(pt){ pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=0.06; pt.life--; });
+  state.particles=state.particles.filter(function(pt){ return pt.life>0; });
+  state.floaters.forEach(function(f){ f.y-=0.7; f.life--; });
+  state.floaters=state.floaters.filter(function(f){ return f.life>0; });
+  state.motes.forEach(function(m){ m.y+=m.s; m.x+=Math.sin(state.frame/90+m.ph)*0.15; if(m.y>ROWS*TILE) m.y=0; });
+  // smooth render position + camera
+  if(p){
+    p.rx+=(p.tx*TILE-p.rx)*0.35; p.ry+=(p.ty*TILE-p.ry)*0.35;
+    var tx=clamp(p.rx-W/2+16,0,COLS*TILE-W), ty=clamp(p.ry-H/2+16,0,ROWS*TILE-H);
+    state.camX+=(tx-state.camX)*0.2; state.camY+=(ty-state.camY)*0.2;
+  }
+  updateHUD();
+}
+function updateHUD(){
+  var hs=$('hudScore'), hg=$('hudGems'), hl=$('hudLevel'), ht=$('hudTime'), hvl=$('hudLives'), hh=$('hudHi');
+  if(hs) hs.textContent=state.score;
+  if(hg) hg.textContent=state.gems+'/'+state.quota+(state.exitOpen?' ✓ OPEN':'');
+  if(hl) hl.textContent=state.level+' · '+LEVELS[(state.level-1)%LEVELS.length].name;
+  if(ht) ht.textContent=state.timeLeft;
+  if(hvl) hvl.textContent='●'.repeat(Math.max(0,state.lives))+'○'.repeat(Math.max(0,3-state.lives));
+  if(hh) hh.textContent=state.hi;
+}
+
+/* ---- render: layered cave, rich characters, glow ---- */
+/* ---- CHAR-SWEEP 2026-11-22: true sprite stacks ----
+   Every figure is painted once into an offscreen canvas as a stack of
+   silhouette slices (dark extruded base -> 3-tone shaded body -> lit top
+   face with detail + rim light in the figure's colour), then blitted per
+   frame with a contact shadow, idle sway/breathing and movement lean.
+   Painters are palette-driven: slice passes get det:false + shade-scaled
+   tones, so the extrusion is the figure's own silhouette, never a blob. */
+function gsShade(hex,f){
+  var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r=Math.max(0,Math.min(255,Math.round(r*f))); g=Math.max(0,Math.min(255,Math.round(g*f))); b=Math.max(0,Math.min(255,Math.round(b*f)));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function gsStack(size,painter,pal){
+  var c=document.createElement('canvas'); c.width=size; c.height=size;
+  var g=c.getContext('2d'); if(!g) return c;
+  g.translate(size/2,size/2);
+  for(var i=6;i>=1;i--){
+    var f=0.30+(6-i)*0.075;
+    var sil={m:gsShade(pal.m,f), d:gsShade(pal.m,f*0.72), l:gsShade(pal.m,Math.min(1,f*1.25)), glow:gsShade(pal.m,f), rim:gsShade(pal.m,f), det:false};
+    g.save(); g.translate(0,i*1.3); painter(g,sil); g.restore();
+  }
+  painter(g,{m:pal.m, d:pal.d, l:pal.l, glow:pal.glow, rim:pal.rim, det:true});
+  return c;
+}
+function gsPike(g,P){
+  /* PIKE — armoured shaft-runner bot: backpack tanks, plated hull, helm
+     dome + lamp, narrow visor slits, chest core. Drill arm is drawn live
+     over the stack so it tracks the facing direction. */
+  g.fillStyle=P.d; g.fillRect(-27,-11,11,23);                    /* backpack */
+  g.fillRect(-27,-11,11,4);
+  g.fillStyle=P.d; g.fillRect(-17,17,13,6); g.fillRect(4,17,13,6); /* treads */
+  g.beginPath();                                               /* hull */
+  g.moveTo(-20,18); g.lineTo(-23,0); g.lineTo(-17,-13); g.lineTo(-6,-19); g.lineTo(9,-19); g.lineTo(20,-12); g.lineTo(23,1); g.lineTo(20,17); g.lineTo(10,21); g.lineTo(-10,21);
+  g.closePath(); g.fillStyle=P.m; g.fill();
+  g.beginPath();                                               /* shaded left half */
+  g.moveTo(-20,18); g.lineTo(-23,0); g.lineTo(-17,-13); g.lineTo(-6,-19); g.lineTo(0,-19); g.lineTo(0,21); g.lineTo(-10,21);
+  g.closePath(); g.fillStyle=P.d; g.fill();
+  g.beginPath();                                               /* lit top plate */
+  g.moveTo(-13,-14); g.lineTo(0,-19); g.lineTo(14,-13); g.lineTo(17,-4); g.lineTo(0,-9); g.lineTo(-17,-6);
+  g.closePath(); g.fillStyle=P.l; g.fill();
+  g.beginPath();                                               /* pauldrons */
+  g.moveTo(-24,-6); g.lineTo(-15,-11); g.lineTo(-13,-3); g.lineTo(-21,1); g.closePath(); g.fillStyle=P.d; g.fill();
+  g.beginPath();
+  g.moveTo(24,-6); g.lineTo(15,-11); g.lineTo(13,-3); g.lineTo(21,1); g.closePath(); g.fillStyle=P.l; g.fill();
+  g.beginPath(); g.arc(0,-14,10.5,Math.PI,0); g.fillStyle=P.l; g.fill(); /* helm dome */
+  g.beginPath();                                               /* dome shade wedge */
+  g.moveTo(-10.5,-14); g.arc(0,-14,10.5,Math.PI,1.5*Math.PI); g.lineTo(0,-14); g.closePath(); g.fillStyle=P.d; g.fill();
+  g.fillStyle=P.d; g.fillRect(-12,-14.5,24,5);                   /* helm band */
+  g.fillStyle=P.d; g.beginPath(); g.arc(18,5,4.5,0,7); g.fill(); /* drill mount */
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=2.2;                        /* emerald rim light */
+    g.beginPath(); g.moveTo(20,-12); g.lineTo(23,1); g.lineTo(20,17); g.stroke();
+    g.beginPath(); g.arc(0,-14,10.5,-0.85,0.2); g.stroke();
+    g.strokeStyle='rgba(0,0,0,0.45)'; g.lineWidth=1.4;           /* plate seams */
+    g.beginPath(); g.moveTo(-17,-6); g.lineTo(-18,13); g.stroke();
+    g.beginPath(); g.moveTo(17,-4); g.lineTo(18,13); g.stroke();
+    g.beginPath(); g.moveTo(-27,-3); g.lineTo(-16,-3); g.stroke();
+    g.beginPath();                                               /* visor void */
+    g.moveTo(-11.5,-9.5); g.lineTo(11.5,-9.5); g.lineTo(8.5,-0.5); g.lineTo(-8.5,-0.5); g.closePath();
+    g.fillStyle='#02120a'; g.fill();
+    g.fillStyle='#eafff3';                                       /* bold eye-slits */
+    g.beginPath(); g.moveTo(-9.5,-7.4); g.lineTo(-2.6,-6.2); g.lineTo(-9.5,-4.6); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(9.5,-7.4); g.lineTo(2.6,-6.2); g.lineTo(9.5,-4.6); g.closePath(); g.fill();
+    g.fillStyle=P.glow; g.fillRect(-8,-2.6,16,1.3);              /* visor under-glow */
+    g.fillStyle=P.glow;                                          /* chest core */
+    g.beginPath(); g.moveTo(0,4); g.lineTo(3.4,8); g.lineTo(0,12); g.lineTo(-3.4,8); g.closePath(); g.fill();
+    g.fillStyle='#eafff3'; g.beginPath(); g.arc(0,8,1.2,0,7); g.fill();
+    g.strokeStyle=P.rim; g.lineWidth=1.4;                        /* mount ring */
+    g.beginPath(); g.arc(18,5,4.5,0,7); g.stroke();
+    g.save();                                                    /* helm lamp */
+    g.shadowColor='#ffd75e'; g.shadowBlur=9;
+    g.fillStyle='#ffd75e'; g.beginPath(); g.arc(0,-24,3.8,0,7); g.fill();
+    g.fillStyle='#fff3d0'; g.beginPath(); g.arc(0,-24,1.8,0,7); g.fill();
+    g.restore();
+  }
+}
+function gsFly(g,P){
+  /* SPARKFLY — spiked ember wasp-beetle: coal body, dorsal spikes, jaw
+     mandibles, stinger, ember cracks. Wings are drawn live (they beat). */
+  g.fillStyle=P.d;                                               /* stinger */
+  g.beginPath(); g.moveTo(-12,6); g.lineTo(-23,12); g.lineTo(-11,13); g.closePath(); g.fill();
+  g.fillStyle=P.d;                                               /* dorsal spikes */
+  [-2.4,-1.7,-1.0,-0.3].forEach(function(a){
+    var bx=Math.cos(a)*12, by=Math.sin(a)*10-1, tx=Math.cos(a)*19, ty=Math.sin(a)*16-1;
+    g.beginPath(); g.moveTo(bx-3.4,by); g.lineTo(tx,ty); g.lineTo(bx+3.4,by); g.closePath(); g.fill();
+  });
+  g.fillStyle=P.m; g.beginPath(); g.ellipse(0,2,15,12,0,0,7); g.fill(); /* body */
+  g.fillStyle=P.l; g.beginPath(); g.ellipse(-3,-3,10,7,-0.3,0,7); g.fill(); /* lit crown */
+  g.fillStyle=P.d; g.beginPath(); g.ellipse(0,8,12,6,0,0,Math.PI); g.fill(); /* belly shade */
+  g.fillStyle=P.m; g.beginPath(); g.arc(11,-1,7.5,0,7); g.fill(); /* head */
+  g.fillStyle=P.d;                                               /* mandibles */
+  g.beginPath(); g.moveTo(13,3); g.lineTo(20,10); g.lineTo(11,8); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(16,1); g.lineTo(23,5); g.lineTo(14,6); g.closePath(); g.fill();
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=2;                          /* rim light */
+    g.beginPath(); g.arc(0,2,15,-2.4,-0.8); g.stroke();
+    g.strokeStyle=P.glow; g.lineWidth=1.3;                       /* ember shell cracks */
+    g.beginPath(); g.moveTo(-8,-6); g.lineTo(-4,-1); g.lineTo(-7,4); g.stroke();
+    g.beginPath(); g.moveTo(3,-8); g.lineTo(1,-3); g.lineTo(5,1); g.stroke();
+    g.fillStyle='#ffe9a8';                                       /* angry eye-slits */
+    g.beginPath(); g.moveTo(7,-4.6); g.lineTo(12,-3.4); g.lineTo(7.4,-2.2); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(13.5,-5.2); g.lineTo(16.5,-2.6); g.lineTo(12.8,-2.4); g.closePath(); g.fill();
+    g.fillStyle='#fff3d0';                                       /* fang */
+    g.beginPath(); g.moveTo(14,5); g.lineTo(17,5); g.lineTo(15.2,8.6); g.closePath(); g.fill();
+  }
+}
+function gsMoth(g,P){
+  /* GEMMOTH — violet gem-moth: segmented thorax stack, banded abdomen,
+     horned head. Faceted wings are drawn live (they flap). */
+  g.fillStyle=P.d;                                               /* abdomen segments */
+  g.beginPath(); g.ellipse(0,15,5.5,5,0,0,7); g.fill();
+  g.fillStyle=P.m; g.beginPath(); g.ellipse(0,9,6.8,6,0,0,7); g.fill();
+  g.fillStyle=P.d; g.beginPath(); g.ellipse(0,3,7.6,6.4,0,0,7); g.fill();
+  g.fillStyle=P.m; g.beginPath(); g.ellipse(0,-3,7.5,8,0,0,7); g.fill(); /* thorax */
+  g.fillStyle=P.l; g.beginPath(); g.ellipse(-2,-6,4.6,5,-0.3,0,7); g.fill(); /* lit band */
+  g.fillStyle=P.m; g.beginPath(); g.arc(0,-13,5.8,0,7); g.fill(); /* head */
+  g.fillStyle=P.d;                                               /* head horns */
+  g.beginPath(); g.moveTo(-4,-16); g.lineTo(-8,-22); g.lineTo(-1.5,-18); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(4,-16); g.lineTo(8,-22); g.lineTo(1.5,-18); g.closePath(); g.fill();
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=1.8;                        /* rim light */
+    g.beginPath(); g.arc(0,-3,7.5,-1.2,0.6); g.stroke();
+    g.beginPath(); g.arc(0,9,6.8,-1.1,0.7); g.stroke();
+    g.strokeStyle=P.rim; g.lineWidth=1.3;                        /* antennae */
+    g.beginPath(); g.moveTo(-2,-17); g.quadraticCurveTo(-7,-24,-11,-23); g.stroke();
+    g.beginPath(); g.moveTo(2,-17); g.quadraticCurveTo(7,-24,11,-23); g.stroke();
+    g.fillStyle=P.glow;                                          /* amber eyes */
+    g.beginPath(); g.arc(-2.6,-13.5,1.7,0,7); g.arc(2.6,-13.5,1.7,0,7); g.fill();
+    g.fillStyle=P.glow; g.beginPath(); g.arc(-11,-23,1.5,0,7); g.arc(11,-23,1.5,0,7); g.fill(); /* antenna tips */
+    g.fillStyle='#e8f0ff';                                       /* fangs */
+    g.beginPath(); g.moveTo(-3,-9); g.lineTo(-1,-9); g.lineTo(-2,-5.8); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(3,-9); g.lineTo(1,-9); g.lineTo(2,-5.8); g.closePath(); g.fill();
+    g.fillStyle=P.glow;                                          /* thorax gem */
+    g.beginPath(); g.moveTo(0,-6); g.lineTo(2.4,-2.6); g.lineTo(0,0.6); g.lineTo(-2.4,-2.6); g.closePath(); g.fill();
+  }
+}
+function gsGem(g,P){
+  /* SPARK-GEM — brilliant-cut stack: extruded base, faceted crown, lit
+     table, inner glow core. Colour stays pure cyan: readable at a glance. */
+  if(P.det){
+    var gg=g.createRadialGradient(0,2,2,0,2,24);
+    gg.addColorStop(0,'rgba(53,224,255,0.5)'); gg.addColorStop(1,'rgba(53,224,255,0)');
+    g.fillStyle=gg; g.beginPath(); g.arc(0,2,24,0,7); g.fill();
+  }
+  g.beginPath();                                               /* silhouette */
+  g.moveTo(-13,-11); g.lineTo(13,-11); g.lineTo(18,-1); g.lineTo(0,17); g.lineTo(-18,-1);
+  g.closePath(); g.fillStyle=P.m; g.fill();
+  g.beginPath();                                               /* left facet */
+  g.moveTo(-13,-11); g.lineTo(-18,-1); g.lineTo(0,17); g.lineTo(-6,-1); g.lineTo(-7,-11);
+  g.closePath(); g.fillStyle=P.d; g.fill();
+  g.beginPath();                                               /* right facet */
+  g.moveTo(13,-11); g.lineTo(18,-1); g.lineTo(0,17); g.lineTo(6,-1); g.lineTo(7,-11);
+  g.closePath(); g.globalAlpha=0.45; g.fillStyle=P.d; g.fill(); g.globalAlpha=1;
+  g.beginPath();                                               /* crown band */
+  g.moveTo(-13,-11); g.lineTo(13,-11); g.lineTo(18,-1); g.lineTo(-18,-1);
+  g.closePath(); g.globalAlpha=0.55; g.fillStyle=P.l; g.fill(); g.globalAlpha=1;
+  g.beginPath();                                               /* lit table */
+  g.moveTo(-8,-11); g.lineTo(8,-11); g.lineTo(11,-3); g.lineTo(-11,-3);
+  g.closePath(); g.fillStyle=P.l; g.fill();
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=1.6;                        /* rim light */
+    g.beginPath(); g.moveTo(-13,-11); g.lineTo(13,-11); g.lineTo(18,-1); g.stroke();
+    g.strokeStyle='rgba(255,255,255,0.55)'; g.lineWidth=1;        /* facet seams */
+    g.beginPath(); g.moveTo(-6,-1); g.lineTo(0,17); g.lineTo(6,-1); g.stroke();
+    g.beginPath(); g.moveTo(-18,-1); g.lineTo(18,-1); g.stroke();
+    g.fillStyle='rgba(255,255,255,0.9)';                         /* inner core */
+    g.beginPath(); g.moveTo(0,-7); g.lineTo(3.4,-1); g.lineTo(0,5); g.lineTo(-3.4,-1); g.closePath(); g.fill();
+  }
+}
+function gsBoulder(g,P){
+  /* boulder — faceted rock stack: angular silhouette, 3-tone facets,
+     gold rim arc, cracks. Still reads round enough to roll. */
+  var pts=[[-6,-15],[5,-16],[13,-9],[16,1],[11,11],[2,16],[-9,14],[-16,5],[-14,-7]];
+  g.beginPath();
+  pts.forEach(function(p,i){ if(i===0) g.moveTo(p[0],p[1]); else g.lineTo(p[0],p[1]); });
+  g.closePath(); g.fillStyle=P.m; g.fill();
+  g.beginPath();                                               /* lit top facet */
+  g.moveTo(-6,-15); g.lineTo(5,-16); g.lineTo(13,-9); g.lineTo(2,-4); g.lineTo(-9,-6);
+  g.closePath(); g.fillStyle=P.l; g.fill();
+  g.beginPath();                                               /* belly shade */
+  g.moveTo(-16,5); g.lineTo(16,1); g.lineTo(11,11); g.lineTo(2,16); g.lineTo(-9,14);
+  g.closePath(); g.fillStyle=P.d; g.fill();
+  if(P.det){
+    g.strokeStyle='rgba(255,179,71,0.8)'; g.lineWidth=1.8;        /* gold rim arc */
+    g.beginPath(); g.arc(0,0,15.5,-0.7,1.05); g.stroke();
+    g.strokeStyle='rgba(0,0,0,0.4)'; g.lineWidth=1.3;            /* cracks + seams */
+    g.beginPath(); g.moveTo(-2,-13); g.lineTo(1,-5); g.lineTo(-3,2); g.stroke();
+    g.beginPath(); g.moveTo(-14,-6); g.lineTo(-6,-2); g.stroke();
+    g.beginPath(); g.moveTo(9,9); g.lineTo(3,13); g.stroke();
+    g.fillStyle='rgba(255,255,255,0.28)';                        /* facet glint */
+    g.beginPath(); g.moveTo(-4,-13); g.lineTo(2,-14); g.lineTo(0,-8); g.lineTo(-5,-9); g.closePath(); g.fill();
+  }
+}
+function gsGloam(g,P){
+  /* GLOAM — lumpy spore-mass stack: clustered blobs, tendril spikes,
+     glowing spore cores. Menacing growth, not a cute slime. */
+  g.fillStyle=P.d;                                               /* tendril spikes */
+  [[-11,-8],[-4,-13],[4,-13],[11,-8]].forEach(function(s){
+    g.beginPath(); g.moveTo(s[0]-3,s[1]+4); g.lineTo(s[0],s[1]-4); g.lineTo(s[0]+3,s[1]+4); g.closePath(); g.fill();
+  });
+  g.fillStyle=P.m;                                               /* blob cluster */
+  [[0,2,13],[-10,6,8],[10,6,8.5],[-5,-6,8],[6,-7,7.5]].forEach(function(b){
+    g.beginPath(); g.arc(b[0],b[1],b[2],0,7); g.fill();
+  });
+  g.fillStyle=P.l;                                               /* lit crowns */
+  [[-5,-7,4.6],[6,-8,4.2],[-11,3,3.6]].forEach(function(b){
+    g.beginPath(); g.arc(b[0],b[1],b[2],0,7); g.fill();
+  });
+  g.fillStyle=P.d; g.beginPath(); g.ellipse(0,10,11,5.5,0,0,Math.PI); g.fill(); /* belly shade */
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=1.6;                        /* rim light */
+    g.beginPath(); g.arc(0,2,13,-2.5,-1.1); g.stroke();
+    g.fillStyle=P.glow;                                          /* spore cores */
+    [[-4,-2],[5,3],[-9,7]].forEach(function(s){
+      g.beginPath(); g.arc(s[0],s[1],2.4,0,7); g.fill();
+    });
+    g.fillStyle='#ffffff';
+    [[-4,-2],[5,3],[-9,7]].forEach(function(s){
+      g.beginPath(); g.arc(s[0],s[1],1,0,7); g.fill();
+    });
+    g.fillStyle='rgba(10,2,24,0.75)';                            /* maw */
+    g.beginPath(); g.ellipse(1,7,3.6,2.2,0,0,7); g.fill();
+  }
+}
+var _gsSpr=null;
+function gsSprites(){
+  if(_gsSpr) return _gsSpr;
+  _gsSpr={
+    pike: gsStack(72, gsPike, {m:'#0da566', d:'#065236', l:'#2fe89a', glow:'#00ff88', rim:'#7dffc8'}),
+    fly:  gsStack(72, gsFly,  {m:'#e06a10', d:'#7a2d05', l:'#ffb347', glow:'#ff7a3c', rim:'#ffd75e'}),
+    moth: gsStack(72, gsMoth, {m:'#5c3a9e', d:'#2e1a56', l:'#b78cff', glow:'#ffb347', rim:'#d9c2ff'}),
+    gem:  gsStack(56, gsGem,  {m:'#35e0ff', d:'#0a4a5c', l:'#bdf3ff', glow:'#35e0ff', rim:'#e8fbff'}),
+    rock: gsStack(56, gsBoulder, {m:'#5c5145', d:'#33291f', l:'#8a7a66', glow:'#ffb347', rim:'#ffb347'}),
+    gloam:gsStack(56, gsGloam, {m:'#7a4fd0', d:'#4a2a86', l:'#b78cff', glow:'#e3ccff', rim:'#d9c2ff'})
+  };
+  return _gsSpr;
+}
+function drawBackground(){
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#17102a'); g.addColorStop(0.5,'#0e0819'); g.addColorStop(1,'#07040d');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // far layer: distant crystal silhouettes, parallax with camera
+  ctx.save();
+  ctx.translate(-state.camX*0.25,-state.camY*0.25);
+  for(var i=0;i<14;i++){
+    var cx=((i*173)%1200)-40, cy=40+((i*97)%560);
+    var s=26+((i*37)%46);
+    ctx.fillStyle='rgba(53,224,255,0.05)';
+    ctx.beginPath(); ctx.moveTo(cx,cy+s); ctx.lineTo(cx+s*0.4,cy-s); ctx.lineTo(cx+s*0.8,cy+s); ctx.closePath(); ctx.fill();
+  }
+  // strata bands
+  for(var b=0;b<6;b++){
+    ctx.fillStyle='rgba(183,140,255,'+(0.02+0.008*b)+')';
+    ctx.fillRect(-40, 90+b*110, 1240, 8+((b*13)%18));
+  }
+  ctx.restore();
+  // ambient motes (far dust)
+  ctx.fillStyle='rgba(255,215,140,0.35)';
+  state.motes.forEach(function(m){
+    var sx=m.x-state.camX, sy=m.y-state.camY;
+    if(sx>-5&&sx<W+5&&sy>-5&&sy<H+5){ ctx.beginPath(); ctx.arc(sx,sy,m.r,0,6.29); ctx.fill(); }
+  });
+}
+function drawTile(x,y){
+  var sx=x*TILE-state.camX, sy=y*TILE-state.camY;
+  if(sx<-TILE||sx>W||sy<-TILE||sy>H) return;
+  var c=cellAt(x,y);
+  if(c==='#'){
+    ctx.fillStyle='#241d33'; ctx.fillRect(sx,sy,TILE,TILE);
+    ctx.fillStyle='#2e2542'; ctx.fillRect(sx+2,sy+2,TILE-4,5);
+    ctx.fillStyle='#171222'; ctx.fillRect(sx+2,sy+TILE-6,TILE-4,4);
+    ctx.fillStyle='#3a2f52';
+    [[8,9],[22,20],[14,24]].forEach(function(pt){ ctx.beginPath(); ctx.arc(sx+pt[0],sy+pt[1],1.6,0,6.29); ctx.fill(); });
+    return;
+  }
+  if(dirtAt(x,y)){
+    var sr=seedRand(x,y);
+    ctx.fillStyle=sr>0.66?'#4a3220':(sr>0.33?'#43301e':'#3a2a1a');
+    ctx.fillRect(sx,sy,TILE,TILE);
+    ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(sx,sy+TILE-3,TILE,3);
+    ctx.fillStyle='rgba(255,200,120,0.16)';
+    ctx.fillRect(sx+4+sr*14,sy+6+sr*10,3,3);
+    ctx.fillRect(sx+18-sr*8,sy+20-sr*6,2,2);
+    ctx.fillStyle='rgba(0,0,0,0.2)';
+    ctx.fillRect(sx,sy,TILE,1);
+    return;
+  }
+  // empty floor: faint plating
+  ctx.fillStyle='rgba(255,255,255,0.02)'; ctx.fillRect(sx,sy,TILE,TILE);
+  if(c==='O'){
+    // boulder: CHAR-SWEEP sprite stack — faceted rock, contact shadow
+    ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(sx+16,sy+29,13,3.6,0,0,6.29); ctx.fill();
+    ctx.drawImage(gsSprites().rock,sx-3,sy-4,38,38);
+    return;
+  }
+  if(c==='*'){
+    // spark-gem: CHAR-SWEEP sprite stack — extruded brilliant cut, pulsing
+    var gp=1+Math.sin(state.frame/18+x*1.3+y)*0.05, gs2=40*gp;
+    ctx.drawImage(gsSprites().gem,sx+16-gs2/2,sy+16-gs2/2,gs2,gs2);
+    // live glint sweeping the table facet
+    var gl=(Math.sin(state.frame/22+x*1.7+y*0.6)+1)/2;
+    if(gl>0.82){
+      ctx.strokeStyle='rgba(255,255,255,'+((gl-0.82)*4)+')'; ctx.lineWidth=1.4;
+      var gx2=sx+16, gy2=sy+9;
+      ctx.beginPath();
+      ctx.moveTo(gx2-5,gy2); ctx.lineTo(gx2+5,gy2);
+      ctx.moveTo(gx2,gy2-4); ctx.lineTo(gx2,gy2+4);
+      ctx.stroke();
+    }
+    return;
+  }
+  if(c==='G'){
+    // gloam: CHAR-SWEEP sprite stack — spore mass, pulsing scale
+    var pu=1+Math.sin(state.frame/14+x+y)*0.1, gz=42*pu;
+    ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx+16,sy+29,13,3.4,0,0,6.29); ctx.fill();
+    ctx.drawImage(gsSprites().gloam,sx+16-gz/2,sy+17-gz/2,gz,gz);
+    return;
+  }
+  if(c==='E'){
+    if(state.exitOpen){
+      ctx.save(); ctx.shadowColor='#00ff88'; ctx.shadowBlur=18;
+      ctx.fillStyle='#00ff88';
+      ctx.beginPath(); ctx.arc(sx+16,sy+16,12+Math.sin(state.frame/10)*2,0,6.29); ctx.fill();
+      ctx.restore();
+      ctx.fillStyle='#04120a'; ctx.beginPath(); ctx.arc(sx+16,sy+16,7,0,6.29); ctx.fill();
+      ctx.fillStyle='#a7ffd2'; ctx.font='bold 13px monospace'; ctx.textAlign='center'; ctx.fillText('▲',sx+16,sy+21);
+    } else {
+      ctx.fillStyle='#241d33'; ctx.fillRect(sx+4,sy+4,TILE-8,TILE-8);
+      ctx.strokeStyle='#5c5145'; ctx.lineWidth=2; ctx.strokeRect(sx+6,sy+6,TILE-12,TILE-12);
+      ctx.fillStyle='#8a7ba8'; ctx.font='bold 12px monospace'; ctx.textAlign='center'; ctx.fillText('✕',sx+16,sy+21);
+    }
+    return;
+  }
+}
+function drawPlayer(){
+  var p=state.player; if(!p || !p.alive) return;
+  var sx=p.rx-state.camX, sy=p.ry-state.camY;
+  var bob=Math.sin(state.frame/9)*1.5;
+  var moving=!!p.want;
+  var lean=(p.want? p.want.x*0.09 : 0) + Math.sin(state.frame/30)*0.02; // movement lean + idle sway
+  var breathe=1+Math.sin(state.frame/24)*0.015;                          // idle breathing
+  ctx.save();
+  ctx.translate(sx+16,sy+16);
+  // contact shadow (unrotated, shrinks as the bot bobs)
+  ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(0,14.5,13-bob*0.5,4,0,0,6.29); ctx.fill();
+  ctx.translate(0,bob); ctx.rotate(lean); ctx.scale(breathe,breathe);
+  // CHAR-SWEEP sprite stack: armoured miner-bot (stack baked offscreen)
+  ctx.drawImage(gsSprites().pike,-25,-25,50,50);
+  // drill arm, live over the stack, tracking the facing direction
+  var dx=p.dir.x, dy=p.dir.y;
+  ctx.save(); ctx.rotate(Math.atan2(dy,dx)+(moving?Math.sin(state.frame*1.7)*0.05:0));
+  ctx.fillStyle='#8a6f42'; ctx.fillRect(13,-3,11,6);
+  ctx.fillStyle='#c8b28a'; ctx.fillRect(13,-3,11,2.4);
+  ctx.fillStyle='#6e6252'; ctx.beginPath(); ctx.moveTo(24,-5); ctx.lineTo(34,0); ctx.lineTo(24,5); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(24,-5); ctx.lineTo(34,0); ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+  // invulnerability shimmer
+  if(p.invuln>0 && (state.frame%8<4)){
+    ctx.strokeStyle='rgba(0,255,136,0.6)'; ctx.lineWidth=2;
+    ctx.strokeRect(sx+2,sy+2,TILE-4,TILE-4);
+  }
+}
+function drawEnemy(e){
+  if(!e.alive) return;
+  var sx=e.tx*TILE-state.camX, sy=e.ty*TILE-state.camY;
+  if(sx<-40||sx>W+40||sy<-40||sy>H+40) return;
+  var cx=sx+16, cy=sy+16+Math.sin(state.frame/7+e.ph)*2;
+  var sway=Math.sin(state.frame/20+e.ph)*0.05;
+  var face=e.dir.x<0?-1:1;
+  // contact shadow on the ground below the hover
+  ctx.fillStyle='rgba(0,0,0,0.38)'; ctx.beginPath(); ctx.ellipse(cx,sy+29,11,3.2,0,0,6.29); ctx.fill();
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(sway);
+  if(e.type==='fly'){
+    // SPARKFLY: live beating wings behind the CHAR-SWEEP stacked body
+    var w=Math.sin(state.frame/4+e.ph);
+    ctx.fillStyle='rgba(255,150,60,0.5)';
+    ctx.save(); ctx.rotate(-0.5-w*0.35); ctx.beginPath(); ctx.ellipse(-11,-6,9,3.6,0,0,6.29); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.rotate(0.5+w*0.35); ctx.beginPath(); ctx.ellipse(11,-6,9,3.6,0,0,6.29); ctx.fill(); ctx.restore();
+    ctx.save(); if(face<0) ctx.scale(-1,1);
+    ctx.drawImage(gsSprites().fly,-24,-24,48,48);
+    ctx.restore();
+    // ember trail spark
+    if(state.frame%6===0) ctx.fillStyle='rgba(255,122,60,0.5)';
+    else ctx.fillStyle='rgba(255,179,71,0.3)';
+    ctx.beginPath(); ctx.arc(-face*14,7,1.8,0,6.29); ctx.fill();
+  } else {
+    // GEMMOTH: live faceted gem-wings behind the CHAR-SWEEP stacked body
+    var fl=Math.sin(state.frame/5+e.ph)*5;
+    ctx.fillStyle='rgba(124,79,208,0.85)';
+    ctx.beginPath(); ctx.moveTo(-4,-3); ctx.lineTo(-24,-13-fl); ctx.lineTo(-27,1); ctx.lineTo(-9,9); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(4,-3); ctx.lineTo(24,-13-fl); ctx.lineTo(27,1); ctx.lineTo(9,9); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(217,194,255,0.8)'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(-6,-1); ctx.lineTo(-23,-9-fl*0.8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6,-1); ctx.lineTo(23,-9-fl*0.8); ctx.stroke();
+    ctx.fillStyle='rgba(53,224,255,0.9)';
+    ctx.beginPath(); ctx.arc(-24,-11-fl,1.7,0,6.29); ctx.arc(24,-11-fl,1.7,0,6.29); ctx.fill();
+    ctx.save(); if(face<0) ctx.scale(-1,1);
+    ctx.drawImage(gsSprites().moth,-24,-24,48,48);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var zoom=state.fp?1.7:1;
+  ctx.save();
+  if(state.fp && state.player){
+    ctx.translate(W/2,H/2); ctx.scale(zoom,zoom); ctx.translate(-(state.player.rx-state.camX)-16,-(state.player.ry-state.camY)-16);
+  }
+  drawBackground();
+  var x0=Math.max(0,Math.floor(state.camX/TILE)-1), x1=Math.min(COLS-1,Math.ceil((state.camX+W)/TILE)+1);
+  var y0=Math.max(0,Math.floor(state.camY/TILE)-1), y1=Math.min(ROWS-1,Math.ceil((state.camY+H)/TILE)+1);
+  for(var y=y0;y<=y1;y++) for(var x=x0;x<=x1;x++) drawTile(x,y);
+  state.enemies.forEach(drawEnemy);
+  drawPlayer();
+  // particles
+  state.particles.forEach(function(pt){
+    var sx=pt.x-state.camX, sy=pt.y-state.camY;
+    ctx.globalAlpha=Math.max(0,pt.life/40);
+    ctx.fillStyle=pt.col; ctx.beginPath(); ctx.arc(sx,sy,pt.r,0,6.29); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  // floaters
+  ctx.font='bold 12px Share Tech Mono, monospace'; ctx.textAlign='center';
+  state.floaters.forEach(function(f){
+    var sx=f.x-state.camX, sy=f.y-state.camY;
+    ctx.globalAlpha=Math.max(0,f.life/70);
+    ctx.fillStyle=f.col; ctx.fillText(f.txt,sx,sy);
+  });
+  ctx.globalAlpha=1;
+  ctx.restore();
+  // lantern darkness in FP mode
+  if(state.fp && state.player){
+    var lx=W/2, ly=H/2;
+    var lg=ctx.createRadialGradient(lx,ly,90,lx,ly,420);
+    lg.addColorStop(0,'rgba(0,0,0,0)'); lg.addColorStop(1,'rgba(2,2,8,0.82)');
+    ctx.fillStyle=lg; ctx.fillRect(0,0,W,H);
+  }
+  // banner
+  if(state.banner && state.frame<state.bannerUntil){
+    ctx.font='800 26px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(W/2-260,54,520,40);
+    ctx.fillStyle='#00ff88'; ctx.fillText(state.banner,W/2,82);
+  }
+  // title / over screens
+  if(state.phase==='title'){
+    ctx.fillStyle='rgba(4,2,10,0.72)'; ctx.fillRect(0,0,W,H);
+    ctx.textAlign='center';
+    ctx.fillStyle='#00ff88'; ctx.font='900 54px Orbitron, sans-serif';
+    ctx.fillText('GEMSHAFT',W/2,250);
+    ctx.fillStyle='#e8dcf5'; ctx.font='600 20px Rajdhani, sans-serif';
+    ctx.fillText('Dig deep. Mind the boulders. Bring home the gems.',W/2,292);
+    ctx.fillStyle='#8a7ba8'; ctx.font='500 16px Rajdhani, sans-serif';
+    ctx.fillText('Solo · Watch · Duel — pick a mode below, or press ENTER to dig.',W/2,330);
+    ctx.fillStyle='#ffb347'; ctx.font='600 15px Share Tech Mono, monospace';
+    ctx.fillText('HI '+state.hi+'  ·  quota is the key — the exit only opens when it is met',W/2,368);
+  }
+  if(state.phase==='over'){
+    ctx.fillStyle='rgba(4,2,10,0.72)'; ctx.fillRect(0,0,W,H);
+    ctx.textAlign='center';
+    ctx.fillStyle=state.winner?'#00ff88':'#ff3860'; ctx.font='900 44px Orbitron, sans-serif';
+    ctx.fillText(state.winner||'GAME OVER',W/2,290);
+    ctx.fillStyle='#e8dcf5'; ctx.font='600 20px Rajdhani, sans-serif';
+    ctx.fillText('Score '+state.score+'  ·  HI '+state.hi+'  ·  Level '+state.level,W/2,330);
+    ctx.fillStyle='#8a7ba8'; ctx.font='500 16px Rajdhani, sans-serif';
+    ctx.fillText('Press R to dig again, or pick a mode below.',W/2,364);
+  }
+}
+
+/* ---- input ---- */
+var keys={};
+function pressDir(dx,dy){
+  if(state.phase!=='play'||state.paused) return;
+  if(state.player) state.player.want={x:dx,y:dy};
+}
+function releaseDir(dx,dy){
+  if(state.player && state.player.want && state.player.want.x===dx && state.player.want.y===dy) state.player.want=null;
+}
+document.addEventListener('keydown',function(ev){
+  var k=ev.key.toLowerCase();
+  if(k==='arrowup'||k==='w'){ pressDir(0,-1); ev.preventDefault(); }
+  else if(k==='arrowdown'||k==='s'){ pressDir(0,1); ev.preventDefault(); }
+  else if(k==='arrowleft'||k==='a'){ pressDir(-1,0); ev.preventDefault(); }
+  else if(k==='arrowright'||k==='d'){ pressDir(1,0); ev.preventDefault(); }
+  else if(k===' '||k==='shift'){ if(state.phase==='play') dashStep(); ev.preventDefault(); }
+  else if(k==='v'){ toggleFP(); }
+  else if(k==='p'){ togglePause(); }
+  else if(k==='m'){ toggleMute(); }
+  else if(k==='r'){ startGame(state.mode); }
+  else if(k==='enter'){ if(state.phase==='title'||state.phase==='over') startGame('solo'); }
+});
+document.addEventListener('keyup',function(ev){
+  var k=ev.key.toLowerCase();
+  if(k==='arrowup'||k==='w') releaseDir(0,-1);
+  else if(k==='arrowdown'||k==='s') releaseDir(0,1);
+  else if(k==='arrowleft'||k==='a') releaseDir(-1,0);
+  else if(k==='arrowright'||k==='d') releaseDir(1,0);
+});
+function toggleFP(){ state.fp=!state.fp; setMsg(state.fp?'Lantern cam — the dark closes in.':'Wide shaft view.'); syncButtons(); }
+function togglePause(){
+  if(state.phase!=='play') return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+}
+function toggleMute(){
+  muted=!muted;
+  try{ localStorage.setItem('gemshaft.mute',muted?'1':'0'); }catch(e){}
+  setMsg(muted?'Muted.':'Sound on.');
+}
+function syncButtons(){
+  var map={btnSolo:'solo',btnWatch:'watch',btnDuel:'duel'};
+  Object.keys(map).forEach(function(id){
+    var b=$(id); if(b) b.classList.toggle('active', state.mode===map[id] && state.phase==='play');
+  });
+  var fp=$('btnFP'); if(fp) fp.classList.toggle('active', !!state.fp);
+  var pa=$('btnPause'); if(pa) pa.classList.toggle('active', !!state.paused);
+}
+function bind(id,fn){ var b=$(id); if(b) b.addEventListener('click',fn); }
+bind('btnSolo',function(){ startGame('solo'); });
+bind('btnWatch',function(){ startGame('watch'); });
+bind('btnDuel',function(){ startGame('duel'); });
+bind('btnFP',function(){ toggleFP(); });
+bind('btnPause',function(){ togglePause(); });
+bind('resumeBtn',function(){ togglePause(); });
+bind('saveBtn',function(){ saveGame(); });
+bind('loadBtn',function(){ if(loadGame()) togglePause(); });
+bind('restartBtn',function(){ if(state.paused) togglePause(); startGame(state.mode); });
+bind('quitArcadeBtn',function(){ window.location.href='../arcade.html'; });
+/* touch shell: D-pad steers, A dash, B cam, START menu, SELECT cam */
+function bindHold(id,down,up){
+  var b=$(id); if(!b) return;
+  b.addEventListener('pointerdown',function(e){ e.preventDefault(); down(); });
+  if(up){ b.addEventListener('pointerup',up); b.addEventListener('pointerleave',up); }
+}
+bindHold('dUp',function(){ pressDir(0,-1); },function(){ releaseDir(0,-1); });
+bindHold('dDown',function(){ pressDir(0,1); },function(){ releaseDir(0,1); });
+bindHold('dLeft',function(){ pressDir(-1,0); },function(){ releaseDir(-1,0); });
+bindHold('dRight',function(){ pressDir(1,0); },function(){ releaseDir(1,0); });
+bindHold('btnA',function(){ if(state.phase==='play') dashStep(); });
+bindHold('btnB',function(){ toggleFP(); });
+bindHold('startBtn',function(){ togglePause(); });
+bindHold('selectBtn',function(){ toggleFP(); });
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+
+/* ---- main loop ---- */
+function frame(){
+  update();
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---- auto-start from query (?auto=play / ?auto=watch / ?auto=duel) ---- */
+if(q.get('auto')==='play') startGame('solo');
+else if(q.get('auto')==='watch') startGame('watch');
+else if(q.get('auto')==='duel') startGame('duel');
+
+/* ---- debug / harness API ---- */
+window.__gemshaft={
+  get state(){ return state; },
+  startGame:startGame, buildLevel:buildLevel,
+  toggleFP:toggleFP, togglePause:togglePause, toggleMute:toggleMute,
+  saveGame:saveGame, loadGame:loadGame, dashStep:dashStep,
+  physicsTick:physicsTick, gloamTick:gloamTick, botThink:botThink,
+  tryStep:tryStep, checkQuota:checkQuota, die:die, levelClear:levelClear,
+  debugSetCell:function(x,y,c){ setCell(x,y,c); },
+  debugSetDirt:function(x,y,v){ if(inBounds(x,y)) state.dirt[y][x]=v; },
+  debugPlaceEnemy:function(type,x,y){ var e=makeEnemy(type,x,y,state.enemies.length); state.enemies.push(e); return e; },
+  debugMove:function(dx,dy){ if(state.player) state.player.want={x:dx,y:dy}; },
+  debugEndAttempt:function(){ die('debug end of attempt'); },
+  debugSetTime:function(t){ state.timeLeft=t; },
+  isMuted:function(){ return muted; },
+  step:function(){ update(); },
+  debugAgent:function(){ return state.watchBot; },
+  debugRecorded:function(){ return !!state.feRecorded; },
+  debugCursor:function(){ return watchIdx; },
+  get feTraces(){ return state.feTraces; },
+  get feAgentId(){ return state.feAgentId; },
+  get feRecorded(){ return !!state.feRecorded; },
+  get watchIdx(){ return watchIdx; }
+};
+</script>
+</body>
+</html>

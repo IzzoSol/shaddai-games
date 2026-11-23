@@ -1,0 +1,146 @@
+[
+ {
+  "id": "zerox",
+  "dir": "assets/characters/zerox/",
+  "name": "ZEROX",
+  "src": "zerox-council",
+  "cell": 256,
+  "frames": 8,
+  "clips": {
+   "walk": "walk.webp",
+   "run": "run.webp",
+   "action": "action.webp"
+  },
+  "standH": 226,
+  "footY": 234,
+  "centerX": 125.5
+ },
+ {
+  "id": "quill",
+  "dir": "assets/characters/quill/",
+  "name": "QUILL",
+  "src": "quill-council",
+  "cell": 256,
+  "frames": 8,
+  "clips": {
+   "walk": "walk.webp",
+   "run": "run.webp",
+   "action": "action.webp"
+  },
+  "standH": 187,
+  "footY": 225,
+  "centerX": 129
+ },
+ {
+  "id": "oracle",
+  "dir": "assets/characters/oracle/",
+  "name": "ORACLE",
+  "src": "oracle-c2",
+  "cell": 256,
+  "frames": 8,
+  "clips": {
+   "walk": "walk.webp",
+   "run": "run.webp",
+   "action": "action.webp"
+  },
+  "standH": 204,
+  "footY": 233,
+  "centerX": 127.5
+ },
+ {
+  "id": "turtle",
+  "dir": "assets/characters/turtle/",
+  "name": "TURTLE",
+  "src": "turtle-council",
+  "cell": 256,
+  "frames": 8,
+  "clips": {
+   "walk": "walk.webp",
+   "run": "run.webp",
+   "action": "action.webp"
+  },
+  "standH": 215,
+  "footY": 235,
+  "centerX": 128
+ },
+ {
+  "id": "nexus",
+  "dir": "assets/characters/nexus/",
+  "name": "NEXUS",
+  "src": "nexus-council",
+  "cell": 256,
+  "frames": 8,
+  "clips": {
+   "walk": "walk.webp",
+   "run": "run.webp",
+   "action": "action.webp"
+  },
+  "standH": 163,
+  "footY": 213,
+  "centerX": 130.5
+ },
+ {
+  "id": "pikadon",
+  "dir": "assets/characters/pikadon/",
+  "name": "PIKADON",
+  "src": "pikadon-council",
+  "cell": 256,
+  "frames": 8,
+  "clips": {
+   "walk": "walk.webp",
+   "run": "run.webp",
+   "action": "action.webp"
+  },
+  "standH": 164,
+  "footY": 213,
+  "centerX": 130
+ },
+ {
+  "id": "shaddai",
+  "dir": "assets/characters/shaddai/",
+  "name": "SHADDAI",
+  "src": "shaddai-council",
+  "cell": 256,
+  "frames": 8,
+  "clips": {
+   "walk": "walk.webp",
+   "run": "run.webp",
+   "action": "action.webp"
+  },
+  "standH": 164,
+  "footY": 213,
+  "centerX": 128.5
+ },
+ {
+  "id": "leadr",
+  "dir": "assets/characters/leadr/",
+  "name": "Leadr",
+  "src": "leadr",
+  "cell": 256,
+  "frames": 8,
+  "clips": {
+   "walk": "walk.webp",
+   "run": "run.webp",
+   "action": "action.webp"
+  },
+  "standH": 164,
+  "footY": 213,
+  "centerX": 126
+ },
+ {
+  "id": "gaeli",
+  "dir": "assets/characters/gaeli/",
+  "name": "Gaeli",
+  "src": "gaeli",
+  "cell": 256,
+  "frames": 8,
+  "clips": {
+   "walk": "walk.webp",
+   "run": "run.webp",
+   "action": "action.webp"
+  },
+  "standH": 221,
+  "footY": 233,
+  "centerX": 124
+ }
+]

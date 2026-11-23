@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>◈ FALLIBLE LEAGUE — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#000000;
+    --panel:#050505;
+    --panel2:#080a09;
+    --border:rgba(0,255,136,0.14);
+    --border-strong:rgba(0,255,136,0.4);
+    --green:#00ff88;
+    --cyan:#00f0ff;
+    --purple:#c084fc;
+    --yellow:#f5e000;
+    --orange:#ff9d3d;
+    --red:#ff2a2a;
+    --dim:#5a6b60;
+    --text:#c8d6cd;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    font-size:14px;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:9999;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.035) 3px,
+      rgba(0,0,0,0.035) 4px
+    );
+  }
+  h1,h2,h3{font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;margin:0;}
+  a{color:var(--cyan);text-decoration:none;}
+  a:hover{color:var(--green);}
+  .topbar{
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    padding:14px 20px;background:var(--panel);
+    border-bottom:1px solid var(--border);
+  }
+  .topbar .back{
+    border:1px solid var(--border);padding:6px 12px;font-size:12px;
+    letter-spacing:1px;color:var(--text);
+  }
+  .topbar .back:hover{border-color:var(--border-strong);color:var(--green);}
+  .topbar h1{font-size:20px;color:var(--green);}
+  .topbar .tag{color:var(--dim);font-size:12px;letter-spacing:1px;}
+  .wrap{max-width:1020px;width:100%;margin:0 auto;padding:24px 20px 60px;}
+  .lede{color:var(--dim);margin:6px 0 20px;max-width:720px;line-height:1.6;}
+  .lede b{color:var(--text);font-weight:400;}
+  .controls{
+    display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+    padding:14px;border:1px solid var(--border);background:var(--panel2);
+    margin-bottom:20px;
+  }
+  .controls label{color:var(--dim);font-size:12px;letter-spacing:1px;}
+  select{
+    font-family:'Share Tech Mono',monospace;font-size:14px;
+    background:#000;color:var(--green);
+    border:1px solid var(--border-strong);padding:8px 10px;cursor:pointer;
+  }
+  button{
+    font-family:'Share Tech Mono',monospace;font-size:14px;cursor:pointer;
+    background:#000;color:var(--green);
+    border:1px solid var(--border-strong);padding:9px 16px;letter-spacing:1px;
+  }
+  button:hover{background:rgba(0,255,136,0.08);}
+  button:disabled{opacity:0.45;cursor:default;}
+  .btn-note{color:var(--dim);font-size:12px;line-height:1.5;max-width:420px;}
+  .stats{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;margin-bottom:20px;
+  }
+  .stat{
+    border:1px solid var(--border);background:var(--panel);
+    padding:12px 14px;
+  }
+  .stat .k{font-size:11px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;}
+  .stat .v{font-family:'Orbitron',sans-serif;font-size:22px;color:var(--green);margin-top:4px;}
+  .stat .v small{font-size:12px;color:var(--dim);}
+  .stat.wide{grid-column:span 2;}
+  .stat .v.upset{font-size:15px;line-height:1.5;}
+  table{width:100%;border-collapse:collapse;background:var(--panel);}
+  /* E71: standings table scrolls inside its own wrapper on narrow
+     screens instead of overflowing the page (D1, E70 probe). */
+  .tablescroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tablescroll table{min-width:560px;}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:13px;}
+  th{
+    font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;
+    color:var(--dim);text-transform:uppercase;
+  }
+  tr.rank1 td:first-child{color:var(--yellow);}
+  td.elo{font-family:'Orbitron',sans-serif;color:var(--green);}
+  td.delta-up{color:var(--green);}
+  td.delta-down{color:var(--red);}
+  .formchip{
+    display:inline-block;min-width:20px;text-align:center;
+    padding:2px 4px;margin-right:3px;font-size:12px;
+    border:1px solid var(--border);
+  }
+  .formchip.W{color:var(--green);border-color:rgba(0,255,136,0.4);}
+  .formchip.L{color:var(--red);border-color:rgba(255,42,42,0.4);}
+  .formchip.D{color:var(--yellow);border-color:rgba(245,224,0,0.4);}
+  .tiltbar{
+    display:inline-block;width:70px;height:8px;vertical-align:middle;
+    background:#111;border:1px solid var(--border);margin-right:6px;
+  }
+  .tiltbar i{display:block;height:100%;background:var(--orange);}
+  .section{margin-top:28px;}
+  .section h2{font-size:15px;color:var(--cyan);margin-bottom:12px;}
+  .matches{list-style:none;margin:0;padding:0;border:1px solid var(--border);background:var(--panel);}
+  .matches li{
+    padding:9px 12px;border-bottom:1px solid var(--border);
+    font-size:13px;line-height:1.5;
+  }
+  .matches li:last-child{border-bottom:none;}
+  .matches .w{color:var(--green);}
+  .matches .l{color:var(--red);}
+  .matches .dim{color:var(--dim);}
+  .empty{color:var(--dim);padding:16px;text-align:center;border:1px solid var(--border);background:var(--panel);}
+  .fallback{
+    border:1px solid rgba(255,42,42,0.4);background:var(--panel);
+    color:var(--red);padding:16px;margin-top:20px;line-height:1.6;
+  }
+  .foot{margin-top:32px;color:var(--dim);font-size:12px;line-height:1.6;}
+  @media (max-width:640px){
+    .stat.wide{grid-column:span 1;}
+    th:nth-child(5),td:nth-child(5){display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../arcade.html">← ARCADE</a>
+  <h1>FALLIBLE LEAGUE</h1>
+  <span class="tag">COUNCIL BOTS · IMPERFECT ON PURPOSE · EVERY DECISION TRACED</span>
+</div>
+
+<div class="wrap">
+  <p class="lede">
+    The council plays <b>imperfectly on purpose</b> — personality-driven picks,
+    tilt after losses, learning between matches. Standings below are read from the
+    engine's persisted state in this browser (<b>fallible.agents.v1 / fallible.traces.v1</b>).
+    Exhibition matches are played live by the engine, in your browser, in the
+    reference mini-game <b>grid-duel</b> — nothing is scripted, and a genuine draw
+    is recorded as a draw.
+  </p>
+
+  <div class="controls">
+    <label for="gameSel">GAME</label>
+    <select id="gameSel"></select>
+    <button id="batchBtn" type="button">▶ RUN EXHIBITION BATCH (20 MATCHES)</button>
+    <span class="btn-note" id="batchNote">Plays 20 grid-duel matches across the council pairs and updates the table. Elo K=24, start 1200.</span>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="tablescroll">
+  <table id="standingsTable" aria-label="League standings">
+    <thead>
+      <tr>
+        <th>#</th><th>Agent</th><th>Elo</th><th>Δ</th><th>W–L–D</th><th>Form</th><th>Streak</th><th>Tilt</th>
+      </tr>
+    </thead>
+    <tbody id="standingsBody"></tbody>
+  </table>
+  </div>
+  <div class="empty" id="emptyNote" hidden>No matches yet for this game — run an exhibition batch to seed the table.</div>
+
+  <div class="section">
+    <h2>RECENT MATCHES</h2>
+    <ul class="matches" id="matchList"></ul>
+  </div>
+
+  <div class="fallback" id="engineFallback" hidden>
+    The Fallible Engine (agent-engine.js) did not load, so no standings can be shown.
+    Games still work with their built-in bots — this page just has nothing to rank yet.
+  </div>
+
+  <p class="foot">
+    Fallible Engine v1 · Elo per agent per game (K=24, start 1200) · learning nudges
+    evaluation weights toward picks that preceded wins · traces capped at 5,000 stored
+    (count kept) · data stays in this browser unless exported.
+  </p>
+</div>
+
+<script src="agent-engine.js"></script>
+<script>
+(function () {
+  'use strict';
+  var IDS = ['ASIMOV', 'SHADDAI', 'ZEROX', 'ORACLE', 'NEXUS', 'TURTLE', 'QUILL', 'PIKADON'];
+  var PAIRS = [
+    ['ZEROX', 'SHADDAI'], ['ORACLE', 'QUILL'], ['TURTLE', 'NEXUS'],
+    ['ASIMOV', 'PIKADON'], ['ZEROX', 'ORACLE']
+  ];
+  var DEFAULT_GAME = 'grid-duel';
+  var BATCH_SIZE = 20;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var gameSel = $('gameSel'), batchBtn = $('batchBtn'), batchNote = $('batchNote');
+  var statsEl = $('stats'), bodyEl = $('standingsBody'), matchList = $('matchList');
+  var emptyNote = $('emptyNote'), fallback = $('engineFallback');
+
+  if (typeof window.FallibleEngine === 'undefined') {
+    fallback.hidden = false;
+    batchBtn.disabled = true;
+    gameSel.disabled = true;
+    statsEl.innerHTML = '';
+    return;
+  }
+  var E = window.FallibleEngine;
+
+  // ---- Reference mini-game: grid-duel (same rules as the E1 vm test) ----
+  // Two agents on a 1D track, hp 10 each. Each round both pick simultaneously:
+  // advance (close distance), strike (damage if in range), guard (halve damage),
+  // feint (counter 1 if opponent strikes). 80 rounds max, then a draw.
+  function scoredOptions(agent, me, foe, dist) {
+    var p = agent.personality;
+    return [
+      { key: 'advance', score: 0.30 + p.aggression * 0.4 + (dist > 3 ? 0.30 : 0.0), tag: 'advance' },
+      { key: 'strike',  score: dist <= 2 ? 0.70 + p.aggression * 0.3 : 0.10, tag: 'strike' },
+      { key: 'guard',   score: 0.20 + p.caution * 0.5 + (me.hp <= 4 ? 0.30 : 0), tag: 'guard' },
+      { key: 'feint',   score: 0.15 + p.curiosity * 0.5, tag: 'feint' }
+    ];
+  }
+  function playMatch(a, b) {
+    var A = { hp: 10, pos: 2 }, B = { hp: 10, pos: 10 };
+    var traceA = [], traceB = [], rounds = 0;
+    while (A.hp > 0 && B.hp > 0 && rounds < 80) {
+      rounds++;
+      var dist = Math.abs(B.pos - A.pos);
+      var dA = E.decide(a, 'grid-duel', scoredOptions(a, A, B, dist), {});
+      var dB = E.decide(b, 'grid-duel', scoredOptions(b, B, A, dist), {});
+      traceA.push(dA.trace); traceB.push(dB.trace);
+      var moveA = dA.pick.key, moveB = dB.pick.key;
+      if (moveA === 'advance' && A.pos < B.pos) A.pos++;
+      if (moveB === 'advance' && B.pos > A.pos) B.pos--;
+      var dist2 = Math.abs(B.pos - A.pos);
+      var dmgA = 0, dmgB = 0;
+      if (moveA === 'strike' && dist2 <= 2) dmgB += (moveB === 'feint' ? 3 : 2);
+      if (moveB === 'strike' && dist2 <= 2) dmgA += (moveA === 'feint' ? 3 : 2);
+      if (moveA === 'feint' && moveB === 'strike') dmgB += 1;
+      if (moveB === 'feint' && moveA === 'strike') dmgA += 1;
+      if (moveA === 'guard') dmgA = Math.ceil(dmgA / 2);
+      if (moveB === 'guard') dmgB = Math.ceil(dmgB / 2);
+      A.hp -= dmgA; B.hp -= dmgB;
+    }
+    var outcome;
+    if (A.hp <= 0 && B.hp <= 0) outcome = 'draw';
+    else if (B.hp <= 0) outcome = 'win';
+    else if (A.hp <= 0) outcome = 'loss';
+    else outcome = 'draw';
+    return { outcome: outcome, rounds: rounds, traceA: traceA, traceB: traceB };
+  }
+
+  var agents = {};
+  IDS.forEach(function (id) { agents[id] = E.loadAgent(id); });
+
+  function runBatch(n) {
+    var played = 0;
+    for (var i = 0; i < n; i++) {
+      var pair = PAIRS[i % PAIRS.length];
+      var m = playMatch(agents[pair[0]], agents[pair[1]]);
+      E.recordMatch(agents[pair[0]], agents[pair[1]], 'grid-duel', m.outcome, m.traceA, m.traceB);
+      played++;
+    }
+    return played;
+  }
+
+  // ---- Standings rendering ----
+  function gamesKnown() {
+    var games = {};
+    var st = E.standings();
+    IDS.forEach(function (id) {
+      Object.keys(st[id].elo || {}).forEach(function (g) { games[g] = true; });
+    });
+    E.recentMatches(1000).forEach(function (m) { games[m.gameId] = true; });
+    var list = Object.keys(games);
+    if (list.indexOf(DEFAULT_GAME) === -1) list.unshift(DEFAULT_GAME);
+    return list;
+  }
+
+  function currentGame() { return gameSel.value || DEFAULT_GAME; }
+
+  function wldFor(agentId, gameId, matches) {
+    var w = 0, l = 0, d = 0;
+    matches.forEach(function (m) {
+      if (m.gameId !== gameId) return;
+      // Match records are canonical (one per match, outcome from agentId's
+      // side); flip the outcome when this agent was the opponent.
+      var outcome = null;
+      if (m.agentId === agentId) outcome = m.outcome;
+      else if (m.opponentId === agentId) {
+        outcome = m.outcome === 'win' ? 'loss' : m.outcome === 'loss' ? 'win' : 'draw';
+      } else return;
+      if (outcome === 'win') w++;
+      else if (outcome === 'loss') l++;
+      else d++;
+    });
+    return { w: w, l: l, d: d, n: w + l + d };
+  }
+
+  function streakOf(form) {
+    if (!form || !form.length) return '—';
+    var last = form[form.length - 1], n = 0;
+    for (var i = form.length - 1; i >= 0 && form[i] === last; i--) n++;
+    return last + n;
+  }
+
+  function biggestUpset(matches) {
+    var best = null;
+    matches.forEach(function (m) {
+      // Winner vs loser pre-match Elo: upset when the winner was rated lower.
+      var winElo, loseElo, winner, loser;
+      if (m.outcome === 'win') {
+        winner = m.agentId; loser = m.opponentId;
+        winElo = m.eloBefore; loseElo = m.oppElo;
+      } else if (m.outcome === 'loss') {
+        winner = m.opponentId; loser = m.agentId;
+        winElo = m.oppElo; loseElo = m.eloBefore;
+      } else return;
+      if (typeof winElo !== 'number' || typeof loseElo !== 'number') return;
+      var gap = loseElo - winElo;
+      if (gap > 0 && (!best || gap > best.gap)) {
+        best = { gap: gap, winner: winner, loser: loser, winElo: winElo, loseElo: loseElo, gameId: m.gameId, t: m.t };
+      }
+    });
+    return best;
+  }
+
+  function render() {
+    var gameId = currentGame();
+    var st = E.standings();
+    var matches = E.recentMatches(1000);
+    var stats = E.stats();
+
+    // Game selector (rebuild only if the set changed).
+    var known = gamesKnown();
+    if (gameSel.options.length !== known.length ||
+        known.some(function (g, i) { return !gameSel.options[i] || gameSel.options[i].value !== g; })) {
+      var prev = gameId;
+      gameSel.innerHTML = '';
+      known.forEach(function (g) {
+        var o = document.createElement('option');
+        o.value = g; o.textContent = g;
+        gameSel.appendChild(o);
+      });
+      gameSel.value = known.indexOf(prev) !== -1 ? prev : DEFAULT_GAME;
+      gameId = currentGame();
+    }
+
+    // Standings rows, sorted by Elo desc.
+    var rows = IDS.map(function (id) {
+      var s = st[id];
+      return {
+        id: id,
+        elo: (s.elo && s.elo[gameId]) || E.START_ELO,
+        form: s.form || [],
+        tilt: s.tiltLevel || 0,
+        wld: wldFor(id, gameId, matches)
+      };
+    }).sort(function (a, b) { return b.elo - a.elo; });
+
+    var played = matches.filter(function (m) { return m.gameId === gameId; }).length;
+    var anyPlayed = rows.some(function (r) { return r.wld.n > 0; });
+    emptyNote.hidden = anyPlayed;
+
+    bodyEl.innerHTML = rows.map(function (r, i) {
+      var delta = r.elo - E.START_ELO;
+      var deltaHtml = delta === 0 ? '<td>—</td>'
+        : '<td class="' + (delta > 0 ? 'delta-up' : 'delta-down') + '">' +
+          (delta > 0 ? '+' : '') + delta + '</td>';
+      var formHtml = r.form.slice(-5).map(function (f) {
+        return '<span class="formchip ' + f + '">' + f + '</span>';
+      }).join('') || '<span style="color:var(--dim)">—</span>';
+      var tiltPct = Math.round(r.tilt * 100);
+      return '<tr class="' + (i === 0 ? 'rank1' : '') + '">' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td>' + r.id + '</td>' +
+        '<td class="elo">' + r.elo + '</td>' +
+        deltaHtml +
+        '<td>' + r.wld.w + '–' + r.wld.l + '–' + r.wld.d + '</td>' +
+        '<td>' + formHtml + '</td>' +
+        '<td>' + streakOf(r.form) + '</td>' +
+        '<td><span class="tiltbar"><i style="width:' + tiltPct + '%"></i></span>' + tiltPct + '%</td>' +
+        '</tr>';
+    }).join('');
+
+    // Stats strip.
+    var upset = biggestUpset(matches);
+    var upsetHtml = upset
+      ? upset.winner + ' beat ' + upset.loser +
+        ' <small>(' + upset.loseElo + ' vs ' + upset.winElo + ' · gap +' + upset.gap + ' · ' + upset.gameId + ')</small>'
+      : '— none yet —';
+    statsEl.innerHTML =
+      '<div class="stat"><div class="k">Matches · ' + gameId + '</div><div class="v">' + played + '</div></div>' +
+      '<div class="stat"><div class="k">Traces recorded</div><div class="v">' + stats.traceCount +
+        ' <small>/ ' + stats.tracesStored + ' stored</small></div></div>' +
+      '<div class="stat"><div class="k">Agents tracked</div><div class="v">' + IDS.length + '</div></div>' +
+      '<div class="stat wide"><div class="k">Biggest recent upset</div><div class="v upset">' + upsetHtml + '</div></div>';
+
+    // Recent matches (this game first, newest first).
+    var recent = matches.filter(function (m) { return m.gameId === gameId; }).slice(0, 8);
+    if (!recent.length) {
+      matchList.innerHTML = '<li class="dim">No matches recorded yet for ' + gameId + '.</li>';
+    } else {
+      matchList.innerHTML = recent.map(function (m) {
+        var when = new Date(m.t).toLocaleString();
+        if (m.outcome === 'draw') {
+          return '<li><span class="w">' + m.agentId + '</span> drew with <span class="l">' +
+            (m.opponentId || 'field') + '</span> <span class="dim">· ' + m.gameId +
+            ' · Elo ' + m.eloBefore + '→' + m.eloAfter + ' · ' + when + '</span></li>';
+        }
+        var winner = m.outcome === 'win' ? m.agentId : m.opponentId;
+        var loser = m.outcome === 'win' ? m.opponentId : m.agentId;
+        return '<li><span class="w">' + winner + '</span> beat <span class="l">' + loser +
+          '</span> <span class="dim">· ' + m.gameId + ' · ' + m.decisions +
+          ' decisions · ' + when + '</span></li>';
+      }).join('');
+    }
+  }
+
+  batchBtn.addEventListener('click', function () {
+    batchBtn.disabled = true;
+    batchNote.textContent = 'Playing ' + BATCH_SIZE + ' exhibition matches…';
+    setTimeout(function () {
+      var n = runBatch(BATCH_SIZE);
+      batchNote.textContent = 'Played ' + n + ' exhibition matches (grid-duel). Table updated from persisted engine state.';
+      batchBtn.disabled = false;
+      render();
+    }, 30);
+  });
+
+  gameSel.addEventListener('change', render);
+
+  // Deep link for verification: ?exhibition=N auto-runs N matches on load.
+  var params = new URLSearchParams(window.location.search);
+  var auto = parseInt(params.get('exhibition') || '0', 10);
+  if (auto > 0 && auto <= 200) runBatch(auto);
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GRIMVAULT — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#070510;--panel:#0e0a1c;--border:rgba(0,255,136,.22);--gold:#ffb347;--green:#00ff88;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#e8dcf5;--dim:#8a7ba8}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.08),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(7,5,16,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #hud{display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--green);padding:8px 4px 0;min-height:20px}
+  #hud b{color:#fff}#hud .low{color:var(--red)}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:8px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(7,5,16,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#0e0a1c;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .abtns button{width:52px;height:52px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:183,140,255}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>GRIM<span>VAULT</span></h1><span class="tag">Roguelike delve · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI HANDHELD</span><span class="shell-led">● LIVE</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="560"></canvas>
+      <div id="pauseOverlay"><div class="card"><h2>PAUSED</h2><p id="pauseText">The vault waits. It is patient. It is always patient.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save State</button>
+        <button class="mbtn" id="loadBtn">Load State</button>
+        <button class="mbtn" id="restartBtn">Restart Delve</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to Arcade</button>
+      </div></div>
+    </div>
+    <div id="hud"></div>
+    <div id="msg">Descend. Find the Core Shard. Climb out alive.</div>
+    <div class="row">
+      <button class="mbtn active" id="btnSolo">Solo Delve<small>VEX-9 goes down alone</small></button>
+      <button class="mbtn" id="btnWatch">Watch<small>A council bot delves · Fallible Engine</small></button>
+      <button class="mbtn" id="btnFP">Delver-Cam<small>V · first-person view</small></button>
+      <button class="mbtn" id="btnPause">Pause<small>P / ESC · save &amp; load inside</small></button>
+      <button class="mbtn" id="btnMute">Sound: On<small>M to mute</small></button>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <span class="c"></span><button id="padUp">▲</button><span class="c"></span>
+        <button id="padLeft">◀</button><button id="padWait">•</button><button id="padRight">▶</button>
+        <span class="c"></span><button id="padDown">▼</button><span class="c"></span>
+      </div>
+      <div class="abtns"><button id="btnB">B</button><button id="btnA">A</button></div>
+      <div class="shell-pills"><button id="startBtn">START</button><button id="selectBtn">WAIT</button></div>
+    </div>
+  </div>
+  <div class="help">
+    <b>GRIMVAULT</b> — a turn-based roguelike delve. Every step you take, the vault takes one too. Descend five floors, take the <b>Core Shard</b> from the CORE GUARDIAN's vault, and climb back to the surface stairs with it. Death is permanent — one life, no refunds.<br/>
+    <span class="k">ARROWS / WASD</span> move (diagonals: QEZC) · <span class="k">SPACE / .</span> wait a turn · <span class="k">V</span> delver-cam (first-person) · <span class="k">P / ESC</span> pause · <span class="k">M</span> mute · <span class="k">R</span> restart.<br/>
+    Bump a monster to attack it. Step on items to take them: gold, health cells, rations (food), torches (see further), scrolls (mapping reveals the floor, blast hurts everything you can see), power cells (+1 STR). Food drains every turn — starve and your HP drains instead. Kill things, earn XP, level up: +6 max HP, +1 STR.<br/>
+    <b>ORIN</b>, a rival delver, prowls floors 2–4 grabbing gold. Bump ORIN to fight for the hoard — slay ORIN and the hoard spills.<br/>
+    <b>WATCH</b> is a council bot delving on the Fallible Engine — it plans toward the stairs, the shard and home, flees when hurt, and blunders on purpose. Never frame-perfect. If the engine fails to load, the legacy VEX stand-in delves instead.<br/>
+    📱 <b>Handheld shell:</b> D-pad moves VEX-9, <span class="k">A</span> waits a turn, <span class="k">B</span> toggles delver-cam, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit).<br/>
+    <b>Clean-room:</b> roguelike formula (procedural rooms + corridors, turn-based bump combat, hunger, permadeath, amulet-run — documented behaviour, scan3.md §5: Rogue 5.4.4, 100% complete original source, BSD per the restoration with the historical non-commercial caveat flagged in the credits; read as text only, never run or copied), our own code, vault, names, monsters and art — no copied assets, names or code.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   GRIMVAULT — original turn-based roguelike delve for the Shaddai Arcade.
+   Clean-room: the ROGUE formula (procedural room/corridor generation,
+   turn-based grid movement, bump combat, hunger, XP levels, permadeath,
+   fetch-the-amulet-and-climb-out win) re-implemented from documented
+   behaviour (scan3.md §5: Rogue 5.4.4 original source, 100% complete;
+   BSD-3-Clause per the Roguelike Restoration Project, with the caveat that
+   the original code historically carried a non-commercial clause — flagged
+   here, attribution kept; read as text only, never run/copied). Our own
+   code, vault (5 floors), delver (VEX-9), rival (ORIN), monsters, names
+   and art. No copyrighted characters, sprites or sounds. Modes: 1P,
+   WATCH bot delver on the Fallible Engine. Delver-cam first-person view
+   (V, raycast). Handheld shell on mobile (D-pad, A wait, B cam, START).
+   ========================================================================== */
+var GW=48, GH=28, TS=20, CW=960, CH=560;
+var MAXFLOOR=5, SAVE_KEY='grimvault.save.v1', HI_KEY='grimvault.hi.v1';
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg'), hudEl=document.getElementById('hud');
+var pauseOverlay=document.getElementById('pauseOverlay');
+
+/* ---- seeded RNG (mulberry32) — floors regenerate identically per seed ---- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hash2(x,y){var h=(x*374761393+y*668265263)^0x5bf03635;h=Math.imul(h^h>>>13,1274126177);return((h^h>>>16)>>>0)/4294967296;}
+
+/* ---- monster table: original names, types, stats ---- */
+var MONSTERS={
+  rat:    {name:'SCRAP RAT',     hp:6,  dmg:2, def:0, xp:5,   gold:4,  color:'#c9a86a', aggro:6,  glyph:'r'},
+  mite:   {name:'RUST MITE',     hp:4,  dmg:1, def:0, xp:4,   gold:3,  color:'#b07840', aggro:5,  glyph:'m'},
+  bat:    {name:'SPORE BAT',     hp:5,  dmg:2, def:0, xp:6,   gold:5,  color:'#9a7bd8', aggro:7,  glyph:'b', erratic:true},
+  crawler:{name:'CAVE CRAWLER',  hp:8,  dmg:3, def:0, xp:8,   gold:6,  color:'#7fb069', aggro:7,  glyph:'c'},
+  hound:  {name:'IRON HOUND',    hp:10, dmg:3, def:1, xp:10,  gold:8,  color:'#8fa3bf', aggro:12, glyph:'h'},
+  wisp:   {name:'SHARD WISP',    hp:7,  dmg:4, def:0, xp:12,  gold:12, color:'#35e0ff', aggro:8,  glyph:'w'},
+  jelly:  {name:'GRIM JELLY',    hp:13, dmg:2, def:1, xp:10,  gold:7,  color:'#57e389', aggro:5,  glyph:'j'},
+  warden: {name:'TOMB WARDEN',   hp:16, dmg:4, def:2, xp:16,  gold:15, color:'#d8d3c3', aggro:8,  glyph:'T'},
+  stalker:{name:'VAULT STALKER', hp:14, dmg:5, def:1, xp:18,  gold:20, color:'#ff5c8a', aggro:4,  glyph:'S', sneaky:true},
+  guardian:{name:'CORE GUARDIAN',hp:42, dmg:6, def:2, xp:100, gold:60, color:'#ffb347', aggro:99, glyph:'G'}
+};
+/* spawn weights by floor band */
+function pickType(rng,floor){
+  var pool=['rat','mite','bat'];
+  if(floor>=2) pool.push('crawler','hound');
+  if(floor>=3) pool.push('wisp','jelly');
+  if(floor>=4) pool.push('warden','stalker');
+  if(floor>=5) pool.push('warden','stalker','hound');
+  return pool[Math.floor(rng()*pool.length)];
+}
+var ITEM_KINDS={
+  gold:  {name:'gold',   color:'#ffd94a'},
+  health:{name:'health cell', color:'#00ff88'},
+  ration:{name:'ration', color:'#d8a35c'},
+  torch: {name:'torch',  color:'#ff9a3c'},
+  map:   {name:'scroll of mapping', color:'#b78cff'},
+  blast: {name:'scroll of blast',   color:'#ff3860'},
+  power: {name:'power cell', color:'#35e0ff'}
+};
+
+/* ---- dungeon generation ---- */
+function genFloor(seed,floor){
+  var rng=mulberry32(seed*7919+floor*104729+13);
+  var grid=[], y, x;
+  for(y=0;y<GH;y++){grid.push([]);for(x=0;x<GW;x++)grid[y].push(0);}
+  var rooms=[], tries=0;
+  while(rooms.length<9 && tries<80){
+    tries++;
+    var w=5+Math.floor(rng()*7), h=4+Math.floor(rng()*5);
+    var rx=1+Math.floor(rng()*(GW-w-2)), ry=1+Math.floor(rng()*(GH-h-2));
+    var ok=true, i, r;
+    for(i=0;i<rooms.length;i++){r=rooms[i];
+      if(rx<r.x+r.w+1&&rx+w+1>r.x&&ry<r.y+r.h+1&&ry+h+1>r.y){ok=false;break;}}
+    if(!ok) continue;
+    rooms.push({x:rx,y:ry,w:w,h:h,cx:rx+(w>>1),cy:ry+(h>>1)});
+    var yy, xx;
+    for(yy=ry;yy<ry+h;yy++)for(xx=rx;xx<rx+w;xx++)grid[yy][xx]=1;
+  }
+  /* corridors between consecutive room centres */
+  function corridor(x0,y0,x1,y1){
+    var x=x0,y=y0;
+    while(x!==x1){grid[y][x]=1;x+=x1>x?1:-1;}
+    while(y!==y1){grid[y][x]=1;y+=y1>y?1:-1;}
+    grid[y][x]=1;
+  }
+  var k;
+  for(k=1;k<rooms.length;k++) corridor(rooms[k-1].cx,rooms[k-1].cy,rooms[k].cx,rooms[k].cy);
+  var startRoom=rooms[0], endRoom=rooms[rooms.length-1];
+  var stairsUp={x:startRoom.cx,y:startRoom.cy};
+  var stairsDown=(floor<MAXFLOOR)?{x:endRoom.cx,y:endRoom.cy}:null;
+  var shardPos=null;
+  if(floor===MAXFLOOR) shardPos={x:endRoom.cx,y:endRoom.cy};
+  /* torches: room corners */
+  var torches=[];
+  rooms.forEach(function(r){
+    if(rng()<0.7) torches.push({x:r.x+1,y:r.y+1});
+    if(rng()<0.5) torches.push({x:r.x+r.w-2,y:r.y+r.h-2});
+  });
+  function freeTile(){
+    for(var t=0;t<200;t++){
+      var r=rooms[Math.floor(rng()*rooms.length)];
+      var tx=r.x+Math.floor(rng()*r.w), ty=r.y+Math.floor(rng()*r.h);
+      if(grid[ty][tx]===1 && !(tx===stairsUp.x&&ty===stairsUp.y) &&
+         !(stairsDown&&tx===stairsDown.x&&ty===stairsDown.y) &&
+         !(shardPos&&tx===shardPos.x&&ty===shardPos.y)) return {x:tx,y:ty};
+    }
+    return {x:rooms[0].cx,y:rooms[0].cy};
+  }
+  function farFrom(x,y,d){
+    return function(p){return Math.abs(p.x-x)+Math.abs(p.y-y)>=d;};
+  }
+  var monsters=[], items=[], mid=0;
+  var nMon=6+floor*2, i, t, pos;
+  for(i=0;i<nMon;i++){
+    t=pickType(rng,floor);
+    pos=freeTile();
+    if(Math.abs(pos.x-stairsUp.x)+Math.abs(pos.y-stairsUp.y)<4){i--;continue;}
+    var base=MONSTERS[t];
+    monsters.push({id:'m'+(mid++),type:t,x:pos.x,y:pos.y,
+      hp:base.hp+Math.floor(floor/2),maxhp:base.hp+Math.floor(floor/2),
+      dmg:base.dmg,def:base.def,xp:base.xp,gold:base.gold+Math.floor(rng()*6)});
+  }
+  if(floor===MAXFLOOR){
+    var gp={x:shardPos.x,y:shardPos.y-1}; if(grid[gp.y]&&grid[gp.y][gp.x]!==1) gp={x:shardPos.x+1,y:shardPos.y};
+    var gb=MONSTERS.guardian;
+    monsters.push({id:'m'+(mid++),type:'guardian',x:gp.x,y:gp.y,hp:gb.hp,maxhp:gb.hp,dmg:gb.dmg,def:gb.def,xp:gb.xp,gold:gb.gold});
+  }
+  function addItem(kind,n){
+    for(var j=0;j<n;j++){var p=freeTile();items.push({kind:kind,x:p.x,y:p.y,amt:kind==='gold'?5+Math.floor(rng()*11):0});}
+  }
+  addItem('gold',5); addItem('health',3); addItem('ration',3);
+  addItem('torch',1); addItem('map',1); addItem('blast',1);
+  if(rng()<0.35) addItem('power',1);
+  var rival=null;
+  if(floor>=2&&floor<MAXFLOOR){
+    var rp=freeTile();
+    rival={x:rp.x,y:rp.y,hp:20,maxhp:20,hoard:0,alive:true};
+  }
+  return {grid:grid,rooms:rooms,stairsUp:stairsUp,stairsDown:stairsDown,
+    shardPos:shardPos,torches:torches,monsters:monsters,items:items,rival:rival};
+}
+
+/* ---- line of sight (Bresenham) ---- */
+function los(grid,x0,y0,x1,y1){
+  var dx=Math.abs(x1-x0), dy=Math.abs(y1-y0), sx=x0<x1?1:-1, sy=y0<y1?1:-1, err=dx-dy, x=x0, y=y0;
+  while(!(x===x1&&y===y1)){
+    if(!(x===x0&&y===y0)&&grid[y]&&grid[y][x]===0) return false;
+    var e2=2*err;
+    if(e2>-dy){err-=dy;x+=sx;}
+    if(e2<dx){err+=dx;y+=sy;}
+  }
+  return true;
+}
+
+/* ---- state ---- */
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var G=null; /* live game state */
+var watchAgent=null, watchTimer=0, lastWatchPos=null, stuckCount=0;
+/* E50: Fallible Engine repair — persisted rotation cursor + trace list.
+ * D2: WATCH used to pick a RANDOM council id per click and restart reused
+ * G.watchId forever. The cursor lives in its own key and advances ONLY
+ * when the engine loads the agent (fallback never consumes it).
+ * D1: decide() traces were discarded; the list is collected here and
+ * passed whole to recordResult so learning fires and records carry their
+ * full decision count. */
+var WATCH_IDX_KEY='grimvault.watchIdx';
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var watchIdxPersisted=0;
+try{ watchIdxPersisted=parseInt(localStorage.getItem(WATCH_IDX_KEY)||'0',10)||0; }catch(e){ watchIdxPersisted=0; }
+function saveWatchIdx(){ try{ localStorage.setItem(WATCH_IDX_KEY, String(watchIdxPersisted)); }catch(e){} }
+var watchTraces=[];
+var tNow=0, particles=[];
+for(var pi=0;pi<36;pi++) particles.push({x:Math.random()*CW,y:Math.random()*CH,r:Math.random()*1.8+0.4,s:Math.random()*0.25+0.06,a:Math.random()*0.5+0.15});
+
+function newPlayer(){
+  return {x:0,y:0,hp:30,maxhp:30,str:5,gold:0,xp:0,level:1,food:200,sight:8,
+    hasShard:false,face:1,dirX:1,dirY:0};
+}
+function startGame(mode,agentId,seed){
+  var s=(typeof seed==='number')?seed:((Math.random()*2147483647)|0);
+  var fl=genFloor(s,1);
+  G={mode:mode||'solo',seed:s,floor:1,turn:0,grid:fl.grid,rooms:fl.rooms,
+    stairsUp:fl.stairsUp,stairsDown:fl.stairsDown,shardPos:fl.shardPos,
+    torches:fl.torches,monsters:fl.monsters,items:fl.items,rival:fl.rival,
+    player:newPlayer(),explored:[],visible:[],log:[],
+    over:false,won:false,overReason:'',paused:false,muted:false,fp:false,
+    watchId:agentId||null,watchDone:false};
+  G.player.x=fl.stairsUp.x; G.player.y=fl.stairsUp.y;
+  for(var y=0;y<GH;y++){G.explored.push([]);G.visible.push([]);for(var x=0;x<GW;x++){G.explored[y].push(false);G.visible[y].push(false);}}
+  watchAgent=null; stuckCount=0; lastWatchPos=null; watchTraces=[];
+  if(mode==='watch'){
+    /* E50: D2 rotation (persisted cursor, advances only on a live engine
+     * load) + D4 loadAgent (hydrate persisted Elo/weights/tagCounts —
+     * createAgent started every delve from 1200/{} and never learned) +
+     * D2b record the EFFECTIVE agent id in G.watchId (the TURTLE default
+     * used to leave it null, so a saved default delve reloaded agentless). */
+    var rotId=null;
+    if(!agentId && FE) rotId=COUNCIL_IDS[watchIdxPersisted%COUNCIL_IDS.length];
+    if(FE){
+      try{watchAgent=FE.loadAgent(agentId||rotId||'TURTLE');}catch(e){watchAgent=null;}
+      if(watchAgent && !agentId && rotId){ watchIdxPersisted++; saveWatchIdx(); }
+    }
+    if(!watchAgent) watchAgent={id:agentId||'VEX',legacy:true};
+    G.watchId=watchAgent.id;
+  }
+  setMsg(mode==='watch' ? ('WATCH — '+(watchAgent?watchAgent.id:'VEX')+' delves the vault.') : 'Descend. Find the Core Shard. Climb out alive.');
+  computeVisible(); render(); updateHud();
+  return G;
+}
+function setMsg(t){msgEl.textContent=t; if(G) G.log.push(t); if(G&&G.log.length>40)G.log.shift();}
+function computeVisible(){
+  var p=G.player, y, x;
+  for(y=0;y<GH;y++)for(x=0;x<GW;x++)G.visible[y][x]=false;
+  for(y=0;y<GH;y++)for(x=0;x<GW;x++){
+    var d=Math.abs(x-p.x)+Math.abs(y-p.y);
+    if(d<=p.sight && los(G.grid,p.x,p.y,x,y)){G.visible[y][x]=true;G.explored[y][x]=true;}
+  }
+}
+function tileAt(x,y){return (G.grid[y]&&typeof G.grid[y][x]!=='undefined')?G.grid[y][x]:0;}
+function monAt(x,y){for(var i=0;i<G.monsters.length;i++)if(G.monsters[i].x===x&&G.monsters[i].y===y)return G.monsters[i];return null;}
+function itemAt(x,y){for(var i=0;i<G.items.length;i++)if(G.items[i].x===x&&G.items[i].y===y)return G.items[i];return null;}
+function rivalAt(x,y){return (G.rival&&G.rival.alive&&G.rival.x===x&&G.rival.y===y)?G.rival:null;}
+function isStairsUp(x,y){return G.stairsUp.x===x&&G.stairsUp.y===y;}
+function isStairsDown(x,y){return G.stairsDown&&G.stairsDown.x===x&&G.stairsDown.y===y;}
+function isShard(x,y){return G.shardPos&&G.shardPos.x===x&&G.shardPos.y===y;}
+function gainXP(n){
+  var p=G.player; p.xp+=n;
+  while(p.xp>=p.level*20){p.xp-=p.level*20;p.level++;p.maxhp+=6;p.hp=p.maxhp;p.str+=1;
+    setMsg('LEVEL UP — VEX-9 is now level '+p.level+' (HP '+p.maxhp+', STR '+p.str+').');beep(660,0.12);}
+}
+function applyItem(it){
+  var p=G.player;
+  if(it.kind==='gold'){p.gold+=it.amt;setMsg('+'+it.amt+' gold.');beep(880,0.06);}
+  else if(it.kind==='health'){var h=Math.min(p.maxhp-p.hp,8);p.hp+=h;setMsg('Health cell +'+h+' HP.');beep(520,0.08);}
+  else if(it.kind==='ration'){p.food=Math.min(200,p.food+50);setMsg('Ration eaten. Food '+p.food+'.');beep(440,0.08);}
+  else if(it.kind==='torch'){p.sight+=2;setMsg('Torch lit — sight radius '+p.sight+'.');beep(700,0.08);}
+  else if(it.kind==='power'){p.str+=1;setMsg('Power cell — STR '+p.str+'.');beep(760,0.1);}
+  else if(it.kind==='map'){for(var y=0;y<GH;y++)for(var x=0;x<GW;x++)if(G.grid[y][x]===1)G.explored[y][x]=true;setMsg('Scroll of mapping — the whole floor is revealed.');beep(600,0.12);}
+  else if(it.kind==='blast'){
+    var n=0;
+    G.monsters.slice().forEach(function(m){
+      if(G.visible[m.y]&&G.visible[m.y][m.x]){m.hp-=8;n++;if(m.hp<=0)killMonster(m,true);}
+    });
+    setMsg('Scroll of blast — '+n+' creature'+(n===1?'':'s')+' seared for 8.');beep(180,0.2);
+  }
+  G.items.splice(G.items.indexOf(it),1);
+}
+function killMonster(m,silent){
+  var p=G.player, base=MONSTERS[m.type];
+  p.gold+=m.gold; gainXP(m.xp);
+  if(!silent) setMsg(base.name+' slain — +'+m.gold+' gold, +'+m.xp+' XP.');
+  beep(300,0.1);
+  G.monsters.splice(G.monsters.indexOf(m),1);
+}
+function playerAttack(m){
+  var p=G.player;
+  var dmg=Math.max(1,p.str+Math.floor(Math.random()*3)-m.def);
+  m.hp-=dmg;
+  setMsg('VEX-9 hits '+MONSTERS[m.type].name+' for '+dmg+'.');
+  beep(220,0.07);
+  if(m.hp<=0) killMonster(m);
+}
+function playerAttackRival(r){
+  var p=G.player;
+  var dmg=Math.max(1,p.str+Math.floor(Math.random()*3)-1);
+  r.hp-=dmg;
+  setMsg('VEX-9 hits ORIN for '+dmg+'.');
+  beep(220,0.07);
+  if(r.hp<=0){
+    r.alive=false;
+    var n=0;
+    for(var i=0;i<3;i++){
+      var gx=r.x+[-1,0,1][i], gy=r.y+1;
+      if(tileAt(gx,gy)===1&&!monAt(gx,gy)&&!itemAt(gx,gy)){G.items.push({kind:'gold',x:gx,y:gy,amt:15+Math.floor(Math.random()*10)});n++;}
+    }
+    setMsg('ORIN is down — the hoard spills ('+n+' gold piles).');
+  }
+}
+function monsterAttack(m){
+  var p=G.player;
+  var dmg=Math.max(1,m.dmg+Math.floor(Math.random()*3)-1);
+  p.hp-=dmg;
+  setMsg(MONSTERS[m.type].name+' hits VEX-9 for '+dmg+'.');
+  beep(140,0.08);
+  if(p.hp<=0) gameOver('slain by '+MONSTERS[m.type].name+' on floor '+G.floor);
+}
+function gameOver(reason){
+  if(G.over) return;
+  G.over=true; G.won=false; G.overReason=reason;
+  setMsg('VEX-9 is destroyed — '+reason+'. The vault keeps the shard.');
+  beep(90,0.4);
+  finishWatch('L');
+}
+function winGame(){
+  if(G.over) return;
+  var p=G.player;
+  G.over=true; G.won=true;
+  var score=p.gold+G.floor*100+Math.max(0,500-G.turn);
+  setMsg('ESCAPED WITH THE CORE SHARD — score '+score+' ('+p.gold+' gold, '+G.turn+' turns).');
+  beep(880,0.3);
+  try{var hi=JSON.parse(localStorage.getItem(HI_KEY)||'{"score":0}');if(score>hi.score){localStorage.setItem(HI_KEY,JSON.stringify({score:score,turns:G.turn}));}}catch(e){}
+  finishWatch('W');
+}
+/* E50: D0 — the engine only accepts 'win'/'loss'/'draw'; the game used to
+ * pass 'W'/'L', which threw inside the silent try/catch, so NO grimvault
+ * record was ever written. Map the game's own outcome (gameOver='L',
+ * winGame='W') to engine words and pass the WHOLE trace list (D1) so the
+ * record carries its full decision count and E8 learning fires. */
+function finishWatch(outcome){
+  if(!G||G.mode!=='watch'||G.watchDone) return;
+  G.watchDone=true;
+  if(FE&&watchAgent&&!watchAgent.legacy){
+    try{FE.recordResult(watchAgent,'grimvault',null,outcome==='W'?'win':'loss',watchTraces);}catch(e){}
+  }
+}
+function loadFloor(floor){
+  var fl=genFloor(G.seed,floor);
+  G.floor=floor;G.grid=fl.grid;G.rooms=fl.rooms;G.stairsUp=fl.stairsUp;
+  G.stairsDown=fl.stairsDown;G.shardPos=fl.shardPos;G.torches=fl.torches;
+  G.monsters=fl.monsters;G.items=fl.items;G.rival=fl.rival;
+  G.explored=[];G.visible=[];
+  var y;
+  for(y=0;y<GH;y++){G.explored.push([]);G.visible.push([]);for(var x=0;x<GW;x++){G.explored[y].push(false);G.visible[y].push(false);}}
+  /* arriving on stairs: down-arrival lands on up-stairs, up-arrival on down-stairs */
+  G.player.x=fl.stairsUp.x; G.player.y=fl.stairsUp.y;
+  computeVisible();
+}
+function descend(){
+  if(G.floor>=MAXFLOOR) return;
+  loadFloor(G.floor+1);
+  setMsg('Floor '+G.floor+' — the dark gets thicker.');
+  beep(330,0.12);
+}
+function ascend(){
+  var p=G.player;
+  if(G.floor===1){
+    if(p.hasShard){winGame();return;}
+    setMsg('The way out is sealed — the Core Shard is below.');
+    return;
+  }
+  loadFloor(G.floor-1);
+  /* climbing back up lands on the down-stairs of the floor above */
+  if(G.stairsDown){p.x=G.stairsDown.x;p.y=G.stairsDown.y;}
+  setMsg('Floor '+G.floor+' — the vault shifts behind you.');
+  beep(330,0.12);
+}
+function monstersAct(){
+  var p=G.player;
+  G.monsters.slice().forEach(function(m){
+    if(G.over) return;
+    var base=MONSTERS[m.type];
+    var d=Math.abs(m.x-p.x)+Math.abs(m.y-p.y);
+    if(d===1){monsterAttack(m);return;}
+    var aggro=(base.sneaky)?4:base.aggro;
+    var steps=(base.erratic&&Math.random()<0.5)?0:1;
+    if(d<=aggro&&G.visible[m.y]&&G.visible[m.y][m.x]) steps=1;
+    else if(d<=aggro) steps=1;
+    else steps=0;
+    if(steps===0&&Math.random()<0.25) steps=1; /* wander */
+    if(steps===0) return;
+    var dx=0,dy=0;
+    if(base.erratic&&Math.random()<0.4){dx=[-1,0,1][Math.floor(Math.random()*3)];dy=[-1,0,1][Math.floor(Math.random()*3)];}
+    else{
+      var ddx=p.x-m.x, ddy=p.y-m.y;
+      if(Math.abs(ddx)>=Math.abs(ddy)) dx=ddx>0?1:-1; else dy=ddy>0?1:-1;
+    }
+    function tryStep(sx,sy){
+      var nx=m.x+sx, ny=m.y+sy;
+      if(tileAt(nx,ny)!==1) return false;
+      if(monAt(nx,ny)||(nx===p.x&&ny===p.y)||rivalAt(nx,ny)) return false;
+      m.x=nx;m.y=ny;return true;
+    }
+    if(!tryStep(dx,dy)){ if(dx!==0) tryStep(0,p.y>m.y?1:-1); else if(dy!==0) tryStep(p.x>m.x?1:-1,0); }
+  });
+  /* rival delver: grab nearest gold/item, fight if cornered */
+  var r=G.rival;
+  if(r&&r.alive&&!G.over){
+    var dR=Math.abs(r.x-p.x)+Math.abs(r.y-p.y);
+    if(dR===1&&Math.random()<0.5){
+      p.hp-=3; setMsg('ORIN shoves VEX-9 for 3.');
+      if(p.hp<=0){gameOver('slain by ORIN on floor '+G.floor);return;}
+    } else {
+      var best=null,bd=1e9;
+      G.items.forEach(function(it){var dd=Math.abs(it.x-r.x)+Math.abs(it.y-r.y);if(dd<bd){bd=dd;best=it;}});
+      if(best){
+        var sx=best.x>r.x?1:(best.x<r.x?-1:0), sy=best.y>r.y?1:(best.y<r.y?-1:0);
+        var nx=r.x+(Math.abs(best.x-r.x)>=Math.abs(best.y-r.y)?sx:0);
+        var ny=r.y+(Math.abs(best.x-r.x)<Math.abs(best.y-r.y)?sy:0);
+        if(tileAt(nx,ny)===1&&!monAt(nx,ny)&&!(nx===p.x&&ny===p.y)){r.x=nx;r.y=ny;}
+        var it=itemAt(r.x,r.y);
+        if(it){r.hoard+=(it.kind==='gold'?it.amt:5);G.items.splice(G.items.indexOf(it),1);}
+      }
+    }
+  }
+}
+function endTurn(){
+  var p=G.player;
+  if(G.over) return;
+  G.turn++;
+  p.food--;
+  if(p.food<=0){p.food=0;p.hp-=1;setMsg('Starving — HP drains.');if(p.hp<=0){gameOver('starved in the dark on floor '+G.floor);return;}}
+  monstersAct();
+  computeVisible(); render(); updateHud();
+}
+/* ---- player actions ---- */
+function doMove(dx,dy){
+  if(!G||G.over||G.paused) return false;
+  var p=G.player;
+  if(dx!==0||dy!==0){p.dirX=dx;p.dirY=dy;p.face=(dx!==0)?dx:0;}
+  var nx=p.x+dx, ny=p.y+dy;
+  if(tileAt(nx,ny)!==1){setMsg('Solid vault-stone.');return false;}
+  var m=monAt(nx,ny);
+  if(m){playerAttack(m);endTurn();return true;}
+  var r=rivalAt(nx,ny);
+  if(r){playerAttackRival(r);endTurn();return true;}
+  if(isStairsUp(nx,ny)&&G.floor===1&&!p.hasShard){
+    setMsg('The way out is sealed — the Core Shard is below.');return false;
+  }
+  p.x=nx;p.y=ny;
+  if(isShard(nx,ny)){p.hasShard=true;setMsg('THE CORE SHARD IS YOURS — now climb out, floor by floor.');beep(990,0.25);}
+  var it=itemAt(nx,ny);
+  if(it) applyItem(it);
+  if(isStairsDown(nx,ny)){endTurn();if(!G.over)descend();computeVisible();render();updateHud();return true;}
+  if(isStairsUp(nx,ny)){endTurn();if(!G.over)ascend();computeVisible();render();updateHud();return true;}
+  endTurn();
+  return true;
+}
+function doWait(){
+  if(!G||G.over||G.paused) return false;
+  setMsg('VEX-9 holds position, listening.');
+  endTurn(); return true;
+}
+/* ---- WATCH bot ---- */
+function objective(){
+  var p=G.player;
+  if(!p.hasShard) return (G.floor<MAXFLOOR)?G.stairsDown:G.shardPos;
+  return G.stairsUp;
+}
+function botOptions(){
+  var p=G.player, obj=objective(), opts=[];
+  var dirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+  dirs.forEach(function(d){
+    var nx=p.x+d[0], ny=p.y+d[1];
+    if(tileAt(nx,ny)!==1) return;
+    var m=monAt(nx,ny), r=rivalAt(nx,ny), it=itemAt(nx,ny);
+    var key='m'+d[0]+','+d[1], score, tag;
+    if(m){
+      var base=MONSTERS[m.type];
+      if(p.hp<=8){score=-4;tag='flee';}
+      else if(m.hp<=p.str+2){score=6+m.xp*0.2;tag='attack';}
+      else{score=2;tag='attack';}
+      if(stuckCount>4){score+=5;tag='attack';}
+    } else if(r){score=3;tag='duel';}
+    else{
+      var before=Math.abs(obj.x-p.x)+Math.abs(obj.y-p.y);
+      var after=Math.abs(obj.x-nx)+Math.abs(obj.y-ny);
+      score=4-(after-before)*1.2+(after<before?1:0);
+      if(it)score+=2;
+      if(it&&it.kind==='ration'&&p.food<50)score+=4; /* hungry bot hunts rations */
+      if(isStairsUp(nx,ny)&&G.floor===1&&!p.hasShard)score=-10;
+      tag='advance';
+    }
+    opts.push({key:key,score:score,tag:tag,dx:d[0],dy:d[1]});
+  });
+  opts.push({key:'wait',score:0.3,tag:'wait',dx:0,dy:0});
+  return opts;
+}
+function stepWatch(){
+  if(!G||G.over||G.mode!=='watch') return false;
+  var opts=botOptions(), pick=null;
+  if(FE&&watchAgent&&!watchAgent.legacy){
+    try{var res=FE.decide(watchAgent,'grimvault',opts,{});pick=res.pick;watchTraces.push(res.trace);} /* E50 D1: collect the trace */
+    catch(e){pick=null;}
+  }
+  if(!pick){
+    pick=opts[0];
+    opts.forEach(function(o){if(o.score+(Math.random()*2-1)>pick.score+(Math.random()*2-1))pick=o;});
+  }
+  var p=G.player;
+  if(lastWatchPos&&lastWatchPos.x===p.x&&lastWatchPos.y===p.y) stuckCount++;
+  else stuckCount=0;
+  lastWatchPos={x:p.x,y:p.y};
+  if(pick.key==='wait') return doWait();
+  return doMove(pick.dx,pick.dy);
+}
+/* ---- save / load ---- */
+function saveState(){
+  if(!G) return false;
+  try{
+    if(FE&&FE.flush){ try{ FE.flush(); }catch(e){} } /* E50 D3: engine persist is throttled (every 200 traces) — land them before the save */
+    var data={v:1,mode:G.mode,seed:G.seed,floor:G.floor,turn:G.turn,
+      grid:G.grid,stairsUp:G.stairsUp,stairsDown:G.stairsDown,shardPos:G.shardPos,
+      torches:G.torches,monsters:G.monsters,items:G.items,rival:G.rival,
+      player:G.player,explored:G.explored,over:G.over,won:G.won,watchId:G.watchId,
+      watchTraces:watchTraces}; /* E50 D3: persist the trace list so a resumed delve records its FULL decide count */
+    localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+    setMsg('State saved — floor '+G.floor+', turn '+G.turn+'.');
+    return true;
+  }catch(e){setMsg('Save failed.');return false;}
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem(SAVE_KEY);
+    if(!raw){setMsg('No saved state.');return false;}
+    var d=JSON.parse(raw);
+    if(d.v!==1){setMsg('Save is from an older vault.');return false;}
+    var keepMode=d.mode||'solo'; /* E50 D3b: restore the SAVED mode — the old code kept the boot mode, so a watch save loaded as solo on a fresh boot */
+    G={mode:keepMode,seed:d.seed,floor:d.floor,turn:d.turn,grid:d.grid,
+      rooms:[],stairsUp:d.stairsUp,stairsDown:d.stairsDown,shardPos:d.shardPos,
+      torches:d.torches,monsters:d.monsters,items:d.items,rival:d.rival,
+      player:d.player,explored:d.explored,visible:[],log:G?G.log:[],
+      over:d.over,won:d.won,overReason:'',paused:false,muted:G?G.muted:false,fp:G?G.fp:false,
+      watchId:d.watchId||null,watchDone:d.over};
+    watchTraces=Array.isArray(d.watchTraces)?d.watchTraces.slice():[]; /* E50 D3: restore the trace list */
+    for(var y=0;y<GH;y++){G.visible.push([]);for(var x=0;x<GW;x++)G.visible[y].push(false);}
+    if(G.mode==='watch'&&FE&&G.watchId){
+      try{watchAgent=FE.loadAgent(G.watchId);}catch(e){watchAgent={id:G.watchId,legacy:true};} /* E50 D4: loadAgent hydrates persisted Elo/weights */
+    }
+    computeVisible(); render(); updateHud();
+    setMsg('State loaded — floor '+G.floor+', turn '+G.turn+'.');
+    return true;
+  }catch(e){setMsg('Load failed.');return false;}
+}
+
+/* ---- audio (tiny beeps, M to mute) ---- */
+var AC=null;
+try{AC=(typeof window!=='undefined'&&(window.AudioContext||window.webkitAudioContext))?new (window.AudioContext||window.webkitAudioContext)():null;}catch(e){AC=null;}
+function beep(f,dur){
+  if(!AC||!G||G.muted) return;
+  try{
+    var o=AC.createOscillator(), g=AC.createGain();
+    o.type='square'; o.frequency.value=f; g.gain.value=0.04;
+    o.connect(g); g.connect(AC.destination);
+    o.start(); g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+dur); o.stop(AC.currentTime+dur);
+  }catch(e){}
+}
+/* ---- HUD ---- */
+function updateHud(){
+  if(!G) return;
+  var p=G.player;
+  var foodCls=p.food<20?'low':'';
+  hudEl.innerHTML='<span>FLOOR <b>'+G.floor+'/5</b></span><span>HP <b class="'+(p.hp<=8?'low':'')+'">'+p.hp+'/'+p.maxhp+'</b></span>'+
+    '<span>STR <b>'+p.str+'</b></span><span>LVL <b>'+p.level+'</b> XP '+p.xp+'/'+(p.level*20)+'</span>'+
+    '<span>GOLD <b>'+p.gold+'</b></span><span>FOOD <b class="'+foodCls+'">'+p.food+'</b></span>'+
+    '<span>TURN <b>'+G.turn+'</b></span>'+(p.hasShard?'<span>◆ SHARD</span>':'')+
+    (G.mode==='watch'?'<span>WATCH '+(watchAgent?watchAgent.id:'')+'</span>':'');
+}
+/* ---- rendering: layered top-down vault ---- */
+function shade(hex,f){
+  var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  return 'rgb('+Math.min(255,Math.floor(r*f))+','+Math.min(255,Math.floor(g*f))+','+Math.min(255,Math.floor(b*f))+')';
+}
+/* ---- CHAR-SWEEP 2026-11-22: TRUE SPRITE STACKS (visual only) ----
+   Every figure is a distinct silhouette drawn in a -10..10 unit box,
+   extruded in stacked slices (dark base stepping up to a lit top),
+   3-tone baked shading (dark core -> mid -> lit top), rim light in the
+   figure's colour, contact shadow, idle sway/breathing, movement lean.
+   No glyph letters, no dot-eye orbs: grim, sleek, menacing. */
+var gvStroke=false;
+function gvPoly(pts){ctx.beginPath();ctx.moveTo(pts[0],pts[1]);for(var i=2;i<pts.length;i+=2)ctx.lineTo(pts[i],pts[i+1]);ctx.closePath();if(gvStroke)ctx.stroke();else ctx.fill();}
+function gvEll(x,y,rx,ry){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);if(gvStroke)ctx.stroke();else ctx.fill();}
+function gvRect(x,y,w,h){if(gvStroke)ctx.strokeRect(x,y,w,h);else ctx.fillRect(x,y,w,h);}
+function gvShape(type){
+  if(type==='rat'){ /* low scavenger: long body, pointed snout, curled tail, torn ears */
+    gvPoly([-8,3,-14,6,-13,1,-8,0]); gvEll(0,3,8,5);
+    gvPoly([5,0,12,3,5,6]); gvPoly([-4,-1,-3,-5,-1,-1]); gvPoly([0,-2,2,-6,3,-1]);
+    gvRect(-6,7,3,3); gvRect(3,7,3,3);
+  } else if(type==='mite'){ /* spiked rust beetle */
+    for(var s1=0;s1<5;s1++){var a1=-2.4+s1*0.6;gvPoly([Math.cos(a1)*5-1.5,Math.sin(a1)*5,Math.cos(a1)*10,Math.sin(a1)*9-1,Math.cos(a1)*5+1.5,Math.sin(a1)*5]);}
+    gvEll(0,2,7.5,6.5); gvRect(-8,5,2.5,4); gvRect(-3,7,2.5,3.5); gvRect(3,7,2.5,3.5); gvRect(6,5,2.5,4);
+    gvPoly([-6,6,-4,10,-2,6]); gvPoly([6,6,4,10,2,6]);
+  } else if(type==='bat'){ /* wide ragged wings, small fanged body */
+    gvPoly([-2,-2,-11,-8,-9,-1,-12,2,-7,3,-2,2]); gvPoly([2,-2,11,-8,9,-1,12,2,7,3,2,2]);
+    gvEll(0,1,3.6,5.5); gvPoly([-3,-4,-2,-9,0,-4]); gvPoly([3,-4,2,-9,0,-4]);
+  } else if(type==='crawler'){ /* segmented elongated horror, mandibles */
+    gvEll(-6,4,4.2,3.6); gvEll(0,2,4.8,4.2); gvEll(6,3,4.4,3.8);
+    gvRect(-8,6,2,3.5); gvRect(-2,6.5,2,3.5); gvRect(4,6.5,2,3.5);
+    gvPoly([9,1,13,-1,10,4]); gvPoly([9,5,13,7,9,8]);
+  } else if(type==='hound'){ /* angular iron beast: blade tail, ear spike, jaw */
+    gvPoly([-9,0,-15,-6,-13,3]); gvPoly([-9,0,7,-3,10,1,7,6,-7,6]);
+    gvPoly([6,-5,10,-11,12,-4,16,-1,11,3,6,0]); gvRect(-6,5,3.5,4.5); gvRect(4,5,3.5,4.5);
+  } else if(type==='wisp'){ /* shard flame: teardrop, no body, hovering */
+    ctx.beginPath(); ctx.moveTo(0,-11); ctx.quadraticCurveTo(7,-3,5,3); ctx.quadraticCurveTo(3,8,0,9);
+    ctx.quadraticCurveTo(-3,8,-5,3); ctx.quadraticCurveTo(-7,-3,0,-11); ctx.closePath();
+    if(gvStroke)ctx.stroke();else ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-4,8); ctx.quadraticCurveTo(-6,11,-3,10); ctx.quadraticCurveTo(-2,12,0,10);
+    ctx.quadraticCurveTo(2,12,3,10); ctx.quadraticCurveTo(6,11,4,8); ctx.closePath();
+    if(gvStroke)ctx.stroke();else ctx.fill();
+  } else if(type==='jelly'){ /* grim dome with drips — heavy, translucent menace */
+    ctx.beginPath(); ctx.arc(0,4,8.5,Math.PI,0); ctx.closePath(); if(gvStroke)ctx.stroke();else ctx.fill();
+    gvRect(-7,3,3.5,5); gvRect(-1.5,3,3.5,6.5); gvRect(4,3,3.5,4.5); gvEll(0,0,5.5,3.5);
+  } else if(type==='warden'){ /* horned tomb armour, broad pauldrons */
+    gvPoly([-4,-8,-10,-13,-8,-4]); gvPoly([4,-8,10,-13,8,-4]);
+    gvEll(-7,-1,3.4,2.8); gvEll(7,-1,3.4,2.8);
+    gvPoly([-6,-1,6,-1,7,9,-7,9]); gvRect(-4.5,-10,9,6.5); gvRect(-6,8,4,3); gvRect(2,8,4,3);
+  } else if(type==='stalker'){ /* tall hooded killer, long claw arms */
+    gvPoly([-4,-3,0,-13,4,-3]); gvPoly([-4,-2,4,-2,3,10,-3,10]);
+    gvPoly([-4,0,-8,4,-7,10,-5,4]); gvPoly([4,0,8,4,7,10,5,4]);
+    gvPoly([-7,9,-8,12,-6,10]); gvPoly([-5,10,-4,13,-3,10]); gvPoly([7,9,8,12,6,10]); gvPoly([5,10,4,13,3,10]);
+  } else if(type==='guardian'){ /* CORE GUARDIAN boss: crown, huge pauldrons, core chest */
+    gvPoly([-3,-10,-4,-16,-1,-11]); gvPoly([0,-11,0,-17,2,-11]); gvPoly([3,-10,5,-16,6,-10]);
+    gvEll(-10,-2,4.6,3.8); gvEll(10,-2,4.6,3.8);
+    gvPoly([-8,-2,8,-2,10,10,-10,10]); gvRect(-5,-11,10,7); gvRect(-7,9,5,3.5); gvRect(2,9,5,3.5);
+    gvPoly([-8,-4,-13,-9,-11,-1]); gvPoly([8,-4,13,-9,11,-1]);
+  } else if(type==='orin'){ /* rival delver: hood, satchel, lean scavenger frame */
+    gvPoly([-3,-5,0,-11,4,-5]); gvEll(0,-5,4,4.2);
+    gvPoly([-5,0,5,0,6,9,-6,9]); gvRect(-9,0,3.5,7); gvRect(-4,8,3.5,3); gvRect(1,8,3.5,3);
+    gvPoly([5,2,10,6,6,6]);
+  } else if(type==='vex'){ /* VEX-9: armoured delver bot, pauldrons, antenna, chest core */
+    gvRect(-0.7,-13,1.4,4); gvEll(-6.5,-1,3.2,2.7); gvEll(6.5,-1,3.2,2.7);
+    gvPoly([-5.5,0,5.5,0,6.5,9,-6.5,9]); gvRect(-4.5,-9.5,9,7);
+    gvRect(-5.5,8,4,3.5); gvRect(1.5,8,4,3.5); gvPoly([-5,1,-9,6,-6,7]); gvPoly([5,1,9,6,6,7]);
+  } else { gvEll(0,1,7.5,7); }
+}
+function gvDetail(type,color,rim){
+  var eye=shade(color,1.8), dark='#07040e';
+  ctx.lineWidth=1.1;
+  if(type==='rat'){
+    ctx.fillStyle='#ff4040'; gvEll(7.5,1.5,1.3,1.3); gvEll(3.5,0.5,1,1);
+    ctx.fillStyle='#e8dcc0'; gvPoly([8,4,10,4,9,6]);
+    ctx.strokeStyle=shade(color,0.55); ctx.beginPath(); ctx.moveTo(-6,-1); ctx.lineTo(4,-1); ctx.stroke();
+  } else if(type==='mite'){
+    ctx.fillStyle=eye; gvEll(-3.5,-1,1.4,1.4); gvEll(0,-2,1.4,1.4); gvEll(3.5,-1,1.4,1.4);
+    ctx.strokeStyle=shade(color,1.5); ctx.beginPath(); ctx.moveTo(-5,-4); ctx.lineTo(-2,0); ctx.lineTo(-4,3); ctx.moveTo(5,-5); ctx.lineTo(3,-1); ctx.lineTo(5,2); ctx.stroke();
+  } else if(type==='bat'){
+    ctx.fillStyle='#ff3860'; gvEll(-1.6,-1,1.1,1.4); gvEll(1.6,-1,1.1,1.4);
+    ctx.fillStyle='#f4f0ff'; gvPoly([-2,3,-1,3,-1.5,5.5]); gvPoly([2,3,1,3,1.5,5.5]);
+  } else if(type==='crawler'){
+    ctx.fillStyle=eye; gvEll(6,1,1.3,1.3); gvEll(3.5,0,1,1); gvEll(8,4,1,1);
+    ctx.strokeStyle=shade(color,0.5); ctx.beginPath(); ctx.moveTo(-2,-2); ctx.lineTo(-2,6); ctx.moveTo(3,-2); ctx.lineTo(3,6); ctx.stroke();
+  } else if(type==='hound'){
+    ctx.fillStyle='#ff3860'; gvPoly([8,-4,14,-3,8,-1.8]);
+    ctx.strokeStyle=shade(color,1.6); ctx.beginPath(); ctx.moveTo(-8,-1); ctx.lineTo(6,-2); ctx.stroke();
+    ctx.strokeStyle=dark; ctx.beginPath(); ctx.moveTo(10,1.5); ctx.lineTo(15,0.5); ctx.stroke();
+    ctx.fillStyle=eye; gvEll(-2,-4.5,1.2,0.8);
+  } else if(type==='wisp'){
+    ctx.fillStyle=shade(color,0.55); ctx.beginPath(); ctx.moveTo(0,-6); ctx.quadraticCurveTo(3.5,-1,2.5,3); ctx.quadraticCurveTo(1.5,6,0,6.5); ctx.quadraticCurveTo(-1.5,6,-2.5,3); ctx.quadraticCurveTo(-3.5,-1,0,-6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#eafcff'; gvEll(0,1,1.7,2.4);
+    ctx.fillStyle=dark; gvEll(-0.0,0.2,0.7,1.1);
+  } else if(type==='jelly'){
+    ctx.fillStyle=dark; gvPoly([-5,-2,-1,-1,-5,0.5]); gvPoly([5,-2,1,-1,5,0.5]);
+    ctx.fillStyle='#d6ffe2'; gvEll(-3,-0.8,0.9,0.9); gvEll(3,-0.8,0.9,0.9);
+    ctx.fillStyle=shade(color,0.5); gvEll(-3,4,1.8,1.4); gvEll(2.5,5,1.4,1.1);
+    ctx.strokeStyle=dark; ctx.beginPath(); ctx.moveTo(-3,2.5); ctx.lineTo(-1,1.8); ctx.lineTo(1,2.5); ctx.lineTo(3,1.8); ctx.stroke();
+  } else if(type==='warden'){
+    ctx.fillStyle=dark; gvRect(-4,-9,8,4.5);
+    ctx.fillStyle='#ffd75e'; gvRect(-3,-7.2,6,1.5);
+    ctx.strokeStyle=shade(color,1.5); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,7); ctx.moveTo(-6,3); ctx.lineTo(6,3); ctx.stroke();
+    ctx.fillStyle='#ffd75e'; gvPoly([0,3.5,1.6,5.5,0,7.5,-1.6,5.5]);
+  } else if(type==='stalker'){
+    ctx.fillStyle=dark; gvEll(0,-6,3,3.6);
+    ctx.fillStyle='#ff5c8a'; gvPoly([-2.6,-7,-0.4,-6.4,-2.6,-5.8]); gvPoly([2.6,-7,0.4,-6.4,2.6,-5.8]);
+    ctx.strokeStyle=shade(color,1.5); ctx.beginPath(); ctx.moveTo(-6,5); ctx.lineTo(-7,9); ctx.moveTo(6,5); ctx.lineTo(7,9); ctx.stroke();
+  } else if(type==='guardian'){
+    ctx.fillStyle=dark; gvRect(-4.5,-10,9,5);
+    ctx.fillStyle='#ffb347'; gvRect(-3.5,-8,7,1.8);
+    ctx.fillStyle='#ffd75e'; gvPoly([0,1,3.2,4.5,0,8,-3.2,4.5]);
+    ctx.fillStyle='#fff2cf'; gvPoly([0,3,1.4,4.5,0,6,-1.4,4.5]);
+    ctx.strokeStyle='#ffd75e'; ctx.beginPath(); ctx.moveTo(-4,-14); ctx.lineTo(-3,-10); ctx.moveTo(0,-15.5); ctx.lineTo(0,-11); ctx.moveTo(4,-14); ctx.lineTo(4,-10); ctx.stroke();
+    ctx.strokeStyle=shade(color,1.4); ctx.beginPath(); ctx.moveTo(-9,2); ctx.lineTo(-9,8); ctx.moveTo(9,2); ctx.lineTo(9,8); ctx.stroke();
+  } else if(type==='orin'){
+    ctx.fillStyle=dark; gvEll(0,-5,3,3);
+    ctx.fillStyle='#e6ccff'; gvRect(-2.2,-6,4.4,1.4);
+    ctx.strokeStyle='#ff5c8a'; ctx.beginPath(); ctx.moveTo(-5,1); ctx.lineTo(5,7); ctx.stroke();
+    ctx.fillStyle='#dfe8ff'; gvPoly([8,5,10.5,6,8,7]);
+    ctx.fillStyle=shade(color,1.5); gvRect(-8.6,1.5,2.6,2);
+  } else if(type==='vex'){
+    ctx.fillStyle=dark; gvRect(-4,-9,8,4.6);
+    ctx.fillStyle='#35e0ff'; gvRect(-3.2,-7.4,6.4,1.7);
+    ctx.fillStyle='#ff3860'; gvEll(0,-12.6,1,1);
+    ctx.fillStyle='#00ff88'; gvPoly([0,2.5,2.2,5,0,7.5,-2.2,5]);
+    ctx.fillStyle='#d8ffe9'; gvPoly([0,4,1,5,0,6,-1,5]);
+    ctx.strokeStyle='#00ff88'; ctx.beginPath(); ctx.moveTo(-6.5,-3.5); ctx.lineTo(-3,-3.5); ctx.moveTo(6.5,-3.5); ctx.lineTo(3,-3.5); ctx.stroke();
+    ctx.strokeStyle=shade(color,1.7); ctx.beginPath(); ctx.moveTo(-5,8.5); ctx.lineTo(5,8.5); ctx.stroke();
+  }
+}
+function drawFigure(cx,cy,color,type,rim,scale,bob,lean){
+  var r=TS*0.46*(scale||1);
+  var u=r/10, phase=cx*0.37+cy*0.61;
+  var sway=Math.sin(tNow/340+phase)*0.035, breathe=1+Math.sin(tNow/270+phase)*0.022;
+  var slices=(type==='guardian')?7:5;
+  ctx.save();
+  /* contact shadow + colour ground-glow */
+  ctx.fillStyle='rgba(0,0,0,0.5)';
+  ctx.beginPath(); ctx.ellipse(cx,cy+r*0.92,r*0.95,r*0.3,0,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.13; ctx.fillStyle=color;
+  ctx.beginPath(); ctx.ellipse(cx,cy+r*0.9,r*1.25,r*0.42,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  /* SPRITE STACK: silhouette extruded downward, darkest at the base,
+     stepping up in tone slice by slice */
+  for(var k=slices;k>=1;k--){
+    ctx.save(); ctx.translate(cx,cy+(bob||0)+k*1.15); ctx.rotate((lean||0)+sway);
+    ctx.scale(u,u);
+    ctx.fillStyle=shade(color,0.16+(slices-k)*0.055);
+    gvStroke=false; gvShape(type);
+    ctx.restore();
+  }
+  /* lit top face: 3-tone gradient dark core -> mid -> lit top */
+  ctx.save(); ctx.translate(cx,cy+(bob||0)); ctx.rotate((lean||0)+sway);
+  ctx.scale(u*breathe,u);
+  var grad=ctx.createLinearGradient(0,-11,0,11);
+  grad.addColorStop(0,shade(color,1.45)); grad.addColorStop(0.5,color); grad.addColorStop(1,shade(color,0.5));
+  ctx.fillStyle=grad; gvStroke=false; gvShape(type);
+  /* rim light in the figure's colour along the top silhouette */
+  ctx.strokeStyle=rim||color; ctx.lineWidth=1.4; ctx.globalAlpha=0.7;
+  gvStroke=true; gvShape(type); gvStroke=false; ctx.globalAlpha=1;
+  gvDetail(type,color,rim||color);
+  ctx.restore();
+  ctx.restore();
+}
+function drawCreature(x,y,color,glyph,rim,scale,bob,type,lean){
+  drawFigure(x*TS+TS/2,y*TS+TS/2,color,type||'blob',rim,scale,bob,lean);
+}
+function render(){
+  if(!G) return;
+  tNow+=16;
+  ctx.clearRect(0,0,CW,CH);
+  if(G.fp){renderFP();return;}
+  /* far layer: deep gradient + ember glow toward the objective */
+  var bg=ctx.createLinearGradient(0,0,0,CH);
+  bg.addColorStop(0,'#0d0819'); bg.addColorStop(0.55,'#080614'); bg.addColorStop(1,'#05030a');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,CW,CH);
+  var obj=objective();
+  if(obj){
+    var og=ctx.createRadialGradient(obj.x*TS+10,obj.y*TS+10,4,obj.x*TS+10,obj.y*TS+10,240);
+    og.addColorStop(0,'rgba(53,224,255,0.14)'); og.addColorStop(1,'rgba(53,224,255,0)');
+    ctx.fillStyle=og; ctx.fillRect(0,0,CW,CH);
+  }
+  var p=G.player, x, y;
+  /* the vault looms: unexplored wall silhouettes near the player (contents
+     stay hidden — only the stone's shape reads in the dark) */
+  for(y=0;y<GH;y++)for(x=0;x<GW;x++){
+    if(G.explored[y][x]||G.grid[y][x]!==0) continue;
+    if(Math.abs(x-p.x)+Math.abs(y-p.y)>16) continue;
+    var nearF=(tileAt(x+1,y)===1||tileAt(x-1,y)===1||tileAt(x,y+1)===1||tileAt(x,y-1)===1);
+    if(!nearF) continue;
+    ctx.fillStyle='rgba(48,40,72,0.6)';
+    ctx.fillRect(x*TS,y*TS,TS,TS);
+  }
+  /* player torchlight wash */
+  var pg=ctx.createRadialGradient(p.x*TS+10,p.y*TS+10,8,p.x*TS+10,p.y*TS+10,230);
+  pg.addColorStop(0,'rgba(0,255,136,0.10)'); pg.addColorStop(1,'rgba(0,255,136,0)');
+  ctx.fillStyle=pg; ctx.fillRect(0,0,CW,CH);
+  /* mid layer: floor + walls */
+  for(y=0;y<GH;y++)for(x=0;x<GW;x++){
+    if(!G.explored[y][x]) continue;
+    var vis=G.visible[y][x];
+    var bright=vis?1:0.42;
+    if(G.grid[y][x]===1){
+      var h=hash2(x,y);
+      var base=16+Math.floor(h*10);
+      ctx.fillStyle='rgb('+Math.floor(base*bright)+','+Math.floor((base+4)*bright)+','+Math.floor((base+14)*bright)+')';
+      ctx.fillRect(x*TS,y*TS,TS,TS);
+      if(h>0.86&&vis){ctx.fillStyle='rgba(0,255,136,'+(0.10*bright)+')';ctx.fillRect(x*TS+4,y*TS+4,TS-8,TS-8);}
+      ctx.strokeStyle='rgba(255,255,255,'+(0.05*bright)+')';ctx.lineWidth=1;
+      ctx.strokeRect(x*TS+0.5,y*TS+0.5,TS-1,TS-1);
+    } else {
+      var nearFloor=(tileAt(x+1,y)===1||tileAt(x-1,y)===1||tileAt(x,y+1)===1||tileAt(x,y-1)===1);
+      if(!nearFloor) continue;
+      ctx.fillStyle='rgb('+Math.floor(34*bright)+','+Math.floor(28*bright)+','+Math.floor(52*bright)+')';
+      ctx.fillRect(x*TS,y*TS,TS,TS);
+      ctx.fillStyle='rgba(255,255,255,'+(0.14*bright)+')';
+      ctx.fillRect(x*TS,y*TS,TS,3);
+      ctx.fillStyle='rgba(0,0,0,'+(0.35*bright)+')';
+      ctx.fillRect(x*TS,y*TS+TS-3,TS,3);
+    }
+  }
+  /* stairs + shard */
+  function glyphAt(tx,ty,ch,color,glow){
+    if(!G.visible[ty]||!G.visible[ty][tx]) return;
+    ctx.save();
+    if(glow){var g2=ctx.createRadialGradient(tx*TS+10,ty*TS+10,2,tx*TS+10,ty*TS+10,26);
+      g2.addColorStop(0,glow);g2.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g2;ctx.fillRect(tx*TS-16,ty*TS-16,52,52);}
+    ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillStyle=color;
+    ctx.fillText(ch,tx*TS+10,ty*TS+15);ctx.restore();
+  }
+  glyphAt(G.stairsUp.x,G.stairsUp.y,'<','#35e0ff','rgba(53,224,255,0.35)');
+  if(G.stairsDown) glyphAt(G.stairsDown.x,G.stairsDown.y,'>','#ffb347','rgba(255,179,71,0.35)');
+  if(G.shardPos&&!G.player.hasShard){
+    var pulse=0.7+0.3*Math.sin(tNow/300);
+    glyphAt(G.shardPos.x,G.shardPos.y,'◆','#35e0ff','rgba(53,224,255,'+(0.5*pulse)+')');
+  }
+  /* items */
+  G.items.forEach(function(it){
+    if(!G.visible[it.y]||!G.visible[it.y][it.x]) return;
+    var cx=it.x*TS+10, cy=it.y*TS+10, c=ITEM_KINDS[it.kind].color;
+    ctx.save();
+    if(it.kind==='gold'){ctx.fillStyle=c;ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-1,cy-1,1.5,0,Math.PI*2);ctx.fill();}
+    else if(it.kind==='health'){ctx.fillStyle=c;ctx.fillRect(cx-5,cy-2,10,4);ctx.fillRect(cx-2,cy-5,4,10);}
+    else if(it.kind==='ration'){ctx.fillStyle=c;ctx.fillRect(cx-5,cy-4,10,8);ctx.fillStyle='#7a5a30';ctx.fillRect(cx-5,cy-1,10,2);}
+    else if(it.kind==='torch'){ctx.fillStyle='#ff9a3c';ctx.beginPath();ctx.arc(cx,cy-2,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffd94a';ctx.beginPath();ctx.arc(cx,cy-3,2,0,Math.PI*2);ctx.fill();}
+    else if(it.kind==='map'||it.kind==='blast'){ctx.fillStyle=c;ctx.fillRect(cx-5,cy-6,10,12);ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(cx-3,cy-3,6,1);ctx.fillRect(cx-3,cy,6,1);ctx.fillRect(cx-3,cy+3,6,1);}
+    else if(it.kind==='power'){ctx.fillStyle=c;ctx.fillRect(cx-4,cy-4,8,8);ctx.fillStyle='#fff';ctx.fillRect(cx-1,cy-1,2,2);}
+    ctx.restore();
+  });
+  /* torch glow */
+  G.torches.forEach(function(t){
+    if(!G.visible[t.y]||!G.visible[t.y][t.x]) return;
+    var fl=0.75+0.25*Math.sin(tNow/180+t.x*1.7+t.y);
+    var tg=ctx.createRadialGradient(t.x*TS+10,t.y*TS+10,2,t.x*TS+10,t.y*TS+10,54);
+    tg.addColorStop(0,'rgba(255,154,60,'+(0.30*fl)+')');tg.addColorStop(1,'rgba(255,154,60,0)');
+    ctx.fillStyle=tg;ctx.fillRect(t.x*TS-44,t.y*TS-44,108,108);
+    ctx.fillStyle='#ffb347';ctx.beginPath();ctx.arc(t.x*TS+10,t.y*TS+8,2.5+fl,0,Math.PI*2);ctx.fill();
+  });
+  /* monsters */
+  G.monsters.forEach(function(m){
+    if(!G.visible[m.y]||!G.visible[m.y][m.x]) return;
+    var base=MONSTERS[m.type];
+    if(base.sneaky&&Math.abs(m.x-p.x)+Math.abs(m.y-p.y)>4) return; /* stalker unseen at range */
+    drawCreature(m.x,m.y,base.color,base.glyph,base.color,m.type==='guardian'?1.45:(m.type==='warden'?1.15:1),Math.sin(tNow/240+m.x)*1.2,m.type,Math.sin(tNow/300+m.y)*0.05);
+    if(m.hp<m.maxhp){
+      ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(m.x*TS+2,m.y*TS+1,16,3);
+      ctx.fillStyle='#ff3860';ctx.fillRect(m.x*TS+2,m.y*TS+1,16*(m.hp/m.maxhp),3);
+    }
+  });
+  /* rival */
+  if(G.rival&&G.rival.alive&&G.visible[G.rival.y]&&G.visible[G.rival.y][G.rival.x])
+    drawCreature(G.rival.x,G.rival.y,'#b78cff','O','#ff5c8a',1.08,Math.sin(tNow/200)*1.2,'orin',Math.sin(tNow/260)*0.05);
+  /* player VEX-9 — stacked armoured bot, emerald rim, cyan visor (visor
+     is part of the stack's top detail now; lean follows facing) */
+  var bob=Math.sin(tNow/220)*1.5;
+  drawCreature(p.x,p.y,'#2e7d52','V','#00ff88',1.18,bob,'vex',(p.dirX||0)*0.09);
+  /* dust motes + embers */
+  particles.forEach(function(pt){
+    pt.y-=pt.s; if(pt.y<0){pt.y=CH;pt.x=Math.random()*CW;}
+    ctx.fillStyle='rgba(0,255,136,'+pt.a*0.5+')';
+    ctx.fillRect(pt.x,pt.y,pt.r,pt.r);
+  });
+  /* game-over / win banner */
+  if(G.over){
+    ctx.fillStyle='rgba(5,3,10,0.72)';ctx.fillRect(0,CH/2-52,CW,104);
+    ctx.font='900 30px Orbitron, sans-serif';ctx.textAlign='center';
+    ctx.fillStyle=G.won?'#00ff88':'#ff3860';
+    ctx.fillText(G.won?'ESCAPED WITH THE SHARD':'VEX-9 IS DESTROYED',CW/2,CH/2-8);
+    ctx.font='14px "Share Tech Mono", monospace';ctx.fillStyle='#e8dcf5';
+    ctx.fillText(G.won?('Score '+(p.gold+G.floor*100+Math.max(0,500-G.turn))+' — press R to delve again'):G.overReason+' — press R to delve again',CW/2,CH/2+22);
+  }
+}
+/* ---- first-person delver-cam (raycast on the grid) ---- */
+function renderFP(){
+  var p=G.player;
+  var facing=Math.atan2(p.dirY||0,p.dirX||1);
+  var sky=ctx.createLinearGradient(0,0,0,CH);
+  sky.addColorStop(0,'#0a0616');sky.addColorStop(0.55,'#120a24');sky.addColorStop(0.55,'#05030a');sky.addColorStop(1,'#02010a');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,CW,CH);
+  var FOV=Math.PI/3, cols=CW/4, i;
+  var px=p.x+0.5, py=p.y+0.5;
+  for(i=0;i<cols;i++){
+    var ang=facing+(i/cols-0.5)*FOV;
+    var dx=Math.cos(ang), dy=Math.sin(ang);
+    var dist=0, hit=false, side=0;
+    while(dist<22&&!hit){
+      dist+=0.06;
+      var tx=Math.floor(px+dx*dist), ty=Math.floor(py+dy*dist);
+      if(tileAt(tx,ty)===0){hit=true;side=(Math.abs(px+dx*dist-tx-0.5)>Math.abs(py+dy*dist-ty-0.5))?0:1;}
+    }
+    var corr=dist*Math.cos(ang-facing);
+    var h=Math.min(CH*1.4,(CH*0.85)/Math.max(0.15,corr));
+    var sh=Math.max(0.12,1-corr/16);
+    /* ceiling + floor shaded by the same distance — the corridor has depth */
+    ctx.fillStyle='rgb('+Math.floor(16*sh)+','+Math.floor(12*sh)+','+Math.floor(28*sh)+')';
+    ctx.fillRect(i*4,0,4,(CH-h)/2);
+    ctx.fillStyle='rgb('+Math.floor(26*sh)+','+Math.floor(20*sh)+','+Math.floor(38*sh)+')';
+    ctx.fillRect(i*4,(CH+h)/2,4,CH-(CH+h)/2);
+    var col=side?Math.floor(64*sh):Math.floor(88*sh);
+    ctx.fillStyle='rgb('+col+','+Math.floor(col*0.82)+','+Math.floor(col*1.5)+')';
+    ctx.fillRect(i*4,(CH-h)/2,4,h);
+    ctx.fillStyle='rgba(0,255,136,'+(0.10*sh)+')';
+    ctx.fillRect(i*4,(CH-h)/2,4,2);
+    /* stone courses across the wall slice */
+    ctx.fillStyle='rgba(0,0,0,0.28)';
+    ctx.fillRect(i*4,(CH-h)/2+h*0.33,4,1);
+    ctx.fillRect(i*4,(CH-h)/2+h*0.66,4,1);
+  }
+  /* billboards: visible monsters / shard / stairs in the cone */
+  function billboard(wx,wy,color,size,label,type){
+    var dx=wx+0.5-px, dy=wy+0.5-py;
+    var d=Math.sqrt(dx*dx+dy*dy);
+    if(d<0.4||d>14) return;
+    var ang=Math.atan2(dy,dx), rel=ang-facing;
+    while(rel>Math.PI)rel-=Math.PI*2;while(rel<-Math.PI)rel+=Math.PI*2;
+    if(Math.abs(rel)>FOV/2) return;
+    if(!los(G.grid,p.x,p.y,wx,wy)) return;
+    var sx=(rel/FOV+0.5)*CW;
+    var s=Math.max(8,size/Math.max(0.5,d));
+    if(type){ /* CHAR-SWEEP: the same sprite stack, billboarded in the cam */
+      drawFigure(sx,CH/2,color,type,color,Math.max(0.35,(s*0.55)/(TS*0.46)),Math.sin(tNow/240+wx)*2,0);
+      return;
+    }
+    var grad=ctx.createRadialGradient(sx,CH/2,s*0.1,sx,CH/2,s);
+    grad.addColorStop(0,color);grad.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=grad;ctx.beginPath();ctx.arc(sx,CH/2,s,0,Math.PI*2);ctx.fill();
+    ctx.font='bold 13px monospace';ctx.textAlign='center';ctx.fillStyle='#fff';
+    ctx.fillText(label,sx,CH/2+4);
+  }
+  /* far-to-near so closer stacks paint over farther ones */
+  G.monsters.filter(function(m){return G.visible[m.y]&&G.visible[m.y][m.x];})
+    .sort(function(a,b){return (Math.abs(b.x-p.x)+Math.abs(b.y-p.y))-(Math.abs(a.x-p.x)+Math.abs(a.y-p.y));})
+    .forEach(function(m){
+      billboard(m.x,m.y,MONSTERS[m.type].color,m.type==='guardian'?230:150,MONSTERS[m.type].glyph.toUpperCase(),m.type);
+    });
+  if(G.shardPos&&!p.hasShard) billboard(G.shardPos.x,G.shardPos.y,'#35e0ff',220,'◆');
+  if(G.stairsDown) billboard(G.stairsDown.x,G.stairsDown.y,'#ffb347',120,'>');
+  billboard(G.stairsUp.x,G.stairsUp.y,'#35e0ff',120,'<');
+  /* torch flicker wash + vignette */
+  var fl=0.05+0.03*Math.sin(tNow/170);
+  ctx.fillStyle='rgba(255,154,60,'+fl+')';ctx.fillRect(0,0,CW,CH);
+  var vg=ctx.createRadialGradient(CW/2,CH/2,CH*0.35,CW/2,CH/2,CH*0.75);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.55)');
+  ctx.fillStyle=vg;ctx.fillRect(0,0,CW,CH);
+  ctx.font='11px "Share Tech Mono", monospace';ctx.textAlign='left';ctx.fillStyle='rgba(0,255,136,0.85)';
+  ctx.fillText('DELVER-CAM · FLOOR '+G.floor+' · HP '+p.hp+'/'+p.maxhp+' · FOOD '+p.food,12,CH-12);
+  if(G.over){
+    ctx.fillStyle='rgba(5,3,10,0.72)';ctx.fillRect(0,CH/2-52,CW,104);
+    ctx.font='900 30px Orbitron, sans-serif';ctx.textAlign='center';
+    ctx.fillStyle=G.won?'#00ff88':'#ff3860';
+    ctx.fillText(G.won?'ESCAPED WITH THE SHARD':'VEX-9 IS DESTROYED',CW/2,CH/2-8);
+  }
+}
+/* ---- input ---- */
+var KEYMAP={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],
+  w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],q:[-1,-1],e:[1,-1],z:[-1,1],c:[1,1]};
+document.addEventListener('keydown',function(ev){
+  if(!G) return;
+  var k=ev.key;
+  if(k==='p'||k==='P'||k==='Escape'){togglePause();return;}
+  if(k==='m'||k==='M'){toggleMute();return;}
+  if(k==='r'||k==='R'){startGame(G.mode);return;} /* E50 D2: a fresh delve rotates to the next council agent */
+  if(k==='v'||k==='V'){toggleFP();return;}
+  if(G.paused||G.over) return;
+  if(k===' '||k==='.'){doWait();ev.preventDefault();return;}
+  var mv=KEYMAP[k]||KEYMAP[k.toLowerCase()];
+  if(mv){doMove(mv[0],mv[1]);ev.preventDefault();}
+});
+function togglePause(){
+  if(!G) return;
+  G.paused=!G.paused;
+  pauseOverlay.style.display=G.paused?'flex':'none';
+  setMsg(G.paused?'Paused — the vault waits.':'Back in the dark.');
+}
+function toggleMute(){
+  if(!G) return;
+  G.muted=!G.muted;
+  var b=document.getElementById('btnMute');
+  if(b) b.innerHTML=G.muted?'Sound: Off<small>M to unmute</small>':'Sound: On<small>M to mute</small>';
+}
+function toggleFP(){
+  if(!G) return;
+  G.fp=!G.fp;
+  var b=document.getElementById('btnFP');
+  if(b) b.classList.toggle('active',G.fp);
+  render();
+}
+function bindBtn(id,fn){var el=document.getElementById(id);if(el)el.addEventListener('click',fn);}
+bindBtn('btnSolo',function(){setMode('solo');});
+bindBtn('btnWatch',function(){setMode('watch');});
+bindBtn('btnFP',toggleFP);
+bindBtn('btnPause',togglePause);
+bindBtn('btnMute',toggleMute);
+bindBtn('resumeBtn',function(){if(G&&G.paused)togglePause();});
+bindBtn('saveBtn',function(){saveState();});
+bindBtn('loadBtn',function(){loadState();});
+bindBtn('restartBtn',function(){if(G){G.paused=false;pauseOverlay.style.display='none';startGame(G.mode);}}); /* E50 D2: fresh delve rotates */
+bindBtn('quitArcadeBtn',function(){window.location.href='../arcade.html';});
+function setMode(mode){
+  /* E50 D2: no agentId — startGame rotates via the persisted cursor. */
+  startGame(mode,null);
+  var s=document.getElementById('btnSolo'), w=document.getElementById('btnWatch');
+  if(s)s.classList.toggle('active',mode==='solo');
+  if(w)w.classList.toggle('active',mode==='watch');
+}
+/* handheld shell */
+var isTouch=(typeof window!=='undefined'&&('ontouchstart' in window))||(typeof navigator!=='undefined'&&navigator.maxTouchPoints>0);
+if(isTouch) document.body.classList.add('touch');
+bindBtn('padUp',function(){doMove(0,-1);});
+bindBtn('padDown',function(){doMove(0,1);});
+bindBtn('padLeft',function(){doMove(-1,0);});
+bindBtn('padRight',function(){doMove(1,0);});
+bindBtn('padWait',function(){doWait();});
+bindBtn('btnA',function(){doWait();});
+bindBtn('btnB',toggleFP);
+bindBtn('startBtn',togglePause);
+bindBtn('selectBtn',function(){doWait();});
+/* ---- boot ---- */
+var params={};
+try{params=new URLSearchParams(window.location.search);}catch(e){params={get:function(){return null;}};}
+var bootMode=(params.get&&params.get('mode')==='watch')?'watch':'solo';
+var bootAgent=(params.get&&params.get('agent'))||null;
+startGame(bootMode,bootAgent);
+if(params.get&&params.get('fp')==='1'){G.fp=true;render();}
+var lastWatch=0;
+function loop(){
+  if(G&&G.mode==='watch'&&!G.over&&!G.paused){
+    var now=Date.now();
+    if(now-lastWatch>170){lastWatch=now;stepWatch();}
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+/* ---- harness seam ---- */
+window.__grimvault={
+  state:function(){return G;},
+  start:startGame, move:doMove, wait:doWait, stepWatch:stepWatch,
+  feTraces:function(){return watchTraces.length;}, /* E50: trace-list length */
+  watchIdx:function(){return watchIdxPersisted;}, /* E50: persisted rotation cursor */
+  save:saveState, load:loadState, genFloor:genFloor,
+  objective:objective, botOptions:botOptions,
+  monsters:MONSTERS, setMsg:setMsg
+};
+</script>
+</body>
+</html>

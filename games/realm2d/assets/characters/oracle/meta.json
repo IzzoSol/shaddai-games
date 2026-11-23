@@ -1,0 +1,15 @@
+{
+ "id": "oracle",
+ "name": "ORACLE",
+ "src": "oracle-c2",
+ "cell": 256,
+ "frames": 8,
+ "clips": {
+  "walk": "walk.webp",
+  "run": "run.webp",
+  "action": "action.webp"
+ },
+ "standH": 204,
+ "footY": 233,
+ "centerX": 127.5
+}

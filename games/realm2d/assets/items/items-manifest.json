@@ -1,0 +1,42 @@
+{
+  "goods/wood": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. a neat stack of cut glowing amber logs, item icon, isometric",
+    "src": "public/assets/items/goods/wood.png"
+  },
+  "goods/hide": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. a rolled animal hide pelt, dark rust leather with stitching, item icon, isometric",
+    "src": "public/assets/items/goods/hide.png"
+  },
+  "goods/water": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. a round canteen flask of fresh water, cyan dripping, item icon, isometric",
+    "src": "public/assets/items/goods/water.png"
+  },
+  "goods/ore": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. raw ore chunks, dull grey rock with glowing orange vein cracks, item icon, isometric",
+    "src": "public/assets/items/goods/ore.png"
+  },
+  "goods/trinket": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. a small oval gem trinket, violet crystal on a thin wire, item icon, isometric",
+    "src": "public/assets/items/goods/trinket.png"
+  },
+  "fish/minnow": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. a small silver minnow fish, tiny fins, bright eye, item icon, isometric",
+    "src": "public/assets/items/fish/minnow.png"
+  },
+  "fish/bass": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. a green-brown bass fish with spiny dorsal fin, item icon, isometric",
+    "src": "public/assets/items/fish/bass.png"
+  },
+  "fish/salmon": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. a salmon fish, pink-orange body with darker back, item icon, isometric",
+    "src": "public/assets/items/fish/salmon.png"
+  },
+  "fish/tuna": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. a big fat tuna fish, metallic blue-grey, tall fin, item icon, isometric",
+    "src": "public/assets/items/fish/tuna.png"
+  },
+  "fish/levi": {
+    "prompt": "neon-punk isometric game loot icon, single item centered, hard-edged clean silhouette, subtle anime-cell shading, dark background, no text, no watermark, no border, no extra objects. an enormous shadow leviathan serpent, dark scales, glowing violet eyes, item icon, isometric",
+    "src": "public/assets/items/fish/levi.png"
+  }
+}

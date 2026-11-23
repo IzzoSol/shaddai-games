@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MINIMARCH — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#07130c;--panel:#0b1a10;--border:rgba(0,255,136,.22);--gold:#ffd75e;--green:#00ff88;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#e8f5dc;--dim:#8aa893}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.10),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(7,19,12,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  #jobRow{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .jobbtn{flex:1;min-width:96px;padding:9px 4px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .jobbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:11px;margin-top:3px;text-transform:none}
+  .jobbtn.sel{border-color:var(--gold);box-shadow:0 0 14px rgba(255,215,94,.35);color:#fff}
+  .jobbtn.zero{opacity:.38}
+  #levelRow{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .lvlbtn{min-width:64px;padding:8px 6px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;text-align:center}
+  .lvlbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:9px;margin-top:2px}
+  .lvlbtn.done{border-color:var(--green);color:#fff}
+  .lvlbtn.locked{opacity:.35}
+  .lvlbtn.cur{border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,94,.35)}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(7,19,12,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#0b1a10;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  /* FULLSCREEN: the shell (stage on desktop, whole handheld console on
+     phones) fills the frame — stage keeps its 960/600 aspect. */
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*960/600));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*960/600))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(calc(100vw - 16px),calc((100vh - 190px)*960/600))}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .abtns button{width:52px;height:52px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>MINI<span>MARCH</span></h1><span class="tag">Rescue the marchers · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="600"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The march waits.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart level</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c"></button><button data-k="up">▲</button><button class="c"></button>
+        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
+        <button class="c"></button><button data-k="down2">▼</button><button class="c"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — cycle job">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — marcher cam">B</button>
+        <button id="btnA" title="A — apply selected job">A</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">Pick a level. The marchers are waiting.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ March<small>1P — rescue the quota</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>Bot rescuer plays</small></button>
+    <button class="mbtn" id="btnCam">🎥 Marcher-cam<small>V — follow the lead marcher</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — march fills the screen</small></button>
+  </div>
+  <div id="levelRow"></div>
+  <div id="jobRow"></div>
+  <div class="help">
+    <b>MINIMARCH</b> — the mini-bots march mindlessly forward, and only you can save them. <b>Click a marcher</b> (or move the cursor and press <span class="k">A</span>) to give it a job: <b>BLOCKER</b> stands and turns the rest around, <b>BUILDER</b> lays a staircase, <b>DIGGER</b> digs straight down, <b>BASHER</b> digs forward, <b>MINER</b> digs diagonally down, <b>CLIMBER</b> scales walls, <b>FLOATER</b> opens a canopy and survives long falls, <b>BOMBER</b> clears dirt with a blast. Save the <b>quota</b> before the timer runs out — a long fall splats, water and lava drown, steel cannot be dug. Keys <span class="k">1–8</span> pick a job, <span class="k">V</span> marcher-cam, <span class="k">P</span> pause, <span class="k">R</span> restart.<br/>
+    <b>WATCH</b> is a council bot rescuer on the Fallible Engine — it scores every (marcher, job) pairing and picks by personality, so it digs the wrong hole sometimes. If the engine fails to load, the NOVA / TURTLE / ZEROX stand-ins rescue instead. Every decision is a recorded trace.<br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: D-pad moves the cursor, <span class="k">A</span> applies the selected job to the nearest marcher, <span class="k">SELECT</span> cycles the job, <span class="k">B</span> toggles marcher-cam, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit).<br/>
+    ⛶ <b>Fullscreen (F):</b> the shell fills the screen — Esc exits first, P still pauses.<br/>
+    <b>Clean-room:</b> the marcher-rescue formula, our own code, levels, characters and art — no copied assets, names or code. Design reference: Lix (CC0) for level concepts only.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   MINIMARCH — original marcher-rescue game for the Shaddai Arcade.
+   Clean-room: the Lemmings FORMULA (mindless walkers + assignable jobs to
+   save a quota before the timer ends) re-implemented from documented
+   behaviour in our own code. All names, levels, characters, art and tuning
+   are original. Design reference: Lix (CC0) for level concepts only — no
+   Lix code, levels or assets were copied, run or moved into this file.
+   No reference code or assets were copied, run or moved into this file.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var W=960, H=600, COLS=48, ROWS=30, TS=20;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+
+/* ---------- jobs ---------- */
+var JOBS=[
+  {id:'BLOCKER', key:'1', color:'#ffd75e', desc:'stand, turn others'},
+  {id:'BUILDER', key:'2', color:'#ff9d5c', desc:'lay a staircase'},
+  {id:'DIGGER',  key:'3', color:'#35e0ff', desc:'dig straight down'},
+  {id:'BASHER',  key:'4', color:'#ff3860', desc:'dig forward'},
+  {id:'MINER',   key:'5', color:'#b78cff', desc:'dig diagonally down'},
+  {id:'CLIMBER', key:'6', color:'#00ff88', desc:'scale walls'},
+  {id:'FLOATER', key:'7', color:'#7ee0ff', desc:'canopy, safe falls'},
+  {id:'BOMBER',  key:'8', color:'#ff5040', desc:'blast the dirt'}
+];
+var JOB_BY_ID={}; JOBS.forEach(function(j){ JOB_BY_ID[j.id]=j; });
+
+/* ---------- level definitions ----------
+   Builder DSL: fill(x,y,w,h,t) tiles — 0 empty, 1 dirt, 2 steel, 3 hazard.
+   hatch(tx,ty) / exit(tx,ty) in tile coords. Every level is authored here,
+   left to right, hatch on the left, exit on the right. */
+function blankGrid(){
+  var g=new Uint8Array(COLS*ROWS);
+  return g;
+}
+function L(g){
+  return {
+    fill:function(x,y,w,h,t){ for(var j=y;j<y+h;j++) for(var i=x;i<x+w;i++) if(i>=0&&i<COLS&&j>=0&&j<ROWS) g[j*COLS+i]=t; },
+    ground:function(y){ this.fill(0,y,COLS,ROWS-y,1); },
+    steel:function(x,y,w,h){ this.fill(x,y,w,h,2); },
+    water:function(x,y,w,h){ this.fill(x,y,w,h,3); }
+  };
+}
+var LEVELS=[
+ {name:'FIRST STEPS', band:0, sub:'Meadow Works', total:10, quota:8, time:90, jobs:{},
+  build:function(g){ var b=L(g); b.ground(28); }},
+ {name:'DIG DOWN', band:0, sub:'Meadow Works', total:10, quota:8, time:110, jobs:{DIGGER:2},
+  build:function(g){ var b=L(g); b.fill(0,24,COLS,2,1); b.ground(28); },
+  hatch:[4,23], exit:[42,27]},
+ {name:'BUILD THE BRIDGE', band:0, sub:'Meadow Works', total:10, quota:8, time:120, jobs:{BUILDER:2},
+  build:function(g){ var b=L(g); b.ground(28); b.fill(22,28,6,2,3); b.fill(28,22,16,8,1); },
+  hatch:[4,27], exit:[40,21]},
+ {name:'BLOCK PARTY', band:0, sub:'Meadow Works', total:12, quota:10, time:120, jobs:{BLOCKER:1}, dir:-1,
+  build:function(g){ var b=L(g); b.ground(28); b.fill(2,24,10,4,1); b.fill(0,28,4,2,3); },
+  hatch:[4,23], exit:[42,27]},
+ {name:'BASH THROUGH', band:1, sub:'Cave Depths', total:12, quota:9, time:130, jobs:{BASHER:2},
+  build:function(g){ var b=L(g); b.ground(28); b.fill(24,20,2,10,1); },
+  hatch:[4,27], exit:[42,27]},
+ {name:'MINE THE SLOPE', band:1, sub:'Cave Depths', total:12, quota:9, time:130, jobs:{MINER:2},
+  build:function(g){ var b=L(g); b.ground(28); b.fill(2,16,14,14,1); },
+  hatch:[4,15], exit:[42,27]},
+ {name:'CLIMB HIGH', band:1, sub:'Cave Depths', total:10, quota:5, time:140, jobs:{CLIMBER:6},
+  build:function(g){ var b=L(g); b.ground(28); b.fill(24,12,2,18,1); b.fill(26,16,18,14,1); },
+  hatch:[4,27], exit:[40,15]},
+ {name:'FLOAT DOWN', band:1, sub:'Cave Depths', total:12, quota:10, time:120, jobs:{FLOATER:12},
+  build:function(g){ var b=L(g); b.ground(28); b.fill(2,8,8,2,1); },
+  hatch:[4,7], exit:[42,27]},
+ {name:'BOMB SQUAD', band:2, sub:'Machine Core', total:14, quota:10, time:140, jobs:{BOMBER:2},
+  build:function(g){ var b=L(g); b.ground(28); b.fill(23,22,2,8,1); },
+  hatch:[4,27], exit:[42,27]},
+ {name:'THE GAUNTLET', band:2, sub:'Machine Core', total:12, quota:8, time:160, jobs:{BASHER:1,BUILDER:1,FLOATER:8},
+  build:function(g){ var b=L(g); b.ground(28);
+    b.fill(14,20,2,10,1); b.fill(26,28,5,2,3); b.fill(31,22,10,8,1); },
+  hatch:[4,27], exit:[44,27]},
+ {name:'STEEL MAZE', band:2, sub:'Machine Core', total:14, quota:10, time:160, jobs:{BASHER:2,MINER:2},
+  build:function(g){ var b=L(g); b.ground(28);
+    b.steel(14,16,2,10); b.fill(14,26,2,4,1);
+    b.steel(30,16,2,10); b.fill(30,26,2,4,1);
+    b.fill(20,29,4,1,1); b.fill(21,28,3,1,1); b.fill(22,27,2,1,1); b.fill(23,26,1,1,1); },
+  hatch:[4,27], exit:[42,27]},
+ {name:'THE LAST MARCH', band:2, sub:'Machine Core', total:14, quota:10, time:180,
+  jobs:{BASHER:1,BUILDER:1,CLIMBER:12,FLOATER:4,BOMBER:1,BLOCKER:1,DIGGER:1,MINER:1},
+  build:function(g){ var b=L(g); b.ground(28);
+    b.fill(12,20,2,10,1); b.fill(20,28,4,2,3); b.fill(24,22,6,8,1);
+    b.fill(30,24,4,6,1); b.fill(34,26,4,4,1);
+    b.steel(38,16,2,14); b.fill(40,20,6,10,1); },
+  hatch:[4,27], exit:[44,19]}
+];
+/* default hatch/exit for levels that did not override them */
+LEVELS.forEach(function(lv,i){
+  if(!lv.hatch) lv.hatch=[4,27];
+  if(!lv.exit) lv.exit=[42,27];
+});
+var BANDS=[
+  {name:'MEADOW WORKS', sky:['#0a2e1a','#071f12','#04160b'], far:'#0d3a22', mid:'#12522f', ground:'#1d5c33', dirt:'#4a7a3a', accent:'#00ff88', mote:'#bfffd9', label:'green meadow'},
+  {name:'CAVE DEPTHS', sky:['#160a2e','#100722','#0a0518'], far:'#241045', mid:'#331a5e', ground:'#2a1a4a', dirt:'#5a4a8a', accent:'#b78cff', mote:'#d9c8ff', label:'violet cave'},
+  {name:'MACHINE CORE', sky:['#2e0f0a','#220a07','#160503'], far:'#3a1a10', mid:'#522512', ground:'#4a2a1a', dirt:'#8a5a3a', accent:'#ff9d5c', mote:'#ffd9b0', label:'ember machine hall'}
+];
+
+/* ---------- state ---------- */
+var PERSONAS={
+  NOVA:   {name:'NOVA',   style:'assigns fast, digs first', tick:26, err:0.10},
+  TURTLE: {name:'TURTLE', style:'waits, only sure jobs',   tick:64, err:0.02},
+  ZEROX:  {name:'ZEROX',  style:'gambles on odd jobs',     tick:36, err:0.35}
+};
+var WATCH_ORDER=['NOVA','TURTLE','ZEROX'];
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var feAgentId=null, feAgent=null, feTraces=[], feRecorded=false, feWatchIdx=0;
+function feNextAgentId(){ var id=COUNCIL_IDS[feWatchIdx%COUNCIL_IDS.length]; feWatchIdx++; return id; }
+
+var state;
+function freshState(){
+  return {
+    phase:'title', mode:'solo', paused:false, cam:false,
+    frame:0, score:0, hi:0, level:0, unlocked:0, done:[],
+    grid:null, hatch:null, exit:null, band:0,
+    marchers:[], particles:[], spawned:0, saved:0, lost:0,
+    timeLeft:0, jobsLeft:{}, selJob:'BLOCKER', cursor:{x:480,y:300},
+    watchBot:'NOVA', watchTimer:0, watchAssigns:0,
+    banner:'', bannerT:0, shake:0, over:false, result:'', msg:'',
+    motes:makeMotes(), camX:480, camY:300
+  };
+}
+function makeMotes(){
+  var s=[]; for(var i=0;i<70;i++) s.push({x:Math.random()*W,y:Math.random()*H,r:0.8+Math.random()*1.8,sp:0.15+Math.random()*0.5,ph:Math.random()*6.28});
+  return s;
+}
+state=freshState();
+try{
+  var s=localStorage.getItem('minimarch.hi'); if(s) state.hi=parseInt(s,10)||0;
+  var p=localStorage.getItem('minimarch.progress');
+  if(p){ var d=JSON.parse(p); state.unlocked=d.unlocked||0; state.done=d.done||[]; state.score=d.score||0; }
+}catch(e){}
+
+/* ---------- tiles ---------- */
+function tileAt(tx,ty){
+  if(tx<0||tx>=COLS||ty<0||ty>=ROWS) return 2; /* world edge is steel */
+  return state.grid[ty*COLS+tx];
+}
+function setTile(tx,ty,v){
+  if(tx<0||tx>=COLS||ty<0||ty>=ROWS) return;
+  state.grid[ty*COLS+tx]=v;
+}
+function isSolid(t){ return t===1||t===2; }
+function feetRow(m){ return Math.floor((m.y-1)/TS); }
+function tileCol(m){ return Math.floor(m.x/TS); }
+
+/* ---------- level load ---------- */
+function loadLevel(idx){
+  var lv=LEVELS[idx];
+  state.level=idx; state.band=lv.band;
+  state.grid=blankGrid();
+  lv.build(state.grid);
+  state.hatch={tx:lv.hatch[0], ty:lv.hatch[1]};
+  state.exit={tx:lv.exit[0], ty:lv.exit[1]};
+  state.marchers=[]; state.particles=[];
+  state.spawned=0; state.saved=0; state.lost=0;
+  state.timeLeft=lv.time*60; state.frame=0;
+  state.jobsLeft={}; for(var k in lv.jobs) state.jobsLeft[k]=lv.jobs[k];
+  state.selJob=firstJobWithCount()||'BLOCKER';
+  state.over=false; state.result='';
+  state.banner='LEVEL '+(idx+1)+' — '+lv.name;
+  state.bannerT=170;
+  state.camX=480; state.camY=300;
+  setMsg('Level '+(idx+1)+': '+lv.name+' — save '+lv.quota+' of '+lv.total+' marchers.');
+  syncUI();
+}
+function firstJobWithCount(){
+  for(var i=0;i<JOBS.length;i++) if((state.jobsLeft[JOBS[i].id]||0)>0) return JOBS[i].id;
+  return null;
+}
+function spawnMarcher(){
+  var lv=LEVELS[state.level];
+  var dir=(lv.dir!==undefined)?lv.dir:1;
+  var cols=['#00ff88','#ffd75e','#35e0ff','#b78cff','#ff9d5c','#7ee0ff','#ff8fb0','#a8ff62'];
+  var m={
+    id:state.spawned, x:state.hatch.tx*TS+10, y:state.hatch.ty*TS+19,
+    dir:dir, vx:0, vy:0, falling:false, fallStart:0, fallStartY:0,
+    job:null, jobT:0, climber:false, floater:false, climbing:false, climbH:0,
+    buildSteps:0, buildBX:0, buildBY:0, minerFirst:true,
+    dead:false, saved:false, splat:false, anim:Math.random()*6.28,
+    color:cols[state.spawned%cols.length], fuse:0
+  };
+  state.marchers.push(m);
+  state.spawned++;
+  burstParticles(m.x,m.y-8,'#ffffff',6);
+}
+function burstParticles(x,y,color,n){
+  for(var i=0;i<n;i++) state.particles.push({x:x,y:y,vx:(Math.random()-0.5)*3,vy:(Math.random()-0.5)*3-0.5,life:20+Math.random()*16,color:color,r:1+Math.random()*2});
+}
+
+/* ---------- jobs ---------- */
+function assignJob(m,jobId){
+  if(!m||m.dead||m.saved||state.phase!=='playing'||state.paused) return false;
+  if(m.job) return false; /* one job at a time; traits stack */
+  var left=state.jobsLeft[jobId]||0;
+  if(left<=0) return false;
+  if(jobId==='CLIMBER'&&m.climber) return false;
+  if(jobId==='FLOATER'&&m.floater) return false;
+  if(jobId==='CLIMBER'){ m.climber=true; state.jobsLeft[jobId]--; setMsg(m.id+' is a CLIMBER now.'); return true; }
+  if(jobId==='FLOATER'){ m.floater=true; state.jobsLeft[jobId]--; setMsg(m.id+' is a FLOATER now.'); return true; }
+  m.job=jobId; m.jobT=0; m.buildSteps=0; m.minerFirst=true;
+  if(jobId==='BOMBER') m.fuse=180;
+  if(jobId==='BUILDER'){ m.buildBX=tileCol(m)+m.dir; m.buildBY=feetRow(m); }
+  state.jobsLeft[jobId]--;
+  if(state.mode==='watch') state.watchAssigns++;
+  setMsg('Job '+jobId+' given to marcher '+m.id+'.');
+  syncUI();
+  return true;
+}
+function explodeBomber(m){
+  var fr=feetRow(m), tc=tileCol(m);
+  for(var dy=-2;dy<=2;dy++) for(var dx=-2;dx<=2;dx++){
+    var tx=tc+dx, ty=fr+dy;
+    if(ty>fr) continue; /* never dig below the bomber's feet row */
+    if(Math.abs(dx)+Math.abs(dy)>3) continue;
+    if(tileAt(tx,ty)===1) setTile(tx,ty,0);
+  }
+  burstParticles(m.x,m.y-8,'#ff9d5c',26);
+  burstParticles(m.x,m.y-8,'#ffd75e',18);
+  state.shake=8;
+  m.dead=true; m.job=null;
+  setMsg('BOOM — marcher '+m.id+' cleared the dirt.');
+}
+
+/* ---------- marcher physics (one frame) ---------- */
+function updateMarcher(m){
+  if(m.dead||m.saved) return;
+  m.anim+=0.12;
+  var fr=feetRow(m), tc=tileCol(m);
+  /* hazard: feet in lava/water */
+  if(tileAt(tc,fr)===3||tileAt(Math.floor(m.x/TS),Math.floor((m.y+2)/TS))===3){
+    m.dead=true; state.lost++;
+    burstParticles(m.x,m.y-8,'#ff3860',16);
+    setMsg('Marcher '+m.id+' went into the drink.');
+    return;
+  }
+  /* exit */
+  var ex=state.exit;
+  if(m.x>ex.tx*TS&&m.x<(ex.tx+1)*TS&&m.y-8>ex.ty*TS&&m.y-8<(ex.ty+1)*TS){
+    m.saved=true; state.saved++;
+    burstParticles(m.x,m.y-8,'#00ff88',14);
+    setMsg('Marcher '+m.id+' is SAFE. '+state.saved+'/'+LEVELS[state.level].quota+' saved.');
+    return;
+  }
+  /* blocker: stand still */
+  if(m.job==='BLOCKER'){
+    if(!isSolid(tileAt(tc,fr+1))){ m.job=null; } /* ground dug out — walk on */
+    else { m.vy=0; return; }
+  }
+  /* bomber fuse — stands still while it burns (falls if not grounded) */
+  if(m.job==='BOMBER'){
+    m.fuse--;
+    if(m.fuse<=0){ explodeBomber(m); return; }
+    if(isSolid(tileAt(tc,fr+1))){ return; }
+  }
+  /* falling? (climbers hold the wall instead of falling) */
+  var below=tileAt(tc,fr+1);
+  if(!isSolid(below)&&!m.climbing){
+    if(!m.falling){ m.falling=true; m.fallStartY=m.y; }
+    m.vy=Math.min(m.floater?1.0:4.6, m.vy+0.22);
+    m.y+=m.vy;
+    m.x+=m.dir*0.5; /* drift forward while falling */
+    if(m.x<8) m.x=8; if(m.x>W-8) m.x=W-8;
+    return;
+  }
+  /* grounded — a fall ends here: measure it, snap feet to the ground top */
+  if(m.falling){
+    var fell=m.y-m.fallStartY;
+    m.falling=false; m.vy=0;
+    if(fell>100&&!m.floater){
+      m.dead=true; m.splat=true; state.lost++;
+      burstParticles(m.x,m.y-4,'#ff3860',18);
+      setMsg('Marcher '+m.id+' splatted from a '+Math.round(fell)+'px fall.');
+      return;
+    }
+  }
+  m.falling=false; m.vy=0;
+  m.y=(fr+1)*TS;
+  /* digging jobs */
+  if(m.job==='DIGGER'){
+    m.jobT++;
+    if(m.jobT%10===0){
+      var t=tileAt(tc,fr+1);
+      if(t===1){
+        /* break through the floor, then stop: a digger that has reached
+           open space below does not keep chewing the floor under it */
+        var below2=tileAt(tc,fr+2);
+        setTile(tc,fr+1,0); burstParticles(m.x,m.y,'#8a6a4a',5);
+        if(below2===0){ m.job=null; }
+      }
+      else { m.job=null; setMsg('Marcher '+m.id+' finished digging.'); }
+    }
+    return;
+  }
+  if(m.job==='BASHER'){
+    m.jobT++;
+    var bt=tileAt(tc+m.dir,fr);
+    if(bt===1){
+      if(m.jobT%10===0){ setTile(tc+m.dir,fr,0); burstParticles(m.x+m.dir*10,m.y-8,'#8a6a4a',5); m.x+=m.dir*4; }
+      return;
+    }
+    if(bt===2){ m.job=null; setMsg('Marcher '+m.id+' cannot bash steel.'); return; }
+    /* open tunnel ahead: keep the job and walk on (digs any dirt it meets) */
+  }
+  if(m.job==='MINER'){
+    m.jobT++;
+    if(m.jobT%10===0){
+      if(m.minerFirst){
+        var dt=tileAt(tc,fr+1);
+        if(dt===1){ setTile(tc,fr+1,0); m.minerFirst=false; m.y+=TS; burstParticles(m.x,m.y,'#8a6a4a',5); }
+        else { m.job=null; }
+      } else {
+        /* dig a 2-tall diagonal corridor so followers can walk down it */
+        var mt=tileAt(tc+m.dir,fr+1);
+        var mt2=tileAt(tc+m.dir,fr);
+        if(mt===1&&mt2!==2){
+          setTile(tc+m.dir,fr+1,0);
+          if(mt2===1) setTile(tc+m.dir,fr,0);
+          m.x+=m.dir*TS; m.y+=TS; burstParticles(m.x,m.y,'#8a6a4a',5);
+        }
+        else { m.job=null; setMsg('Marcher '+m.id+' finished mining.'); }
+      }
+    }
+    return;
+  }
+  if(m.job==='BUILDER'){
+    m.jobT++;
+    if(m.jobT%7===0){
+      if(m.buildSteps>=12){ m.job=null; setMsg('Marcher '+m.id+' finished building.'); return; }
+      var bx=m.buildBX, by=m.buildBY;
+      if(tileAt(bx,by)!==0){ m.job=null; setMsg('Marcher '+m.id+' ran out of room to build.'); return; }
+      setTile(bx,by,1);
+      m.buildSteps++;
+      m.x=bx*TS+10; m.y=by*TS;
+      m.buildBX+=m.dir; m.buildBY-=1;
+      burstParticles(m.x,m.y,'#ff9d5c',4);
+    }
+    return;
+  }
+  /* walking */
+  var aheadX=m.x+m.dir*8;
+  var atx=Math.floor(aheadX/TS);
+  /* blocker ahead? turn around */
+  for(var i=0;i<state.marchers.length;i++){
+    var o=state.marchers[i];
+    if(o!==m&&!o.dead&&!o.saved&&o.job==='BLOCKER'&&Math.abs(o.x-m.x)<12&&Math.abs(o.y-m.y)<20&&((o.x-m.x)*m.dir>0)){
+      m.dir*=-1; return;
+    }
+  }
+  if(isSolid(tileAt(atx,fr))){
+    /* 1-tile step up? */
+    if(!isSolid(tileAt(atx,fr-1))){
+      m.y=fr*TS; m.x+=m.dir*2;
+      return;
+    }
+    /* climber scales the wall */
+    if(m.climber){
+      if(!m.climbing){ m.climbing=true; m.climbH=0; m.falling=false; m.vy=0; }
+      m.y-=1.2; m.x+=m.dir*0.3; m.climbH+=1.2;
+      if(m.y<24||m.climbH>420){ m.climbing=false; }
+      return;
+    }
+    m.dir*=-1; return;
+  }
+  if(m.climbing){
+    /* reached the top: no longer blocked at head level */
+    if(!isSolid(tileAt(atx,fr-1))){ m.climbing=false; }
+    else { m.y-=1.2; m.x+=m.dir*0.3; m.climbH+=1.2; if(m.climbH>420){ m.climbing=false; m.dir*=-1; } return; }
+  }
+  m.x+=m.dir*0.8;
+  if(m.x<8){ m.x=8; m.dir=1; }
+  if(m.x>W-8){ m.x=W-8; m.dir=-1; }
+}
+
+/* ---------- update ---------- */
+function update(){
+  if(state.paused) return;
+  state.frame++;
+  if(state.bannerT>0) state.bannerT--;
+  if(state.shake>0) state.shake*=0.88; if(state.shake<0.4) state.shake=0;
+  for(var i=state.particles.length-1;i>=0;i--){
+    var p=state.particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
+    if(p.life<=0) state.particles.splice(i,1);
+  }
+  state.motes.forEach(function(mo){
+    mo.y-=mo.sp; mo.x+=Math.sin(state.frame*0.01+mo.ph)*0.3;
+    if(mo.y<-4){ mo.y=H+4; mo.x=Math.random()*W; }
+  });
+  if(state.phase!=='playing') return;
+  var lv=LEVELS[state.level];
+  /* spawn */
+  if(state.spawned<lv.total && state.frame%40===0) spawnMarcher();
+  /* timer */
+  state.timeLeft--;
+  if(state.timeLeft<=0){ levelFail('Time up.'); return; }
+  state.marchers.forEach(updateMarcher);
+  state.marchers=state.marchers.filter(function(m){ return !(m.dead&&m.splat) || true; });
+  /* marcher-cam follows the lead marcher */
+  if(state.cam){
+    var lead=null;
+    state.marchers.forEach(function(m){ if(!m.dead&&!m.saved) lead=m; });
+    if(lead){ state.camX=clamp(lead.x,240,720); state.camY=clamp(lead.y-8,150,450); }
+  }
+  if(state.mode==='watch') watchTick();
+  /* win / fail */
+  if(state.saved>=lv.quota){ levelComplete(); return; }
+  if(state.spawned>=lv.total){
+    var alive=state.marchers.filter(function(m){ return !m.dead&&!m.saved; }).length;
+    if(alive===0&&state.saved<lv.quota) levelFail('The march is over.');
+  }
+}
+function levelComplete(){
+  if(state.over) return;
+  recordWatchResult(true);
+  state.over=true; state.result='win'; state.phase='clear';
+  var bonus=500+Math.floor(state.timeLeft/60)*5;
+  state.score+=state.saved*100+bonus;
+  if(state.score>state.hi){ state.hi=state.score; try{ localStorage.setItem('minimarch.hi',String(state.hi)); }catch(e){} }
+  if(state.level+1>state.unlocked){ state.unlocked=Math.min(11,state.level+1); }
+  if(!state.done[state.level]) state.done[state.level]=true;
+  saveProgress();
+  setBanner('LEVEL CLEAR — '+state.saved+' SAVED · BONUS +'+bonus);
+  setMsg('Level clear! '+state.saved+' marchers saved, bonus +'+bonus+'. Score '+state.score+'. Next level unlocked.');
+  syncUI();
+}
+function levelFail(reason){
+  if(state.over) return;
+  recordWatchResult(false);
+  state.over=true; state.result='fail'; state.phase='fail';
+  setBanner('MARCH FAILED — '+reason);
+  setMsg(reason+' Saved '+state.saved+'/'+LEVELS[state.level].quota+'. Press R to try again.');
+  syncUI();
+}
+function recordWatchResult(win){
+  if(state.mode!=='watch'||feRecorded) return;
+  feRecorded=true;
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  if(!FE||!feAgent) return;
+  FE.recordResult(feAgent,'minimarch',null, win?'win':'loss', feTraces);
+}
+
+/* ---------- WATCH bot ---------- */
+function watchOptions(){
+  var lv=LEVELS[state.level];
+  var opts=[];
+  state.marchers.forEach(function(m){
+    if(m.dead||m.saved||m.job) return;
+    var fr=feetRow(m), tc=tileCol(m);
+    var blocked=isSolid(tileAt(tc+m.dir,fr));
+    var belowDirt=tileAt(tc,fr+1)===1;
+    var exitBelow=state.exit.ty>fr;
+    var hazardAhead=false;
+    for(var d=1;d<=4;d++){ var t=tileAt(tc+m.dir*d,fr+1); if(t===3||t===0&&tileAt(tc+m.dir*d,fr+2)===0&&tileAt(tc+m.dir*d,fr+3)===0){ hazardAhead=true; } }
+    var jobs=Object.keys(state.jobsLeft).filter(function(j){ return state.jobsLeft[j]>0; });
+    jobs.forEach(function(j){
+      var score=0.02, tag='idle-watch';
+      if(j==='FLOATER'&&m.falling&&(m.y-m.fallStartY)>40){ score=0.9; tag='save-the-fall'; }
+      else if(j==='BLOCKER'&&hazardAhead){ score=0.8; tag='block-the-hazard'; }
+      else if(j==='BASHER'&&blocked&&tileAt(tc+m.dir,fr)===1){ score=0.75; tag='bash-the-wall'; }
+      else if(j==='CLIMBER'&&blocked){ score=0.7; tag='climb-the-wall'; }
+      else if(j==='BUILDER'&&hazardAhead){ score=0.7; tag='bridge-the-gap'; }
+      else if(j==='DIGGER'&&belowDirt&&exitBelow){ score=0.65; tag='dig-to-exit'; }
+      else if(j==='MINER'&&blocked&&tileAt(tc+m.dir,fr+1)===1){ score=0.6; tag='mine-the-slope'; }
+      else if(j==='BOMBER'&&blocked&&tileAt(tc+m.dir,fr)===1){ score=0.55; tag='bomb-the-wall'; }
+      opts.push({key:'m'+m.id+'-'+j, score:score, tag:tag, m:m, job:j});
+    });
+  });
+  opts.push({key:'__hold', score:0.10, tag:'hold-watch', m:null, job:null});
+  return opts;
+}
+function engineWatchTick(){
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  if(!FE||!feAgent) return false;
+  var opts=watchOptions();
+  var res=FE.decide(feAgent,'minimarch',opts,{timePressure:0});
+  feTraces.push(res.trace);
+  var pick=res.pick;
+  if(!pick.m) return true; /* held */
+  assignJob(pick.m,pick.job);
+  return true;
+}
+function watchTick(){
+  /* In engine mode the watch bot is a council agent (not a PERSONAS key),
+     so the tick comes from a safe fallback; legacy mode always has a P. */
+  var P=PERSONAS[state.watchBot]||PERSONAS.NOVA;
+  state.watchTimer--;
+  if(state.watchTimer>0) return;
+  if(engineWatchTick()){ state.watchTimer=P.tick+Math.floor(Math.random()*20); return; }
+  /* legacy stand-in personalities */
+  var opts=watchOptions().filter(function(o){ return o.m; });
+  if(!opts.length){ state.watchTimer=P.tick; return; }
+  opts.sort(function(a,b){ return b.score-a.score; });
+  if(state.watchBot==='TURTLE'&&opts[0].score<0.6){ state.watchTimer=P.tick; return; }
+  var pick=opts[0];
+  if(state.watchBot==='ZEROX'&&Math.random()<P.err) pick=opts[Math.floor(Math.random()*opts.length)];
+  assignJob(pick.m,pick.job);
+  state.watchTimer=P.tick+Math.floor(Math.random()*20);
+}
+
+/* ---------- modes / save / load ---------- */
+function startGame(mode,levelIdx){
+  var lv=(levelIdx!==undefined)?levelIdx:state.level;
+  state=freshState();
+  try{
+    var s=localStorage.getItem('minimarch.hi'); if(s) state.hi=parseInt(s,10)||0;
+    var p=localStorage.getItem('minimarch.progress');
+    if(p){ var d=JSON.parse(p); state.unlocked=d.unlocked||0; state.done=d.done||[]; state.score=d.score||0; }
+  }catch(e){}
+  state.mode=mode||'solo'; state.phase='playing';
+  loadLevel(lv);
+  if(state.mode==='watch'){
+    var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+    if(FE){
+      feAgentId=feNextAgentId();
+      feAgent=FE.loadAgent(feAgentId);
+      state.watchBot=feAgentId;
+      feTraces=[]; feRecorded=false;
+      setMsg('WATCH — '+feAgentId+' rescues level '+(lv+1)+' on the Fallible Engine. Imperfect on purpose.');
+    } else {
+      feAgentId=null; feAgent=null; feTraces=[]; feRecorded=false;
+      state.watchBot=WATCH_ORDER[state.frame%3];
+      setMsg('WATCH — '+state.watchBot+' ('+PERSONAS[state.watchBot].style+') is rescuing. Imperfect on purpose.');
+    }
+  }
+  buildLevelButtons(); buildJobButtons();
+  syncButtons();
+}
+function saveProgress(){
+  try{
+    localStorage.setItem('minimarch.progress', JSON.stringify({unlocked:state.unlocked,done:state.done,score:state.score}));
+  }catch(e){}
+}
+function saveState(){
+  saveProgress();
+  try{
+    localStorage.setItem('minimarch.save', JSON.stringify({level:state.level,score:state.score,hi:state.hi}));
+    setMsg('State saved — level '+(state.level+1)+', score '+state.score+'.');
+  }catch(e){ setMsg('Save failed in this browser.'); }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('minimarch.save'); if(!raw){ setMsg('No saved state yet.'); return false; }
+    var d=JSON.parse(raw);
+    var mode=state.mode;
+    startGame(mode, clamp(d.level||0,0,11));
+    state.score=d.score||0; state.hi=d.hi||state.hi;
+    setMsg('State loaded — level '+(state.level+1)+', score '+state.score+'.');
+    return true;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+function togglePause(){
+  if(state.phase!=='playing' && !state.paused) return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+  setMsg(state.paused?'Paused — the march waits.':'The march resumes.');
+}
+function toggleCam(){
+  state.cam=!state.cam;
+  var b=$('btnCam'); if(b) b.classList.toggle('active',state.cam);
+  setMsg(state.cam?'Marcher-cam — following the lead marcher.':'Full march view.');
+}
+function syncButtons(){
+  var s=$('btnSolo'), w=$('btnWatch');
+  if(s) s.classList.toggle('active',state.mode==='solo'&&state.phase==='playing');
+  if(w) w.classList.toggle('active',state.mode==='watch'&&state.phase==='playing');
+}
+function setMsg(t){ state.msg=t; if(msgEl) msgEl.textContent=t; }
+function setBanner(t){ state.banner=t; state.bannerT=170; }
+function syncUI(){ buildJobButtons(); buildLevelButtons(); }
+
+/* ---------- UI builders ---------- */
+function buildLevelButtons(){
+  var row=$('levelRow'); if(!row) return;
+  row.innerHTML='';
+  LEVELS.forEach(function(lv,i){
+    var b=document.createElement('button');
+    b.className='lvlbtn'+(state.done[i]?' done':'')+(i>state.unlocked?' locked':'')+(i===state.level?' cur':'');
+    b.innerHTML=(i+1)+'. '+lv.name+'<small>'+lv.sub+' · quota '+lv.quota+'/'+lv.total+'</small>';
+    if(i<=state.unlocked) b.addEventListener('click',function(){ if(state.phase==='playing') loadLevel(i); else startGame(state.mode,i); });
+    row.appendChild(b);
+  });
+}
+function buildJobButtons(){
+  var row=$('jobRow'); if(!row) return;
+  row.innerHTML='';
+  JOBS.forEach(function(j){
+    var left=state.jobsLeft[j.id]||0;
+    var b=document.createElement('button');
+    b.className='jobbtn'+(state.selJob===j.id?' sel':'')+(left<=0?' zero':'');
+    b.innerHTML=j.id+' <small>'+j.key+' · ×'+left+' — '+j.desc+'</small>';
+    b.addEventListener('click',function(){ state.selJob=j.id; syncUI(); setMsg(j.id+': '+j.desc+' — click a marcher to assign.'); });
+    row.appendChild(b);
+  });
+}
+
+/* ---------- input ---------- */
+function canvasPos(e){
+  var r=cv.getBoundingClientRect();
+  var cx=(e.clientX!==undefined?e.clientX:(e.touches&&e.touches[0]?e.touches[0].clientX:0));
+  var cy=(e.clientY!==undefined?e.clientY:(e.touches&&e.touches[0]?e.touches[0].clientY:0));
+  return {x:(cx-r.left)*W/r.width, y:(cy-r.top)*H/r.height};
+}
+function nearestMarcher(x,y){
+  var best=null, bd=1e9;
+  state.marchers.forEach(function(m){
+    if(m.dead||m.saved) return;
+    var d=Math.hypot(m.x-x,(m.y-8)-y);
+    if(d<bd){ bd=d; best=m; }
+  });
+  return (best&&bd<30)?best:null;
+}
+function applyAt(x,y){
+  state.cursor.x=x; state.cursor.y=y;
+  if(state.phase!=='playing') return;
+  var m=nearestMarcher(x,y);
+  if(m) assignJob(m,state.selJob);
+}
+if(cv.addEventListener){
+  cv.addEventListener('pointermove',function(e){ var p=canvasPos(e); state.cursor.x=p.x; state.cursor.y=p.y; });
+  cv.addEventListener('pointerdown',function(e){ var p=canvasPos(e); applyAt(p.x,p.y); });
+}
+function debugKey(code,down){
+  if(!down) return;
+  if(code==='KeyP'){ togglePause(); return; }
+  if(code==='KeyV'){ toggleCam(); return; }
+  if(code==='KeyR'){ if(state.phase!=='title') startGame(state.mode,state.level); return; }
+  if(code==='Enter'||code==='Space'){ applyAt(state.cursor.x,state.cursor.y); return; }
+  var ji=JOBS.findIndex(function(j){ return 'Digit'+j.key===code; });
+  if(ji>=0){ state.selJob=JOBS[ji].id; syncUI(); return; }
+  var step=24;
+  if(code==='ArrowLeft'){ state.cursor.x=clamp(state.cursor.x-step,0,W); }
+  if(code==='ArrowRight'){ state.cursor.x=clamp(state.cursor.x+step,0,W); }
+  if(code==='ArrowUp'){ state.cursor.y=clamp(state.cursor.y-step,0,H); }
+  if(code==='ArrowDown'){ state.cursor.y=clamp(state.cursor.y+step,0,H); }
+}
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('keydown',function(e){
+    if(e.code==='KeyF'){ toggleFullscreen(); return; }
+    if(document.fullscreenElement){
+      return; /* Esc exits fullscreen first (browser); nothing pauses while fullscreen */
+    }
+    if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code)>=0) e.preventDefault();
+    debugKey(e.code,true);
+  });
+}
+function bindBtn(id,fn){ var b=$(id); if(b&&b.addEventListener) b.addEventListener('click',fn); }
+bindBtn('btnSolo',function(){ startGame('solo'); });
+bindBtn('btnWatch',function(){ startGame('watch'); });
+bindBtn('btnCam',function(){ toggleCam(); });
+bindBtn('btnPause',function(){ togglePause(); });
+bindBtn('resumeBtn',function(){ togglePause(); });
+bindBtn('saveBtn',function(){ saveState(); });
+bindBtn('loadBtn',function(){ loadState(); });
+bindBtn('restartBtn',function(){ if(state.paused) togglePause(); startGame(state.mode,state.level); });
+bindBtn('quitArcadeBtn',function(){ location.href='../arcade.html'; });
+bindBtn('startBtn',function(){ togglePause(); });
+bindBtn('selectBtn',function(){
+  var i=JOBS.findIndex(function(j){ return j.id===state.selJob; });
+  state.selJob=JOBS[(i+1)%JOBS.length].id; syncUI();
+});
+bindBtn('btnA',function(){ applyAt(state.cursor.x,state.cursor.y); });
+bindBtn('btnB',function(){ toggleCam(); });
+if(typeof document!=='undefined' && document.querySelectorAll){
+  var dp=document.querySelectorAll('.dpad button[data-k]');
+  for(var di=0;di<dp.length;di++){
+    (function(btn){
+      btn.addEventListener('click',function(){
+        var k=btn.getAttribute('data-k');
+        if(k==='up') state.cursor.y=clamp(state.cursor.y-24,0,H);
+        if(k==='down'||k==='down2') state.cursor.y=clamp(state.cursor.y+24,0,H);
+        if(k==='left') state.cursor.x=clamp(state.cursor.x-24,0,W);
+        if(k==='right') state.cursor.x=clamp(state.cursor.x+24,0,W);
+      });
+    })(dp[di]);
+  }
+}
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+var startLevel=0;
+if(q.get('level')){ var li=parseInt(q.get('level'),10); if(!isNaN(li)&&li>=0&&li<12){ startLevel=li; } }
+if(q.get('auto')==='watch') startGame('watch',startLevel);
+if(q.get('auto')==='play') startGame('solo',startLevel);
+buildLevelButtons(); buildJobButtons();
+
+/* ---------- fullscreen ----------
+   The shell (stage on desktop, whole handheld console on phones) goes true
+   fullscreen via the Fullscreen API: button + F key toggle, Esc exits
+   before it can pause. Label follows the real fullscreen state. */
+var fsShell=document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ var b=$('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — march fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+bindBtn('btnFs',function(){ toggleFullscreen(); });
+
+/* ---------- render ---------- */
+function drawBackground(){
+  var band=BANDS[state.band];
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,band.sky[0]); g.addColorStop(0.55,band.sky[1]); g.addColorStop(1,band.sky[2]);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* far layer: silhouettes */
+  ctx.fillStyle=band.far;
+  if(state.band===0){
+    ctx.beginPath(); ctx.moveTo(0,420);
+    for(var x=0;x<=W;x+=80) ctx.lineTo(x,360+Math.sin(x*0.008+1)*40);
+    ctx.lineTo(W,600); ctx.lineTo(0,600); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(255,240,180,.16)';
+    ctx.beginPath(); ctx.arc(820,86,34,0,7); ctx.fill();
+  } else if(state.band===1){
+    for(var sx=0;sx<W;sx+=90){
+      ctx.beginPath(); ctx.moveTo(sx,0); ctx.lineTo(sx+22,0); ctx.lineTo(sx+11,60+((sx*7)%50)); ctx.closePath(); ctx.fill();
+    }
+    ctx.beginPath(); ctx.moveTo(0,600);
+    for(var x2=0;x2<=W;x2+=80) ctx.lineTo(x2,500+Math.cos(x2*0.01)*30);
+    ctx.lineTo(W,600); ctx.closePath(); ctx.fill();
+  } else {
+    for(var px=0;px<W;px+=120){
+      ctx.fillRect(px,0,26,300+((px*13)%120));
+      ctx.fillRect(px+26,0,10,220+((px*7)%80));
+    }
+    ctx.fillStyle='rgba(255,157,92,.10)';
+    ctx.beginPath(); ctx.arc(820,86,30,0,7); ctx.fill();
+  }
+  /* mid layer: soft shapes + glow band */
+  ctx.fillStyle=band.mid; ctx.globalAlpha=0.55;
+  if(state.band===0){
+    for(var hx=0;hx<W;hx+=160){ ctx.beginPath(); ctx.arc(hx+80,470,90,Math.PI,0); ctx.fill(); }
+  } else if(state.band===1){
+    for(var cx=0;cx<W;cx+=140){ ctx.beginPath(); ctx.moveTo(cx,470); ctx.lineTo(cx+40,380); ctx.lineTo(cx+80,470); ctx.closePath(); ctx.fill(); }
+  } else {
+    for(var gx=0;gx<W;gx+=180){ ctx.fillRect(gx,420,120,60); ctx.beginPath(); ctx.arc(gx+60,420,26,0,7); ctx.fill(); }
+  }
+  ctx.globalAlpha=1;
+  /* ambient motes */
+  state.motes.forEach(function(mo){
+    ctx.globalAlpha=0.25+0.35*Math.abs(Math.sin(state.frame*0.02+mo.ph));
+    ctx.fillStyle=band.mote; ctx.beginPath(); ctx.arc(mo.x,mo.y,mo.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+function drawTerrain(){
+  var band=BANDS[state.band];
+  for(var ty=0;ty<ROWS;ty++) for(var tx=0;tx<COLS;tx++){
+    var t=state.grid[ty*COLS+tx];
+    if(!t) continue;
+    var px=tx*TS, py=ty*TS;
+    if(t===1){
+      var top=state.grid[(ty-1)*COLS+tx]!==1;
+      ctx.fillStyle=top?band.dirt:'#2a1f16';
+      if(state.band===1) ctx.fillStyle=top?'#6a5aa8':'#241a3a';
+      if(state.band===2) ctx.fillStyle=top?'#9a6a44':'#2a1a12';
+      ctx.fillRect(px,py,TS,TS);
+      if(top){ ctx.fillStyle='rgba(255,255,255,.28)'; ctx.fillRect(px,py,TS,3); }
+      ctx.fillStyle='rgba(0,0,0,.25)';
+      ctx.fillRect(px+4,py+8,3,3); ctx.fillRect(px+12,py+13,3,3);
+      if((tx*7+ty*13)%11===0){ ctx.fillStyle=band.accent; ctx.globalAlpha=0.5; ctx.fillRect(px+8,py+5,2,2); ctx.globalAlpha=1; }
+    } else if(t===2){
+      ctx.fillStyle='#3a4450'; ctx.fillRect(px,py,TS,TS);
+      ctx.fillStyle='#5a6675'; ctx.fillRect(px,py,TS,3);
+      ctx.fillStyle='#20262e'; ctx.fillRect(px,py+17,TS,3);
+      ctx.fillStyle='#8a97a8'; ctx.fillRect(px+4,py+4,2,2); ctx.fillRect(px+14,py+14,2,2);
+    } else if(t===3){
+      var pulse=0.6+0.4*Math.sin(state.frame*0.08+tx*0.7+ty);
+      ctx.fillStyle=state.band===0?'rgba(53,160,255,'+pulse+')':'rgba(255,90,40,'+pulse+')';
+      ctx.fillRect(px,py,TS,TS);
+      ctx.fillStyle='rgba(255,255,255,.5)';
+      ctx.fillRect(px+3,py+4+Math.sin(state.frame*0.1+tx)*2,6,2);
+    }
+  }
+}
+function drawHatchExit(){
+  var h=state.hatch, e=state.exit;
+  /* hatch: glowing gate */
+  var hx=h.tx*TS, hy=h.ty*TS;
+  ctx.save(); ctx.shadowColor='#00ff88'; ctx.shadowBlur=18;
+  ctx.fillStyle='#0d2b1d'; ctx.fillRect(hx-2,hy-6,24,26);
+  ctx.fillStyle='#00ff88'; ctx.fillRect(hx,hy,20,20);
+  ctx.restore();
+  ctx.fillStyle='#04120a'; ctx.fillRect(hx+4,hy+4,12,12);
+  ctx.fillStyle='#00ff88'; ctx.font='bold 10px "Share Tech Mono",monospace'; ctx.textAlign='center';
+  ctx.fillText('IN',hx+10,hy+13);
+  /* exit: glowing portal + beacon */
+  var ex=e.tx*TS, ey=e.ty*TS;
+  var pulse=0.5+0.5*Math.sin(state.frame*0.06);
+  ctx.save(); ctx.globalAlpha=0.25+0.3*pulse;
+  var bg=ctx.createLinearGradient(ex,ey-160,ex,ey+20);
+  bg.addColorStop(0,'rgba(0,255,136,0)'); bg.addColorStop(1,'rgba(0,255,136,.8)');
+  ctx.fillStyle=bg; ctx.fillRect(ex+2,ey-160,16,180); ctx.restore();
+  ctx.save(); ctx.shadowColor='#00ff88'; ctx.shadowBlur=22;
+  ctx.fillStyle='#0d2b1d'; ctx.fillRect(ex-2,ey-6,24,26);
+  ctx.fillStyle='#00ff88'; ctx.fillRect(ex,ey,20,20);
+  ctx.restore();
+  ctx.fillStyle='#04120a'; ctx.beginPath(); ctx.arc(ex+10,ey+10,6,0,7); ctx.fill();
+  ctx.fillStyle='#00ff88'; ctx.beginPath(); ctx.arc(ex+10,ey+10,3+2*pulse,0,7); ctx.fill();
+  ctx.fillStyle='#00ff88'; ctx.font='bold 10px "Share Tech Mono",monospace'; ctx.textAlign='center';
+  ctx.fillText('EXIT',ex+10,ey-12);
+}
+/* ---------- marcher sprite stack (CHAR SWEEP 2026-11-22) ----------
+   Every marcher is a miniature SPRITE STACK in the SliceStack spirit:
+   6 silhouette slices stepped upward with real vertical offsets, baked
+   3-tone shading (dark core -> mid -> lit cap), a rim light in the
+   marcher's own colour, a glowing eye visor, planted-feet walk cycle
+   (feet counter the 0.8px/frame march speed — no skating), idle
+   breathing, and a distinct gear silhouette per job. Tone palettes are
+   computed once per colour and cached in MM_TONES; slice widths are
+   module constants — the per-frame path is plain arcs/rects, no
+   allocations, so a screen full of marchers stays cheap. */
+var MM_TONES={};
+function mmTones(hex){
+  var t=MM_TONES[hex];
+  if(t) return t;
+  var n=parseInt(hex.slice(1),16);
+  var r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  function sh(f){
+    var rr,gg,bb;
+    if(f<=1){ rr=r*f; gg=g*f; bb=b*f; }
+    else { var k=f-1; rr=r+(255-r)*k; gg=g+(255-g)*k; bb=b+(255-b)*k; }
+    return 'rgb('+Math.round(rr)+','+Math.round(gg)+','+Math.round(bb)+')';
+  }
+  t={ core:sh(0.15), dark:sh(0.34), mid:sh(0.62), base:hex, lit:sh(1.32), pale:sh(1.72) };
+  MM_TONES[hex]=t;
+  return t;
+}
+var MM_SW=[9.0,9.4,8.6,7.2,5.6,3.8];            /* slice half-widths, bottom -> top */
+var MM_SF=[0,1,2,3,4,5];                        /* tone index per slice */
+/* one stack slice: a squat armoured plate — flat base, domed top */
+function mmSlicePath(x,top,w,h){
+  ctx.beginPath();
+  ctx.moveTo(x-w,top+h);
+  ctx.lineTo(x-w,top+h*0.42);
+  ctx.quadraticCurveTo(x-w,top+1.2,x,top);
+  ctx.quadraticCurveTo(x+w,top+1.2,x+w,top+h*0.42);
+  ctx.lineTo(x+w,top+h);
+  ctx.closePath();
+}
+function mmBoot(bx,by,dir,T){
+  ctx.fillStyle='#070b09';
+  ctx.fillRect(bx-3.2,by-2.6,7.4,2.6);
+  ctx.fillStyle=T.mid;
+  ctx.fillRect(bx+dir*2.6-1.1,by-2.6,2.2,1.3);   /* lit toe cap, facing side */
+}
+function drawMarcher(m){
+  if(m.dead||m.saved) return;
+  var T=mmTones(m.color);
+  var jobCol=m.job?JOB_BY_ID[m.job].color:(m.climber?'#00ff88':(m.floater?'#7ee0ff':null));
+  var JT=jobCol?mmTones(jobCol):null;
+  var grounded=!m.falling&&!m.climbing;
+  var walking=grounded&&m.job!=='BLOCKER'&&m.job!=='BOMBER'&&m.job!=='DIGGER';
+  var ph=m.anim*2.2;                              /* stride phase (anim ticks 0.12/frame) */
+  var stride=walking?Math.sin(ph):0;
+  var breathe=grounded&&!walking?(0.35+Math.sin(state.frame*0.09+m.id*1.7)*0.3):0;
+  var squash=m.falling?0:(walking?Math.abs(Math.cos(ph))*0.5:breathe);
+  var lean=m.falling?m.dir*1.4:(m.climbing?m.dir*1.6:(walking?m.dir*(1+stride*0.5):0));
+  var x=m.x+lean*0.4, gy=m.y;                     /* gy = ground line under the feet */
+  var top=gy-19+squash;                           /* stack peak */
+  ctx.save();
+  /* floater canopy: ribbed, 3-tone, cords to the shoulders */
+  if(m.floater&&m.falling){
+    var FT=mmTones('#7ee0ff');
+    var cw=15+Math.sin(state.frame*0.3+m.id)*0.8, cy=gy-25;
+    ctx.strokeStyle='rgba(200,240,255,.75)'; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(x-cw*0.82,cy); ctx.lineTo(x-5,gy-13);
+    ctx.moveTo(x+cw*0.82,cy); ctx.lineTo(x+5,gy-13);
+    ctx.moveTo(x,cy-3); ctx.lineTo(x,gy-14);
+    ctx.stroke();
+    ctx.fillStyle=FT.dark;
+    ctx.beginPath(); ctx.arc(x,cy,cw,Math.PI,0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=FT.mid;
+    ctx.beginPath(); ctx.arc(x,cy-1.2,cw-2.4,Math.PI,0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=FT.pale; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.arc(x,cy-1.2,cw-2.4,Math.PI*1.15,Math.PI*1.85); ctx.stroke();
+    ctx.strokeStyle=FT.dark; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(x-cw*0.45,cy-10.4); ctx.lineTo(x-cw*0.45,cy);
+    ctx.moveTo(x+cw*0.45,cy-10.4); ctx.lineTo(x+cw*0.45,cy);
+    ctx.stroke();
+  }
+  /* ground shadow + faint colour pool (shrinks/fades while airborne) */
+  ctx.fillStyle='rgba(0,0,0,'+(m.falling?0.18:0.32)+')';
+  ctx.beginPath(); ctx.ellipse(x,gy+1.5,m.falling?6:8.5,2.4,0,0,7); ctx.fill();
+  if(!m.falling){
+    ctx.globalAlpha=0.10; ctx.fillStyle=T.base;
+    ctx.beginPath(); ctx.ellipse(x,gy+1.5,11,3.2,0,0,7); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  /* ---- back gear (behind the stack) ---- */
+  if(m.job==='BUILDER'){                          /* carried beam across the shoulders */
+    ctx.save(); ctx.translate(x,gy-16.5); ctx.rotate(-0.42*m.dir);
+    ctx.fillStyle='#5a3d20'; ctx.fillRect(-11.5,-1.6,23,3.2);
+    ctx.fillStyle='#8a5f30'; ctx.fillRect(-11.5,-1.6,23,1.3);
+    ctx.fillStyle=JT.mid; ctx.fillRect(-11.5,-1.6,2.2,3.2); ctx.fillRect(9.3,-1.6,2.2,3.2);
+    ctx.restore();
+  } else if(m.climber){                           /* rope pack on the back */
+    ctx.fillStyle=T.core; ctx.fillRect(x-m.dir*9.5-2.2,gy-16.5,4.6,9.5);
+    ctx.strokeStyle='#00ff88'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.arc(x-m.dir*9.5,gy-12,2.6,0,7); ctx.stroke();
+  } else if(m.floater&&!m.falling){               /* folded canopy pack */
+    ctx.fillStyle=mmTones('#7ee0ff').dark;
+    ctx.beginPath(); ctx.arc(x-m.dir*8,gy-13,4.6,0,7); ctx.fill();
+    ctx.fillStyle=mmTones('#7ee0ff').lit; ctx.fillRect(x-m.dir*8-3.4,gy-14.2,6.8,1.4);
+  } else if(m.job==='BOMBER'){                    /* fuse tank on the back */
+    ctx.fillStyle='#2a0f0c'; ctx.fillRect(x-m.dir*9.5-2,gy-16,4.4,9);
+    ctx.fillStyle=JT.mid; ctx.fillRect(x-m.dir*9.5-2,gy-16,4.4,1.8);
+  }
+  /* ---- legs + planted boots ---- */
+  var f1x,f2x,f1y=gy,f2y=gy;
+  if(m.job==='BLOCKER'){ f1x=x-6.5; f2x=x+6.5; }                    /* wide armoured stance */
+  else if(m.climbing){ f1x=x-4.5; f1y=gy-3; f2x=x+4.5; f2y=gy-7; }  /* staggered on the wall */
+  else if(m.falling){ f1x=x-5; f1y=gy-1; f2x=x+6; f2y=gy-3.5; }     /* tucked */
+  else if(walking){ f1x=x-4+stride*3.4; f1y=gy-Math.max(0,stride)*1.7; f2x=x+4-stride*3.4; f2y=gy-Math.max(0,-stride)*1.7; }
+  else { f1x=x-5; f2x=x+5; }
+  ctx.strokeStyle=T.dark; ctx.lineWidth=3; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(x-3,gy-6); ctx.lineTo(f1x,f1y-1.4);
+  ctx.moveTo(x+3,gy-6); ctx.lineTo(f2x,f2y-1.4);
+  ctx.stroke();
+  mmBoot(f1x,f1y,m.dir,T); mmBoot(f2x,f2y,m.dir,T);
+  /* ---- THE STACK: 6 slices, dark core -> mid -> lit cap ---- */
+  var tones=[T.core,T.dark,T.mid,T.base,T.lit,T.pale];
+  for(var i=0;i<6;i++){
+    var sw=MM_SW[i], stop=gy-8-i*1.9, sx=x+lean*(i/5);
+    mmSlicePath(sx,stop,sw,4.8);
+    ctx.fillStyle=tones[MM_SF[i]]; ctx.fill();
+    if(i>=3){                                     /* rim light: marcher colour, lit edge */
+      ctx.strokeStyle=i===5?T.pale:T.lit; ctx.globalAlpha=i===5?0.95:0.55; ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(sx-sw,stop+2.4);
+      ctx.quadraticCurveTo(sx-sw,stop,sx,stop);
+      ctx.quadraticCurveTo(sx+sw,stop,sx+sw,stop+2.4);
+      ctx.stroke(); ctx.globalAlpha=1;
+    }
+  }
+  /* helm crest fin — job colour when jobbed, lit body colour otherwise */
+  ctx.fillStyle=JT?JT.mid:T.lit;
+  ctx.fillRect(x+lean-0.9,top-2.4,1.8,2.8);
+  /* ---- glowing eye visor ---- */
+  var vx=x+lean*0.8+m.dir*1.1;
+  ctx.fillStyle='#05090c'; ctx.fillRect(vx-5.4,gy-14.6,10.8,3.8);
+  ctx.fillStyle='#d8fbff'; ctx.fillRect(vx-4.2+m.dir*0.7,gy-13.9,8.4,2.2);
+  ctx.fillStyle='#ffffff'; ctx.fillRect(vx+m.dir*2.6-0.8,gy-13.9,1.6,2.2);
+  if(JT){ ctx.fillStyle=JT.base; ctx.fillRect(vx-5.4,gy-15.8,10.8,1.2); }  /* job brow strip */
+  /* chest core: diamond lamp, job colour when jobbed */
+  ctx.fillStyle=JT?JT.pale:T.pale;
+  ctx.beginPath();
+  ctx.moveTo(x,gy-10.6); ctx.lineTo(x+2.1,gy-8.5); ctx.lineTo(x,gy-6.4); ctx.lineTo(x-2.1,gy-8.5);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.45)';
+  ctx.beginPath(); ctx.moveTo(x,gy-9.4); ctx.lineTo(x+1.1,gy-8.5); ctx.lineTo(x,gy-7.6); ctx.lineTo(x-1.1,gy-8.5); ctx.closePath(); ctx.fill();
+  /* ---- front job gear: each job reads at a glance ---- */
+  if(m.job==='BLOCKER'){                          /* shield plate, front + facing */
+    var shx=x+m.dir*8.6, shy=gy-10.5;
+    ctx.fillStyle=JT.mid;
+    ctx.beginPath();
+    ctx.moveTo(shx-3.6,shy-6.5); ctx.lineTo(shx+3.6,shy-6.5); ctx.lineTo(shx+3.6,shy+3.4);
+    ctx.quadraticCurveTo(shx+3.6,shy+6.4,shx,shy+7.4);
+    ctx.quadraticCurveTo(shx-3.6,shy+6.4,shx-3.6,shy+3.4);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=JT.dark; ctx.lineWidth=1.2; ctx.stroke();
+    ctx.strokeStyle=JT.pale; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(shx-3.6,shy-4.6); ctx.lineTo(shx+3.6,shy-4.6); ctx.stroke();
+    ctx.fillStyle=JT.pale; ctx.beginPath(); ctx.arc(shx,shy-0.4,1.5,0,7); ctx.fill();
+    ctx.strokeStyle=JT.dark; ctx.lineWidth=2;     /* braced arms to the plate */
+    ctx.beginPath(); ctx.moveTo(x+m.dir*4,gy-12); ctx.lineTo(shx-m.dir*3,shy-2); ctx.stroke();
+  } else if(m.job==='DIGGER'){                    /* helm lamp + angled drill */
+    ctx.fillStyle='#fff6c8'; ctx.beginPath(); ctx.arc(x+lean+m.dir*2.2,top-0.6,1.5,0,7); ctx.fill();
+    ctx.globalAlpha=0.35; ctx.fillStyle='#ffd75e';
+    ctx.beginPath(); ctx.arc(x+lean+m.dir*2.2,top-0.6,3.4,0,7); ctx.fill(); ctx.globalAlpha=1;
+    ctx.strokeStyle=JT.mid; ctx.lineWidth=2.4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x+m.dir*6.5,gy-5.5); ctx.lineTo(x+m.dir*11.5,gy-1); ctx.stroke();
+    ctx.strokeStyle=JT.pale; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(x+m.dir*9.6,gy-2.8); ctx.lineTo(x+m.dir*12.6,gy-0.2); ctx.stroke();
+  } else if(m.job==='BASHER'){                    /* battering log + helm spike */
+    ctx.fillStyle='#4a2f18'; ctx.fillRect(x+m.dir*5-(m.dir<0?11:0),gy-10.2,11,4);
+    ctx.fillStyle='#7a4e26'; ctx.fillRect(x+m.dir*5-(m.dir<0?11:0),gy-10.2,11,1.6);
+    ctx.fillStyle=JT.mid; ctx.fillRect(x+m.dir*14.6-(m.dir<0?2.2:0),gy-10.5,2.2,4.6);
+    ctx.fillStyle=JT.pale;
+    ctx.beginPath(); ctx.moveTo(x+lean-1.4,top-0.4); ctx.lineTo(x+lean+1.4,top-0.4); ctx.lineTo(x+lean+m.dir*1.2,top-4); ctx.closePath(); ctx.fill();
+  } else if(m.job==='MINER'){                     /* lamp band + shouldered pickaxe */
+    ctx.fillStyle=JT.base; ctx.fillRect(x+lean-3.6,top+0.8,7.2,1.7);
+    ctx.fillStyle='#fff6c8'; ctx.fillRect(x+lean+m.dir*1.6,top+0.8,1.8,1.7);
+    ctx.strokeStyle='#c8ccd4'; ctx.lineWidth=1.7; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x-m.dir*6.5,gy-17.5); ctx.lineTo(x+m.dir*6.8,gy-7.5); ctx.stroke();
+    ctx.strokeStyle=JT.pale; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(x+m.dir*4.4,gy-10.6); ctx.quadraticCurveTo(x+m.dir*8.6,gy-11.6,x+m.dir*10.6,gy-8.6); ctx.stroke();
+  } else if(m.job==='BUILDER'){                   /* hard-hat dome over the cap */
+    ctx.fillStyle=JT.base;
+    ctx.beginPath(); ctx.arc(x+lean,top+2.2,4.6,Math.PI,0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=JT.lit; ctx.fillRect(x+lean-5.6,top+1.6,11.2,1.5);
+  } else if(m.job==='BOMBER'){                    /* bomb on the crest + blinking fuse */
+    ctx.fillStyle='#14100e'; ctx.beginPath(); ctx.arc(x+lean+3.4,top-3.4,3.1,0,7); ctx.fill();
+    ctx.fillStyle=JT.mid; ctx.fillRect(x+lean+2.2,top-7.4,2.4,1.6);
+    var blink=(Math.floor(state.frame/6)%2===0);
+    ctx.strokeStyle='#ffd75e'; ctx.lineWidth=1.1;
+    ctx.beginPath(); ctx.moveTo(x+lean+3.4,top-7.4); ctx.quadraticCurveTo(x+lean+6.4,top-10.4,x+lean+8.2,top-7.8); ctx.stroke();
+    ctx.fillStyle=blink?'#ff5040':'#ffd75e';
+    ctx.beginPath(); ctx.arc(x+lean+8.2,top-7.6,1.4,0,7); ctx.fill();
+    if(blink){ ctx.fillStyle=JT.base; ctx.fillRect(x-4.4,gy-5.6,8.8,1.5); }  /* chest fuse band */
+  } else if(m.climber){                           /* wall gloves + chest rope coil */
+    ctx.fillStyle=JT.pale;
+    ctx.fillRect(x+m.dir*7.6-1.4,gy-14.6,2.8,2.8); ctx.fillRect(x+m.dir*7.6-1.4,gy-9.4,2.8,2.8);
+    ctx.strokeStyle=JT.mid; ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.arc(x-m.dir*2.5,gy-8.5,2.4,0,7); ctx.stroke();
+  }
+  if(m.job){ ctx.fillStyle=JT.pale; ctx.font='bold 8px "Share Tech Mono",monospace'; ctx.textAlign='center'; ctx.fillText(m.job[0],x,top-5.5); }
+  ctx.restore();
+}
+function drawParticles(){
+  state.particles.forEach(function(p){
+    ctx.globalAlpha=Math.min(1,p.life/30); ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+function drawHUD(){
+  var lv=LEVELS[state.level];
+  ctx.fillStyle='rgba(2,6,15,.72)'; ctx.fillRect(0,0,W,34);
+  ctx.fillStyle='#fff'; ctx.font='bold 14px "Orbitron",sans-serif'; ctx.textAlign='left';
+  ctx.fillText('LV '+(state.level+1)+' '+lv.name,14,23);
+  ctx.fillStyle='#00ff88'; ctx.fillText('SAVED '+state.saved+'/'+lv.quota,300,23);
+  ctx.fillStyle='#ffd75e'; ctx.fillText('TOTAL '+state.spawned+'/'+lv.total,450,23);
+  var t=Math.max(0,Math.ceil(state.timeLeft/60));
+  ctx.fillStyle=t<20?'#ff3860':'#35e0ff';
+  ctx.fillText('⏱ '+Math.floor(t/60)+':'+('0'+(t%60)).slice(-2),600,23);
+  ctx.fillStyle='#8fa0b8'; ctx.font='12px "Share Tech Mono",monospace';
+  ctx.fillText('SCORE '+state.score+' · BEST '+state.hi,730,23);
+  if(state.mode==='watch'){
+    ctx.fillStyle='#b78cff'; ctx.font='12px "Share Tech Mono",monospace';
+    ctx.fillText('WATCH · '+state.watchBot+' · assigns '+state.watchAssigns,14,52);
+  }
+  if(state.bannerT>0){
+    ctx.fillStyle='rgba(2,6,15,.6)'; ctx.fillRect(W/2-300,52,600,34);
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 16px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.banner,W/2,76);
+  }
+  /* cursor */
+  if(state.phase==='playing'){
+    ctx.save(); ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2;
+    ctx.shadowColor='#ffd75e'; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(state.cursor.x,state.cursor.y,14,0,7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(state.cursor.x-20,state.cursor.y); ctx.lineTo(state.cursor.x-8,state.cursor.y);
+    ctx.moveTo(state.cursor.x+8,state.cursor.y); ctx.lineTo(state.cursor.x+20,state.cursor.y);
+    ctx.moveTo(state.cursor.x,state.cursor.y-20); ctx.lineTo(state.cursor.x,state.cursor.y-8);
+    ctx.moveTo(state.cursor.x,state.cursor.y+8); ctx.lineTo(state.cursor.x,state.cursor.y+20); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 10px "Share Tech Mono",monospace'; ctx.textAlign='center';
+    ctx.fillText(state.selJob,state.cursor.x,state.cursor.y-20);
+  }
+  if(state.phase==='title'){
+    ctx.fillStyle='rgba(2,6,15,.55)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#fff'; ctx.font='900 52px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText('MINIMARCH',W/2,180);
+    ctx.fillStyle='#00ff88'; ctx.font='600 16px "Orbitron",sans-serif';
+    ctx.fillText('12 LEVELS · 3 WORLDS · 8 JOBS · ONE QUOTA',W/2,216);
+    ctx.fillStyle='#c6d6ea'; ctx.font='16px "Rajdhani",sans-serif';
+    ctx.fillText('The mini-bots march on without thinking. Give them jobs — or watch them walk off the edge.',W/2,300);
+    ctx.fillStyle='#8fa0b8'; ctx.font='13px "Share Tech Mono",monospace';
+    ctx.fillText('Click MARCH to play level '+(state.level+1)+' — '+LEVELS[state.level].name+' — or WATCH a bot rescuer try.',W/2,330);
+    ctx.fillText('Click a marcher to give it the selected job · 1–8 pick a job · V marcher-cam · P pause',W/2,356);
+  }
+  if(state.phase==='clear'||state.phase==='fail'){
+    ctx.fillStyle=state.phase==='clear'?'rgba(2,20,10,.6)':'rgba(20,2,6,.6)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=state.phase==='clear'?'#00ff88':'#ff3860';
+    ctx.font='900 40px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.phase==='clear'?'LEVEL CLEAR':'MARCH FAILED',W/2,270);
+    ctx.fillStyle='#fff'; ctx.font='20px "Orbitron",sans-serif';
+    ctx.fillText('SAVED '+state.saved+'/'+LEVELS[state.level].quota+'   ·   SCORE '+state.score+'   ·   BEST '+state.hi,W/2,312);
+    ctx.fillStyle='#8fa0b8'; ctx.font='14px "Share Tech Mono",monospace';
+    ctx.fillText(state.phase==='clear'?'Pick the next level below — or press R to replay':'Press R to try again',W/2,344);
+  }
+}
+function render(){
+  ctx.save();
+  if(state.shake>0) ctx.translate((Math.random()-0.5)*state.shake,(Math.random()-0.5)*state.shake);
+  if(state.cam&&state.phase==='playing'){
+    ctx.translate(W/2,H/2); ctx.scale(2,2); ctx.translate(-state.camX,-state.camY);
+    drawBackground(); drawTerrain(); drawHatchExit();
+    state.marchers.forEach(drawMarcher); drawParticles();
+    ctx.restore(); ctx.save();
+    ctx.fillStyle='rgba(2,6,15,.72)'; ctx.fillRect(0,0,W,34);
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 14px "Orbitron",sans-serif'; ctx.textAlign='left';
+    ctx.fillText('MARCHER-CAM · LV '+(state.level+1)+' '+LEVELS[state.level].name,14,23);
+    ctx.fillStyle='#8fa0b8'; ctx.font='12px "Share Tech Mono",monospace';
+    ctx.fillText('SAVED '+state.saved+'/'+LEVELS[state.level].quota+' · V TO EXIT CAM',600,23);
+  } else {
+    drawBackground(); drawTerrain(); drawHatchExit();
+    state.marchers.forEach(drawMarcher); drawParticles(); drawHUD();
+  }
+  ctx.restore();
+}
+function loop(){
+  update();
+  try{ render(); }catch(e){ /* headless stub contexts may lack gradients; logic still runs */ }
+  if(typeof requestAnimationFrame!=='function') return;
+  requestAnimationFrame(loop);
+}
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+if(state.phase==='title'){ loadLevel(state.level); state.phase='title'; }
+
+/* test/debug surface — same shape as the other arcade games */
+window.__minimarch={
+  get state(){ return {phase:state.phase,mode:state.mode,paused:state.paused,cam:state.cam,frame:state.frame,
+    score:state.score,hi:state.hi,level:state.level,unlocked:state.unlocked,done:state.done.slice(),
+    spawned:state.spawned,saved:state.saved,lost:state.lost,timeLeft:state.timeLeft,
+    jobsLeft:JSON.parse(JSON.stringify(state.jobsLeft)), selJob:state.selJob,
+    marchers:state.marchers.map(function(m){return {id:m.id,x:m.x,y:m.y,dir:m.dir,job:m.job,climber:m.climber,floater:m.floater,dead:m.dead,saved:m.saved,falling:m.falling};}),
+    watchBot:state.watchBot,watchAssigns:state.watchAssigns,
+    feAgent:feAgentId,feTraces:feTraces.length,over:state.over,result:state.result,
+    grid:state.grid?Array.prototype.slice.call(state.grid):null,
+    hatch:state.hatch,exit:state.exit,band:state.band,banner:state.banner}; },
+  levels:LEVELS,
+  startGame:startGame, loadLevel:loadLevel, assignJob:assignJob,
+  toggleFullscreen:toggleFullscreen, isFullscreen:isFullscreen,
+  get fs(){ return isFullscreen(); },
+  debugKey:debugKey, debugSpawnMarcher:spawnMarcher,
+  debugTile:function(tx,ty){ return tileAt(tx,ty); },
+  debugMarcher:function(id){ var f=state.marchers.filter(function(m){return m.id===id;}); return f.length?f[0]:null; },
+  debugMarchers:function(){ return state.marchers; },
+  debugPlaceMarcher:function(x,y,dir){
+    var cols=['#00ff88','#ffd75e','#35e0ff','#b78cff','#ff9d5c','#7ee0ff'];
+    var m={id:state.spawned, x:x, y:y, dir:dir||1, vx:0, vy:0, falling:false, fallStart:0, fallStartY:0,
+      job:null, jobT:0, climber:false, floater:false, climbing:false, climbH:0,
+      buildSteps:0, buildBX:0, buildBY:0, minerFirst:true,
+      dead:false, saved:false, splat:false, anim:0, color:cols[state.spawned%cols.length], fuse:0};
+    state.marchers.push(m); state.spawned++;
+    return m;
+  },
+  debugSetTime:function(f){ state.timeLeft=f; },
+  debugSetSaved:function(n){ state.saved=n; },
+  debugSetSpawned:function(n){ state.spawned=n; },
+  debugSetBot:function(b){ state.watchBot=b; },
+  debugSave:saveState, debugLoad:loadState, debugToggleCam:toggleCam, debugTogglePause:togglePause,
+  debugApplyAt:applyAt, debugSetCursor:function(x,y){ state.cursor.x=x; state.cursor.y=y; },
+  debugWatchTick:watchTick
+};
+</script>
+</body>
+</html>

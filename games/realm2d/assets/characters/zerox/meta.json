@@ -1,0 +1,15 @@
+{
+ "id": "zerox",
+ "name": "ZEROX",
+ "src": "zerox-council",
+ "cell": 256,
+ "frames": 8,
+ "clips": {
+  "walk": "walk.webp",
+  "run": "run.webp",
+  "action": "action.webp"
+ },
+ "standH": 226,
+ "footY": 234,
+ "centerX": 125.5
+}

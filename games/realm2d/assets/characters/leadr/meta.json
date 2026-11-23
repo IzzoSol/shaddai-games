@@ -1,0 +1,15 @@
+{
+ "id": "leadr",
+ "name": "Leadr",
+ "src": "leadr",
+ "cell": 256,
+ "frames": 8,
+ "clips": {
+  "walk": "walk.webp",
+  "run": "run.webp",
+  "action": "action.webp"
+ },
+ "standH": 164,
+ "footY": 213,
+ "centerX": 126
+}

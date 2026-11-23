@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EMBERVALE — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#070a12;--panel:#0d1420;--border:rgba(255,179,71,.22);--gold:#ffb347;--green:#00ff88;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#e8ecf5;--dim:#8a94a8}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(255,179,71,.08),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(7,10,18,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--gold)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--gold);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(255,179,71,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--gold);box-shadow:0 0 16px rgba(255,179,71,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(7,10,18,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:var(--panel);border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:16px}.topbar .tag{display:none}
+    .mbtn{min-width:44%}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>EMBER<span>VALE</span></h1><span class="tag">City builder · Mayor of the Ember Vale · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="544"></canvas>
+      <div id="pauseOverlay"><div class="card"><h2>PAUSED</h2><p id="pauseText">The vale waits.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart city</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="msg">Found Embervale: zone homes, shops and works, keep the lights on, and grow it to 5,000 citizens.</div>
+    <div class="row">
+      <button class="mbtn" id="btnSolo">🏙️ Found city<small>1P — grow Embervale to 5,000 citizens</small></button>
+      <button class="mbtn" id="btnWatch">🤖 Watch mayor<small>Bot mayor builds the vale — imperfect on purpose</small></button>
+      <button class="mbtn" id="btnDuel">⚔️ Duel<small>Two mayors, 12 months each — bigger city wins</small></button>
+      <button class="mbtn" id="btnCam">🎥 Street cam<small>V — zoom to the cursor, street level</small></button>
+      <button class="mbtn" id="btnPause">⏸ Pause<small>P — save / load in menu</small></button>
+    </div>
+    <div class="help">
+      <b>How to build:</b> pick a tool below the map (or press <span class="k">B</span> to cycle), move the cursor with <span class="k">arrows / WASD</span>, place with <span class="k">Enter / Space / A</span> or click a tile. <span class="k">Roads</span> carry power and people — zones only grow beside a road. <span class="k">Coal plants</span> ($400, 700⚡) and <span class="k">wind turbines</span> ($150, 150⚡) power everything they can reach through roads and zones; unpowered zones stall and dim. Homes want <span class="k">parks</span> nearby and hate <span class="k">industry</span> next door. Taxes pay every month; upkeep eats at them. Fires start in dry months — bulldoze the burning tile before it spreads. Reach <b>5,000 citizens</b> for EMBERVALE PRIME. Fall below <b>-$500</b> and the vale goes bankrupt.<br/>
+      📱 <b>Handheld shell:</b> on phones the game sits in its own console: D-pad moves the cursor, <span class="k">A</span> places the tool, <span class="k">B</span> cycles tools, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles street cam.<br/>
+      <span class="k">V</span> street cam · <span class="k">P</span> pause · <span class="k">M</span> mute · <span class="k">R</span> restart · <span class="k">1–8</span> pick a tool
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c"></button><button id="dUp">▲</button><button class="c"></button>
+        <button id="dLeft">◀</button><button id="startBtn" title="START — menu">▣</button><button id="dRight">▶</button>
+        <button class="c"></button><button id="dDown">▼</button><button class="c"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="selectBtn" title="SELECT — street cam">SELECT</button>
+        <button id="btnTool" title="B — cycle tool">TOOL</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — cycle tool">B</button>
+        <button id="btnA" title="A — place tool">A</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* EMBERVALE — original-IP city builder for the Shaddai Arcade.
+   Licence: GPL-3.0-or-later (Micropolis lineage). The simulation design
+   follows the documented Micropolis Simulate() 16-phase cycle (map scans,
+   taxes, power, pollution, population, fire) read as a spec only — this
+   file is our own original JS; every name, mayor, building and line of
+   text is original. The name "SimCity" is never used (EA trademark term).
+   No code, art or assets from Micropolis were run, copied or moved in. */
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var W=960, H=544;
+var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+var muted=false;
+function $(id){ return document.getElementById(id); }
+var msgEl=$('msg');
+function setMsg(t){ if(msgEl) msgEl.textContent=t; }
+
+/* ---------- seeded RNG (mulberry32) ---------- */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ---------- constants ---------- */
+var MW=28, MH=18, TS=27, OX=8, OY=44, PW=172; /* map 28x18 tiles, right panel 172px */
+var MONTHS_PER_YEAR=12, FRAMES_PER_MONTH=30;
+var TOOLS=[
+  {id:'bulldoze', name:'BULLDOZE', cost:5,  key:'1'},
+  {id:'road',     name:'ROAD',     cost:10, key:'2'},
+  {id:'R',        name:'HOMES',    cost:50, key:'3'},
+  {id:'C',        name:'SHOPS',    cost:50, key:'4'},
+  {id:'I',        name:'WORKS',    cost:50, key:'5'},
+  {id:'park',     name:'PARK',     cost:20, key:'6'},
+  {id:'wind',     name:'WIND',     cost:150,key:'7'},
+  {id:'coal',     name:'COAL PLANT',cost:400,key:'8'}
+];
+var RANKS=[[0,'HAMLET'],[100,'VILLAGE'],[500,'TOWN'],[1500,'CITY'],[3000,'METROPOLIS'],[5000,'EMBERVALE PRIME']];
+var WIN_POP=5000, BANKRUPT=-500, WATCH_MONTHS=24, DUEL_TERM=12;
+var RPOP=[0,25,70,160]; /* citizens per residential tile by level */
+var MAYORS={
+  ZEROX:{color:'#ff3860', hat:'visor',  blurb:'zones industry everywhere'},
+  TURTLE:{color:'#00ff88', hat:'cap',   blurb:'parks first, slow and steady'},
+  NEXUS:{color:'#35e0ff', hat:'headset',blurb:'balances the three demands'},
+  ORACLE:{color:'#b78cff', hat:'hood',  blurb:'saves funds, strikes late'}
+};
+/* E58: watch-mayor rotation — the full 8-bot council, one step per watch
+   start, persisted as embervale.feWatchIdx. Engine absent: legacy random
+   pick from the old 4-bot pool, no cursor consumed (fallback stays as-is). */
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var BOT_ORDER=['ZEROX','TURTLE','NEXUS','ORACLE'];
+function feWatchIdx(){
+  try{ var v=localStorage.getItem('embervale.feWatchIdx'); var n=parseInt(v,10);
+    return isNaN(n)?0:((n%8)+8)%8; }catch(e){ return 0; }
+}
+function pickWatchBot(){
+  if(!FE) return BOT_ORDER[Math.floor(Math.random()*BOT_ORDER.length)];
+  // monotonic counter: the stored value counts starts (9 after 9 starts);
+  // the mod-8 read in feWatchIdx() picks the next council member.
+  var raw=0;
+  try{ var v=localStorage.getItem('embervale.feWatchIdx'); var n=parseInt(v,10); raw=isNaN(n)?0:n; }catch(e){ raw=0; }
+  var idx=((raw%8)+8)%8;
+  var id=COUNCIL_IDS[idx];
+  try{ localStorage.setItem('embervale.feWatchIdx', String(raw+1)); }catch(e){}
+  return id;
+}
+
+/* ---------- state ---------- */
+var state=null;
+function newTiles(){
+  var t=[], i;
+  for(i=0;i<MW*MH;i++) t.push({t:'grass', lvl:0, powered:false, fire:0});
+  return t;
+}
+function tileAt(x,y){ if(x<0||y<0||x>=MW||y>=MH) return null; return state.tiles[y*MW+x]; }
+function idx(x,y){ return y*MW+x; }
+function startGame(mode, botId){
+  var tiles=newTiles();
+  state={phase:'play', mode:mode||'solo', paused:false, cam:false, frame:0,
+    tiles:tiles, funds:2000, month:0, pop:0, jobs:0,
+    demand:{R:60,C:45,I:55}, power:{used:0,cap:0},
+    cursor:{x:14,y:9}, tool:1, rank:'HAMLET', over:false, result:null, win:false,
+    fires:0, rubble:0, placed:0,
+    feAgentId:null, feAgent:null, feTraces:[], feRecorded:false,
+    duel: mode==='duel' ? {turn:0, p1pop:0, p2pop:0} : null,
+    watchMonth:0, seed:20261122, cars:[]};
+  /* starter town — a cross of roads with homes, shops, works, a park and power */
+  function put(x,y,t){ var tl=tileAt(x,y); if(tl){ tl.t=t; } }
+  var x;
+  for(x=4;x<=23;x++){ put(x,5,'road'); put(x,9,'road'); put(x,13,'road'); }
+  for(var y=3;y<=14;y++) put(14,y,'road');
+  put(5,8,'R'); put(6,8,'R'); put(7,8,'R'); put(5,10,'R'); put(6,10,'R');
+  put(5,4,'R'); put(6,4,'R'); put(7,4,'R'); put(5,6,'R'); put(15,4,'R'); put(16,4,'R');
+  put(5,12,'R'); put(6,12,'R'); put(15,12,'R'); put(16,12,'R');
+  put(15,8,'C'); put(16,8,'C'); put(15,10,'C');
+  put(17,4,'C'); put(18,4,'C'); put(15,6,'C'); put(17,12,'C');
+  put(20,8,'I'); put(21,8,'I'); put(20,10,'I');
+  put(20,4,'I'); put(21,4,'I'); put(20,6,'I'); put(20,12,'I');
+  put(10,10,'park'); put(10,6,'park'); put(13,8,'coal'); put(16,10,'wind'); put(24,12,'wind');
+  state.tiles.forEach(function(tl){ if(tl.t!=='grass') state.placed++; });
+  state.feAgentId=botId||null;
+  if(mode==='watch'){
+    state.feAgentId=botId||pickWatchBot();
+    if(FE){ try{ state.feAgent=FE.loadAgent(state.feAgentId); }catch(e){ state.feAgent=null; } }
+  }
+  recompute();
+  setMsg(mode==='watch' ? ('Mayor '+state.feAgentId+' takes the vale — '+ (MAYORS[state.feAgentId]?MAYORS[state.feAgentId].blurb:'')) :
+        mode==='duel' ? 'Duel: Mayor 1 builds 12 months, then Mayor 2. Bigger city wins.' :
+        'Found Embervale: zone homes, shops and works, keep the lights on.');
+  updateButtons();
+}
+function rankFor(pop){
+  var r='HAMLET';
+  for(var i=0;i<RANKS.length;i++) if(pop>=RANKS[i][0]) r=RANKS[i][1];
+  return r;
+}
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+
+/* ---------- power: flood from plants through conductors ---------- */
+function conducts(t){ return t==='road'||t==='R'||t==='C'||t==='I'||t==='park'||t==='wind'||t==='coal'; }
+function recomputePower(){
+  var cap=0, i, tl;
+  for(i=0;i<state.tiles.length;i++){
+    tl=state.tiles[i];
+    tl.powered=false;
+    if(tl.t==='coal') cap+=700;
+    else if(tl.t==='wind') cap+=150;
+  }
+  /* BFS from every plant across conducting tiles */
+  var dist=new Array(state.tiles.length), q=[], d;
+  for(i=0;i<dist.length;i++) dist[i]=-1;
+  for(i=0;i<state.tiles.length;i++){
+    tl=state.tiles[i];
+    if(tl.t==='coal'||tl.t==='wind'){ dist[i]=0; q.push(i); }
+  }
+  while(q.length){
+    var cur=q.shift(), cx=cur%MW, cy=(cur/MW)|0;
+    d=dist[cur];
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(o){
+      var nx=cx+o[0], ny=cy+o[1];
+      if(nx<0||ny<0||nx>=MW||ny>=MH) return;
+      var ni=ny*MW+nx;
+      if(dist[ni]>=0) return;
+      if(!conducts(state.tiles[ni].t)) return;
+      dist[ni]=d+1; q.push(ni);
+    });
+  }
+  /* power demand: zones draw (lvl+1)*10 */
+  var powered=[];
+  for(i=0;i<state.tiles.length;i++){
+    tl=state.tiles[i];
+    if(dist[i]>=0 && (tl.t==='R'||tl.t==='C'||tl.t==='I'||tl.t==='park')){
+      tl.powered=true;
+      powered.push({i:i, d:dist[i], draw:(tl.lvl+1)*10});
+    }
+  }
+  var used=0;
+  powered.forEach(function(p){ used+=p.draw; });
+  /* brownouts: unpower the farthest tiles first until demand fits capacity */
+  if(used>cap){
+    powered.sort(function(a,b){ return b.d-a.d; });
+    var k=0;
+    while(used>cap && k<powered.length){
+      state.tiles[powered[k].i].powered=false;
+      used-=powered[k].draw; k++;
+    }
+  }
+  state.power={used:used, cap:cap};
+}
+
+/* ---------- population / jobs / demand ---------- */
+function recompute(){
+  recomputePower();
+  var pop=0, jobs=0, com=0, ind=0, rub=0, fires=0, i, tl;
+  for(i=0;i<state.tiles.length;i++){
+    tl=state.tiles[i];
+    if(tl.t==='R') pop+=RPOP[tl.lvl];
+    if(tl.t==='C'){ jobs+=(tl.lvl+1)*12; com++; }
+    if(tl.t==='I'){ jobs+=(tl.lvl+1)*12; ind++; }
+    if(tl.t==='rubble') rub++;
+    if(tl.fire>0) fires++;
+  }
+  state.pop=pop; state.jobs=jobs; state.rubble=rub; state.fires=fires;
+  state.demand.R=clamp(Math.round(55+(jobs-pop*0.6)*0.15-pop/120),5,95);
+  state.demand.C=clamp(Math.round(45+pop/50-com*2.5),5,95);
+  state.demand.I=clamp(Math.round(55+pop/70-ind*2.5),5,95);
+  state.rank=rankFor(pop);
+}
+
+/* ---------- one month: growth, taxes, fire, win/loss ---------- */
+function adjCount(x,y,fn){
+  var n=0;
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(o){
+    var t=tileAt(x+o[0],y+o[1]);
+    if(t && fn(t)) n++;
+  });
+  return n;
+}
+/* E58: one canonical watch-end — records exactly once on ANY watch end
+   branch (season end, EMBERVALE PRIME, bankruptcy) under the feRecorded
+   guard; solo/duel never reach here. */
+function endWatch(win){
+  if(state.mode!=='watch') return;
+  if(FE && state.feAgent && !state.feRecorded){
+    state.feRecorded=true; // E58: one canonical record per watch season
+    try{ FE.recordResult(state.feAgent,'embervale',null,win?'win':'loss',state.feTraces); }catch(e){}
+  }
+  state.over=true; state.result=win?'WIN':'LOSS'; state.win=win;
+}
+function monthTick(){
+  if(!state || state.phase!=='play' || state.paused || state.over) return;
+  state.month++;
+  var x,y,tl,i;
+  /* growth phase */
+  for(y=0;y<MH;y++) for(x=0;x<MW;x++){
+    tl=tileAt(x,y);
+    if(tl.t!=='R'&&tl.t!=='C'&&tl.t!=='I') continue;
+    if(tl.fire>0) continue;
+    var score=0;
+    score+= tl.powered?2:-3;
+    score+= adjCount(x,y,function(t){return t.t==='road';})>0?2:-2;
+    if(tl.t==='R'||tl.t==='C') score+= adjCount(x,y,function(t){return t.t==='park';})>0?1:0;
+    if(tl.t==='R'){
+      var ind=adjCount(x,y,function(t){return t.t==='I';});
+      score-= Math.min(2,ind);
+    }
+    score+= state.demand[tl.t]>=50?1:(state.demand[tl.t]<25?-1:0);
+    if(score>=4 && tl.lvl<3) tl.lvl++;
+    else if(score<=-2 && tl.lvl>0){ tl.lvl--; if(tl.lvl===0 && score<=-3 && Math.random()<0.5){ tl.t='rubble'; } }
+  }
+  /* fire phase: spread, burn out, ignite */
+  for(i=0;i<state.tiles.length;i++){
+    tl=state.tiles[i];
+    if(tl.fire>0){
+      tl.fire--;
+      if(tl.fire<=0){ tl.t='rubble'; tl.lvl=0; }
+    }
+  }
+  for(y=0;y<MH;y++) for(x=0;x<MW;x++){
+    tl=tileAt(x,y);
+    if(tl.fire>0){
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(o){
+        var n=tileAt(x+o[0],y+o[1]);
+        if(n && n.fire===0 && (n.t==='R'||n.t==='C'||n.t==='I'||n.t==='park') && Math.random()<0.3) n.fire=3;
+      });
+    }
+  }
+  var indTiles=0;
+  for(i=0;i<state.tiles.length;i++) if(state.tiles[i].t==='I') indTiles++;
+  if(Math.random() < Math.min(0.10, 0.01+0.004*indTiles)){
+    var fl=[];
+    for(i=0;i<state.tiles.length;i++){
+      tl=state.tiles[i];
+      if(tl.fire===0 && (tl.t==='R'||tl.t==='C'||tl.t==='I'||tl.t==='park')) fl.push(tl);
+    }
+    if(fl.length){ fl[Math.floor(Math.random()*fl.length)].fire=3; setMsg('🔥 Fire in the vale! Bulldoze the burning tile.'); }
+  }
+  recompute();
+  /* taxes phase */
+  var roads=0, coal=0, wind=0, parks=0, com=0, ind2=0;
+  for(i=0;i<state.tiles.length;i++){
+    tl=state.tiles[i];
+    if(tl.t==='road') roads++;
+    if(tl.t==='coal') coal++;
+    if(tl.t==='wind') wind++;
+    if(tl.t==='park') parks++;
+    if(tl.t==='C') com++;
+    if(tl.t==='I') ind2++;
+  }
+  var income=Math.round(state.pop*0.5 + com*8 + ind2*10);
+  var upkeep=Math.round(roads*0.1 + coal*25 + wind*5 + parks*0.5);
+  state.funds += income-upkeep;
+  state.lastTax={income:income, upkeep:upkeep};
+  /* duel terms + watch season */
+  if(state.mode==='duel' && state.duel){
+    if(state.month===DUEL_TERM && state.duel.turn===0){
+      state.duel.p1pop=state.pop; state.duel.turn=1;
+      setMsg('Mayor 1 finishes at '+state.pop+' citizens. Mayor 2 — your 12 months start now.');
+    } else if(state.month===DUEL_TERM*2){
+      state.duel.p2pop=state.pop; endDuel();
+    }
+  }
+  if(state.mode==='watch'){
+    state.watchMonth++;
+    if(state.watchMonth>=WATCH_MONTHS && !state.feRecorded){
+      var win=state.pop>=1000;
+      endWatch(win);
+      setMsg('Season over — Mayor '+state.feAgentId+' leaves a city of '+state.pop+' citizens. '+(win?'A vale to be proud of.':'The vale wanted more.'));
+    }
+  }
+  /* win / bankruptcy */
+  if(!state.over && state.pop>=WIN_POP){
+    if(state.mode==='watch') endWatch(true);
+    else { state.over=true; state.result='WIN'; state.win=true; }
+    setMsg('🏆 EMBERVALE PRIME — 5,000 citizens! The vale is a city now.');
+  }
+  if(!state.over && state.funds<BANKRUPT){
+    if(state.mode==='watch') endWatch(false);
+    else { state.over=true; state.result='LOSS'; state.win=false; }
+    setMsg('💸 Bankruptcy — the vale is broke. The council takes the keys.');
+  }
+}
+function endDuel(){
+  var d=state.duel;
+  state.over=true;
+  state.result = d.p2pop>d.p1pop ? 'WIN' : (d.p1pop>d.p2pop ? 'LOSS' : 'DRAW');
+  state.win = d.p2pop>d.p1pop;
+  setMsg('Duel over — Mayor 1: '+d.p1pop+' · Mayor 2: '+d.p2pop+'. '+(d.p2pop>d.p1pop?'Mayor 2 takes the vale!':(d.p1pop>d.p2pop?'Mayor 1 takes the vale!':'A dead heat.')));
+}
+
+/* ---------- tools ---------- */
+function toolCost(id){ for(var i=0;i<TOOLS.length;i++) if(TOOLS[i].id===id) return TOOLS[i].cost; return 0; }
+function applyTool(toolId, x, y, free){
+  if(!state || state.phase!=='play' || state.over) return false;
+  var tl=tileAt(x,y);
+  if(!tl) return false;
+  if(tl.fire>0 && toolId!=='bulldoze'){ setMsg('That tile is burning — bulldoze it first.'); return false; }
+  var cost=free?0:toolCost(toolId);
+  if(state.funds<cost){ setMsg('Not enough funds for '+toolId.toUpperCase()+' ($'+cost+').'); return false; }
+  if(toolId==='bulldoze'){
+    if(tl.t==='grass' && tl.fire===0){ setMsg('Nothing to bulldoze there.'); return false; }
+    tl.t='grass'; tl.lvl=0; tl.fire=0;
+  } else if(toolId==='road'){
+    if(tl.t!=='grass'){ setMsg('Roads need empty ground.'); return false; }
+    tl.t='road';
+  } else if(toolId==='R'||toolId==='C'||toolId==='I'){
+    if(tl.t!=='grass'){ setMsg('Zones need empty ground.'); return false; }
+    tl.t=toolId; tl.lvl=0;
+  } else if(toolId==='park'){
+    if(tl.t!=='grass'){ setMsg('Parks need empty ground.'); return false; }
+    tl.t='park';
+  } else if(toolId==='wind'||toolId==='coal'){
+    if(tl.t!=='grass'){ setMsg('Power plants need empty ground.'); return false; }
+    tl.t=toolId;
+  }
+  if(!free) state.funds-=cost;
+  state.placed++;
+  recompute();
+  return true;
+}
+function placeAtCursor(){ return applyTool(TOOLS[state.tool].id, state.cursor.x, state.cursor.y, false); }
+function cycleTool(){ state.tool=(state.tool+1)%TOOLS.length; setMsg('Tool: '+TOOLS[state.tool].name+' ($'+TOOLS[state.tool].cost+')'); }
+
+/* ---------- WATCH mayor bot (Fallible Engine) ---------- */
+function botCandidates(){
+  var opts=[], x, y, tl;
+  var short=state.power.used>state.power.cap*0.9;
+  var hasRubble=false;
+  for(y=0;y<MH;y++) for(x=0;x<MW;x++){
+    tl=tileAt(x,y);
+    if(tl.t==='rubble'){ hasRubble=true; }
+    if(tl.t!=='grass') continue;
+    var nearRoad=adjCount(x,y,function(t){return t.t==='road';})>0;
+    var nearR=adjCount(x,y,function(t){return t.t==='R';})>0;
+    var nearI=adjCount(x,y,function(t){return t.t==='I';})>0;
+    if(short && nearRoad){
+      opts.push({label:'WIND at '+x+','+y, score:88, tag:'power-wind', tool:'wind', x:x, y:y});
+      opts.push({label:'COAL at '+x+','+y, score: state.funds>800?82:40, tag:'power-coal', tool:'coal', x:x, y:y});
+    }
+    if(nearRoad){
+      opts.push({label:'HOMES at '+x+','+y, score:50+state.demand.R/2+(nearR?6:0)-(nearI?12:0), tag:'zone-R', tool:'R', x:x, y:y});
+      opts.push({label:'SHOPS at '+x+','+y, score:40+state.demand.C/2, tag:'zone-C', tool:'C', x:x, y:y});
+      opts.push({label:'WORKS at '+x+','+y, score:35+state.demand.I/2, tag:'zone-I', tool:'I', x:x, y:y});
+      if(nearR) opts.push({label:'PARK at '+x+','+y, score:30, tag:'park', tool:'park', x:x, y:y});
+    }
+    if(adjCount(x,y,function(t){return t.t==='road';})===1 && state.placed<400)
+      opts.push({label:'ROAD at '+x+','+y, score:44, tag:'road', tool:'road', x:x, y:y});
+  }
+  if(hasRubble){
+    for(y=0;y<MH;y++) for(x=0;x<MW;x++){
+      if(tileAt(x,y).t==='rubble') opts.push({label:'CLEAR rubble '+x+','+y, score:70, tag:'bulldoze', tool:'bulldoze', x:x, y:y});
+    }
+  }
+  return opts;
+}
+function botAct(){
+  if(!state || state.mode!=='watch' || state.over) return;
+  var opts=botCandidates();
+  if(!opts.length) return;
+  var pick=null;
+  if(FE && state.feAgent){
+    try{
+      var res=FE.decide(state.feAgent,'embervale',opts,{timePressure: state.power.used>state.power.cap?0.8:0.2});
+      pick=res.choice; state.feTraces.push(res.trace); // E58: keep the FULL per-season list — no silent cap
+    }catch(e){ pick=null; }
+  }
+  if(!pick){
+    pick=opts[0];
+    for(var i=1;i<opts.length;i++) if(opts[i].score>pick.score) pick=opts[i];
+  }
+  if(pick && state.funds>=toolCost(pick.tool)) applyTool(pick.tool, pick.x, pick.y, false);
+}
+
+/* ---------- save / load ---------- */
+var SAVE_KEY='embervale.save.v1';
+function tileCode(t){ return {grass:'.',road:'r',R:'R',C:'C',I:'I',park:'p',wind:'w',coal:'P',rubble:'x'}[t]||'.'; }
+function codeTile(c){ return {'.':'grass',r:'road',R:'R',C:'C',I:'I',p:'park',w:'wind',P:'coal',x:'rubble'}[c]||'grass'; }
+function saveState(){
+  if(!state) return;
+  var types='', lvls='', fires='';
+  state.tiles.forEach(function(tl){ types+=tileCode(tl.t); lvls+=String(tl.lvl); fires+=String(tl.fire); });
+  try{
+    if(FE){ try{ FE.flush(); }catch(e){} } // E58: land unflushed engine traces
+    localStorage.setItem(SAVE_KEY, JSON.stringify({v:1, mode:state.mode, funds:state.funds, month:state.month,
+      tool:state.tool, cursor:state.cursor, types:types, lvls:lvls, fires:fires,
+      feAgentId:state.feAgentId, duel:state.duel, watchMonth:state.watchMonth,
+      feTraces:state.feTraces, feRecorded:!!state.feRecorded,
+      over:state.over, win:state.win, result:state.result}));
+    setMsg('State saved — month '+state.month+', '+state.pop+' citizens.');
+  }catch(e){ setMsg('Save failed.'); }
+}
+function loadState(){
+  var raw=null;
+  try{ raw=localStorage.getItem(SAVE_KEY); }catch(e){}
+  if(!raw){ setMsg('No saved state.'); return false; }
+  var d; try{ d=JSON.parse(raw); }catch(e){ setMsg('Save is corrupt.'); return false; }
+  /* E58: the SAVED mode is the mode — a watch save restores as WATCH in
+     place (same agent, hydrated via loadAgent, full trace list, guard kept),
+     and an over-save restores as over and stays inert. Works from the title
+     screen too: no game needs to be running first. */
+  startGame(d.mode||'solo', d.feAgentId||null);
+  state.funds=d.funds; state.month=d.month;
+  state.tool=d.tool||1; state.cursor=d.cursor||{x:14,y:9};
+  state.duel=d.duel||null; state.watchMonth=d.watchMonth||0;
+  state.feTraces=(d.feTraces||[]).slice();
+  state.feRecorded=!!d.feRecorded;
+  state.tiles=newTiles();
+  for(var i=0;i<state.tiles.length && i<(d.types||'').length;i++){
+    state.tiles[i].t=codeTile(d.types[i]);
+    state.tiles[i].lvl=parseInt(d.lvls[i]||'0',10)||0;
+    state.tiles[i].fire=parseInt(d.fires[i]||'0',10)||0;
+  }
+  state.placed=0;
+  state.tiles.forEach(function(tl){ if(tl.t!=='grass') state.placed++; });
+  state.phase='play';
+  if(d.over){
+    state.over=true; state.result=d.result||(d.win?'WIN':'LOSS'); state.win=!!d.win;
+  }
+  state.paused=false;
+  recompute();
+  setMsg('State loaded — month '+state.month+', '+state.pop+' citizens.');
+  updateButtons();
+  return true;
+}
+
+/* ---------- pause / cam / mute / restart ---------- */
+function togglePause(){
+  if(!state) return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+  var pt=$('pauseText'); if(pt) pt.textContent=state.paused?'The vale waits.':'';
+  setMsg(state.paused?'Paused.':'Back to building.');
+}
+function toggleCam(){ if(!state) return; state.cam=!state.cam; setMsg(state.cam?'Street cam — zoomed to the cursor.':'Map view.'); }
+function toggleMute(){ muted=!muted; setMsg(muted?'Muted.':'Sound on.'); }
+function updateButtons(){
+  var solo=$('btnSolo'), watch=$('btnWatch'), duel=$('btnDuel');
+  if(solo) solo.classList.toggle('active', !!state && state.mode==='solo');
+  if(watch) watch.classList.toggle('active', !!state && state.mode==='watch');
+  if(duel) duel.classList.toggle('active', !!state && state.mode==='duel');
+}
+
+/* ---------- input ---------- */
+var keys={};
+function moveCursor(dx,dy){
+  if(!state) return;
+  state.cursor.x=clamp(state.cursor.x+dx,0,MW-1);
+  state.cursor.y=clamp(state.cursor.y+dy,0,MH-1);
+}
+function onKey(e){
+  var k=(e.key||'').toLowerCase();
+  if(!state){ if(k==='enter'||k===' '){ startGame('solo'); } return; }
+  if(k==='p'){ togglePause(); return; }
+  if(state.paused) return;
+  if(k==='arrowup'||k==='w') moveCursor(0,-1);
+  else if(k==='arrowdown'||k==='s') moveCursor(0,1);
+  else if(k==='arrowleft'||k==='a') moveCursor(-1,0);
+  else if(k==='arrowright'||k==='d') moveCursor(1,0);
+  else if(k==='enter'||k===' '){ placeAtCursor(); }
+  else if(k==='b') cycleTool();
+  else if(k==='v') toggleCam();
+  else if(k==='m') toggleMute();
+  else if(k==='r') startGame(state.mode, state.feAgentId);
+  else if(k>='1'&&k<='8'){ state.tool=parseInt(k,10)-1; setMsg('Tool: '+TOOLS[state.tool].name+' ($'+TOOLS[state.tool].cost+')'); }
+  if(['arrowup','arrowdown','arrowleft','arrowright',' '].indexOf(k)>=0 && e.preventDefault) e.preventDefault();
+}
+function debugKey(name, down){
+  if(!down) return;
+  var map={up:'arrowup',down:'arrowdown',left:'arrowleft',right:'arrowright',
+    place:'enter',cycle:'b',cam:'v',pause:'p',mute:'m'};
+  onKey({key:map[name]||name, preventDefault:function(){}});
+}
+document.addEventListener('keydown', onKey);
+if(cv){
+  cv.addEventListener('click', function(e){
+    if(!state || state.paused) return;
+    var r=cv.getBoundingClientRect();
+    var mx=(e.clientX-r.left)*(W/r.width), my=(e.clientY-r.top)*(H/r.height);
+    var tx=Math.floor((mx-OX)/TS), ty=Math.floor((my-OY)/TS);
+    if(tx>=0&&ty>=0&&tx<MW&&ty<MH){ state.cursor.x=tx; state.cursor.y=ty; placeAtCursor(); }
+  });
+  cv.addEventListener('mousemove', function(e){
+    if(!state) return;
+    var r=cv.getBoundingClientRect();
+    var mx=(e.clientX-r.left)*(W/r.width), my=(e.clientY-r.top)*(H/r.height);
+    var tx=Math.floor((mx-OX)/TS), ty=Math.floor((my-OY)/TS);
+    if(tx>=0&&ty>=0&&tx<MW&&ty<MH){ state.cursor.x=tx; state.cursor.y=ty; }
+  });
+}
+function bind(id, fn){ var el=$(id); if(el) el.addEventListener('click', fn); }
+bind('btnSolo', function(){ startGame('solo'); });
+bind('btnWatch', function(){ startGame('watch'); });
+bind('btnDuel', function(){ startGame('duel'); });
+bind('btnCam', toggleCam);
+bind('btnPause', togglePause);
+bind('resumeBtn', togglePause);
+bind('saveBtn', saveState);
+bind('loadBtn', loadState);
+bind('restartBtn', function(){ if(state){ var m=state.mode, b=state.feAgentId; togglePauseIf(); startGame(m,b); } });
+bind('quitArcadeBtn', function(){ location.href='../arcade.html'; });
+function togglePauseIf(){ if(state && state.paused) togglePause(); }
+bind('dUp', function(){ moveCursor(0,-1); });
+bind('dDown', function(){ moveCursor(0,1); });
+bind('dLeft', function(){ moveCursor(-1,0); });
+bind('dRight', function(){ moveCursor(1,0); });
+bind('startBtn', togglePause);
+bind('selectBtn', toggleCam);
+bind('btnTool', cycleTool);
+bind('btnA', placeAtCursor);
+bind('btnB', cycleTool);
+if(('ontouchstart' in window) || (typeof navigator!=='undefined' && navigator.maxTouchPoints>0)) document.body.classList.add('touch');
+
+/* ---------- render ---------- */
+/* EMBERVALE 100X presentation pass (Israel, 2026-11-22): PIL-painted vista
+   backdrop (embedded, guarded) + pre-rendered sprite-stack buildings with
+   real height, textured ground/roads, dynamic smoke, sprite cars,
+   pedestrians, cloud shadows and a seasonal tint. Render only — the sim
+   is untouched. Sprites are painted once onto offscreen canvases; under
+   the headless harness every canvas op is a stub no-op, so this stays
+   harness-safe. */
+var BACKDROP_B64='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';
+var backdropImg=null, backdropReady=false;
+if(typeof Image!=='undefined'){
+  try{
+    backdropImg=new Image();
+    backdropImg.onload=function(){ backdropReady=true; };
+    backdropImg.src='data:image/png;base64,'+BACKDROP_B64;
+  }catch(e){ backdropImg=null; }
+}
+var clouds=[];
+(function(){ var r=mulberry32(77); for(var i=0;i<7;i++) clouds.push({x:r()*960, y:4+r()*18, s:0.6+r()*0.9, v:0.08+r()*0.12}); })();
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function h2(x,y){ return (x*73+y*149)%97; }
+function lerpC(a,b,k){
+  var pa=[parseInt(a.slice(1,3),16),parseInt(a.slice(3,5),16),parseInt(a.slice(5,7),16)];
+  var pb=[parseInt(b.slice(1,3),16),parseInt(b.slice(3,5),16),parseInt(b.slice(5,7),16)];
+  return 'rgb('+Math.round(pa[0]+(pb[0]-pa[0])*k)+','+Math.round(pa[1]+(pb[1]-pa[1])*k)+','+Math.round(pa[2]+(pb[2]-pa[2])*k)+')';
+}
+/* ----- sprite factory: SS supersample, painters work in logical px ----- */
+var SS=3, sprCache={};
+function getSpr(key, w, h, painter){
+  var s=sprCache[key];
+  if(s) return s;
+  var c=document.createElement('canvas'); c.width=w*SS; c.height=h*SS;
+  var g=c.getContext('2d'); g.scale(SS,SS);
+  painter(g, mulberry32(key.length*131+key.charCodeAt(0)*17+key.charCodeAt(key.length-1)));
+  sprCache[key]=c; return c;
+}
+function shade(g,x,y,w,h,topA,botA){
+  var gr=g.createLinearGradient(0,y,0,y+h);
+  gr.addColorStop(0,'rgba(255,255,255,'+topA+')'); gr.addColorStop(0.4,'rgba(255,255,255,0)');
+  gr.addColorStop(1,'rgba(0,0,0,'+botA+')');
+  g.fillStyle=gr; g.fillRect(x,y,w,h);
+}
+function box3d(g,x,y,w,h,face,side,top){
+  g.fillStyle=side; g.beginPath();
+  g.moveTo(x+w,y); g.lineTo(x+w+2.6,y-2.6); g.lineTo(x+w+2.6,y+h-2.6); g.lineTo(x+w,y+h); g.closePath(); g.fill();
+  g.fillStyle=top; g.beginPath();
+  g.moveTo(x,y); g.lineTo(x+2.6,y-2.6); g.lineTo(x+w+2.6,y-2.6); g.lineTo(x+w,y); g.closePath(); g.fill();
+  g.fillStyle=face; g.fillRect(x,y,w,h);
+  g.fillStyle='rgba(0,0,0,0.15)';
+  for(var yy=y+4; yy<y+h-1; yy+=4) g.fillRect(x,yy,w,0.8);
+  shade(g,x,y,w,h,0.20,0.25);
+  g.fillStyle='rgba(255,255,255,0.38)'; g.fillRect(x,y,1,h); g.fillRect(x,y,w,1);
+}
+function groundShadow(g,cx,cy,rx){
+  g.fillStyle='rgba(0,0,0,0.40)';
+  g.beginPath(); g.ellipse(cx,cy,rx,2.6,0,0,6.29); g.fill();
+}
+function litWin(g,x,y,w,h,powered,rnd){
+  if(powered && rnd()>0.28){
+    g.fillStyle='rgba(255,150,50,0.6)'; g.fillRect(x-0.8,y-0.8,w+1.6,h+1.6);
+    g.fillStyle='#ffd75e'; g.fillRect(x,y,w,h);
+    g.fillStyle='#fff3c4'; g.fillRect(x,y,w,h*0.45);
+  } else {
+    g.fillStyle=powered?'#2c3e50':'#232a33'; g.fillRect(x,y,w,h);
+    g.fillStyle='rgba(160,200,255,0.20)'; g.fillRect(x,y,w,h*0.4);
+  }
+}
+/* ----- ground sprites (logical 27x27) ----- */
+var GRASS_BASE=[['#256b30','#1a4a22'],['#206030','#173f1e'],['#2a7034','#1d5226'],['#1f5c2c','#153d1d'],['#27682e','#1b4c21'],['#226233','#184423'],['#2c7236','#205628'],['#1e5a2b','#143a1c']];
+function paintGrass(g,rnd,v){
+  var gb=GRASS_BASE[v%8];
+  var base=g.createLinearGradient(0,0,0,27);
+  base.addColorStop(0,gb[0]); base.addColorStop(1,gb[1]);
+  g.fillStyle=base; g.fillRect(0,0,27,27);
+  for(var i=0;i<95;i++){
+    g.fillStyle=rnd()>0.5?'rgba(0,0,0,0.14)':'rgba(195,255,175,0.10)';
+    g.fillRect(rnd()*26,rnd()*26,1.3,1.3);
+  }
+  g.fillStyle='rgba(140,110,50,0.13)';
+  g.beginPath(); g.ellipse(4+rnd()*16,4+rnd()*16,6+rnd()*5,3.6+rnd()*2.6,0.6,0,6.29); g.fill();
+  g.fillStyle='rgba(10,40,16,0.16)';
+  g.beginPath(); g.ellipse(3+rnd()*17,12+rnd()*11,5+rnd()*4,3+rnd()*2,0.2,0,6.29); g.fill();
+  function tree(tx,ty,s){
+    groundShadow(g,tx,ty+4.4*s,3.6*s);
+    g.fillStyle='#4a3220'; g.fillRect(tx-0.7*s,ty+1.5*s,1.4*s,3.4*s);
+    var cols=['#1e5c26','#2a7a32','#3f9a44'];
+    for(var l=0;l<3;l++){
+      g.fillStyle=cols[l];
+      g.beginPath(); g.arc(tx+(l-1)*1.6*s, ty-l*2.1*s, (4.6-l*0.9)*s, 0, 6.29); g.fill();
+    }
+    g.fillStyle='rgba(220,255,200,0.35)';
+    g.beginPath(); g.arc(tx-1.6*s,ty-3.4*s,1.5*s,0,6.29); g.fill();
+  }
+  function bush(bx,by,s){
+    g.fillStyle='#27682c'; g.beginPath(); g.arc(bx,by,2.6*s,0,6.29); g.arc(bx+2.4*s,by+0.6*s,2*s,0,6.29); g.fill();
+    g.fillStyle='rgba(220,255,200,0.30)'; g.beginPath(); g.arc(bx-0.8*s,by-1*s,1*s,0,6.29); g.fill();
+  }
+  function flowers(){
+    var fc=['#ffd75e','#ff5db1','#ff7840','#e8f0ff'];
+    for(var i=0;i<7;i++){ g.fillStyle=fc[(rnd()*4)|0]; g.fillRect(2+rnd()*23,2+rnd()*23,1.4,1.4); }
+  }
+  function rock(){
+    g.fillStyle='#7d7d88'; g.beginPath(); g.moveTo(17,20); g.lineTo(20,15.5); g.lineTo(24,16.5); g.lineTo(25,20); g.closePath(); g.fill();
+    g.fillStyle='rgba(255,255,255,0.28)'; g.fillRect(19.4,16.6,2.6,1.1);
+    groundShadow(g,21,20.6,4);
+  }
+  if(v===1||v===5) tree(9,15,1);
+  if(v===5) tree(20,18,0.75);
+  if(v===2||v===6){ bush(8,10,1); bush(18,19,0.8); }
+  if(v===3||v===5||v===7) flowers();
+  if(v===4||v===7) rock();
+}
+function paintLot(g,rnd,v){
+  var base=g.createLinearGradient(0,0,0,27);
+  base.addColorStop(0,'#4d4438'); base.addColorStop(1,'#38312a');
+  g.fillStyle=base; g.fillRect(0,0,27,27);
+  for(var i=0;i<46;i++){ g.fillStyle=rnd()>0.5?'rgba(0,0,0,0.15)':'rgba(255,240,200,0.07)'; g.fillRect(rnd()*26,rnd()*26,1.4,1.4); }
+  g.strokeStyle='rgba(255,215,120,0.20)'; g.lineWidth=1; g.strokeRect(1.5,1.5,24,24);
+  g.fillStyle='rgba(90,140,60,0.35)'; g.fillRect(0,24.5,27,2.5);
+}
+function paintRoad(g,rnd,mask){
+  g.fillStyle='#565064'; g.fillRect(0,0,27,27);           /* sidewalk base */
+  g.fillStyle='#4a4457'; g.fillRect(1,1,25,25);
+  var N=mask&1,E=mask&2,S=mask&4,Wd=mask&8;
+  g.fillStyle='#2c2c38';                                   /* asphalt */
+  g.fillRect(Wd?0:3.5, N?0:3.5, Wd||E?27:20, N||S?27:20);
+  if(!E) g.fillRect(3.5,3.5,20,20);
+  var ag=g.createLinearGradient(0,0,27,27);
+  ag.addColorStop(0,'rgba(255,255,255,0.07)'); ag.addColorStop(1,'rgba(0,0,0,0.16)');
+  g.fillStyle=ag; g.fillRect(0,0,27,27);
+  for(var i=0;i<34;i++){ g.fillStyle=rnd()>0.5?'rgba(0,0,0,0.20)':'rgba(220,220,255,0.06)'; g.fillRect(rnd()*26,rnd()*26,1.2,1.2); }
+  g.fillStyle='rgba(0,0,0,0.18)';                          /* oil wear */
+  g.beginPath(); g.ellipse(8+rnd()*11,8+rnd()*11,3.4,2.1,0.4,0,6.29); g.fill();
+  g.fillStyle='#e8c85a';                                   /* centre dashes */
+  if(E||Wd){ g.fillRect(1,12.9,4.4,1.3); g.fillRect(21.6,12.9,4.4,1.3); if(E&&Wd) g.fillRect(11.3,12.9,4.4,1.3); }
+  if(N||S){ g.fillRect(12.9,1,1.3,4.4); g.fillRect(12.9,21.6,1.3,4.4); if(N&&S) g.fillRect(12.9,11.3,1.3,4.4); }
+  g.fillStyle='rgba(240,240,250,0.5)';                     /* curb highlights */
+  if(!N) g.fillRect(3.5,3.2,20,0.8); if(!S) g.fillRect(3.5,23,20,0.8);
+  if(!Wd) g.fillRect(3.2,3.5,0.8,20); if(!E) g.fillRect(23,3.5,0.8,20);
+}
+function paintPark(g,rnd,v){
+  var base=g.createLinearGradient(0,0,0,27);
+  base.addColorStop(0,'#2f7a34'); base.addColorStop(1,'#1f5625');
+  g.fillStyle=base; g.fillRect(0,0,27,27);
+  for(var i=0;i<50;i++){ g.fillStyle=rnd()>0.5?'rgba(0,0,0,0.12)':'rgba(200,255,180,0.10)'; g.fillRect(rnd()*26,rnd()*26,1.3,1.3); }
+  g.strokeStyle='#c9b18a'; g.lineWidth=2.6; g.beginPath();  /* winding path */
+  g.moveTo(-1,22); g.quadraticCurveTo(10,14,28,18); g.stroke();
+  g.strokeStyle='rgba(0,0,0,0.15)'; g.lineWidth=0.8; g.beginPath();
+  g.moveTo(-1,23.4); g.quadraticCurveTo(10,15.4,28,19.4); g.stroke();
+  function tree(tx,ty,s){
+    groundShadow(g,tx,ty+4.4*s,3.8*s);
+    g.fillStyle='#4a3220'; g.fillRect(tx-0.7*s,ty+1.5*s,1.4*s,3.4*s);
+    var cols=['#1e5c26','#2f8a36','#4cab4e'];
+    for(var l=0;l<3;l++){ g.fillStyle=cols[l]; g.beginPath(); g.arc(tx+(l-1)*1.7*s,ty-l*2.2*s,(4.8-l*0.9)*s,0,6.29); g.fill(); }
+    g.fillStyle='rgba(225,255,205,0.4)'; g.beginPath(); g.arc(tx-1.7*s,ty-3.6*s,1.5*s,0,6.29); g.fill();
+  }
+  tree(8,13,1); tree(19.5,10.5,0.8); if(v!==1) tree(16,20,0.66);
+  g.fillStyle='#8a6a42'; g.fillRect(4,20.6,5.4,1.1); g.fillRect(4.6,21.7,0.9,1.6); g.fillRect(8,21.7,0.9,1.6); /* bench */
+  g.fillStyle='#2b2b33'; g.fillRect(23.6,15,0.9,4.6);      /* lamp */
+  g.fillStyle='#ffd75e'; g.beginPath(); g.arc(24,14.2,1.5,0,6.29); g.fill();
+  g.fillStyle='rgba(255,215,94,0.30)'; g.beginPath(); g.arc(24,14.2,3.1,0,6.29); g.fill();
+  var fc=['#ff5db1','#ffd75e','#ff7840'];
+  for(var i=0;i<6;i++){ g.fillStyle=fc[i%3]; g.fillRect(2+rnd()*9,3+rnd()*5,1.3,1.3); }
+}
+function paintRubble(g,rnd,v){
+  var base=g.createLinearGradient(0,0,0,27);
+  base.addColorStop(0,'#4d4438'); base.addColorStop(1,'#38312a');
+  g.fillStyle=base; g.fillRect(0,0,27,27);
+  groundShadow(g,13.5,22,10);
+  var cols=['#6a625a','#7d7468','#57504a','#8a8074'];
+  for(var i=0;i<9;i++){
+    var sx=4+rnd()*15, sy=15+rnd()*5, sw=3.5+rnd()*4.5, sh=2.4+rnd()*2.6;
+    g.fillStyle=cols[(rnd()*4)|0]; g.fillRect(sx,sy,sw,sh);
+    g.fillStyle='rgba(255,255,255,0.20)'; g.fillRect(sx,sy,sw,0.9);
+    g.fillStyle='rgba(0,0,0,0.25)'; g.fillRect(sx,sy+sh-0.9,sw,0.9);
+  }
+  g.strokeStyle='#9a8f80'; g.lineWidth=1.1;
+  g.beginPath(); g.moveTo(6,17); g.lineTo(11,10.5); g.lineTo(15,15); g.stroke();
+  g.fillStyle='rgba(255,120,50,0.5)'; g.fillRect(19,18.6,1.6,1.6);
+}
+/* ----- building sprites (logical 27x48; tile top y=21, ground y=48) ----- */
+var HOUSE_WALLS=[['#e8c39a','#c98a5a','#8a4a2a'],['#d96a4a','#b04a30','#7a2e1e'],['#b8c4cc','#8a9aa4','#5a6a74'],['#e0d6b8','#bfae84','#8a7a54']];
+var HOUSE_ROOFS=['#c33d55','#3f5a78','#5a7a4a','#7a4a8a'];
+function paintHouse(g,rnd,lvl,powered,v){
+  var wall=HOUSE_WALLS[v%4], roof=HOUSE_ROOFS[(v+lvl)%4];
+  var dims=[[17,12],[21,17],[24,25],[25,36]][lvl];
+  var w=dims[0], h=dims[1], x=(27-w)/2, yb=47, yt=yb-h;
+  groundShadow(g,13.5,46.6,w*0.52);
+  box3d(g,x,yt,w,h, wall[0], wall[1], wall[2]);
+  if(lvl<2){
+    g.fillStyle=roof; g.beginPath();
+    g.moveTo(x-1.6,yt+0.5); g.lineTo(x+w/2,yt-6.5-lvl*1.5); g.lineTo(x+w+1.6,yt+0.5); g.closePath(); g.fill();
+    g.fillStyle='rgba(255,255,255,0.30)'; g.beginPath();
+    g.moveTo(x-1.6,yt+0.5); g.lineTo(x+w/2,yt-6.5-lvl*1.5); g.lineTo(x+w/2,yt+0.5); g.closePath(); g.fill();
+    g.fillStyle='rgba(0,0,0,0.22)'; g.fillRect(x-1.6,yt, w+3.2,1.1);
+    if(powered){ g.fillStyle='#8a8074'; g.fillRect(x+w-5,yt-6,2.6,5); g.fillStyle='#6a625a'; g.fillRect(x+w-5.5,yt-6.8,3.6,1.1); }
+  } else {
+    g.fillStyle=wall[2]; g.fillRect(x-0.8,yt-1.8,w+1.6,2.2);
+    g.fillStyle='rgba(255,255,255,0.25)'; g.fillRect(x-0.8,yt-1.8,w+1.6,0.8);
+    if(lvl===3){ g.fillStyle='#9aa4ac'; g.fillRect(x+w-8,yt-5.4,4.6,3.8); g.fillStyle='#78828a'; g.fillRect(x+w-8,yt-5.4,4.6,1.1); }
+    else { g.fillStyle='#9aa4ac'; g.fillRect(x+3,yt-4.2,3.4,2.8); }
+  }
+  /* windows */
+  var cols=lvl<2?2:(lvl===2?3:4), rows=lvl<2?1:(lvl===2?3:6);
+  var ww=lvl<2?3.6:3.1, wh=lvl<2?4.1:3.6;
+  for(var r=0;r<rows;r++) for(var cix=0;cix<cols;cix++){
+    var wx=x+2.2+cix*(w-4.4-ww)/(cols-1||1), wy=yt+2.4+r*(h-6)/(rows-1||1);
+    if(lvl<2 && cix===0 && r===0) continue; /* door spot */
+    litWin(g,wx,wy,ww,wh,powered,rnd);
+  }
+  /* door + step + path */
+  g.fillStyle='#4a3220'; g.fillRect(x+1.8,yb-5.4,3.4,5.4);
+  g.fillStyle='#ffd75e'; g.fillRect(x+4.2,yb-3,0.9,0.9);
+  g.fillStyle='#9a8f80'; g.fillRect(x+1.2,yb-0.9,4.6,0.9);
+  if(powered){ g.fillStyle='#3f9a44'; g.fillRect(x+w-5.6,yb-2.6,3.8,2.6); g.fillStyle='#ff5db1'; g.fillRect(x+w-5,yb-3.4,1,1); g.fillRect(x+w-3.6,yb-3.1,1,1); }
+}
+function paintShop(g,rnd,lvl,powered,v){
+  var awn=['#35e0ff','#ff5db1','#ffd75e','#00ff88'][v%4];
+  var dims=[[22,14],[24,20],[25,28],[26,37]][lvl];
+  var w=dims[0], h=dims[1], x=(27-w)/2, yb=47, yt=yb-h;
+  groundShadow(g,13.5,46.6,w*0.52);
+  box3d(g,x,yt,w,h, '#cfd8de', '#8a9aa4', '#5f707c');
+  if(lvl>0){
+    for(var r=0;r<lvl+1;r++) for(var cix=0;cix<3;cix++)
+      litWin(g, x+2.4+cix*(w-7.4)/2, yt+2.2+r*5.4, 3, 3.4, powered, rnd);
+  }
+  var gy=yb-8.6; /* glass storefront */
+  var gg=g.createLinearGradient(0,gy,0,yb);
+  gg.addColorStop(0, powered?'#9ae8ff':'#3d4a55'); gg.addColorStop(0.5, powered?'#35a8cc':'#2c363f'); gg.addColorStop(1, powered?'#1a6a8a':'#232b33');
+  g.fillStyle=gg; g.fillRect(x+1.2,gy,w-2.4,8.6);
+  g.fillStyle='rgba(255,255,255,0.35)';
+  g.beginPath(); g.moveTo(x+4,gy+8.6); g.lineTo(x+9.5,gy); g.lineTo(x+13,gy); g.lineTo(x+7.5,gy+8.6); g.closePath(); g.fill();
+  g.fillStyle='rgba(0,0,0,0.35)'; g.fillRect(x+w/2-0.5,gy,1,8.6);
+  /* awning — striped, stacked slabs */
+  for(var s=0;s<3;s++){
+    g.fillStyle=s%2? '#e8ecf5' : awn;
+    g.fillRect(x+0.4+s*(w-0.8)/3, gy-2.6-(2-s)*0.0, (w-0.8)/3, 2.2);
+  }
+  shade(g,x+0.4,gy-2.6,w-0.8,2.2,0.25,0.2);
+  /* sign band with glow bars (fake lettering) */
+  g.fillStyle='#141c26'; g.fillRect(x+1,gy-7.6,w-2,4.4);
+  g.strokeStyle=awn; g.lineWidth=0.8; g.strokeRect(x+1,gy-7.6,w-2,4.4);
+  g.fillStyle=powered?awn:'#4a5560';
+  var bars=lvl+3;
+  for(var b=0;b<bars;b++) g.fillRect(x+2.6+b*(w-5)/bars, gy-6.1, (w-5)/bars-1.6, 1.5);
+  if(powered){ g.fillStyle=awn; g.beginPath(); g.arc(x+w-2.6,yt+2,1.1,0,6.29); g.fill(); }
+}
+function paintWorks(g,rnd,lvl,powered,v){
+  var w=25, x=(27-w)/2, yb=47, hh=14+lvl*3.2, yt=yb-hh;
+  groundShadow(g,13.5,46.6,w*0.54);
+  box3d(g,x,yt+4.5,w,hh-4.5, '#9a8a6d', '#6f6152', '#4f463c');
+  /* sawtooth roof */
+  g.fillStyle='#5d5348';
+  g.beginPath(); g.moveTo(x,yt+4.5);
+  var teeth=3;
+  for(var t=0;t<teeth;t++){ g.lineTo(x+(t+0.5)*w/teeth, yt+0.6); g.lineTo(x+(t+1)*w/teeth, yt+4.5); }
+  g.lineTo(x+w,yb); g.lineTo(x,yb); g.closePath(); g.fill();
+  g.fillStyle='rgba(190,230,255,0.30)';
+  for(var t2=0;t2<teeth;t2++){ g.beginPath(); g.moveTo(x+t2*w/teeth,yt+4.5); g.lineTo(x+(t2+0.5)*w/teeth,yt+0.6); g.lineTo(x+(t2+0.5)*w/teeth+1.6,yt+4.5); g.closePath(); g.fill(); }
+  /* chimney(s) */
+  var chH=9+lvl*2.6;
+  function chimney(cx){
+    g.fillStyle='#7a4a3a'; g.fillRect(cx,yt-chH+4.5,3.6,chH);
+    g.fillStyle='rgba(255,255,255,0.22)'; g.fillRect(cx,yt-chH+4.5,1.1,chH);
+    g.fillStyle='#3a2e2a'; g.fillRect(cx-0.5,yt-chH+3.6,4.6,1.4);
+    g.fillStyle=powered?'#ff7840':'#4a3a34'; g.fillRect(cx-0.5,yt-chH+5,4.6,0.9);
+  }
+  chimney(x+w-6.4); if(lvl>=2) chimney(x+w-11.4);
+  /* furnace windows + door + hazard base */
+  for(var i=0;i<3;i++){
+    if(powered){ g.fillStyle='#ff9a3c'; g.fillRect(x+2.4+i*5.2,yb-6.4,3.4,3.4); g.fillStyle='#ffd75e'; g.fillRect(x+3.1+i*5.2,yb-5.7,2,2); }
+    else { g.fillStyle='#2e2a26'; g.fillRect(x+2.4+i*5.2,yb-6.4,3.4,3.4); }
+  }
+  g.fillStyle='#33291f'; g.fillRect(x+w-4.6,yb-6.8,3.2,6.8);
+  for(var hz=0;hz<5;hz++){ g.fillStyle=hz%2?'#151312':'#e8c85a'; g.fillRect(x+hz*(w/5), yb-1.4, w/5, 1.4); }
+  /* stacked crates */
+  g.fillStyle='#8a6a42'; g.fillRect(x-0.4,yb-3.4,3.2,3.4); g.fillRect(x-0.4,yb-6.4,2.6,3);
+  g.fillStyle='rgba(0,0,0,0.25)'; g.fillRect(x-0.4,yb-3.4,3.2,0.8); g.fillRect(x-0.4,yb-6.4,2.6,0.8);
+}
+function paintCoal(g,rnd,v){
+  var w=24, x=1.5, yb=47, yt=31;
+  groundShadow(g,13.5,46.6,12);
+  /* cooling tower */
+  g.fillStyle='#8f979e'; g.beginPath();
+  g.moveTo(x+1,yt+16); g.lineTo(x+3.4,yt+4); g.lineTo(x+9.6,yt+4); g.lineTo(x+12,yt+16); g.closePath(); g.fill();
+  shade(g,x+1,yt+4,11,12,0.22,0.25);
+  g.fillStyle='#5d646a'; g.beginPath(); g.ellipse(x+6.5,yt+4,3.1,1.1,0,0,6.29); g.fill();
+  /* main block + chimneys */
+  box3d(g,x+11.5,yb-11,11.5,11, '#7d7468', '#5d554a', '#453e36');
+  function chimney(cx,hh){
+    g.fillStyle='#8a8074'; g.fillRect(cx,yb-11-hh,3,hh);
+    g.fillStyle='#c33d55'; g.fillRect(cx,yb-11-hh,3,1.6);
+    g.fillStyle='#3a2e2a'; g.fillRect(cx-0.4,yb-11-hh-1,3.8,1.3);
+  }
+  chimney(x+14.5,8); chimney(x+19,11);
+  for(var i=0;i<2;i++){ g.fillStyle='#ffd75e'; g.fillRect(x+13.4+i*4.4,yb-7.6,2.6,2.6); }
+  g.fillStyle='rgba(255,120,50,0.65)'; g.fillRect(x+12.6,yb-2,9,1.1);
+}
+function paintCar(g,color){
+  groundShadow(g,6,6.4,5.6);
+  g.fillStyle=color; rr2(g,0.8,2.2,10.4,3.6,1.6); g.fill();
+  g.fillStyle='rgba(255,255,255,0.35)'; rr2(g,1.4,2.4,9.2,1.1,0.5); g.fill();
+  g.fillStyle=color; rr2(g,3,0.4,5.6,2.6,1.2); g.fill();
+  g.fillStyle='#bfe8ff'; rr2(g,3.5,0.8,4.6,1.6,0.7); g.fill();
+  g.fillStyle='rgba(255,255,255,0.5)'; g.fillRect(3.9,0.9,1.6,1.4);
+  g.fillStyle='#15151c'; g.beginPath(); g.arc(3,5.9,1.15,0,6.29); g.arc(9,5.9,1.15,0,6.29); g.fill();
+  g.fillStyle='#e8ecf5'; g.beginPath(); g.arc(3,5.9,0.45,0,6.29); g.arc(9,5.9,0.45,0,6.29); g.fill();
+  g.fillStyle='#ffe9a8'; g.fillRect(10.6,3.4,0.9,1); g.fillStyle='#ff5d7a'; g.fillRect(0.5,3.4,0.9,1);
+}
+function rr2(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+var CAR_COLORS=['#ff3860','#35e0ff','#ffd75e','#00ff88'];
+function carSpr(color){
+  var i=CAR_COLORS.indexOf(color); if(i<0) i=0;
+  return getSpr('car'+i, 12, 7, function(g,rnd){ paintCar(g, CAR_COLORS[i]); });
+}
+function drawWindTile(px,py,powered,frame){
+  /* dynamic turbine — upgraded: pad, tapered pole, glow hub, rim blades */
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(px+13.5,py+24.6,6.4,1.9,0,0,6.29); ctx.fill();
+  ctx.fillStyle='#3d4a42'; ctx.fillRect(px+8,py+23.4,11,2.2);
+  var grd=ctx.createLinearGradient(px+12,0,px+15,0);
+  grd.addColorStop(0,'#c8ccd4'); grd.addColorStop(0.5,'#f2f4f8'); grd.addColorStop(1,'#8f959e');
+  ctx.fillStyle=grd;
+  ctx.beginPath(); ctx.moveTo(px+12.6,py+25); ctx.lineTo(px+14.4,py+25); ctx.lineTo(px+13.9,py+10.5); ctx.lineTo(px+13.1,py+10.5); ctx.closePath(); ctx.fill();
+  var a=frame*0.06, cxp=px+13.5, cyp=py+10;
+  ctx.strokeStyle='#eef1f6'; ctx.lineWidth=1.7; ctx.lineCap='round';
+  for(var i=0;i<3;i++){
+    var ang=a+i*2.094;
+    ctx.beginPath(); ctx.moveTo(cxp,cyp);
+    ctx.lineTo(cxp+Math.cos(ang)*8.6, cyp+Math.sin(ang)*8.6); ctx.stroke();
+  }
+  ctx.fillStyle=powered?'#ffd75e':'#9aa0a8';
+  ctx.beginPath(); ctx.arc(cxp,cyp,2.3,0,6.29); ctx.fill();
+  if(powered){ ctx.fillStyle='rgba(255,215,94,0.3)'; ctx.beginPath(); ctx.arc(cxp,cyp,4.1,0,6.29); ctx.fill(); }
+}
+function drawMayorPortrait(x,y,r,mayorId){
+  var m=MAYORS[mayorId]||{color:'#00ff88',hat:'cap'};
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x,y,r,0,6.29); ctx.clip();
+  ctx.fillStyle='#e8c39a'; ctx.fillRect(x-r,y-r,r*2,r*2);
+  ctx.fillStyle=m.color; ctx.fillRect(x-r,y-r-2,r*2,r*0.9);
+  if(m.hat==='visor'){ ctx.fillStyle='#1a1a22'; ctx.fillRect(x-r*0.7,y-r*0.15,r*1.4,r*0.3); }
+  else if(m.hat==='hood'){ ctx.fillStyle=m.color; ctx.beginPath(); ctx.arc(x,y-r*0.2,r*0.75,Math.PI,0); ctx.fill(); }
+  else if(m.hat==='headset'){ ctx.strokeStyle='#1a1a22'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y-r*0.1,r*0.7,Math.PI*1.1,Math.PI*1.9); ctx.stroke(); }
+  ctx.fillStyle='#1a1a22';
+  ctx.beginPath(); ctx.arc(x-r*0.35,y,1.6,0,6.29); ctx.arc(x+r*0.35,y,1.6,0,6.29); ctx.fill();
+  ctx.strokeStyle='#7a4a2a'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.arc(x,y+r*0.35,r*0.3,0.15*Math.PI,0.85*Math.PI); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle='#ffd75e'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.arc(x,y,r+1.2,0,6.29); ctx.stroke();
+  ctx.strokeStyle=m.color; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(x,y,r,0,6.29); ctx.stroke();
+}
+function glassBar(x,y,w,h,frac,color,label,val){
+  ctx.fillStyle='rgba(0,0,0,0.55)'; rr(x,y,w,h,4); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.10)'; ctx.lineWidth=1; rr(x,y,w,h,4); ctx.stroke();
+  var fw=(w-2)*clamp(frac,0,1);
+  if(fw>1){
+    ctx.save(); ctx.shadowColor=color; ctx.shadowBlur=6;
+    ctx.fillStyle=color; rr(x+1,y+1,fw,h-2,3); ctx.fill(); ctx.restore();
+    ctx.fillStyle='#ffd75e'; ctx.fillRect(x+1+fw-1.6,y+1,1.6,h-2);
+  }
+  ctx.fillStyle='#aeb8c8'; ctx.font='600 9px "Share Tech Mono",monospace'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText(label, x, y+h+7.5);
+  ctx.fillStyle='#e8ecf5'; ctx.textAlign='right'; ctx.fillText(val, x+w, y+h+7.5); ctx.textAlign='left';
+}
+function seasonTint(month){
+  var s=((month/3)|0)%4;
+  return [['124,168,255',0.055],['150,255,150',0.045],['255,205,90',0.05],['255,140,60',0.065]][s];
+}
+function render(){
+  var f=state?state.frame:0;
+  /* PIL vista backdrop (procedural fallback while it loads / headless) */
+  if(backdropReady && backdropImg){
+    ctx.drawImage(backdropImg,0,0,W,H);
+    ctx.fillStyle='rgba(10,8,26,0.18)'; ctx.fillRect(0,0,W,H);
+  } else {
+    var sky=ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,'#140e30'); sky.addColorStop(0.55,'#2a1a44'); sky.addColorStop(0.78,'#572f4a'); sky.addColorStop(1,'#0d1420');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#ffc45e';
+    ctx.beginPath(); ctx.arc(704,40,10,0,6.29); ctx.fill();
+    ctx.fillStyle='rgba(255,150,60,0.22)';
+    ctx.beginPath(); ctx.arc(704,40,19,0,6.29); ctx.fill();
+    ctx.fillStyle='#241a3e';
+    ctx.beginPath(); ctx.moveTo(0,OY);
+    for(var mx=0;mx<=960;mx+=80) ctx.lineTo(mx, OY-12*Math.abs(Math.sin(mx*0.011+2))-((mx/80)%2)*5);
+    ctx.lineTo(960,OY); ctx.closePath(); ctx.fill();
+  }
+  clouds.forEach(function(c){
+    c.x+=c.v; if(c.x>980) c.x=-60;
+    ctx.fillStyle='rgba(232,232,255,0.15)';
+    ctx.beginPath(); ctx.ellipse(c.x,c.y,26*c.s,6*c.s,0,0,6.29); ctx.fill();
+  });
+  ctx.save();
+  ctx.shadowColor='rgba(0,255,136,0.55)'; ctx.shadowBlur=9;
+  ctx.fillStyle='#fff'; ctx.font='900 13px Orbitron,sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('◈ EMBERVALE', 12, 16);
+  ctx.restore();
+  ctx.fillStyle='#9aa6ba'; ctx.font='10px "Share Tech Mono",monospace';
+  ctx.fillText('mayor of the ember vale', 150, 16);
+  if(!state){ renderTitle(); return; }
+  /* map */
+  var x,y,tl, smoke=[];
+  ctx.save();
+  if(state.cam){
+    var cx=OX+state.cursor.x*TS+TS/2, cy=OY+state.cursor.y*TS+TS/2;
+    ctx.translate(W/2-cx*2, H/2-cy*2); ctx.scale(2,2);
+  }
+  for(y=0;y<MH;y++) for(x=0;x<MW;x++){
+    tl=tileAt(x,y);
+    var px=OX+x*TS, py=OY+y*TS, hv=h2(x,y);
+    if(tl.t==='grass'){
+      ctx.drawImage(getSpr('grass'+(hv%8),27,27,function(g,rnd){ paintGrass(g,rnd,hv%8); }), px,py,TS,TS);
+    } else if(tl.t==='road'){
+      var mask=((tileAt(x,y-1)&&tileAt(x,y-1).t==='road')?1:0)|((tileAt(x+1,y)&&tileAt(x+1,y).t==='road')?2:0)
+              |((tileAt(x,y+1)&&tileAt(x,y+1).t==='road')?4:0)|((tileAt(x-1,y)&&tileAt(x-1,y).t==='road')?8:0);
+      ctx.drawImage(getSpr('road'+mask,27,27,function(g,rnd){ paintRoad(g,rnd,mask); }), px,py,TS,TS);
+    } else if(tl.t==='park'){
+      ctx.drawImage(getSpr('park'+(hv%3),27,27,function(g,rnd){ paintPark(g,rnd,hv%3); }), px,py,TS,TS);
+    } else {
+      ctx.drawImage(getSpr('lot'+(hv%3),27,27,function(g,rnd){ paintLot(g,rnd,hv%3); }), px,py,TS,TS);
+      var v=hv%2;
+      if(tl.t==='R') ctx.drawImage(getSpr('house'+tl.lvl+(tl.powered?1:0)+'_'+v,27,48,function(g,rnd){ paintHouse(g,rnd,tl.lvl,tl.powered,v); }), px,py-21,TS,48);
+      else if(tl.t==='C') ctx.drawImage(getSpr('shop'+tl.lvl+(tl.powered?1:0)+'_'+v,27,48,function(g,rnd){ paintShop(g,rnd,tl.lvl,tl.powered,v); }), px,py-21,TS,48);
+      else if(tl.t==='I'){ ctx.drawImage(getSpr('works'+tl.lvl+(tl.powered?1:0)+'_'+v,27,48,function(g,rnd){ paintWorks(g,rnd,tl.lvl,tl.powered,v); }), px,py-21,TS,48); if(tl.powered) smoke.push([px+20.5,py+2-(tl.lvl*2.6),hv]); }
+      else if(tl.t==='coal'){ ctx.drawImage(getSpr('coal'+v,27,48,function(g,rnd){ paintCoal(g,rnd,v); }), px,py-21,TS,48); if(tl.powered){ smoke.push([px+8,py+2,hv]); smoke.push([px+20.5,py-1,hv+31]); } }
+      else if(tl.t==='wind') drawWindTile(px,py,tl.powered,f);
+      else if(tl.t==='rubble') ctx.drawImage(getSpr('rubble'+(hv%2),27,27,function(g,rnd){ paintRubble(g,rnd,hv%2); }), px,py,TS,TS);
+    }
+    if(tl.fire>0){
+      var fl=0.6+0.4*Math.sin(f*0.5+x+y);
+      ctx.fillStyle='rgba(255,'+Math.floor(90+80*fl)+',40,'+(0.5+0.3*fl)+')';
+      ctx.beginPath(); ctx.arc(px+TS/2,py+TS/2,8.6+3*fl,0,6.29); ctx.fill();
+      ctx.fillStyle='rgba(255,150,50,0.8)';
+      ctx.beginPath(); ctx.arc(px+TS/2,py+TS/2+2,5+2*fl,0,6.29); ctx.fill();
+      ctx.fillStyle='#fff3c4'; ctx.beginPath(); ctx.arc(px+TS/2,py+TS/2+3,2.4+fl,0,6.29); ctx.fill();
+    }
+    if((tl.t==='R'||tl.t==='C'||tl.t==='I') && !tl.powered && tl.fire===0){
+      ctx.fillStyle='rgba(4,6,14,0.38)'; ctx.fillRect(px,py,TS,TS);
+      ctx.fillStyle='#ffd75e'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('⚡', px+TS/2, py+10); ctx.textAlign='left';
+    }
+  }
+  /* seasonal tint across the vale */
+  var st=seasonTint(state.month);
+  ctx.fillStyle='rgba('+st[0]+','+st[1]+')';
+  ctx.fillRect(OX,OY,MW*TS,MH*TS);
+  /* chimney smoke — soft puffs rising and drifting */
+  smoke.forEach(function(sm){
+    for(var i=0;i<3;i++){
+      var ph=((f*0.011)+(sm[2]%10)/7+i/3)%1;
+      var sxp=sm[0]+ph*7+Math.sin(ph*5+sm[2])*1.4, syp=sm[1]-ph*30;
+      ctx.fillStyle='rgba(216,220,232,'+(0.34*(1-ph)).toFixed(3)+')';
+      ctx.beginPath(); ctx.arc(sxp,syp,1.8+ph*5.2,0,6.29); ctx.fill();
+    }
+  });
+  /* sprite cars on roads */
+  state.cars.forEach(function(c){
+    var rx=OX+c.x*TS+TS/2, ry=OY+c.y*TS+TS/2;
+    ctx.save(); ctx.translate(rx,ry); if(c.dx<0) ctx.scale(-1,1);
+    ctx.drawImage(carSpr(c.color), -6,-3.5,12,7);
+    ctx.restore();
+  });
+  /* pedestrians — tiny vale folk on parks and roads */
+  var pedCols=['#ffd75e','#35e0ff','#ff5db1','#e8ecf5'];
+  var pedN=0;
+  for(y=0;y<MH && pedN<9;y++) for(x=0;x<MW && pedN<9;x++){
+    tl=tileAt(x,y);
+    if((tl.t==='park'||tl.t==='road') && h2(x*3,y*5)%11===0){
+      var off=Math.sin(f*0.016+h2(x,y))*7;
+      var bob=Math.abs(Math.sin(f*0.22+h2(x,y)))*0.9;
+      var pxx=OX+x*TS+TS/2+off, pyy=OY+y*TS+19-bob;
+      ctx.fillStyle='rgba(0,0,0,0.35)';
+      ctx.beginPath(); ctx.ellipse(pxx,OY+y*TS+21.4,2.2,0.8,0,0,6.29); ctx.fill();
+      ctx.fillStyle='#20242e'; ctx.fillRect(pxx-0.9,pyy-2.6,1.8,2.8);
+      ctx.fillStyle=pedCols[h2(x,y)%4]; ctx.fillRect(pxx-0.9,pyy-2.6,1.8,1);
+      ctx.fillStyle='#e8c39a'; ctx.beginPath(); ctx.arc(pxx,pyy-3.4,1.05,0,6.29); ctx.fill();
+      pedN++;
+    }
+  }
+  /* drifting cloud shadows */
+  ctx.fillStyle='rgba(5,8,20,0.10)';
+  clouds.forEach(function(c,i){
+    if(i%2) return;
+    ctx.beginPath(); ctx.ellipse((c.x*1.4)%(MW*TS+160)-60, OY+50+i*62, 92,25,0,0,6.29); ctx.fill();
+  });
+  /* cursor — gold corners over emerald frame */
+  var cpx=OX+state.cursor.x*TS, cpy=OY+state.cursor.y*TS;
+  ctx.strokeStyle='#ffb347'; ctx.lineWidth=2;
+  ctx.strokeRect(cpx+1,cpy+1,TS-2,TS-2);
+  ctx.strokeStyle='rgba(0,255,136,0.4)';
+  ctx.strokeRect(cpx-2,cpy-2,TS+4,TS+4);
+  ctx.fillStyle='#ffd75e';
+  [[cpx-2,cpy-2],[cpx+TS-2,cpy-2],[cpx-2,cpy+TS-2],[cpx+TS-2,cpy+TS-2]].forEach(function(p){ ctx.fillRect(p[0],p[1],4,4); });
+  ctx.restore();
+  /* drifting embers */
+  ctx.fillStyle='rgba(255,179,71,0.5)';
+  for(var e=0;e<10;e++){
+    var ex=(e*97+f*0.3)%960, ey=(e*61+f*0.15)%544;
+    ctx.fillRect(ex,ey,2,2);
+  }
+  renderPanel();
+  if(state.over){
+    ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(9,13,24,0.88)'; rr(W/2-250,H/2-78,500,140,14); ctx.fill();
+    ctx.strokeStyle='rgba(0,255,136,0.55)'; ctx.lineWidth=1.6; rr(W/2-250,H/2-78,500,140,14); ctx.stroke();
+    ctx.fillStyle='#ffd75e'; ctx.fillRect(W/2-250,H/2-78,500,2.4);
+    ctx.fillStyle=state.win?'#00ff88':'#ff3860';
+    ctx.font='900 30px Orbitron,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.result==='DRAW'?'DEAD HEAT':(state.win?'EMBERVALE PRIME':'THE VALE FALLS'), W/2, H/2-26);
+    ctx.fillStyle='#e8ecf5'; ctx.font='14px "Share Tech Mono",monospace';
+    ctx.fillText(state.pop+' citizens · month '+state.month+' · $'+state.funds, W/2, H/2+8);
+    ctx.font='12px "Share Tech Mono",monospace'; ctx.fillStyle='#8a94a8';
+    ctx.fillText('R — rebuild the vale', W/2, H/2+36);
+    ctx.textAlign='left';
+  }
+}
+function renderPanel(){
+  var px=772, py=OY;
+  var pg=ctx.createLinearGradient(px-8,py-8,px-8,py+492);
+  pg.addColorStop(0,'rgba(16,26,40,0.94)'); pg.addColorStop(1,'rgba(8,12,22,0.94)');
+  ctx.fillStyle=pg; rr(px-8,py-8,PW+16,500,12); ctx.fill();
+  ctx.save(); ctx.shadowColor='rgba(0,255,136,0.4)'; ctx.shadowBlur=10;
+  ctx.strokeStyle='rgba(0,255,136,0.5)'; ctx.lineWidth=1.4; rr(px-8,py-8,PW+16,500,12); ctx.stroke(); ctx.restore();
+  ctx.fillStyle='#ffd75e'; ctx.fillRect(px-8,py-8,PW+16,2.2);
+  ctx.fillStyle='#fff'; ctx.font='900 12px Orbitron,sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('CITY LEDGER', px, py+4);
+  /* glass stat chips */
+  function chip(y,label,val,color){
+    ctx.fillStyle='rgba(255,255,255,0.045)'; rr(px,y,160,25,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,255,136,0.30)'; ctx.lineWidth=1; rr(px,y,160,25,7); ctx.stroke();
+    ctx.fillStyle='#8a94a8'; ctx.font='600 8.5px "Share Tech Mono",monospace';
+    ctx.fillText(label, px+7, y+8);
+    ctx.fillStyle=color; ctx.font='800 13.5px Orbitron,sans-serif';
+    ctx.fillText(val, px+7, y+18.5);
+  }
+  chip(py+16,'FUNDS','$'+state.funds,'#ffd75e');
+  chip(py+45,'CITIZENS',''+state.pop,'#e8ecf5');
+  chip(py+74,'JOBS',''+state.jobs,'#35e0ff');
+  var yr=1+((state.month/12)|0), mo=(state.month%12)+1;
+  ctx.font='11px "Share Tech Mono",monospace'; ctx.fillStyle='#aeb8c8';
+  ctx.fillText('YEAR '+yr+' · MONTH '+mo, px, py+112);
+  ctx.save(); ctx.shadowColor='rgba(255,179,71,0.6)'; ctx.shadowBlur=7;
+  ctx.fillStyle='#ffb347'; ctx.font='900 12.5px Orbitron,sans-serif';
+  ctx.fillText(state.rank, px, py+128); ctx.restore();
+  ctx.font='9.5px "Share Tech Mono",monospace'; ctx.fillStyle='#8a94a8';
+  ctx.fillText(state.mode==='duel'&&state.duel?('DUEL · MAYOR '+(state.duel.turn+1)+' · '+(DUEL_TERM-(state.month%DUEL_TERM))+' MO LEFT'):
+    state.mode==='watch'?('WATCH · SEASON '+Math.min(WATCH_MONTHS,state.watchMonth+1)+'/'+WATCH_MONTHS):'GOAL 5,000 CITIZENS', px, py+143);
+  glassBar(px,py+156,160,9, state.demand.R/100,'#00ff88','R DEMAND', ''+state.demand.R);
+  glassBar(px,py+184,160,9, state.demand.C/100,'#35e0ff','C DEMAND', ''+state.demand.C);
+  glassBar(px,py+212,160,9, state.demand.I/100,'#ffb347','I DEMAND', ''+state.demand.I);
+  glassBar(px,py+240,160,9, state.power.cap?state.power.used/state.power.cap:0,'#ffd75e','POWER '+state.power.used+'/'+state.power.cap, state.power.used+'⚡');
+  ctx.fillStyle='#fff'; ctx.font='900 11px Orbitron,sans-serif';
+  ctx.fillText('TOOLS', px, py+278);
+  ctx.font='10px "Share Tech Mono",monospace';
+  for(var i=0;i<TOOLS.length;i++){
+    var ty=py+292+i*17.5;
+    if(i===state.tool){
+      ctx.fillStyle='rgba(0,255,136,0.10)'; rr(px-4,ty-7.5,168,15.5,5); ctx.fill();
+      ctx.strokeStyle='rgba(0,255,136,0.45)'; ctx.lineWidth=1; rr(px-4,ty-7.5,168,15.5,5); ctx.stroke();
+    }
+    ctx.fillStyle=i===state.tool?'#ffd75e':'#8a94a8';
+    ctx.fillText((i===state.tool?'▶ ':'  ')+TOOLS[i].key+' '+TOOLS[i].name+' $'+TOOLS[i].cost, px, ty);
+  }
+  var my=py+292+8*17.5+10;
+  ctx.fillStyle='#fff'; ctx.font='900 11px Orbitron,sans-serif';
+  ctx.fillText(state.mode==='watch'?'MAYOR':'YOUR MAYOR', px, my);
+  var mid=state.mode==='watch'?state.feAgentId:'YOU';
+  drawMayorPortrait(px+16, my+23, 15, mid==='YOU'?'NEXUS':mid);
+  ctx.font='10px "Share Tech Mono",monospace'; ctx.fillStyle='#e8ecf5';
+  ctx.fillText(mid, px+38, my+17);
+  ctx.fillStyle='#8a94a8';
+  var blurb=mid==='YOU'?'the warden-mayor':(MAYORS[mid]?MAYORS[mid].blurb:'');
+  ctx.fillText(blurb.slice(0,20), px+38, my+31);
+  if(state.mode==='watch'){
+    ctx.fillStyle='#ffb347';
+    ctx.fillText('TRACES '+state.feTraces.length, px, my+54);
+  }
+  ctx.fillStyle='#8a94a8';
+  ctx.fillText(state.cam?'[V] STREET CAM':'[V] MAP VIEW', px, my+70);
+  ctx.fillText(state.paused?'[P] PAUSED':'[P] PAUSE', px, my+84);
+  ctx.fillText(muted?'[M] MUTED':'[M] SOUND ON', px, my+98);
+}
+function renderTitle(){
+  ctx.fillStyle='rgba(0,0,0,0.42)'; ctx.fillRect(0,OY,W,H-OY);
+  ctx.fillStyle='rgba(8,11,22,0.78)'; rr(W/2-292,148,584,196,16); ctx.fill();
+  ctx.save(); ctx.shadowColor='rgba(0,255,136,0.45)'; ctx.shadowBlur=14;
+  ctx.strokeStyle='rgba(0,255,136,0.55)'; ctx.lineWidth=1.6; rr(W/2-292,148,584,196,16); ctx.stroke(); ctx.restore();
+  ctx.fillStyle='#ffd75e'; ctx.fillRect(W/2-292,148,584,2.6);
+  ctx.save(); ctx.shadowColor='rgba(255,179,71,0.65)'; ctx.shadowBlur=16;
+  ctx.fillStyle='#fff'; ctx.font='900 36px Orbitron,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('EMBERVALE', W/2, 196); ctx.restore();
+  ctx.fillStyle='#ffb347'; ctx.font='12.5px "Share Tech Mono",monospace'; ctx.textAlign='center';
+  ctx.fillText('FOUND A CITY · KEEP THE LIGHTS ON · REACH 5,000 CITIZENS', W/2, 228);
+  ctx.fillStyle='#dfe6f2'; ctx.font='600 14.5px Rajdhani,sans-serif';
+  ctx.fillText('Zone homes, shops and works beside roads. Power them. Park them. Tax them.', W/2, 260);
+  ctx.fillText('Fires start in dry months — bulldoze the burning tile before it spreads.', W/2, 283);
+  ctx.save(); ctx.shadowColor='rgba(0,255,136,0.7)'; ctx.shadowBlur=10;
+  ctx.fillStyle='#00ff88'; ctx.font='900 15px Orbitron,sans-serif';
+  ctx.fillText('▶ FOUND CITY — press ENTER or click below', W/2, 322); ctx.restore();
+  ctx.textAlign='left';
+}
+
+/* ---------- main loop ---------- */
+function frame(){
+  if(state && state.phase==='play' && !state.paused && !state.over){
+    state.frame++;
+    /* tiny cars drift along roads */
+    if(state.frame%6===0){
+      var roads=[];
+      state.tiles.forEach(function(tl,i){ if(tl.t==='road') roads.push(i); });
+      if(roads.length){
+        if(state.cars.length<6 && Math.random()<0.3){
+          var ri=roads[Math.floor(Math.random()*roads.length)];
+          state.cars.push({x:ri%MW, y:(ri/MW)|0, dx:Math.random()<0.5?1:-1, color:['#ff3860','#35e0ff','#ffd75e','#00ff88'][Math.floor(Math.random()*4)]});
+        }
+        state.cars.forEach(function(c){
+          var nx=c.x+c.dx;
+          var t=tileAt(nx,c.y);
+          if(t && t.t==='road') c.x=nx; else c.dx*=-1;
+        });
+      }
+    }
+    if(state.frame%FRAMES_PER_MONTH===0){
+      if(state.mode==='watch') botAct();
+      monthTick();
+    }
+  }
+  render();
+  requestAnimationFrame(frame);
+}
+if(!state) startGame('solo');
+requestAnimationFrame(frame);
+
+/* ---------- debug / harness API ---------- */
+window.__embervale={
+  get state(){ return state ? {
+    phase:state.phase, mode:state.mode, paused:state.paused, cam:state.cam, muted:muted,
+    funds:state.funds, pop:state.pop, jobs:state.jobs, month:state.month,
+    year:1+((state.month/12)|0), rank:state.rank,
+    demand:{R:state.demand.R,C:state.demand.C,I:state.demand.I},
+    power:{used:state.power.used, cap:state.power.cap},
+    cursor:{x:state.cursor.x,y:state.cursor.y}, tool:TOOLS[state.tool].id, toolName:TOOLS[state.tool].name,
+    placed:state.placed, fires:state.fires, rubble:state.rubble,
+    feAgent:state.feAgentId, feTraces:state.feTraces.length, feRecorded:state.feRecorded,
+    over:state.over, result:state.result, win:state.win,
+    duel:state.duel?{turn:state.duel.turn,p1pop:state.duel.p1pop,p2pop:state.duel.p2pop}:null,
+    watchMonth:state.watchMonth
+  } : {phase:'title'}; },
+  startGame:startGame,
+  buildTiles:function(){ return newTiles(); },
+  debugKey:debugKey,
+  debugPlace:function(tool,x,y){ return applyTool(tool,x,y,false); },
+  debugTile:function(x,y){ var t=tileAt(x,y); return t?{t:t.t,lvl:t.lvl,powered:t.powered,fire:t.fire}:null; },
+  debugCount:function(type){ var n=0; state.tiles.forEach(function(tl){ if(tl.t===type) n++; }); return n; },
+  debugTick:function(n){ for(var i=0;i<n;i++) monthTick(); },
+  debugIgnite:function(x,y){ var t=tileAt(x,y); if(t){ t.fire=3; recompute(); return true; } return false; },
+  debugSetFunds:function(v){ state.funds=v; },
+  debugGrowAll:function(){ state.tiles.forEach(function(tl){ if(tl.t==='R') tl.lvl=3; }); recompute(); },
+  debugSave:saveState, debugLoad:loadState,
+  debugTogglePause:togglePause, debugToggleCam:toggleCam, debugToggleMute:toggleMute,
+  debugBotAct:botAct, debugCandidates:botCandidates,
+  feWatchCursor:function(){ return feWatchIdx(); }
+};
+</script>
+</body>
+</html>

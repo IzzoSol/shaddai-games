@@ -1,0 +1,74 @@
+{
+  "bram": {
+    "id": "bram",
+    "file": "traders/bram.png",
+    "src": "../../../../assets/traders/bram.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a grizzled old merchant with a steel-grey beard, leather duster, brass pocket-watch chain, kind tired eyes, 512x512"
+  },
+  "sela": {
+    "id": "sela",
+    "file": "traders/sela.png",
+    "src": "../../../../assets/traders/sela.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a calm hooded trader woman, dark indigo hood, amber eyes, silver crescent necklace, 512x512"
+  },
+  "oona": {
+    "id": "oona",
+    "file": "traders/oona.png",
+    "src": "../../../../assets/traders/oona.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a cheerful round merchant with a red bandana, freckles, gold hoop earrings, 512x512"
+  },
+  "dax": {
+    "id": "dax",
+    "file": "traders/dax.png",
+    "src": "../../../../assets/traders/dax.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a cyborg arms dealer, half-chrome jaw with cyan seams, tusked grin, tactical vest, 512x512"
+  },
+  "mira": {
+    "id": "mira",
+    "file": "traders/mira.png",
+    "src": "../../../../assets/traders/mira.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a shrewd sharp-eyed trader with a long dark braid, emerald earrings, fitted blazer, 512x512"
+  },
+  "tobin": {
+    "id": "tobin",
+    "file": "traders/tobin.png",
+    "src": "../../../../assets/traders/tobin.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a burly bearded quartermaster with a heavy oilskin coat, rope belt, warm laugh-lines, 512x512"
+  },
+  "wren": {
+    "id": "wren",
+    "file": "traders/wren.png",
+    "src": "../../../../assets/traders/wren.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a young swift courier girl with brass goggles on her head, short auburn hair, satchel, 512x512"
+  },
+  "juno": {
+    "id": "juno",
+    "file": "traders/juno.png",
+    "src": "../../../../assets/traders/juno.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. an elegant pale dealer with platinum bob, gold geometric earrings, high-neck coat, 512x512"
+  },
+  "kesh": {
+    "id": "kesh",
+    "file": "traders/kesh.png",
+    "src": "../../../../assets/traders/kesh.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a tall bald hawkish trader with a dyed grey-fade beard, tribal gold nose-bridge mark, 512x512"
+  },
+  "pol": {
+    "id": "pol",
+    "file": "traders/pol.png",
+    "src": "../../../../assets/traders/pol.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a stocky no-nonsense haggler with a thick moustache, flat cap, suspenders, 512x512"
+  },
+  "ada": {
+    "id": "ada",
+    "file": "traders/ada.png",
+    "src": "../../../../assets/traders/ada.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a precise silver-haired woman with round spectacles, sharp collar, data-cuff bracelet, 512x512"
+  },
+  "fen": {
+    "id": "fen",
+    "file": "traders/fen.png",
+    "src": "../../../../assets/traders/fen.png",
+    "prompt": "neon CRT bust portrait, head and shoulders, Isometric 2D game splash art, dark teal navy background with subtle scanlines, cyan and dark-gold rim lighting, sharp hard-edged highlights, single subject centered, no text, no watermark, no border. a mysterious hooded hoodlum with faint cyan runes dancing on the cloak, calm glow, 512x512"
+  }
+}

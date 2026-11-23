@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LIFEPATH — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#05010f;--panel:#0c0618;--border:rgba(0,255,136,.22);--green:#00ff88;--gold:#ffd75e;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#d8ffe9;--dim:#7d8aa0}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.10),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(6,9,14,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-wrap:nowrap}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px;white-space:nowrap;flex-shrink:0}.topbar h1 span{color:var(--gold)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif;white-space:nowrap}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:140px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .mbtn.focused,.abtn.focused,.evchoice.focused,.sumbtn.focused{outline:2px solid var(--gold);outline-offset:1px;box-shadow:0 0 18px rgba(255,215,94,.45)}
+  #btnAge{border-color:var(--gold);color:var(--gold);font-size:15px;box-shadow:0 0 18px rgba(255,215,94,.25)}
+  #hud{border:1px solid var(--border);background:linear-gradient(180deg,rgba(12,6,24,.96),rgba(6,10,16,.96));padding:12px 16px;margin-top:12px}
+  #hudTop{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  #hudName{font-family:'Orbitron',sans-serif;font-size:19px;color:#fff;letter-spacing:1px}
+  #hudMeta{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--cyan)}
+  #hudMoney{margin-left:auto;font-family:'Orbitron',sans-serif;font-size:17px;color:var(--gold)}
+  #turnLine{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--green);margin-top:4px;min-height:16px}
+  #bars{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px}
+  .bar label{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin-bottom:3px}
+  .bar label b{color:#fff;font-weight:400}
+  .track{height:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);position:relative;overflow:hidden}
+  .fill{height:100%;background:linear-gradient(90deg,rgba(0,255,136,.55),var(--green));box-shadow:0 0 10px rgba(0,255,136,.55);transition:width .35s}
+  .fill.gold{background:linear-gradient(90deg,rgba(255,215,94,.5),var(--gold));box-shadow:0 0 10px rgba(255,215,94,.5)}
+  .fill.red{background:linear-gradient(90deg,rgba(255,56,96,.5),var(--red));box-shadow:0 0 10px rgba(255,56,96,.5)}
+  .fill.cyan{background:linear-gradient(90deg,rgba(53,224,255,.5),var(--cyan));box-shadow:0 0 10px rgba(53,224,255,.5)}
+  .fill.violet{background:linear-gradient(90deg,rgba(183,140,255,.5),var(--violet));box-shadow:0 0 10px rgba(183,140,255,.5)}
+  #actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .abtn{flex:1;min-width:118px;padding:9px 6px;background:#0a1420;border:1px solid rgba(53,224,255,.30);color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px;cursor:pointer}
+  .abtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:9px;margin-top:2px}
+  .abtn:disabled{opacity:.38;cursor:default}
+  #logWrap{border:1px solid var(--border);background:linear-gradient(180deg,#0d0918,#070410);margin-top:12px}
+  #logTitle{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);padding:9px 14px;border-bottom:1px solid var(--border)}
+  #lifeLog{height:190px;overflow-y:auto;padding:10px 16px;font-size:14.5px;line-height:1.55}
+  #lifeLog .yr{font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--cyan);letter-spacing:1px;margin-top:8px}
+  #lifeLog .ent{color:#cfe8da}
+  #lifeLog .ent.major{color:#fff;font-weight:600}
+  #lifeLog .ent.bad{color:#ff9db4}
+  #lifeLog .ent.good{color:#8affc9}
+  .card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,92%);background:rgba(9,5,20,.97);border:1px solid var(--gold);box-shadow:0 0 44px rgba(255,215,94,.25);padding:20px 24px;z-index:12;display:none;max-height:92%;overflow-y:auto}
+  .card h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:2px;margin:0 0 4px;font-size:18px}
+  .card .who{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);letter-spacing:1px;margin-bottom:8px}
+  .card p{font-size:16px;line-height:1.55;margin:6px 0 12px;color:#e6f5ec}
+  .evchoice,.sumbtn{display:block;width:100%;text-align:left;margin:7px 0;padding:11px 13px;background:#0a1420;border:1px solid rgba(0,255,136,.35);color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:15px;cursor:pointer}
+  .evchoice small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:2px}
+  .evchoice:hover,.sumbtn:hover{border-color:var(--gold)}
+  #sumBody{font-size:15px;line-height:1.6}
+  #sumBody table{width:100%;border-collapse:collapse;margin:8px 0;font-family:'Share Tech Mono',monospace;font-size:12.5px}
+  #sumBody td,#sumBody th{border:1px solid rgba(255,255,255,.14);padding:5px 8px;text-align:left}
+  #sumBody th{color:var(--gold);font-weight:400}
+  #sumBody .win{color:var(--green)}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65;margin-top:12px}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(5,1,15,.88);display:none;align-items:center;justify-content:center;z-index:20}
+  #pauseOverlay .pcard{background:#0c0618;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0;flex:none}
+  @media (max-width:560px){
+    .topbar{gap:8px;padding:10px 12px}
+    .topbar h1{font-size:17px;letter-spacing:1px}
+    .topbar .tag{display:none}
+    .topbar .back{padding:7px 9px;font-size:10px}
+    #bars{grid-template-columns:repeat(2,1fr)}
+    .abtns{gap:6px;padding-top:30px}.abtns button{width:46px;height:46px;font-size:15px}
+    .dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>LIFE<span>PATH</span></h1><span class="tag">Life simulator · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="600"></canvas>
+      <div class="card" id="eventCard">
+        <h2 id="evTitle">A MOMENT</h2>
+        <div class="who" id="evWho"></div>
+        <p id="evText"></p>
+        <div id="evChoices"></div>
+      </div>
+      <div class="card" id="summaryCard">
+        <h2 id="sumTitle">A LIFE, LIVED</h2>
+        <div class="who" id="sumWho"></div>
+        <div id="sumBody"></div>
+        <div id="sumBtns"></div>
+      </div>
+      <div id="pauseOverlay"><div class="pcard">
+        <h2>PAUSED</h2><p id="pauseSub">The life waits.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="hud">
+      <div id="hudTop"><span id="hudName">—</span><span id="hudMeta">press NEW LIFE</span><span id="hudMoney">$0</span></div>
+      <div id="turnLine"></div>
+      <div id="bars"></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c"></button><button data-k="up">▲</button><button class="c"></button>
+        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
+        <button class="c"></button><button data-k="down2">▼</button><button class="c"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — view other life (duel)">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — age one year">B</button>
+        <button id="btnA" title="A — confirm focused item">A</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">One life. Every year a choice. How will yours read?</div>
+  <div class="row">
+    <button class="mbtn" id="btnAge">▶ Age +1<small>live another year</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+  </div>
+  <div id="actions"></div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">🌱 New Life<small>1P — a fresh random soul</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>a council bot lives a life</small></button>
+    <button class="mbtn" id="btnDuel">⚔ Duel Lives<small>2P local — parallel lives</small></button>
+  </div>
+  <div id="logWrap"><div id="logTitle">LIFE LOG</div><div id="lifeLog"></div></div>
+  <div class="help">
+    <b>LIFEPATH</b> — an original life simulator. Guide one character from birth to death, one year per turn. Each year you get <b>2 actions</b> (study, work out, socialise, hustle, find love, build a career…), then press <b>AGE +1</b> and take whatever the year brings — events with real choices, all of it written into the <b>Life Log</b>, the story of that life. After 50, health fades; when death comes you get the full summary. Then: a new life.<br/>
+    <b>⚔ DUEL LIVES</b> — two players, one machine, two parallel lives in lockstep. Player 1 lives their year, then Player 2 lives theirs. Watch for <b>crossover moments</b> where the two lives collide — schoolyard meetings, office rivalries, shared hustles. When both lives end, the verdict screen settles it: lifespan, wealth, happiness, family.<br/>
+    <b>👁 WATCH</b> is a council bot living a whole life on the Fallible Engine — ZEROX hustles and gambles, TURTLE studies and saves, QUILL socialises — imperfect on purpose, every decision traced. If the engine fails to load, a stand-in lives the life instead.<br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: D-pad moves menu focus, <span class="k">A</span> confirms, <span class="k">B</span> ages a year, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> flips the log between lives in Duel mode. Keyboard: <span class="k">←→↑↓</span> focus · <span class="k">ENTER</span> confirm · <span class="k">A</span> age +1 · <span class="k">P</span> pause.<br/>
+    <b>Clean-room:</b> the life-sim formula, our own code, names, events and art — every event in the pool was written for this game. No other life-sim's text, events or names are used.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   LIFEPATH — an original life simulator for the Shaddai Arcade.
+   Clean-room: the GENERIC life-sim loop (age a character year by year,
+   stats, choices, a written life log) re-implemented in our own code.
+   Every name, event, line of text and piece of art is original to this
+   game — no other life-sim's events, text or branding are used.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var W=960, H=600;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+function clamp(v){ return Math.max(0, Math.min(100, Math.round(v))); }
+function ri(n){ return Math.floor(Math.random()*n); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function fmt(n){ var neg=n<0; var s=Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,','); return (neg?'-$':'$')+s; }
+
+/* ---------- names (original lists) ---------- */
+var FIRST=['Aria','Juno','Milo','Sana','Ezra','Noor','Kaito','Lena','Omar','Ivy','Dario','Mina','Rafi','Tessa','Hugo','Alba','Nico','Petra','Silas','Wren','Idris','Cleo','Bram','Suki','Emeka','Lila','Tomas','Anya','Rune','Mabel'];
+var LAST=['Halloway','Verano','Kestrel','Marlowe','Onyema','Ferro','Lindqvist','Barros','Thistledown','Achebe','Moreau','Kowalski','Renn','Okafor','Vidal','Hoshino','Marchetti','Lund','Abernathy','Solace'];
+var HUES=['#35e0ff','#ffd75e','#ff3860','#b78cff','#00ff88','#ff9d5c','#4d7cff','#ff6ec7'];
+var SKIN=['#f2c79b','#c68863','#8d5a3b','#ffe0bd','#a06a42'];
+/* ---------- gender (derived from the assigned first name — stable for life,
+   never randomised at render time; old saves without the field derive the same way) ---------- */
+var FEMALE_FIRST={Aria:1,Juno:1,Sana:1,Noor:1,Lena:1,Ivy:1,Mina:1,Tessa:1,Alba:1,Petra:1,Wren:1,Cleo:1,Suki:1,Lila:1,Anya:1,Mabel:1};
+var MALE_FIRST={Milo:1,Ezra:1,Kaito:1,Omar:1,Dario:1,Rafi:1,Hugo:1,Nico:1,Silas:1,Idris:1,Bram:1,Emeka:1,Tomas:1,Rune:1};
+function nameHash(s){ var h=0; s=String(s||''); for(var i=0;i<s.length;i++) h+=s.charCodeAt(i)*(i+1); return h; }
+function genderOfName(first){
+  first=String(first||'').split(' ')[0];
+  if(FEMALE_FIRST[first]) return 'f';
+  if(MALE_FIRST[first]) return 'm';
+  return (nameHash(first)%2===0)?'f':'m'; /* deterministic fallback for off-list names */
+}
+function personGender(p){
+  if(!p) return 'm';
+  if(p.gender) return p.gender;
+  return genderOfName(p.name||'');
+}
+/* One descriptor drives every figure render: hair style, outfit, build, extras.
+   Deterministic per person (name-seeded), varies by life stage. */
+function figureStyle(p){
+  var g=personGender(p), age=p.age||0, stage=p.stage||stageOf(age);
+  var h=nameHash(p&&p.name?p.name:'');
+  var st={gender:g, stage:stage, hair:'short', outfit:'pants', beard:false, shawl:false, bow:false, lashes:(g==='f')};
+  if(g==='f'){
+    if(stage==='infant'){ st.hair='tuft'; st.bow=true; st.outfit='blanket'; }
+    else if(stage==='child'){ st.hair=(h%2===0)?'pigtails':'ponytail'; st.outfit=(h%3===0)?'pants':'dress'; }
+    else if(stage==='teen'){ st.hair=(h%2===0)?'ponytail':'long'; st.outfit=(h%2===0)?'dress':'pants'; }
+    else if(stage==='elder'){ st.hair='bun'; st.outfit='dress'; st.shawl=true; }
+    else { st.hair=(h%4===0)?'bun':'long'; st.outfit=(h%2===0)?'dress':'pants'; }
+  } else {
+    if(stage==='infant'){ st.hair='tuft'; st.outfit='blanket'; }
+    else if(stage==='elder'){ st.hair=(h%2===0)?'balding':'short'; st.beard=(h%3!==0); }
+    else if(stage==='adult'){ st.beard=(h%3===0); }
+  }
+  return st;
+}
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var AP_PER_YEAR=2;
+
+/* ---------- jobs ---------- */
+var JOBS=[
+  {id:'barista', title:'Barista', min:0, base:24000},
+  {id:'courier', title:'Courier', min:0, base:27000},
+  {id:'warehouse', title:'Warehouse Lead', min:10, base:33000},
+  {id:'sales', title:'Sales Rep', min:25, base:39000},
+  {id:'teacher', title:'Teacher', min:45, base:45000},
+  {id:'designer', title:'Designer', min:50, base:57000},
+  {id:'nurse', title:'Nurse', min:55, base:59000},
+  {id:'analyst', title:'Data Analyst', min:60, base:69000},
+  {id:'engineer', title:'Engineer', min:65, base:84000},
+  {id:'founder', title:'Startup Founder', min:70, base:96000},
+  {id:'surgeon', title:'Surgeon', min:85, base:152000}
+];
+
+/* ---------- life stages ---------- */
+function stageOf(age){ return age<=2?'infant':age<=12?'child':age<=17?'teen':age<=64?'adult':'elder'; }
+var STAGE_LINES={
+  child:'Grew out of the crib and into the wide world.',
+  teen:'Became a teenager — everything suddenly mattered more.',
+  adult:'Turned 18. Legally an adult; still figuring it out.',
+  elder:'Entered the golden years.'
+};
+var CAUSES=[
+  'died peacefully in their sleep',
+  'succumbed to a sudden heart condition',
+  'passed after a long, quiet illness',
+  'died in an accident on a quiet road',
+  'faded gently, surrounded by the people they loved',
+  'died of complications no one saw coming'
+];
+
+/* ---------- person ---------- */
+function freshPerson(name, hue, skin){
+  return {name:name, gender:genderOfName(name), hue:hue, skin:skin, age:0, stage:'infant',
+    health:45+ri(31), happiness:50+ri(31), smarts:35+ri(41), looks:35+ri(41), karma:50,
+    money:0, peakMoney:0, job:null, salary:0, annuity:0, yearsWorked:0,
+    partner:null, partnerStatus:'single', children:0,
+    alive:true, deathAge:null, cause:null, lastEventId:null, log:[]};
+}
+function randomName(avoid){
+  var n=pick(FIRST)+' '+pick(LAST);
+  if(avoid && n===avoid) n=pick(FIRST)+' '+pick(LAST);
+  return n;
+}
+function lifeScore(p){
+  var fam=(p.partnerStatus==='married'?15:0)+p.children*6;
+  return Math.round((p.deathAge||p.age)*10 + p.peakMoney/120 + p.happiness*1.5 + fam*4);
+}
+
+/* ---------- state ---------- */
+function freshState(){
+  return {phase:'title', mode:'solo', paused:false, frame:0,
+    people:[], turn:0, round:1, roundAged:{}, ap:AP_PER_YEAR,
+    eventQueue:[], panel:null, summary:null,
+    feAgent:null, feAgentId:null, feTraces:0, feTraceList:[], watchIdx:0,
+    watchTimer:0, watchOutcome:null, watchRecorded:false, watchFallback:false,
+    fast:false, noEvents:false, viewIdx:0, focusIdx:0, focusItems:[],
+    motes:[], msg:'One life. Every year a choice. How will yours read?'};
+}
+/* E49: persisted rotation cursor (E48 pattern) — state.watchIdx is load-scoped,
+   so a fresh load re-opened on ASIMOV forever. This key survives loads; it
+   advances only when the engine is present — fallback/stand-in lives never
+   consume it. */
+var WATCH_IDX_KEY='lifepath.watchIdx';
+var watchIdxPersisted=0; try{ watchIdxPersisted=parseInt(localStorage.getItem(WATCH_IDX_KEY)||'0',10)||0; }catch(e){ watchIdxPersisted=0; }
+function saveWatchIdx(){ try{ localStorage.setItem(WATCH_IDX_KEY, String(watchIdxPersisted)); }catch(e){} }
+var state=freshState();
+state.watchIdx=watchIdxPersisted; /* E49: seed the rotation from the persisted cursor */
+for(var mi=0;mi<46;mi++) state.motes.push({x:Math.random()*W,y:Math.random()*H,r:0.8+Math.random()*1.8,sp:0.12+Math.random()*0.35,tw:Math.random()*6.28});
+function setMsg(t){ state.msg=t; if(msgEl) msgEl.textContent=t; }
+function cur(){ return state.people[state.turn]||state.people[0]; }
+function viewPerson(){ return state.people[state.viewIdx]||cur(); }
+function addLog(p, text, cls){
+  p.log.push({age:p.age, text:text, cls:cls||''});
+  if(viewPerson()===p) renderLog();
+}
+
+/* ---------- life events (all original writing) ----------
+   fx keys: health, happiness, smarts, looks, karma, money.
+   gamble: {stake, win, chance}. special: jobLoss | partner | annuity | raise10 */
+var EVENTS=[
+ {id:'found-tooth', min:4, max:9, tag:'luck', title:'THE TOOTH',
+  text:'A wobbly tooth finally pops out at breakfast, right into the porridge.',
+  choices:[
+    {label:'Put it under the pillow', fx:{money:5, happiness:3}},
+    {label:'Keep it in a jar forever', fx:{happiness:1, smarts:1}}]},
+ {id:'playground-fall', min:3, max:11, tag:'health', title:'THE LONG FALL',
+  text:'The climbing frame was taller than it looked. The ground arrives fast.',
+  choices:[
+    {label:'Shake it off like a legend', fx:{health:-3, happiness:-2, looks:1}},
+    {label:'Cry until help comes', fx:{health:-1, happiness:1, karma:1}}]},
+ {id:'stray-puppy', min:5, max:12, tag:'kind', title:'THE STRAY',
+  text:'A shivering puppy with no collar follows you all the way home.',
+  choices:[
+    {label:'Beg to keep it', fx:{happiness:6, karma:2}},
+    {label:'Knock on doors to find its owner', fx:{karma:5, happiness:2}},
+    {label:'Walk away quickly', fx:{happiness:-2}}]},
+ {id:'spelling-bee', min:6, max:12, tag:'study', title:'THE SPELLING BEE',
+  text:'Your name is called. The word list is three pages long and terrifying.',
+  choices:[
+    {label:'Enter and give it everything', fx:{smarts:3, happiness:2}},
+    {label:'Let someone else have the spotlight', fx:{happiness:2, karma:1}}]},
+ {id:'friend-moves', min:7, max:13, tag:'social', title:'THE MOVING VAN',
+  text:'Your best friend\'s family is moving three towns away. The van is already packed.',
+  choices:[
+    {label:'Promise to write every week', fx:{happiness:-3, karma:2}},
+    {label:'Throw a goodbye party in the garden', fx:{money:-5, happiness:2}}]},
+ {id:'first-crush', min:12, max:17, tag:'love', title:'FIRST CRUSH',
+  text:'Someone in your class has started laughing at your jokes. All of them. Even the bad ones.',
+  choices:[
+    {label:'Confess your feelings', fx:{happiness:6, looks:1}},
+    {label:'Admire from a safe distance', fx:{happiness:-2, smarts:1}}]},
+ {id:'exam-week', min:13, max:18, tag:'study', title:'EXAM WEEK',
+  text:'Five exams. Four days. One very tired brain.',
+  choices:[
+    {label:'Cram until the words blur', fx:{smarts:5, health:-3}},
+    {label:'Wing it and trust the vibes', fx:{happiness:2, smarts:1}}]},
+ {id:'party-invite', min:14, max:19, tag:'social', title:'THE PARTY',
+  text:'The biggest party of the year. Everyone is going. Everyone.',
+  choices:[
+    {label:'Go and be legendary', fx:{happiness:7, health:-2}},
+    {label:'Stay in and study', fx:{smarts:4, happiness:-2}}]},
+ {id:'weekend-shifts', min:14, max:20, tag:'hustle', title:'WEEKEND SHIFTS',
+  text:'The corner shop is hiring weekend help. The pay is real. So is the alarm clock.',
+  choices:[
+    {label:'Take the shifts', fx:{money:140, happiness:-2}},
+    {label:'Keep weekends sacred', fx:{happiness:3}}]},
+ {id:'office-raffle', min:18, max:64, req:'job', tag:'risk', title:'THE OFFICE RAFFLE',
+  text:'The office raffle prize is a weekend cabin stay. Tickets are $50. The jar is nearly empty.',
+  choices:[
+    {label:'Buy five tickets', gamble:{stake:50, win:600, chance:0.3}, fx:{happiness:1}},
+    {label:'Keep your $50', fx:{karma:1}}]},
+ {id:'friend-startup', min:20, max:55, tag:'risk', title:'THE BIG IDEA',
+  text:'An old friend corners you with a startup pitch and the words "ground floor".',
+  choices:[
+    {label:'Invest $1,000', gamble:{stake:1000, win:3400, chance:0.35}, fx:{happiness:1}},
+    {label:'Pass, but wish them well', fx:{karma:1}}]},
+ {id:'car-trouble', min:18, max:70, tag:'money', title:'THE NOISE',
+  text:'Your car has started making a noise that mechanics describe as "expensive".',
+  choices:[
+    {label:'Pay the mechanic', fx:{money:-600, happiness:-2}},
+    {label:'Learn to fix it yourself', fx:{smarts:3, health:-1, money:-150}}]},
+ {id:'reunion-invite', min:24, max:60, tag:'social', title:'THE REUNION',
+  text:'A reunion invitation arrives. Everyone will be comparing lives, quietly and constantly.',
+  choices:[
+    {label:'Go and shine', fx:{money:-200, happiness:5}},
+    {label:'Skip it entirely', fx:{happiness:-1}}]},
+ {id:'health-scare', min:35, max:75, tag:'health', title:'THE CHECK-UP',
+  text:'A routine check-up finds something the doctor wants "a closer look" at.',
+  choices:[
+    {label:'See the specialist', fx:{money:-800, health:4}},
+    {label:'Ignore it and hope', fx:{health:-6}}]},
+ {id:'mentor-offer', min:20, max:60, req:'job', tag:'career', title:'THE MENTOR',
+  text:'A senior figure at work offers to mentor you — lunches, introductions, hard truths.',
+  choices:[
+    {label:'Take the mentorship', fx:{smarts:4}, special:'raise10'},
+    {label:'Stay comfortable', fx:{happiness:2}}]},
+ {id:'lottery-ticket', min:18, max:80, tag:'risk', title:'THE TICKET',
+  text:'The jackpot is enormous. The queue at the counter is full of dreamers.',
+  choices:[
+    {label:'Buy a ticket', gamble:{stake:20, win:5000, chance:0.03}, fx:{happiness:1}},
+    {label:'Save the $20', fx:{money:20, karma:1}}]},
+ {id:'downsize', min:20, max:62, req:'job', tag:'career', title:'THE DOWNSIZE',
+  text:'Rumours become memos. Your department is being "restructured".',
+  choices:[
+    {label:'Take the severance package', fx:{money:3000, happiness:-3}, special:'jobLoss'},
+    {label:'Fight to stay', fx:{happiness:-4, health:-2}}]},
+ {id:'wedding-invite', min:22, max:50, req:'single', tag:'love', title:'SOMEONE ELSE\'S WEDDING',
+  text:'A friend is getting married. The seating chart, legend says, is full of possibilities.',
+  choices:[
+    {label:'Go and mingle', fx:{money:-150, happiness:3}, special:'partner', specialChance:0.5},
+    {label:'Send a generous gift', fx:{money:-75, karma:2}}]},
+ {id:'gym-buddy', min:18, max:65, tag:'health', title:'THE GYM BUDDY',
+  text:'A friend wants a 6 a.m. gym partner and has chosen violence: they chose you.',
+  choices:[
+    {label:'Commit to the mornings', fx:{health:5, looks:2, happiness:-1}},
+    {label:'Sleep in, gloriously', fx:{happiness:2, health:-1}}]},
+ {id:'garden-club', min:65, max:110, tag:'social', title:'THE GARDEN CLUB',
+  text:'The neighbourhood garden club is recruiting. The tomatoes, apparently, are political.',
+  choices:[
+    {label:'Join and grow things', fx:{happiness:5, health:2}},
+    {label:'Rest at home instead', fx:{health:1}}]},
+ {id:'grandkids-visit', min:60, max:110, req:'kids', tag:'family', title:'THE INVASION',
+  text:'The grandchildren are coming to visit. Your house will not survive. Neither will your silence.',
+  choices:[
+    {label:'Host the beautiful chaos', fx:{happiness:8, money:-200}},
+    {label:'Suggest a nice quiet park instead', fx:{happiness:1}}]},
+ {id:'pension-letter', min:65, max:110, tag:'money', title:'THE PENSION LETTER',
+  text:'A letter offers a choice: one lump sum now, or a steady trickle for life.',
+  choices:[
+    {label:'Take the lump sum', fx:{money:4000}},
+    {label:'Keep the steady annuity', fx:{money:300}, special:'annuity'}]},
+ {id:'photo-album', min:60, max:110, tag:'calm', title:'THE PHOTO ALBUM',
+  text:'You find a photo album you thought was lost. Whole decades look up at you.',
+  choices:[
+    {label:'Reminisce all afternoon', fx:{happiness:6, smarts:1}},
+    {label:'Call an old friend from the photos', fx:{happiness:4, karma:2}}]},
+ {id:'creaky-knee', min:55, max:110, tag:'health', title:'THE KNEE',
+  text:'Your knee has begun making announcements every time you stand up.',
+  choices:[
+    {label:'Book physical therapy', fx:{money:-500, health:4}},
+    {label:'Push through it', fx:{health:-4}}]},
+ {id:'storm-week', min:6, max:90, tag:'kind', title:'THE STORM',
+  text:'A storm week floods the low streets. Neighbours are sandbagging in the rain.',
+  choices:[
+    {label:'Help sandbag until your arms give out', fx:{karma:5, health:-2, happiness:2}},
+    {label:'Stay inside and stay dry', fx:{happiness:-1}}]},
+ {id:'viral-video', min:13, max:45, tag:'risk', title:'THE CLIP',
+  text:'A ridiculous clip of you exists. It is either internet gold or a permanent embarrassment.',
+  choices:[
+    {label:'Post it everywhere', gamble:{stake:0, win:1200, chance:0.25}, fx:{happiness:2}},
+    {label:'Keep it private', fx:{karma:1}}]},
+ {id:'found-wallet', min:10, max:90, tag:'kind', title:'THE WALLET',
+  text:'A wallet sits on the pavement, fat with cash. Nobody saw you pick it up.',
+  choices:[
+    {label:'Return it, every cent', fx:{karma:8, happiness:3}},
+    {label:'Keep the cash', fx:{money:180, karma:-8}}]}
+];
+function reqOk(p, req){
+  if(!req) return true;
+  if(req==='job') return !!p.job;
+  if(req==='single') return p.partnerStatus==='single';
+  if(req==='kids') return p.children>0;
+  return true;
+}
+function eventById(id){ for(var i=0;i<EVENTS.length;i++) if(EVENTS[i].id===id) return EVENTS[i]; return null; }
+
+/* ---------- crossover events (Duel Lives — original writing) ----------
+   fxBoth applies to both players; fxChooser to the player picking;
+   fxOther to the other player. */
+var CROSSOVERS=[
+ {id:'school-meet', min:5, max:17, title:'CROSSOVER — THE COLLISION',
+  text:'{A} and {B} collide in the schoolyard — literally. Books everywhere. A crowd gathers.',
+  choices:[
+    {label:'Become inseparable', fxBoth:{happiness:6, karma:1}},
+    {label:'Rivals from this day forward', fxBoth:{smarts:3, happiness:-2}}]},
+ {id:'study-group', min:13, max:25, title:'CROSSOVER — STUDY GROUP',
+  text:'{A} and {B} end up in the same study group the night before the big exam.',
+  choices:[
+    {label:'Cram together, share everything', fxBoth:{smarts:4, happiness:2}},
+    {label:'Compete for the top mark', fxChooser:{smarts:5}, fxOther:{smarts:2, happiness:-2}}]},
+ {id:'work-together', min:18, max:64, title:'CROSSOVER — THE PROJECT',
+  text:'{A} and {B} are assigned to the same make-or-break project at work.',
+  choices:[
+    {label:'Team up and carry it together', fxBoth:{money:800, happiness:2}},
+    {label:'Fight for the same promotion', fxChooser:{money:1200, happiness:1}, fxOther:{happiness:-5}}]},
+ {id:'shared-hustle', min:16, max:60, title:'CROSSOVER — THE SIDE BUSINESS',
+  text:'{A} and {B} both spot the same gap in the market on the same street.',
+  choices:[
+    {label:'Split the business, split the profit', fxBoth:{money:600, karma:1}},
+    {label:'Undercut each other ruthlessly', fxChooser:{money:900}, fxOther:{money:-200, happiness:-2}}]},
+ {id:'reunion-toast', min:50, max:110, title:'CROSSOVER — OLD TIMES',
+  text:'Decades on, {A} and {B} find themselves at the same reunion table.',
+  choices:[
+    {label:'Toast to old times', fxBoth:{happiness:7, karma:2}},
+    {label:'Quietly compare life scores', fxBoth:{happiness:-3, smarts:1}}]}
+];
+function crossById(id){ for(var i=0;i<CROSSOVERS.length;i++) if(CROSSOVERS[i].id===id) return CROSSOVERS[i]; return null; }
+
+/* ---------- effects ---------- */
+var FX_NAMES={health:'HEA', happiness:'HAP', smarts:'SMA', looks:'LOO', karma:'KAR'};
+function fxSummary(fx, extra){
+  var parts=[];
+  if(fx) Object.keys(fx).forEach(function(k){
+    var v=fx[k]; if(!v) return;
+    if(k==='money') parts.push((v>0?'+':'−')+fmt(Math.abs(v)).slice(0));
+    else parts.push((v>0?'+':'')+v+' '+(FX_NAMES[k]||k));
+  });
+  if(extra) parts.push(extra);
+  return parts.length?parts.join(' · '):'no change';
+}
+function applyFx(p, fx){
+  if(!fx) return;
+  if(fx.health) p.health=clamp(p.health+fx.health);
+  if(fx.happiness) p.happiness=clamp(p.happiness+fx.happiness);
+  if(fx.smarts) p.smarts=clamp(p.smarts+fx.smarts);
+  if(fx.looks) p.looks=clamp(p.looks+fx.looks);
+  if(fx.karma) p.karma=clamp(p.karma+fx.karma);
+  if(fx.money) p.money+=fx.money;
+  if(p.money>p.peakMoney) p.peakMoney=p.money;
+}
+function applySpecial(p, choice){
+  var s=choice.special; if(!s) return '';
+  if(s==='jobLoss' && p.job){ p.job=null; p.salary=0; return 'lost the job'; }
+  if(s==='raise10' && p.job){ p.salary=Math.round(p.salary*1.10); return 'salary rose to '+fmt(p.salary); }
+  if(s==='annuity'){ p.annuity+=800; return 'annuity +$800/yr'; }
+  if(s==='partner'){
+    if(p.partnerStatus==='single' && Math.random()<(choice.specialChance||0.5)){
+      p.partner=pick(FIRST); p.partnerStatus='dating';
+      addLog(p,'Met '+p.partner+' — something clicked. They are dating now.','good');
+      return 'met '+p.partner;
+    }
+    return 'a pleasant evening, nothing more';
+  }
+  return '';
+}
+
+/* ---------- actions ---------- */
+var ACTIONS=[
+ {key:'study', label:'📚 Study', sub:'smarts up', tag:'study', min:5,
+  can:function(p){ return p.age>=5; },
+  run:function(p){ var g=4+ri(4); p.smarts=clamp(p.smarts+g); p.happiness=clamp(p.happiness-1); return 'Hit the books hard. (+'+g+' SMA)'; }},
+ {key:'workout', label:'🏋 Work Out', sub:'health + looks', tag:'fitness', min:6,
+  can:function(p){ return p.age>=6; },
+  run:function(p){ var g=4+ri(3); p.health=clamp(p.health+g); p.looks=clamp(p.looks+2); return 'Trained until it burned. (+'+g+' HEA, +2 LOO)'; }},
+ {key:'socialise', label:'🎉 Socialise', sub:'happiness up', tag:'social', min:4,
+  can:function(p){ return p.age>=4; },
+  run:function(p){ p.happiness=clamp(p.happiness+5); p.karma=clamp(p.karma+1); return 'Spent the year collecting people and stories. (+5 HAP)'; }},
+ {key:'meditate', label:'🧘 Meditate', sub:'calm + steady', tag:'calm', min:8,
+  can:function(p){ return p.age>=8; },
+  run:function(p){ p.happiness=clamp(p.happiness+3); p.health=clamp(p.health+2); return 'Sat still until the noise stopped. (+3 HAP, +2 HEA)'; }},
+ {key:'hustle', label:'💸 Side Hustle', sub:'money, teen+', tag:'hustle', min:13,
+  can:function(p){ return p.age>=13; },
+  run:function(p){ var g=40+ri(60)+p.age*2+Math.round(p.smarts*0.8); p.money+=g; if(p.money>p.peakMoney) p.peakMoney=p.money; p.health=clamp(p.health-1); return 'Hustled every spare hour. (+'+fmt(g)+')'; }},
+ {key:'job', label:'💼 Get a Job', sub:'pick from the listings', tag:'career', min:18,
+  can:function(p){ return p.age>=18 && !p.job; },
+  run:function(p){ openJobPanel(p, false); return null; }},
+ {key:'changejob', label:'🔀 Change Job', sub:'new listings', tag:'career', min:18,
+  can:function(p){ return p.age>=18 && !!p.job; },
+  run:function(p){ openJobPanel(p, true); return null; }},
+ {key:'raise', label:'📈 Ask for a Raise', sub:'they can only say no', tag:'career', min:18,
+  can:function(p){ return p.age>=18 && !!p.job; },
+  run:function(p){ if(Math.random()<0.45){ var inc=Math.round(p.salary*0.08); p.salary+=inc; return 'Asked, and got it. Salary now '+fmt(p.salary)+'.'; } p.happiness=clamp(p.happiness-3); return 'Asked. The answer was a spreadsheet and a no. (−3 HAP)'; }},
+ {key:'invest', label:'🎲 Invest', sub:'risky swing', tag:'invest', min:18,
+  can:function(p){ return p.age>=18 && p.money>=200; },
+  run:function(p){ var stake=Math.max(200, Math.floor(p.money*0.25)); var chance=0.45+Math.min(0.15, p.smarts/500);
+    if(Math.random()<chance){ var g=Math.round(stake*0.6); p.money+=g; if(p.money>p.peakMoney) p.peakMoney=p.money; return 'Invested '+fmt(stake)+' — it paid off. (+'+fmt(g)+')'; }
+    var l=Math.round(stake*0.45); p.money-=l; p.happiness=clamp(p.happiness-2); return 'Invested '+fmt(stake)+' — the market shrugged. (−'+fmt(l)+')'; }},
+ {key:'date', label:'💘 Find a Date', sub:'put yourself out there', tag:'love', min:16,
+  can:function(p){ return p.age>=16 && p.partnerStatus==='single'; },
+  run:function(p){ if(Math.random()<0.7){ p.partner=pick(FIRST); p.partnerStatus='dating'; p.happiness=clamp(p.happiness+4); return 'Met '+p.partner+'. Butterflies, immediately. (+4 HAP)'; } p.happiness=clamp(p.happiness-2); return 'Put themselves out there. The world was not ready. (−2 HAP)'; }},
+ {key:'propose', label:'💍 Propose', sub:'one knee, one question', tag:'love', min:18,
+  can:function(p){ return p.age>=18 && p.partnerStatus==='dating'; },
+  run:function(p){ if(Math.random()<0.75){ p.partnerStatus='married'; p.money-=2500; p.happiness=clamp(p.happiness+8); return 'Said yes! Married '+p.partner+' in a small, perfect ceremony. (+8 HAP)'; } p.happiness=clamp(p.happiness-6); return 'The answer was no. It echoes for a while. (−6 HAP)'; }},
+ {key:'child', label:'👶 Have a Child', sub:'a whole new person', tag:'family', min:18,
+  can:function(p){ return p.age>=18 && p.age<=48 && p.partnerStatus!=='single' && p.children<6; },
+  run:function(p){ p.children++; p.money-=1000; p.happiness=clamp(p.happiness+5); return 'Welcomed child number '+p.children+' into the world. (+5 HAP)'; }}
+];
+function actionByKey(key){ for(var i=0;i<ACTIONS.length;i++) if(ACTIONS[i].key===key) return ACTIONS[i]; return null; }
+function doAction(key){
+  if(state.phase!=='playing'||state.paused||state.panel) return false;
+  var p=cur(); if(!p||!p.alive) return false;
+  if(state.ap<=0){ setMsg('No actions left this year — press AGE +1.'); return false; }
+  var a=actionByKey(key); if(!a||!a.can(p)) return false;
+  state.ap--;
+  var line=a.run(p);
+  if(line){ addLog(p, line); setMsg(p.name+': '+line); }
+  syncUI();
+  return true;
+}
+
+/* ---------- core flow ---------- */
+function startGame(mode){
+  var keepWatchIdx=state.watchIdx, keepFast=state.fast;
+  state=freshState();
+  state.fast=keepFast; state.watchIdx=keepWatchIdx;
+  state.mode=mode; state.phase='playing';
+  state.motes=[]; for(var i=0;i<46;i++) state.motes.push({x:Math.random()*W,y:Math.random()*H,r:0.8+Math.random()*1.8,sp:0.12+Math.random()*0.35,tw:Math.random()*6.28});
+  var n1=randomName();
+  state.people=[freshPerson(n1, HUES[ri(HUES.length)], SKIN[ri(SKIN.length)])];
+  if(mode==='duel'){
+    var n2=randomName(n1);
+    state.people.push(freshPerson(n2, HUES[ri(HUES.length)], SKIN[ri(SKIN.length)]));
+    state.roundAged={0:false,1:false};
+    addLog(state.people[0],'Born. Player 1 takes this life.','major');
+    addLog(state.people[1],'Born. Player 2 takes this life.','major');
+    setMsg('DUEL LIVES — '+n1.split(' ')[0]+' (P1) vs '+n2.split(' ')[0]+' (P2). P1 lives first.');
+  } else {
+    addLog(state.people[0],'Born, squalling, into an ordinary extraordinary world.','major');
+    setMsg((mode==='watch'?'WATCH — ':'')+n1+' enters the world.');
+  }
+  state.turn=0; state.viewIdx=0;
+  if(mode==='watch') setupWatchAgent();
+  syncUI(); renderLog();
+}
+function setupWatchAgent(){
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  state.feAgentId=COUNCIL_IDS[state.watchIdx%COUNCIL_IDS.length];
+  if(FE){
+    try{ state.feAgent=FE.loadAgent(state.feAgentId); }
+    catch(e){ state.feAgent=null; }
+    /* E49: the cursor advances + persists only when the engine actually
+       loaded the agent — a fallback/stand-in life never consumes it. */
+    if(state.feAgent){ state.watchIdx++; watchIdxPersisted=state.watchIdx; saveWatchIdx(); }
+  }
+  if(!state.feAgent) state.watchFallback=true;
+  setMsg('WATCH — '+(state.feAgent?state.feAgentId+' lives as ':'a stand-in lives as ')+state.people[0].name+'. Imperfect on purpose.');
+}
+function deathRoll(p){
+  if(p.health<=0) return true;
+  var a=p.age, pr;
+  if(a<40) pr=0.002; else if(a<60) pr=0.006; else if(a<70) pr=0.02;
+  else if(a<80) pr=0.05; else if(a<90) pr=0.11; else if(a<100) pr=0.22; else pr=0.40;
+  pr*=(1.7-p.health/100);
+  return Math.random()<pr;
+}
+function kill(p){
+  p.alive=false; p.deathAge=p.age;
+  p.cause = p.age>=90 ? 'died peacefully in their sleep' : (p.health<=5 ? 'their body simply wore out' : pick(CAUSES));
+  addLog(p,'Died at '+p.age+' — '+p.cause+'.','bad');
+}
+function ageYear(p){
+  p.age++;
+  if(p.job){ p.money+=p.salary; p.yearsWorked++;
+    if(Math.random()<0.12){ var inc=Math.round(p.salary*0.07); p.salary+=inc; addLog(p,'Promoted. Salary rose to '+fmt(p.salary)+'.','good'); } }
+  if(p.annuity) p.money+=p.annuity;
+  if(p.age>=18){
+    var costs = p.age>=65 ? 9000+p.children*1000 : 11000+p.children*3000+(p.partnerStatus==='married'?4000:0);
+    p.money-=costs;
+  }
+  if(p.money>p.peakMoney) p.peakMoney=p.money;
+  if(p.age>50){
+    var dec=1+Math.floor((p.age-50)/12)+(p.health<40?1:0);
+    if(Math.random()<0.35) dec++;
+    p.health=clamp(p.health-dec);
+  } else if(p.age>=18 && Math.random()<0.25){
+    p.health=clamp(p.health+(Math.random()<0.5?-1:1));
+  }
+  if(p.money<0) p.happiness=clamp(p.happiness-3);
+  var st=stageOf(p.age);
+  if(st!==p.stage){ p.stage=st; addLog(p, STAGE_LINES[st], 'major'); }
+  if(p.age===5) addLog(p,'Started school, backpack bigger than they were.');
+  if(deathRoll(p)){ kill(p); return true; }
+  return false;
+}
+function rollEvents(p, pi){
+  if(state.noEvents || p.age<3) return;
+  var r=Math.random(), n = r<0.30?0 : (r<0.85?1:2);
+  for(var i=0;i<n;i++){
+    var pool=EVENTS.filter(function(ev){ return p.age>=ev.min && p.age<=ev.max && reqOk(p, ev.req) && ev.id!==p.lastEventId; });
+    if(!pool.length) break;
+    var ev=pick(pool); p.lastEventId=ev.id;
+    state.eventQueue.push({pi:pi, evId:ev.id, cross:false});
+  }
+}
+function pressAge(){
+  if(state.phase!=='playing'||state.paused||state.panel) return false;
+  var p=cur(); if(!p||!p.alive) return false;
+  var pi=state.turn;
+  var died=ageYear(p);
+  state.roundAged[pi]=true;
+  if(died){ onDeath(p, pi); syncUI(); return true; }
+  rollEvents(p, pi);
+  if(state.eventQueue.length) openNextPanel();
+  else afterYear();
+  syncUI();
+  return true;
+}
+function afterYear(){
+  if(state.mode!=='duel'){ state.ap=AP_PER_YEAR; return; }
+  var a=state.people[0], b=state.people[1];
+  var aDone=!a.alive||state.roundAged[0], bDone=!b.alive||state.roundAged[1];
+  if(aDone&&bDone){
+    if(!a.alive&&!b.alive){ showVerdict(); return; }
+    state.round++; state.roundAged={0:false,1:false};
+    /* crossover moment between rounds */
+    if(a.alive&&b.alive&&!state.noEvents&&Math.random()<0.4){
+      var pool=CROSSOVERS.filter(function(c){ return a.age>=c.min&&a.age<=c.max&&b.age>=c.min&&b.age<=c.max; });
+      if(pool.length){ var c=pick(pool); var chooser=state.round%2;
+        state.eventQueue.push({pi:chooser, crossId:c.id, cross:true});
+        openNextPanel(); state.ap=AP_PER_YEAR; return;
+      }
+    }
+    state.turn=a.alive?0:1; state.viewIdx=state.turn; state.ap=AP_PER_YEAR;
+    setMsg('Year '+state.round+' — '+(state.turn===0?a.name:b.name).split(' ')[0]+' to live.');
+  } else {
+    state.turn=state.roundAged[0]?(b.alive?1:0):0;
+    if(!state.people[state.turn].alive) state.turn=state.turn===0?1:0;
+    state.viewIdx=state.turn; state.ap=AP_PER_YEAR;
+    var np=cur(); setMsg(np.name.split(' ')[0]+' — your year. '+(state.turn===0?'Player 1.':'Player 2.'));
+  }
+}
+function onDeath(p, pi){
+  if(state.mode==='watch'){ finishWatch(p); showSummary(p, false); return; }
+  if(state.mode==='duel'){
+    var other=state.people[1-pi];
+    if(!other.alive){ showVerdict(); return; }
+    showSummary(p, true);
+    return;
+  }
+  state.phase='over';
+  showSummary(p, false);
+}
+function finishWatch(p){
+  state.phase='over';
+  var outcome = (p.deathAge>=80 || (p.deathAge>=70 && p.peakMoney>=200000)) ? 'win' : (p.deathAge<55 ? 'loss' : 'draw');
+  state.watchOutcome=outcome;
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  if(FE&&state.feAgent&&!state.watchRecorded){ /* E49: exactly-once guard — phase=over already blocks re-entry, this is the belt */
+    try{ FE.recordResult(state.feAgent,'lifepath',null,outcome,state.feTraceList); state.watchRecorded=true; }
+    catch(e){ state.watchRecorded=false; }
+  }
+}
+
+/* ---------- panels (events / jobs / crossover) ---------- */
+function openNextPanel(){
+  var item=state.eventQueue.shift();
+  if(!item) return false;
+  if(item.cross){ openCrossPanel(item); return true; }
+  var ev=eventById(item.evId); if(!ev) return openNextPanel();
+  var p=state.people[item.pi];
+  state.panel={kind:'event', pi:item.pi, evId:ev.id,
+    title:ev.title, text:ev.text, choices:ev.choices};
+  renderPanel(p);
+  return true;
+}
+function openCrossPanel(item){
+  var c=crossById(item.crossId); if(!c){ afterYear(); return; }
+  var a=state.people[0], b=state.people[1];
+  var text=c.text.split('{A}').join(a.name.split(' ')[0]).split('{B}').join(b.name.split(' ')[0]);
+  state.panel={kind:'crossover', pi:item.pi, crossId:c.id, title:c.title, text:text, choices:c.choices};
+  renderPanel(state.people[item.pi]);
+}
+function openJobPanel(p, changing){
+  var pi=state.people.indexOf(p);
+  var avail=JOBS.filter(function(j){ return p.smarts>=j.min; });
+  var choices=avail.map(function(j){
+    var sal=Math.round(j.base*(0.85+Math.random()*0.4)/100)*100;
+    return {label:j.title+' — '+fmt(sal)+'/yr', sub:'needs '+j.min+' smarts', jobId:j.id, salary:sal};
+  });
+  if(changing) choices.push({label:'Keep current job ('+p.job+')', sub:'no change', jobId:null});
+  if(!choices.length) choices.push({label:'No listings match yet — study first', sub:'', jobId:null});
+  state.panel={kind:'job', pi:pi, title:'THE LISTINGS', text:(changing?'A fresh start, or stay put?':'The job board. Smarts open doors — yours qualify for these:'), choices:choices};
+  renderPanel(p);
+}
+function renderPanel(p){
+  var card=$('eventCard'); if(!card||!state.panel) return;
+  $('evTitle').textContent=state.panel.title;
+  $('evWho').textContent=(state.mode==='duel'?(state.panel.pi===0?'PLAYER 1 · ':'PLAYER 2 · '):'')+p.name.toUpperCase()+' · AGE '+p.age;
+  $('evText').textContent=state.panel.text;
+  var box=$('evChoices'); box.innerHTML='';
+  state.focusItems=[];
+  state.panel.choices.forEach(function(ch, i){
+    var b=document.createElement('button');
+    b.className='evchoice'; b.textContent=ch.label;
+    if(ch.sub){ var s=document.createElement('small'); s.textContent=ch.sub; b.appendChild(s); }
+    (function(idx, btn){ btn.addEventListener('click', function(){ choose(idx); }); })(i, b);
+    box.appendChild(b);
+    state.focusItems.push({el:b, fn:(function(idx){ return function(){ choose(idx); }; })(i)});
+  });
+  state.focusIdx=0; markFocus();
+  card.style.display='block';
+}
+function closePanel(){
+  state.panel=null;
+  var card=$('eventCard'); if(card) card.style.display='none';
+  buildFocus();
+}
+function fxText(fx, extra){ var s=fxSummary(fx, extra); return s; }
+function choose(i){
+  if(!state.panel) return false;
+  var panel=state.panel, ch=panel.choices[i];
+  if(!ch) return false;
+  var p=state.people[panel.pi];
+  if(panel.kind==='job'){
+    if(ch.jobId){
+      var job=null; JOBS.forEach(function(j){ if(j.id===ch.jobId) job=j; });
+      p.job=job.title; p.salary=ch.salary;
+      addLog(p,'Took a job: '+job.title+' at '+fmt(ch.salary)+' a year.','major');
+      setMsg(p.name.split(' ')[0]+' is now a '+job.title+'.');
+    } else setMsg('No change — the search continues.');
+    closePanel(); syncUI(); return true;
+  }
+  if(panel.kind==='crossover'){
+    var other=state.people[1-panel.pi];
+    if(ch.fxBoth){ applyFx(p, ch.fxBoth); applyFx(other, ch.fxBoth); }
+    if(ch.fxChooser) applyFx(p, ch.fxChooser);
+    if(ch.fxOther) applyFx(other, ch.fxOther);
+    var line='Crossover: '+ch.label+'.';
+    addLog(p, line+' ('+fxText(ch.fxBoth||ch.fxChooser)+')', 'major');
+    addLog(other, line+' ('+fxText(ch.fxBoth||ch.fxOther)+')', 'major');
+    setMsg('The two lives intersect: '+ch.label.toLowerCase()+'.');
+    closePanel();
+    state.turn=state.people[0].alive?0:1; state.viewIdx=state.turn;
+    syncUI(); return true;
+  }
+  /* life event */
+  var extra='';
+  if(ch.gamble){
+    var stake=Math.min(ch.gamble.stake, Math.max(0,p.money));
+    p.money-=stake;
+    if(Math.random()<ch.gamble.chance){ p.money+=ch.gamble.win; if(p.money>p.peakMoney) p.peakMoney=p.money; extra='it paid off +'+fmt(ch.gamble.win); }
+    else extra='it did not pay off';
+  }
+  applyFx(p, ch.fx);
+  var sp=applySpecial(p, ch); if(sp) extra=(extra?extra+' · ':'')+sp;
+  var ev=eventById(panel.evId);
+  addLog(p,(ev?ev.title+': ':'')+ch.label+'.', (ch.fx&&(ch.fx.happiness<=-4||ch.fx.health<=-4))?'bad':'');
+  if(extra) addLog(p,'↳ '+extra+'.');
+  closePanel();
+  if(state.eventQueue.length) openNextPanel();
+  else afterYear();
+  syncUI();
+  return true;
+}
+
+/* ---------- summary + verdict ---------- */
+function summaryHTML(p){
+  var rel = p.partnerStatus==='single' ? 'never settled down' :
+    (p.partnerStatus==='married' ? 'married to '+p.partner : 'partnered with '+p.partner);
+  return '<p><b style="color:#fff">'+p.name+'</b> lived <b style="color:#ffd75e">'+(p.deathAge||p.age)+' years</b> — '+p.cause+'.</p>'
+    +'<table><tr><th>Peak net worth</th><td>'+fmt(p.peakMoney)+'</td></tr>'
+    +'<tr><th>Final money</th><td>'+fmt(p.money)+'</td></tr>'
+    +'<tr><th>Career</th><td>'+(p.job? p.job+' ('+p.yearsWorked+' yrs, '+fmt(p.salary)+'/yr)' : 'no settled career')+'</td></tr>'
+    +'<tr><th>Love</th><td>'+rel+'</td></tr>'
+    +'<tr><th>Children</th><td>'+p.children+'</td></tr>'
+    +'<tr><th>Final stats</th><td>HEA '+p.health+' · HAP '+p.happiness+' · SMA '+p.smarts+' · LOO '+p.looks+' · KAR '+p.karma+'</td></tr>'
+    +'<tr><th>Life score</th><td>'+lifeScore(p)+'</td></tr></table>';
+}
+function showSummary(p, midDuel){
+  state.summary={pi:state.people.indexOf(p), midDuel:!!midDuel};
+  var card=$('summaryCard'); if(!card) return;
+  $('sumTitle').textContent = state.mode==='watch' ? 'THE LIFE OF '+ (state.feAgentId||'A BOT') : 'A LIFE, LIVED';
+  $('sumWho').textContent=p.name.toUpperCase()+' · '+(p.deathAge||p.age)+' YEARS';
+  $('sumBody').innerHTML=summaryHTML(p)
+    +(state.mode==='watch'?'<p>Engine verdict: <b style="color:#00ff88">'+(state.watchOutcome||'—').toUpperCase()+'</b> · '+state.feTraces+' decisions traced'+(state.watchRecorded?' · recorded to the league':'')+(state.watchFallback?' · (engine offline — stand-in heuristics)':'')+'</p>':'')
+    +(midDuel?'<p style="color:#ffd75e">One life ends. The other plays on — the verdict comes when both stories close.</p>':'');
+  var box=$('sumBtns'); box.innerHTML=''; state.focusItems=[];
+  function addBtn(label, fn){
+    var b=document.createElement('button'); b.className='sumbtn'; b.textContent=label;
+    b.addEventListener('click', fn); box.appendChild(b);
+    state.focusItems.push({el:b, fn:fn});
+  }
+  if(midDuel) addBtn('Continue — the other life goes on', function(){ dismissSummary(); });
+  else if(state.mode==='watch') addBtn('👁 Watch another life', function(){ hideSummary(); startGame('watch'); });
+  else addBtn('🌱 New Life', function(){ hideSummary(); startGame('solo'); });
+  if(state.mode!=='watch'&&!midDuel) addBtn('⚔ Duel Lives', function(){ hideSummary(); startGame('duel'); });
+  state.focusIdx=0; markFocus();
+  card.style.display='block';
+}
+function hideSummary(){ state.summary=null; var c=$('summaryCard'); if(c) c.style.display='none'; buildFocus(); }
+function dismissSummary(){
+  hideSummary();
+  state.roundAged[state.turn]=true;
+  afterYear(); syncUI();
+}
+function showVerdict(){
+  state.phase='verdict';
+  var a=state.people[0], b=state.people[1];
+  state.summary={verdict:true};
+  var card=$('summaryCard'); if(!card) return;
+  $('sumTitle').textContent='DUEL LIVES — THE VERDICT';
+  $('sumWho').textContent=a.name.toUpperCase()+' vs '+b.name.toUpperCase();
+  function row(label, va, vb, cmp){
+    var wa=cmp>0, wb=cmp<0;
+    return '<tr><th>'+label+'</th><td class="'+(wa?'win':'')+'">'+va+'</td><td class="'+(wb?'win':'')+'">'+vb+'</td></tr>';
+  }
+  var famA=(a.partnerStatus==='married'?2:a.partnerStatus==='dating'?1:0)+a.children;
+  var famB=(b.partnerStatus==='married'?2:b.partnerStatus==='dating'?1:0)+b.children;
+  var winsA=0, winsB=0;
+  [[a.deathAge-b.deathAge],[a.peakMoney-b.peakMoney],[a.happiness-b.happiness],[famA-famB]].forEach(function(d){ if(d[0]>0)winsA++; else if(d[0]<0)winsB++; });
+  var overall = winsA!==winsB ? (winsA>winsB?a:b) : (lifeScore(a)>=lifeScore(b)?a:b);
+  $('sumBody').innerHTML='<table><tr><th></th><th>'+a.name.split(' ')[0]+' (P1)</th><th>'+b.name.split(' ')[0]+' (P2)</th></tr>'
+    +row('Lifespan', a.deathAge+' yrs', b.deathAge+' yrs', a.deathAge-b.deathAge)
+    +row('Peak net worth', fmt(a.peakMoney), fmt(b.peakMoney), a.peakMoney-b.peakMoney)
+    +row('Final happiness', a.happiness, b.happiness, a.happiness-b.happiness)
+    +row('Family', (a.partnerStatus==='married'?'married':a.partnerStatus)+' · '+a.children+' kids', (b.partnerStatus==='married'?'married':b.partnerStatus)+' · '+b.children+' kids', famA-famB)
+    +row('Life score', lifeScore(a), lifeScore(b), lifeScore(a)-lifeScore(b))
+    +'</table><p style="font-size:17px">🏆 <b style="color:#ffd75e">'+overall.name+'</b> takes the duel — '+winsA+' categories to '+winsB+', life score '+lifeScore(overall)+'.</p>'
+    +'<p>'+a.name+': '+a.cause+', aged '+a.deathAge+'.<br/>'+b.name+': '+b.cause+', aged '+b.deathAge+'.</p>';
+  var box=$('sumBtns'); box.innerHTML=''; state.focusItems=[];
+  var b1=document.createElement('button'); b1.className='sumbtn'; b1.textContent='⚔ Duel again';
+  b1.addEventListener('click', function(){ hideSummary(); startGame('duel'); });
+  box.appendChild(b1); state.focusItems.push({el:b1, fn:function(){ hideSummary(); startGame('duel'); }});
+  var b2=document.createElement('button'); b2.className='sumbtn'; b2.textContent='🌱 Solo life';
+  b2.addEventListener('click', function(){ hideSummary(); startGame('solo'); });
+  box.appendChild(b2); state.focusItems.push({el:b2, fn:function(){ hideSummary(); startGame('solo'); }});
+  state.focusIdx=0; markFocus();
+  card.style.display='block';
+}
+
+/* ---------- WATCH bot (Fallible Engine) ---------- */
+function actionScore(p, a){
+  switch(a.key){
+    case 'study': return (100-p.smarts)/100;
+    case 'workout': return (100-p.health)/100;
+    case 'socialise': return (100-p.happiness)/100;
+    case 'meditate': return ((100-p.happiness)+(100-p.health))/220;
+    case 'hustle': return p.money<1500?0.85:0.35;
+    case 'job': return 1.0;
+    case 'changejob': return 0.3;
+    case 'raise': return 0.5;
+    case 'invest': return p.money>2000?0.55:0.3;
+    case 'date': return 0.65;
+    case 'propose': return 0.6;
+    case 'child': return p.children<3?0.45:0.1;
+  }
+  return 0.4;
+}
+function feDecide(opts, fallbackScore){
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  if(FE&&state.feAgent&&opts.length){
+    try{
+      var res=FE.decide(state.feAgent,'lifepath',opts,{timePressure:0});
+      state.feTraces++; state.feTraceList.push(res.trace);
+      for(var i=0;i<opts.length;i++) if(opts[i].key===res.pick.key) return i;
+    }catch(e){}
+  }
+  var best=0, bs=-1e9;
+  opts.forEach(function(o,i){ var s=(fallbackScore?fallbackScore(o):o.score)+(Math.random()-0.5)*0.35; if(s>bs){ bs=s; best=i; } });
+  return best;
+}
+function watchStep(){
+  if(state.phase!=='playing'||state.paused) return;
+  var p=cur(); if(!p||!p.alive) return;
+  if(state.panel){
+    if(state.panel.kind==='job'){
+      var bi=0, bs=-1;
+      state.panel.choices.forEach(function(c,i){ var s=c.jobId?c.salary:-1; if(s>bs){ bs=s; bi=i; } });
+      choose(bi); return;
+    }
+    var opts=state.panel.choices.map(function(c,i){
+      var s=0.4; if(c.fx){ if(c.fx.happiness) s+=c.fx.happiness/20; if(c.fx.health) s+=c.fx.health/20; if(c.fx.smarts) s+=c.fx.smarts/20; if(c.fx.money) s+=c.fx.money/4000; if(c.fx.karma) s+=c.fx.karma/25; }
+      if(c.gamble) s+=c.gamble.chance*0.4;
+      return {key:'c'+i, score:s, tag:(eventById(state.panel.evId)||{}).tag||'life'};
+    });
+    choose(feDecide(opts)); return;
+  }
+  if(state.ap>0){
+    var avail=ACTIONS.filter(function(a){ return a.can(p); });
+    if(avail.length){
+      var opts2=avail.map(function(a){ return {key:a.key, score:actionScore(p,a), tag:a.tag}; });
+      var idx=feDecide(opts2);
+      doAction(avail[idx].key); return;
+    }
+  }
+  pressAge();
+}
+
+/* ---------- save / load ---------- */
+function saveState(){
+  try{
+    /* E49: land unflushed engine traces before the save — engine persist()
+       is throttled (every 200 traces), so a mid-life save would otherwise
+       lose the pre-save traces from the engine store. */
+    var FE0=(typeof window!=='undefined')?window.FallibleEngine:null;
+    if(FE0&&FE0.flush){ try{ FE0.flush(); }catch(e){} }
+    var data={mode:state.mode, turn:state.turn, round:state.round, roundAged:state.roundAged,
+      ap:state.ap, feAgentId:state.feAgentId, feTraces:state.feTraces,
+      people:state.people, eventQueue:state.eventQueue,
+      /* E49: the rotation cursor lives in its own key (lifepath.watchIdx), but
+         the trace list + finished-life flags ride in the save, so a resumed
+         life records its FULL decide count and a finished life stays over. */
+      feTraceList:state.feTraceList, phase:state.phase,
+      watchOutcome:state.watchOutcome, watchRecorded:state.watchRecorded};
+    localStorage.setItem('lifepath.save', JSON.stringify(data));
+    setMsg('Life saved — '+(state.people[0]?state.people[0].name:'')+', age '+(state.people[0]?state.people[0].age:0)+'.');
+    return true;
+  }catch(e){ setMsg('Save failed in this browser.'); return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('lifepath.save'); if(!raw){ setMsg('No saved life yet.'); return false; }
+    var d=JSON.parse(raw);
+    var keepFast=state.fast;
+    state=freshState(); state.fast=keepFast;
+    state.watchIdx=watchIdxPersisted; /* E49: seed the rotation from the persisted cursor */
+    state.mode=d.mode||'solo';
+    /* E49: a finished save restores as over (old saves have no phase key and
+       fall through to the previous playing behaviour). */
+    state.phase=(d.phase==='over')?'over':'playing';
+    state.watchOutcome=(typeof d.watchOutcome!=='undefined')?d.watchOutcome:null;
+    state.watchRecorded=!!d.watchRecorded;
+    state.turn=d.turn||0; state.viewIdx=state.turn; state.round=d.round||1;
+    state.roundAged=d.roundAged||{}; state.ap=(typeof d.ap==='number')?d.ap:AP_PER_YEAR;
+    state.people=d.people||[]; state.eventQueue=d.eventQueue||[];
+    /* E49: restore the trace LIST, not just the count — the finished life's
+       record must carry its full decide count, and E8 learns from the full
+       list. Old saves have no list; the count alone survives for them. */
+    state.feTraceList=Array.isArray(d.feTraceList)?d.feTraceList.slice():[];
+    state.feTraces=state.feTraceList.length||(d.feTraces||0);
+    state.feAgentId=d.feAgentId||null;
+    if(state.mode==='watch'&&state.feAgentId){
+      var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+      if(FE){ try{ state.feAgent=FE.loadAgent(state.feAgentId); }catch(e){ state.feAgent=null; } }
+      if(!state.feAgent) state.watchFallback=true;
+    }
+    for(var i=0;i<46;i++) state.motes.push({x:Math.random()*W,y:Math.random()*H,r:0.8+Math.random()*1.8,sp:0.12+Math.random()*0.35,tw:Math.random()*6.28});
+    hideSummary(); closePanel();
+    if(state.phase==='playing'&&state.eventQueue.length) openNextPanel(); /* E49: never re-open a panel on a finished life */
+    setMsg('Life loaded — '+(state.people[0]?state.people[0].name:'')+', age '+(state.people[0]?state.people[0].age:0)+'.');
+    syncUI(); renderLog();
+    return true;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+function togglePause(){
+  if(state.phase==='title') return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+  setMsg(state.paused?'Paused — the life waits.':'Back to the life.');
+}
+
+/* ---------- UI sync ---------- */
+var BAR_DEFS=[
+  {key:'health', label:'HEALTH', cls:''},
+  {key:'happiness', label:'HAPPINESS', cls:'gold'},
+  {key:'smarts', label:'SMARTS', cls:'cyan'},
+  {key:'looks', label:'LOOKS', cls:'violet'},
+  {key:'karma', label:'KARMA', cls:'red'}
+];
+function buildBars(){
+  var box=$('bars'); if(!box||box.children.length) return;
+  BAR_DEFS.forEach(function(bd){
+    var d=document.createElement('div'); d.className='bar';
+    d.innerHTML='<label>'+bd.label+' <b id="bv-'+bd.key+'">0</b></label><div class="track"><div class="fill '+bd.cls+'" id="bf-'+bd.key+'" style="width:50%"></div></div>';
+    box.appendChild(d);
+  });
+}
+function syncUI(){
+  buildBars();
+  var p=viewPerson(); if(!p) return;
+  var nm=$('hudName'); if(nm){ nm.textContent=p.name; nm.style.color=p.hue; }
+  var meta=$('hudMeta');
+  if(meta) meta.textContent='AGE '+p.age+' · '+p.stage.toUpperCase()+(p.job?' · '+p.job.toUpperCase():'')+(p.partnerStatus!=='single'?' · '+(p.partnerStatus==='married'?'MARRIED TO ':'WITH ')+p.partner.toUpperCase():'')+(p.children?' · '+p.children+' KID'+(p.children>1?'S':''):'')+(!p.alive?' · DEAD AT '+p.deathAge:'');
+  var mon=$('hudMoney'); if(mon){ mon.textContent=fmt(p.money); mon.style.color=p.money<0?'#ff3860':'#ffd75e'; }
+  BAR_DEFS.forEach(function(bd){
+    var f=$('bf-'+bd.key), v=$('bv-'+bd.key);
+    if(f) f.style.width=p[bd.key]+'%';
+    if(v) v.textContent=p[bd.key];
+  });
+  var tl=$('turnLine');
+  if(tl){
+    if(state.mode==='duel'&&state.phase!=='verdict') tl.textContent=(state.turn===0?'▶ PLAYER 1':'▶ PLAYER 2')+' — '+cur().name.split(' ')[0]+' · ROUND '+state.round+' · '+state.ap+' ACTION'+(state.ap===1?'':'S')+' LEFT · viewing '+(state.viewIdx===0?'P1':'P2');
+    else if(state.mode==='watch') tl.textContent='👁 WATCH — '+(state.feAgentId||'STAND-IN')+' living · '+state.feTraces+' decisions traced · '+state.ap+' actions left';
+    else tl.textContent='YEAR · AGE '+p.age+' · '+state.ap+' ACTION'+(state.ap===1?'':'S')+' LEFT THIS YEAR';
+  }
+  renderActions();
+  buildFocus();
+}
+function renderActions(){
+  var box=$('actions'); if(!box) return;
+  box.innerHTML='';
+  if(state.phase!=='playing'||state.panel||state.summary){ return; }
+  var p=cur(); if(!p||!p.alive||state.mode==='watch') return;
+  ACTIONS.forEach(function(a){
+    if(!a.can(p)) return;
+    var b=document.createElement('button');
+    b.className='abtn'; b.textContent=a.label;
+    var s=document.createElement('small'); s.textContent=a.sub; b.appendChild(s);
+    if(state.ap<=0) b.disabled=true;
+    (function(key, btn){ btn.addEventListener('click', function(){ doAction(key); }); })(a.key, b);
+    box.appendChild(b);
+  });
+}
+function renderLog(){
+  var el=$('lifeLog'); if(!el) return;
+  var p=viewPerson(); if(!p){ el.innerHTML=''; return; }
+  var lt=$('logTitle'); if(lt) lt.textContent='LIFE LOG — '+p.name.toUpperCase()+(state.mode==='duel'?' · PLAYER '+(state.viewIdx+1):'');
+  var html='', lastAge=-1;
+  p.log.forEach(function(e){
+    if(e.age!==lastAge){ html+='<div class="yr">— AGE '+e.age+' —</div>'; lastAge=e.age; }
+    html+='<div class="ent '+e.cls+'">'+e.text+'</div>';
+  });
+  el.innerHTML=html||'<div class="ent">A blank page. For now.</div>';
+  el.scrollTop=el.scrollHeight||0;
+}
+
+/* ---------- focus (shell D-pad / keyboard) ---------- */
+function buildFocus(){
+  if(state.panel||state.summary) return; /* panel builders own the focus list */
+  state.focusItems=[];
+  var ageBtn=$('btnAge');
+  var p=cur();
+  if(ageBtn&&state.phase==='playing'&&p&&p.alive&&state.mode!=='watch')
+    state.focusItems.push({el:ageBtn, fn:function(){ pressAge(); }});
+  var box=$('actions');
+  if(box&&box.children) for(var i=0;i<box.children.length;i++){
+    (function(btn){ if(!btn.disabled) state.focusItems.push({el:btn, fn:function(){ btn.click ? btn.click() : null; }}); })(box.children[i]);
+  }
+  if(state.focusIdx>=state.focusItems.length) state.focusIdx=0;
+  markFocus();
+}
+function markFocus(){
+  state.focusItems.forEach(function(f,i){ if(f.el&&f.el.classList) f.el.classList.toggle('focused', i===state.focusIdx); });
+}
+function moveFocus(d){
+  if(!state.focusItems.length) return;
+  state.focusIdx=(state.focusIdx+d+state.focusItems.length)%state.focusItems.length;
+  markFocus();
+}
+function activateFocus(){
+  var f=state.focusItems[state.focusIdx];
+  if(f&&f.fn) f.fn();
+}
+
+/* ---------- input ---------- */
+function debugKey(code, down){
+  if(!down) return;
+  if(code==='KeyP'){ togglePause(); return; }
+  if(state.paused) return;
+  if(code==='ArrowLeft'||code==='ArrowUp'){ moveFocus(-1); return; }
+  if(code==='ArrowRight'||code==='ArrowDown'){ moveFocus(1); return; }
+  if(code==='Enter'||code==='Space'){ activateFocus(); return; }
+  if(code==='KeyA'){ if(state.mode!=='watch') pressAge(); return; }
+}
+if(typeof document!=='undefined'&&document.addEventListener){
+  document.addEventListener('keydown', function(e){
+    if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code)>=0) e.preventDefault();
+    debugKey(e.code, true);
+  });
+}
+function bindBtn(id, fn){ var b=$(id); if(b&&b.addEventListener) b.addEventListener('click', fn); }
+bindBtn('btnAge', function(){ pressAge(); });
+bindBtn('btnPause', function(){ togglePause(); });
+bindBtn('btnSolo', function(){ hideSummary(); startGame('solo'); });
+bindBtn('btnWatch', function(){ hideSummary(); startGame('watch'); });
+bindBtn('btnDuel', function(){ hideSummary(); startGame('duel'); });
+bindBtn('resumeBtn', function(){ togglePause(); });
+bindBtn('saveBtn', function(){ saveState(); });
+bindBtn('loadBtn', function(){ if(state.paused) togglePause(); loadState(); });
+bindBtn('restartBtn', function(){ if(state.paused) togglePause(); hideSummary(); startGame(state.mode); });
+bindBtn('quitArcadeBtn', function(){ location.href='../arcade.html'; });
+bindBtn('startBtn', function(){ togglePause(); });
+bindBtn('selectBtn', function(){ if(state.mode==='duel'){ state.viewIdx=state.viewIdx===0?1:0; syncUI(); renderLog(); } });
+bindBtn('btnA', function(){ activateFocus(); });
+bindBtn('btnB', function(){ if(state.mode!=='watch') pressAge(); });
+if(typeof document!=='undefined'&&document.querySelectorAll){
+  var dp=document.querySelectorAll('.dpad button[data-k]');
+  for(var di=0;di<dp.length;di++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        var k=btn.getAttribute('data-k');
+        if(k==='left'||k==='up') moveFocus(-1);
+        if(k==='right'||k==='down'||k==='down2') moveFocus(1);
+      });
+    })(dp[di]);
+  }
+}
+if(q.get('touch')==='1'||(typeof window!=='undefined'&&'ontouchstart' in window)) document.body.classList.add('touch');
+
+/* ---------- render ---------- */
+function shade(hex, f){
+  var n=parseInt(hex.slice(1),16);
+  var r=Math.min(255,Math.max(0,Math.round(((n>>16)&255)*f)));
+  var g=Math.min(255,Math.max(0,Math.round(((n>>8)&255)*f)));
+  var b=Math.min(255,Math.max(0,Math.round((n&255)*f)));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function rr(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function skyGrad(top, mid, bot){
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,top); g.addColorStop(0.62,mid); g.addColorStop(1,bot);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+}
+function drawMotes(){
+  state.motes.forEach(function(m){
+    ctx.globalAlpha=0.25+0.2*Math.sin(state.frame*0.02+m.tw);
+    ctx.fillStyle='#aef7d2'; ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,6.29); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+function drawTree(x, gy, s, leaf){
+  ctx.fillStyle='#3a2a1c'; ctx.fillRect(x-7*s, gy-64*s, 14*s, 64*s);
+  ctx.fillStyle=leaf;
+  [[0,-92],[ -30,-70],[30,-70],[-16,-104],[18,-104]].forEach(function(o){
+    ctx.beginPath(); ctx.arc(x+o[0]*s, gy+o[1]*s, 30*s, 0, 6.29); ctx.fill();
+  });
+  ctx.strokeStyle='rgba(0,255,136,.35)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(x, gy-88*s, 46*s, 3.4, 5.6); ctx.stroke();
+}
+function drawBackdrop(stage){
+  if(stage==='infant'){
+    skyGrad('#16283d','#101c2c','#0a141f');
+    ctx.fillStyle='#0d1a26'; ctx.fillRect(0,430,W,170);
+    ctx.fillStyle='rgba(255,215,94,.10)'; ctx.beginPath(); ctx.ellipse(480,520,330,44,0,0,6.29); ctx.fill();
+    /* window + moon */
+    ctx.fillStyle='#081120'; rr(700,70,180,210,8); ctx.fill();
+    ctx.strokeStyle='rgba(53,224,255,.4)'; ctx.lineWidth=3; rr(700,70,180,210,8); ctx.stroke();
+    ctx.fillStyle='#ffe9a8'; ctx.beginPath(); ctx.arc(812,128,26,0,6.29); ctx.fill();
+    ctx.fillStyle='#16283d'; ctx.beginPath(); ctx.arc(824,120,22,0,6.29); ctx.fill();
+    ctx.fillStyle='#cfe8ff';
+    [[730,90],[760,210],[850,240],[720,160]].forEach(function(s){ ctx.fillRect(s[0],s[1],3,3); });
+    /* wall panels + hanging mobile */
+    ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.lineWidth=2;
+    for(var i=0;i<5;i++){ ctx.strokeRect(40+i*130,60,100,300); }
+    ctx.strokeStyle='rgba(255,215,94,.55)'; ctx.beginPath(); ctx.moveTo(480,36); ctx.lineTo(480,84); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(408,84); ctx.lineTo(552,84); ctx.stroke();
+    [['#ff3860',408],['#35e0ff',480],['#ffd75e',552]].forEach(function(o){
+      ctx.beginPath(); ctx.moveTo(o[1],84); ctx.lineTo(o[1],112); ctx.stroke();
+      ctx.fillStyle=o[0]; ctx.beginPath(); ctx.arc(o[1],124,11,0,6.29); ctx.fill();
+    });
+    /* toy blocks */
+    ctx.fillStyle='#ff3860'; ctx.fillRect(120,486,30,30); ctx.fillStyle='#35e0ff'; ctx.fillRect(156,492,24,24);
+    ctx.fillStyle='#ffd75e'; ctx.fillRect(134,458,26,26);
+  } else if(stage==='child'||stage==='teen'){
+    var dusk=stage==='teen';
+    skyGrad(dusk?'#241a4d':'#1d3a5f', dusk?'#4a2358':'#2c5a7a', dusk?'#7a3550':'#3d7a5c');
+    ctx.fillStyle=dusk?'#ffb35c':'#ffe9a8'; ctx.beginPath(); ctx.arc(dusk?830:120, dusk?96:92, dusk?30:38, 0, 6.29); ctx.fill();
+    ctx.fillStyle='rgba(255,233,168,.18)'; ctx.beginPath(); ctx.arc(dusk?830:120, dusk?96:92, (dusk?30:38)*1.9, 0, 6.29); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.75)';
+    [[300,70,54],[380,86,36],[620,60,44]].forEach(function(c){ ctx.beginPath(); ctx.ellipse(c[0],c[1],c[2],13,0,0,6.29); ctx.fill(); });
+    /* school building */
+    ctx.fillStyle=dusk?'#2c2140':'#3d3358'; ctx.fillRect(90,220,330,220);
+    ctx.fillStyle=dusk?'#1c1530':'#2a2144'; ctx.beginPath(); ctx.moveTo(74,220); ctx.lineTo(255,158); ctx.lineTo(436,220); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#ffd75e';
+    for(var r2=0;r2<3;r2++) for(var c2=0;c2<4;c2++){ ctx.globalAlpha=0.55+0.3*Math.sin(state.frame*0.03+r2*2+c2); ctx.fillRect(116+c2*74, 244+r2*56, 40, 32); }
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#120c22'; ctx.fillRect(228,352,54,88);
+    ctx.fillStyle='#ff3860'; ctx.fillRect(252,158,4,44);
+    ctx.beginPath(); ctx.moveTo(256,158); ctx.lineTo(292,168); ctx.lineTo(256,178); ctx.closePath(); ctx.fill();
+    /* ground + fence + tree */
+    ctx.fillStyle=dusk?'#14231c':'#173527'; ctx.fillRect(0,440,W,160);
+    ctx.strokeStyle='rgba(255,255,255,.20)'; ctx.lineWidth=3;
+    for(var f2=0;f2<12;f2++){ ctx.beginPath(); ctx.moveTo(20+f2*82,440); ctx.lineTo(20+f2*82,416); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(0,428); ctx.lineTo(W,428); ctx.stroke();
+    drawTree(806, 452, 1.05, dusk?'#1d4030':'#256b45');
+    if(dusk){ ctx.fillStyle='rgba(255,179,92,.16)'; ctx.beginPath(); ctx.ellipse(640,470,120,26,0,0,6.29); ctx.fill();
+      ctx.fillStyle='#0f0c1e'; ctx.beginPath(); ctx.moveTo(560,486); ctx.lineTo(720,486); ctx.lineTo(748,452); ctx.lineTo(588,452); ctx.closePath(); ctx.fill(); }
+  } else if(stage==='adult'){
+    skyGrad('#131c2e','#0e1624','#0a1018');
+    /* window wall with skyline */
+    ctx.fillStyle='#0a1420'; rr(90,56,780,360,10); ctx.fill();
+    var wg=ctx.createLinearGradient(0,56,0,416); wg.addColorStop(0,'#274a6b'); wg.addColorStop(1,'#16283d');
+    ctx.fillStyle=wg; rr(104,70,752,332,8); ctx.fill();
+    ctx.fillStyle='#0b1626';
+    var bx=120; var seed=7;
+    while(bx<830){ var bw=34+((seed*37)%40), bh=90+((seed*53)%170);
+      ctx.fillRect(bx, 402-bh, bw, bh);
+      ctx.fillStyle='#ffd75e';
+      for(var wy=402-bh+10; wy<392; wy+=16) for(var wx=bx+5; wx<bx+bw-6; wx+=11){ if(((wx*wy+seed)%7)<3){ ctx.globalAlpha=0.75; ctx.fillRect(wx,wy,5,7); } }
+      ctx.globalAlpha=1; ctx.fillStyle='#0b1626'; bx+=bw+12; seed+=3; }
+    ctx.strokeStyle='rgba(53,224,255,.35)'; ctx.lineWidth=3; rr(104,70,752,332,8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(480,70); ctx.lineTo(480,402); ctx.stroke();
+    /* floor + desk */
+    ctx.fillStyle='#0d1420'; ctx.fillRect(0,416,W,184);
+    ctx.fillStyle='rgba(0,255,136,.06)'; ctx.fillRect(0,416,W,4);
+    ctx.fillStyle='#1a2436'; rr(300,442,360,20,4); ctx.fill(); ctx.fillRect(316,462,16,66); ctx.fillRect(628,462,16,66);
+    ctx.fillStyle='#0a0f18'; rr(428,398,104,48,4); ctx.fill();
+    ctx.strokeStyle='rgba(0,255,136,.6)'; ctx.lineWidth=2; rr(428,398,104,48,4); ctx.stroke();
+    ctx.strokeStyle='#00ff88'; ctx.beginPath(); ctx.moveTo(440,432); ctx.lineTo(462,420); ctx.lineTo(480,426); ctx.lineTo(504,408); ctx.lineTo(520,414); ctx.stroke();
+    /* plant */
+    ctx.fillStyle='#5a3a22'; ctx.fillRect(742,470,34,40);
+    ctx.strokeStyle='#2f9e5f'; ctx.lineWidth=4;
+    [[758,470,738,428],[758,470,758,420],[758,470,780,432]].forEach(function(l){ ctx.beginPath(); ctx.moveTo(l[0],l[1]); ctx.lineTo(l[2],l[3]); ctx.stroke(); });
+  } else { /* elder — garden */
+    skyGrad('#274b3a','#1d3a30','#12241c');
+    ctx.fillStyle='#ffe9a8'; ctx.beginPath(); ctx.arc(140,90,34,0,6.29); ctx.fill();
+    ctx.fillStyle='rgba(255,233,168,.16)'; ctx.beginPath(); ctx.arc(140,90,64,0,6.29); ctx.fill();
+    ctx.fillStyle='#1c4630'; ctx.beginPath(); ctx.ellipse(240,470,340,80,0,Math.PI,0); ctx.fill();
+    ctx.fillStyle='#256b45'; ctx.beginPath(); ctx.ellipse(760,486,380,84,0,Math.PI,0); ctx.fill();
+    ctx.fillStyle='#173527'; ctx.fillRect(0,486,W,114);
+    drawTree(150, 470, 1.25, '#2c7a4b');
+    /* bench */
+    ctx.fillStyle='#4a3220'; ctx.fillRect(620,452,190,12); ctx.fillRect(620,428,190,10);
+    ctx.fillRect(636,464,10,34); ctx.fillRect(784,464,10,34);
+    /* flowers */
+    var cols=['#ff3860','#ffd75e','#ff6ec7','#35e0ff'];
+    for(var i2=0;i2<26;i2++){ var fx2=(i2*173)%920+20, fy2=516+((i2*97)%64);
+      ctx.fillStyle=cols[i2%4]; ctx.beginPath(); ctx.arc(fx2,fy2,4,0,6.29); ctx.fill();
+      ctx.strokeStyle='rgba(47,158,95,.7)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(fx2,fy2+4); ctx.lineTo(fx2,fy2+12); ctx.stroke(); }
+    /* birds */
+    ctx.strokeStyle='rgba(255,255,255,.65)'; ctx.lineWidth=2;
+    [[640,110],[700,84],[760,124]].forEach(function(b2){ ctx.beginPath(); ctx.arc(b2[0]-8,b2[1],8,3.4,5.9); ctx.stroke(); ctx.beginPath(); ctx.arc(b2[0]+8,b2[1],8,3.4,5.9); ctx.stroke(); });
+  }
+}
+function hairColor(p){
+  if(p.age<30) return '#2b2019';
+  if(p.age<50) return '#4a4038';
+  if(p.age<65) return '#8a8578';
+  return '#e8e6df';
+}
+function kidGender(p, k){ return ((nameHash(p&&p.name?p.name:'')+k*7)%2===0)?'f':'m'; }
+function drawFigure(p, cx, gy, s, isPartner){
+  var hue=p._hue||(isPartner?'#b78cff':p.hue);
+  var skin=p.skin;
+  var st=figureStyle(p);
+  var fem=(st.gender==='f');
+  var dress=fem&&st.outfit==='dress';
+  var stoop=p.age>=65?0.10:0;
+  var hc=hairColor(p);
+  var shW=fem?17:21;               /* shoulder half-width — women narrower */
+  var hemW=dress?26:(fem?13:21);   /* hem half-width — skirt flare / tapered waist */
+  function bodyPath(){
+    if(fem){
+      ctx.beginPath();
+      ctx.moveTo(-shW,-118); ctx.lineTo(shW,-118);
+      ctx.lineTo(12,-86); ctx.lineTo(hemW,-50); ctx.lineTo(-hemW,-50); ctx.lineTo(-12,-86);
+      ctx.closePath();
+    } else rr(-21,-118,42,66,12);
+  }
+  ctx.save();
+  ctx.translate(cx, gy);
+  ctx.scale(s, s);
+  if(stoop) ctx.rotate(0.03);
+  /* long / ponytailed hair falls behind the body */
+  if(st.hair==='long'){ ctx.fillStyle=hc; rr(-24,-160,48,94,17); ctx.fill(); }
+  if(st.hair==='ponytail'){ ctx.fillStyle=hc;
+    ctx.beginPath(); ctx.moveTo(9,-157); ctx.quadraticCurveTo(31,-140,25,-97);
+    ctx.quadraticCurveTo(18,-92,15,-110); ctx.quadraticCurveTo(12,-138,3,-149);
+    ctx.closePath(); ctx.fill(); }
+  /* rim-light silhouette pass */
+  ctx.save();
+  ctx.shadowColor=hue; ctx.shadowBlur=20;
+  ctx.fillStyle=shade(hue,0.9);
+  bodyPath(); ctx.fill();
+  ctx.beginPath(); ctx.arc(0,-136,21,0,6.29); ctx.fill();
+  ctx.restore();
+  /* legs — a dress shows legs + heeled shoes; pants outfits get legs + shoes */
+  if(dress){
+    ctx.fillStyle=skin;
+    ctx.fillRect(-13,-50,9,46); ctx.fillRect(4,-50,9,46);
+    ctx.fillStyle='#2a1420';
+    ctx.fillRect(-15,-5,13,5); ctx.fillRect(3,-5,13,5);
+  } else {
+    ctx.fillStyle='#141a28';
+    if(fem){ ctx.fillRect(-14,-54,11,54); ctx.fillRect(3,-54,11,54); }
+    else { ctx.fillRect(-17,-54,13,54); ctx.fillRect(4,-54,13,54); }
+    ctx.fillStyle='#0a0e16';
+    if(fem){ ctx.fillRect(-16,-4,15,5); ctx.fillRect(2,-4,15,5); }
+    else { ctx.fillRect(-19,-4,17,5); ctx.fillRect(3,-4,17,5); }
+  }
+  /* SPRITE STACK (finishing pass 2026-11-22): body slices stepping down
+     in dark shades — figures stand as stacked forms with real depth
+     under the gradient torso. */
+  for(var k=3;k>=1;k--){
+    ctx.save(); ctx.translate(0, k*2.6);
+    ctx.fillStyle='rgba(5,6,12,'+(0.3+k*0.15)+')';
+    bodyPath(); ctx.fill();
+    ctx.restore();
+  }
+  /* torso with gradient shading */
+  var tg=ctx.createLinearGradient(-21,0,21,0);
+  tg.addColorStop(0, shade(hue,0.55)); tg.addColorStop(0.45, hue); tg.addColorStop(1, shade(hue,0.6));
+  ctx.fillStyle=tg; bodyPath(); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.5; bodyPath(); ctx.stroke();
+  /* elder shawl over the shoulders */
+  if(st.shawl){
+    ctx.fillStyle=shade(hue,0.35);
+    ctx.beginPath(); ctx.moveTo(-shW-3,-118); ctx.lineTo(shW+3,-118); ctx.lineTo(13,-84);
+    ctx.lineTo(0,-95); ctx.lineTo(-13,-84); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1.2; ctx.stroke();
+  }
+  /* arms — slimmer for women */
+  ctx.fillStyle=shade(hue,0.7);
+  if(fem){ rr(-26,-114,8,50,4); ctx.fill(); rr(18,-114,8,50,4); ctx.fill(); }
+  else { rr(-30,-114,10,52,5); ctx.fill(); rr(20,-114,10,52,5); ctx.fill(); }
+  /* elder cane */
+  if(p.age>=65){ ctx.strokeStyle='#8a6a3c'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(26,-66); ctx.lineTo(34,0); ctx.stroke(); }
+  /* head — women get a slightly narrower, softer jaw */
+  ctx.fillStyle=skin;
+  ctx.beginPath();
+  if(fem) ctx.ellipse(0,-136,19.5,21,0,0,6.29); else ctx.arc(0,-136,21,0,6.29);
+  ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.13)'; ctx.beginPath(); ctx.arc(5,-131,17,0.3,2.2); ctx.fill();
+  /* beard (men) — a jaw crescent, drawn before the mouth */
+  if(st.beard){
+    ctx.fillStyle=hc;
+    ctx.beginPath();
+    ctx.arc(0,-136,20,Math.PI*0.12,Math.PI*0.88);
+    ctx.arc(0,-136,14.5,Math.PI*0.88,Math.PI*0.12,true);
+    ctx.closePath(); ctx.fill();
+  }
+  /* hair */
+  ctx.fillStyle=hc;
+  if(st.hair==='balding'){
+    ctx.fillRect(-21,-142,5,14); ctx.fillRect(16,-142,5,14);
+    ctx.beginPath(); ctx.arc(0,-143,20,Math.PI*1.12,Math.PI*1.38); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(0,-143,20,Math.PI*1.62,Math.PI*1.88); ctx.closePath(); ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.arc(0,-141,21,Math.PI*1.02,Math.PI*1.98); ctx.closePath(); ctx.fill();
+  }
+  if(st.hair==='bun'){ ctx.beginPath(); ctx.arc(0,-161,8.5,0,6.29); ctx.fill(); ctx.fillRect(-3,-159,6,9); }
+  if(st.hair==='pigtails'){
+    ctx.beginPath(); ctx.arc(-22,-146,8,0,6.29); ctx.fill();
+    ctx.beginPath(); ctx.arc(22,-146,8,0,6.29); ctx.fill();
+    ctx.fillStyle='#ff3860'; ctx.fillRect(-25,-153,6,4); ctx.fillRect(19,-153,6,4);
+  }
+  if(st.hair==='ponytail'){ ctx.fillStyle='#ff3860'; ctx.beginPath(); ctx.arc(13,-153,3.6,0,6.29); ctx.fill(); }
+  if(st.hair==='long'){ ctx.fillStyle=hc; ctx.fillRect(-23,-146,6,34); ctx.fillRect(17,-146,6,34); }
+  if(p.age<3){ ctx.beginPath(); ctx.arc(0,-158,5,0,6.29); ctx.fill(); }
+  if(st.bow){ ctx.fillStyle='#ff6ec7';
+    ctx.beginPath(); ctx.moveTo(6,-156); ctx.lineTo(15,-161); ctx.lineTo(15,-151); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(6,-156); ctx.lineTo(-3,-161); ctx.lineTo(-3,-151); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(6,-156,2.6,0,6.29); ctx.fill(); }
+  if(!fem&&st.hair==='short'&&p.age>=50){ ctx.fillStyle=hc; ctx.fillRect(-21,-140,5,12); ctx.fillRect(16,-140,5,12); }
+  /* eyes */
+  ctx.fillStyle='#10131c';
+  ctx.beginPath(); ctx.arc(-7,-136,2.6,0,6.29); ctx.fill();
+  ctx.beginPath(); ctx.arc(7,-136,2.6,0,6.29); ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(-6.2,-137,0.9,0,6.29); ctx.fill();
+  ctx.beginPath(); ctx.arc(7.8,-137,0.9,0,6.29); ctx.fill();
+  /* eyelashes + a soft blush for women and girls */
+  if(st.lashes){
+    ctx.strokeStyle='#10131c'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-9.5,-138.5); ctx.lineTo(-12.5,-141); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(9.5,-138.5); ctx.lineTo(12.5,-141); ctx.stroke();
+    ctx.fillStyle='rgba(255,110,150,.20)';
+    ctx.beginPath(); ctx.arc(-11,-128,4.4,0,6.29); ctx.fill();
+    ctx.beginPath(); ctx.arc(11,-128,4.4,0,6.29); ctx.fill();
+  }
+  /* elder glasses */
+  if(p.age>=60){ ctx.strokeStyle='rgba(220,230,255,.8)'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(-7,-136,6.4,0,6.29); ctx.stroke();
+    ctx.beginPath(); ctx.arc(7,-136,6.4,0,6.29); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-1,-136); ctx.lineTo(1,-136); ctx.stroke(); }
+  /* mouth by happiness */
+  ctx.strokeStyle=(st.beard&&p.age<50)?'#c9a186':'#5a3428'; ctx.lineWidth=1.8; ctx.beginPath();
+  if(p.happiness>=60) ctx.arc(0,-126,6,0.25,Math.PI-0.25);
+  else if(p.happiness<=30) ctx.arc(0,-118,6,Math.PI+0.4,-0.4);
+  else { ctx.moveTo(-4,-124); ctx.lineTo(4,-124); }
+  ctx.stroke();
+  ctx.restore();
+}
+function drawAvatar(p, cx, gy){
+  if(p.stage==='infant'){
+    /* crib */
+    ctx.fillStyle='#233246'; rr(cx-72, gy-58, 144, 58, 8); ctx.fill();
+    ctx.strokeStyle='rgba(53,224,255,.5)'; ctx.lineWidth=3; rr(cx-72, gy-58, 144, 58, 8); ctx.stroke();
+    /* baby head + blanket */
+    ctx.save(); ctx.shadowColor=p.hue; ctx.shadowBlur=16;
+    ctx.fillStyle=p.skin; ctx.beginPath(); ctx.arc(cx, gy-66, 21, 0, 6.29); ctx.fill(); ctx.restore();
+    ctx.fillStyle=hairColor(p); ctx.beginPath(); ctx.arc(cx, gy-71, 21, Math.PI*1.05, Math.PI*1.95); ctx.closePath(); ctx.fill();
+    if(personGender(p)==='f'){ ctx.fillStyle='#ff6ec7';
+      ctx.beginPath(); ctx.moveTo(cx+6, gy-88); ctx.lineTo(cx+15, gy-93); ctx.lineTo(cx+15, gy-83); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx+6, gy-88); ctx.lineTo(cx-3, gy-93); ctx.lineTo(cx-3, gy-83); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx+6, gy-88, 2.6, 0, 6.29); ctx.fill(); }
+    ctx.fillStyle='#10131c';
+    ctx.beginPath(); ctx.arc(cx-7, gy-66, 2.6, 0, 6.29); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx+7, gy-66, 2.6, 0, 6.29); ctx.fill();
+    ctx.fillStyle=p.hue; rr(cx-46, gy-52, 92, 34, 10); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.22)'; rr(cx-46, gy-52, 92, 9, 5); ctx.fill();
+    /* crib bars */
+    ctx.fillStyle='#31435c';
+    for(var i=0;i<7;i++) ctx.fillRect(cx-66+i*22, gy-58, 6, 58);
+    return;
+  }
+  var s = p.stage==='child'?0.62 : p.stage==='teen'?0.85 : p.stage==='elder'?0.94 : 1.0;
+  drawFigure(p, cx, gy, s, false);
+  if(p.partnerStatus!=='single'&&p.partner){
+    var pHue=HUES[(p.partner.charCodeAt(0)+p.partner.length)%HUES.length];
+    if(pHue===p.hue) pHue=HUES[(HUES.indexOf(pHue)+3)%HUES.length];
+    var fake={name:p.partner, gender:genderOfName(p.partner), age:Math.max(18,p.age-2), stage:p.stage, happiness:p.happiness, skin:SKIN[(p.name.length+2)%SKIN.length], hue:p.hue, _hue:pHue};
+    drawFigure(fake, cx+104, gy, s*0.97, true);
+    if(p.partnerStatus==='married'){
+      ctx.fillStyle='#ff3860'; ctx.save(); ctx.shadowColor='#ff3860'; ctx.shadowBlur=12;
+      ctx.beginPath(); ctx.moveTo(cx+52, gy-168*s);
+      ctx.bezierCurveTo(cx+38, gy-186*s, cx+52, gy-196*s, cx+52, gy-184*s);
+      ctx.bezierCurveTo(cx+52, gy-196*s, cx+66, gy-186*s, cx+52, gy-168*s); ctx.fill(); ctx.restore();
+    }
+    ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font='600 13px "Rajdhani",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(p.partner, cx+104, gy+20);
+  }
+  var kids=Math.min(p.children,3);
+  for(var k=0;k<kids;k++){
+    var kf={name:p.name, gender:kidGender(p,k), age:6, stage:'child', happiness:70, skin:SKIN[(k+1)%SKIN.length], hue:HUES[(k+3)%HUES.length]};
+    drawFigure(kf, cx-84-k*44, gy, 0.42, false);
+  }
+}
+function render(){
+  ctx.clearRect(0,0,W,H);
+  var p=viewPerson();
+  var stage=p?p.stage:'adult';
+  drawBackdrop(stage);
+  drawMotes();
+  if(state.phase==='title'||!p){
+    ctx.fillStyle='#fff'; ctx.font='900 64px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.shadowColor='#ffd75e'; ctx.shadowBlur=26;
+    ctx.fillText('LIFEPATH', W/2, 268);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#d8ffe9'; ctx.font='600 21px "Rajdhani",sans-serif';
+    ctx.fillText('One life. Every year a choice. How will yours read?', W/2, 312);
+    ctx.fillStyle='#7d8aa0'; ctx.font='15px "Share Tech Mono",monospace';
+    ctx.fillText('press NEW LIFE · WATCH a bot live · or DUEL LIVES with a friend', W/2, 348);
+    return;
+  }
+  drawAvatar(p, p.partnerStatus!=='single'?420:480, 528);
+  /* name plate */
+  ctx.fillStyle='rgba(4,8,14,.72)'; rr(24,18,430,54,8); ctx.fill();
+  ctx.strokeStyle=p.hue; ctx.lineWidth=1.5; rr(24,18,430,54,8); ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='800 21px "Orbitron",sans-serif'; ctx.textAlign='left';
+  ctx.fillText(p.name.toUpperCase(), 40, 44);
+  ctx.fillStyle='#35e0ff'; ctx.font='13px "Share Tech Mono",monospace';
+  ctx.fillText('AGE '+p.age+' · '+p.stage.toUpperCase()+(state.mode==='duel'?' · PLAYER '+(state.viewIdx+1):'')+(p.alive?'':' · ✝ '+p.deathAge), 40, 64);
+  if(state.mode==='watch'){
+    ctx.fillStyle='rgba(4,8,14,.72)'; rr(640,18,296,54,8); ctx.fill();
+    ctx.strokeStyle='#ffd75e'; rr(640,18,296,54,8); ctx.stroke();
+    ctx.fillStyle='#ffd75e'; ctx.font='800 16px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText('👁 '+(state.feAgentId||'STAND-IN'), 788, 42);
+    ctx.fillStyle='#7d8aa0'; ctx.font='12px "Share Tech Mono",monospace';
+    ctx.fillText(state.feTraces+' DECISIONS TRACED', 788, 62);
+  }
+}
+
+/* ---------- loop ---------- */
+function update(){
+  if(state.paused) return;
+  state.frame++;
+  state.motes.forEach(function(m){ m.y-=m.sp; m.x+=Math.sin(state.frame*0.01+m.tw)*0.14; if(m.y<-4){ m.y=H+4; m.x=Math.random()*W; } });
+  if(state.mode==='watch'&&state.phase==='playing'&&!state.summary){
+    state.watchTimer++;
+    if(state.watchTimer>=(state.fast?3:20)){ state.watchTimer=0; watchStep(); syncUI(); }
+  }
+}
+function loop(){
+  update();
+  try{ render(); }catch(e){}
+  if(typeof requestAnimationFrame!=='function') return;
+  requestAnimationFrame(loop);
+}
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+buildBars();
+if(q.get('auto')==='play') startGame('solo');
+if(q.get('auto')==='watch') startGame('watch');
+if(q.get('auto')==='duel') startGame('duel');
+
+/* ---------- test/debug surface ---------- */
+window.__lifepath={
+  get state(){ return {phase:state.phase, mode:state.mode, paused:state.paused, frame:state.frame,
+    turn:state.turn, round:state.round, ap:state.ap, feTraces:state.feTraces, feAgentId:state.feAgentId,
+    watchIdx:state.watchIdx, /* E49: in-load rotation cursor */
+    watchOutcome:state.watchOutcome, watchRecorded:state.watchRecorded, watchFallback:state.watchFallback,
+    verdict:state.phase==='verdict',
+    panel:state.panel?{kind:state.panel.kind, evId:state.panel.evId||null, crossId:state.panel.crossId||null,
+      choices:state.panel.choices.map(function(c){return c.label;})}:null,
+    summary:state.summary?{pi:state.summary.pi, midDuel:!!state.summary.midDuel, verdict:!!state.summary.verdict}:null,
+    eventQueueLen:state.eventQueue.length,
+    people:state.people.map(function(p){ return {name:p.name, age:p.age, stage:p.stage, health:p.health,
+      happiness:p.happiness, smarts:p.smarts, looks:p.looks, karma:p.karma, money:p.money, peakMoney:p.peakMoney,
+      job:p.job, salary:p.salary, partner:p.partner, partnerStatus:p.partnerStatus, children:p.children,
+      alive:p.alive, deathAge:p.deathAge, cause:p.cause, logLen:p.log.length, lifeScore:lifeScore(p)}; })}; },
+  startGame:startGame, pressAge:pressAge, doAction:doAction, choose:choose,
+  debugKey:debugKey, togglePause:togglePause,
+  debugSave:saveState, debugLoad:loadState,
+  debugSetFast:function(f){ state.fast=!!f; },
+  debugWatchIdx:function(){ return watchIdxPersisted; }, /* E49: persisted rotation cursor */
+  debugSetNoEvents:function(b){ state.noEvents=!!b; },
+  debugSetAge:function(n){ var p=cur(); if(p){ p.age=n; p.stage=stageOf(n); syncUI(); } },
+  debugSetStat:function(k,v){ var p=cur(); if(p&&(k in p)) { p[k]=v; syncUI(); } },
+  debugSetPersonStat:function(i,k,v){ var p=state.people[i]; if(p&&(k in p)){ p[k]=v; syncUI(); } },
+  debugFireEvent:function(id){ state.eventQueue=[{pi:state.turn, evId:id, cross:false}]; return openNextPanel(); },
+  debugFireCrossover:function(id){ state.eventQueue=[{pi:0, crossId:id, cross:true}]; return openNextPanel(), true; },
+  debugResolve:function(){ var g=0; while(state.panel&&g++<10) choose(0); if(state.summary&&state.summary.midDuel) dismissSummary(); return g; },
+  debugDismissSummary:function(){ if(state.summary&&state.summary.midDuel) dismissSummary(); else hideSummary(); },
+  debugLifeScore:lifeScore,
+  debugGenderOf:function(name){ return genderOfName(name); },
+  debugFigureStyle:function(p){ return figureStyle(p); },
+  debugKidGender:function(p, k){ return kidGender(p, k); }
+};
+</script>
+</body>
+</html>

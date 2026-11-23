@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FIRST DELVE — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#070a12;--panel:#0d1220;--border:rgba(255,215,94,.22);--gold:#ffd75e;--amber:#ffb347;--cyan:#35e0ff;--green:#00ff88;--red:#ff3860;--text:#efe8d8;--dim:#8a90a8}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(255,215,94,.10),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(7,10,18,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--gold)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--gold);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(255,215,94,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--gold);box-shadow:0 0 16px rgba(255,215,94,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(7,10,18,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#0d1220;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .abtns button{width:52px;height:52px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:255,179,71}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>FIRST<span> DELVE</span></h1><span class="tag">Castle maze · Fetch the Glow Chalice · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="600"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The castle holds its breath.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c"></button><button data-k="up">▲</button><button class="c"></button>
+        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
+        <button class="c"></button><button data-k="down2">▼</button><button class="c"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — toggle delver-cam">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — delver-cam view">B</button>
+        <button id="btnA" title="A — take / drop item">TAKE</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">Find the Glow Chalice. Carry it home to the Gold Gate.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ Delve<small>1P — you are SERIN, the delver-bot</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>a council bot delves for you</small></button>
+    <button class="mbtn" id="btnDuel">⚔ 2P Duel<small>first chalice home wins — same keyboard</small></button>
+    <button class="mbtn" id="btnFP">🎥 Delver-cam<small>V — camera rides SERIN</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+  </div>
+  <div class="help">
+    <b>FIRST DELVE</b> — Delver-bot <b style="color:#ffb347">SERIN</b> crosses the castle maze to fetch the <b>Glow Chalice</b> and carry it home to the <b>Gold Gate</b>. Three dragons patrol the halls — <b style="color:#3ddc78">VERDANT</b> guards the chalice, <b style="color:#ff5a3c">EMBERMAW</b> hunts anything that moves, <b style="color:#ffd75e">GILDED</b> paces the depths — and the thieving bat <b>SNATCHER</b> will steal whatever you carry and drop it somewhere strange. Touch an item to pick it up (one at a time); <span class="k">SPACE / E</span> drops it. The <b>Sword of Dawn</b> slays a dragon on touch — slain dragons crawl home and return after a while. The <b>Ember Key</b> opens the Ember Gate, the <b>Gold Key</b> opens the Gold Gate shortcut home, the <b>Bridge</b> spans the moat, and the <b>Magnet</b> pulls loose metal to you. Eaten without a sword? You lose a life and drop what you carried. Three lives. Somewhere in the castle there is a hidden room — the genre's founding trick, honoured with one of our own.<br/>
+    <b>Controls:</b> <span class="k">Arrows / WASD</span> move · <span class="k">SPACE / E</span> take / drop · <span class="k">V</span> delver-cam · <span class="k">P</span> pause (save / load in the menu) · <span class="k">M</span> mute · <span class="k">R</span> restart. In 2P, player 2 (ORIN, cyan) moves with <span class="k">← → ↑ ↓</span> and takes/drops with <span class="k">ENTER</span>.<br/>
+    <b>WATCH</b> is a council bot delver on the Fallible Engine — it plans the route (sword, key, chalice, home), flees dragons when unarmed, and slays them when armed. It misjudges on purpose — never frame-perfect. If the engine fails to load, the legacy SERIN stand-in delves instead.<br/>
+    📱 <b>Handheld shell:</b> D-pad moves SERIN, <span class="k">TAKE</span> picks up / drops, <span class="k">B</span> toggles delver-cam, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit).<br/>
+    <b>Clean-room:</b> action-adventure maze formula (room graph, carry-one-item, three dragons with one chase routine each, thieving bat, keys / bridge / magnet — documented behaviour, scan4-atari.md §7, SPEC lane, read as text only), our own code, castle, names and art — no copied assets, names or code.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   FIRST DELVE — original castle-maze action-adventure for the Shaddai Arcade.
+   Clean-room: the ADVENTURE formula (data-driven room graph, carry-one-item
+   rules, three dragons each with one chase routine, a thieving bat, keys /
+   bridge / magnet / chalice objects) re-implemented from documented
+   behaviour (scan4-atari.md §7: full 4K cartridge disassembly, SPEC lane —
+   read as text only, never run/copied). Our own code, castle (13 rooms),
+   characters (SERIN, VERDANT, EMBERMAW, GILDED, SNATCHER), names and art.
+   No copyrighted characters, sprites or sounds. Modes: 1P, WATCH bot
+   delver on the Fallible Engine, 2P local duel. Delver-cam first-person
+   view (V). Handheld shell on mobile (D-pad, TAKE, B view, START menu).
+   ========================================================================== */
+var W=960, H=600;
+var RX=30, RY=44, RW=900, RH=532, WALL=14, DOOR_W=96;
+var PLAYER_SPEED=175, LIVES=3, RESPAWN_T=25;
+/* Room graph: links are door sides (N/S/E/W). lock: {side: keyId} — a locked
+   door opens permanently when a player carrying the key touches it.
+   secret: {side: roomId} — a cracked-wall gap, passable, drawn as wall. */
+var ROOMS={
+  gate:    {name:'Gold Castle Gate', style:'gold',    links:{E:'hall'}, win:true},
+  hall:    {name:'Grand Hall',       style:'hall',    links:{W:'gate',E:'armory',N:'garden',S:'vault'}},
+  armory:  {name:'Sword Armory',     style:'armory',  links:{W:'hall'}},
+  garden:  {name:'Ember Garden',     style:'garden',  links:{S:'hall',E:'ember'}},
+  ember:   {name:'Ember Gate',       style:'ember',   links:{W:'garden',E:'chalice'}, lock:{E:'emberkey'}},
+  chalice: {name:'Chalice Chamber',  style:'chalice', links:{W:'ember'}},
+  vault:   {name:'The Vault',        style:'vault',   links:{N:'hall',S:'moat',E:'hidden'}, secret:{E:'hidden'}},
+  moat:    {name:'Moat Crossing',    style:'moat',    links:{N:'vault',S:'depths'}, moat:true},
+  depths:  {name:'The Depths',       style:'depths',  links:{N:'moat',W:'cellar'}},
+  cellar:  {name:'Bridge Cellar',    style:'cellar',  links:{E:'depths',N:'crypt'}},
+  crypt:   {name:'The Crypt',        style:'crypt',   links:{S:'cellar',E:'goldgate'}},
+  goldgate:{name:'Gold Gate',        style:'gold',    links:{W:'crypt',E:'gate'}, lock:{E:'goldkey'}},
+  hidden:  {name:'Hidden Room',      style:'hidden',  links:{W:'vault'}, secret:{W:'vault'}}
+};
+var OPP={N:'S',S:'N',E:'W',W:'E'};
+function doorXY(side){
+  if(side==='N') return {x:RX+RW/2, y:RY};
+  if(side==='S') return {x:RX+RW/2, y:RY+RH};
+  if(side==='E') return {x:RX+RW, y:RY+RH/2};
+  return {x:RX, y:RY+RH/2};
+}
+function roomOf(id){ return ROOMS[id]; }
+/* BFS over the room graph. locked doors are passable only if open or the
+   caller carries the key (carryKey = item id or null). Secret doors pass. */
+function bfs(from,to,carryKey,gates){
+  if(from===to) return [from];
+  var prev={}, q=[from], seen={}; seen[from]=true;
+  while(q.length){
+    var cur=q.shift();
+    var links=ROOMS[cur].links;
+    for(var side in links){
+      var nx=links[side];
+      if(seen[nx]) continue;
+      var lk=ROOMS[cur].lock && ROOMS[cur].lock[side];
+      if(lk && !(gates[cur+':'+side]) && carryKey!==lk && carryKey!=='__ALL__') continue;
+      seen[nx]=true; prev[nx]=cur; q.push(nx);
+      if(nx===to){
+        var path=[to], n=to;
+        while(n!==from){ n=prev[n]; path.unshift(n); }
+        return path;
+      }
+    }
+  }
+  return null;
+}
+function roomDist(a,b,carryKey,gates){
+  var p=bfs(a,b,carryKey,gates);
+  return p? p.length-1 : 999;
+}
+var ITEM_DEFS=[
+  {id:'sword',   name:'Sword of Dawn', kind:'sword',   room:'armory',  x:480, y:300, metal:true},
+  {id:'emberkey',name:'Ember Key',     kind:'key',     room:'garden',  x:700, y:300, metal:true},
+  {id:'goldkey', name:'Gold Key',      kind:'key',     room:'vault',   x:260, y:300, metal:true},
+  {id:'bridge',  name:'Bridge',        kind:'bridge',  room:'vault',   x:660, y:300, metal:true},
+  {id:'magnet',  name:'Magnet',        kind:'magnet',  room:'depths',  x:480, y:300, metal:true},
+  {id:'chalice', name:'Glow Chalice',  kind:'chalice', room:'chalice', x:480, y:300, metal:false},
+  {id:'spark1',  name:'Spark',         kind:'spark',   room:'cellar',  x:480, y:300, metal:false},
+  {id:'spark2',  name:'Spark',         kind:'spark',   room:'hidden',  x:480, y:300, metal:false}
+];
+var DRAGON_DEFS=[
+  {id:'verdant', name:'VERDANT',  color:'#3ddc78', dark:'#0d5a2e', style:'guard',  lair:'chalice', speed:95,  x:480, y:180},
+  {id:'embermaw',name:'EMBERMAW', color:'#ff5a3c', dark:'#7a1e0e', style:'hunter', lair:'crypt',   speed:112, x:480, y:300},
+  {id:'gilded',  name:'GILDED',   color:'#ffd75e', dark:'#8a6a10', style:'patrol', lair:'depths',  speed:80,  x:480, y:300}
+];
+var qs=(typeof location!=='undefined' && location.search)
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+var cv=$('cv'), ctx=cv.getContext('2d');
+var state=null;
+function newState(){
+  return {
+    phase:'playing', mode:'solo', frame:0, time:0, winner:-1, score:0, hi:0,
+    fp:false, paused:false, muted:false, shake:0,
+    gates:{}, /* 'room:side' -> true once opened */
+    players:[
+      {idx:0, name:'SERIN', color:'#ffb347', dark:'#8a5a1a', room:'gate', x:480, y:420, lives:LIVES, carrying:null, alive:true, walk:0, moving:false, bot:null, target:null, thinkT:0, out:false},
+      {idx:1, name:'ORIN',  color:'#35e0ff', dark:'#1a6a8a', room:'gate', x:430, y:420, lives:LIVES, carrying:null, alive:true, walk:0, moving:false, bot:null, target:null, thinkT:0, out:false}
+    ],
+    items:ITEM_DEFS.map(function(d){ return {id:d.id, name:d.name, kind:d.kind, metal:d.metal, room:d.room, x:d.x, y:d.y, carriedBy:-1, taken:false}; }),
+    dragons:DRAGON_DEFS.map(function(d){ return {id:d.id, name:d.name, color:d.color, dark:d.dark, style:d.style, lair:d.lair, speed:d.speed, room:d.lair, x:d.x, y:d.y, alive:true, respawnT:0, wing:0, patrolA:Math.random()*6, roamT:2+Math.random()*3, tx:d.x, ty:d.y}; }),
+    bat:{room:'hall', x:480, y:300, carrying:null, dropT:0, wanderT:0, tx:480, ty:300, flap:0},
+    parts:[], floats:[], roomMsg:'', roomMsgT:0,
+    msg:'Find the Glow Chalice. Carry it home to the Gold Gate.'
+  };
+}
+function itemById(id){ for(var i=0;i<state.items.length;i++) if(state.items[i].id===id) return state.items[i]; return null; }
+function carriedItem(p){ return p.carrying? itemById(p.carrying):null; }
+function hasItem(p,id){ return p.carrying===id; }
+function looseItem(id){ var it=itemById(id); return (it && !it.taken && it.carriedBy<0 && !it.batCarried)? it:null; }
+
+/* ---- Fallible Engine wiring: WATCH is one council delver. Each think tick
+   goes through FallibleEngine.decide over scored move/grab/flee/slay
+   options; traces recorded. Engine absent -> legacy bot, unchanged. ---- */
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var fdAgentId=null, fdAgent=null, fdTraces=[], fdBout=0, fdRecorded=false;
+/* E44 REPAIR (defect 2, frozen rotation): the watch rotation cursor persists
+   in localStorage ('firstdelve.watchIdx'), seeded on load so a fresh load
+   continues the rotation instead of restarting at ASIMOV every time. The
+   cursor only advances on an engine-loaded watch bout (see fdSetupAgents);
+   fallback play never consumes it. */
+try{ var _wi=JSON.parse(localStorage.getItem('firstdelve.watchIdx')||'0')||0; if(isFinite(_wi)&&_wi>=0) fdBout=_wi; }catch(e){}
+function saveFdBout(){ try{ localStorage.setItem('firstdelve.watchIdx', JSON.stringify(fdBout)); }catch(e){} }
+var BOT_PERSONAS={
+  ZEROX:{style:'reckless', err:26, think:0.14},
+  TURTLE:{style:'cautious', err:7,  think:0.20},
+  NEXUS:{style:'balanced', err:14, think:0.16}
+};
+function fdSetupAgents(mode){
+  fdTraces=[]; fdRecorded=false;
+  if(mode==='watch'){
+    fdAgentId=COUNCIL_IDS[fdBout%COUNCIL_IDS.length];
+    if(FE){ fdBout++; saveFdBout(); }
+    fdAgent=null;
+    if(FE){ try{ fdAgent=FE.loadAgent(fdAgentId); }catch(e){ fdAgent=null; } }
+    state.players[0].bot=BOT_PERSONAS[fdAgentId==='ZEROX'?'ZEROX':(fdAgentId==='TURTLE'?'TURTLE':'NEXUS')]||BOT_PERSONAS.NEXUS;
+  } else {
+    fdAgentId=null; fdAgent=null;
+    state.players[0].bot=null;
+  }
+  state.players[1].bot=null;
+}
+/* ---- bot brain: pick an objective, steer toward it.
+   The delve plan, in order: sword first (dragons are honest about it),
+   then the Ember Key — but one pair of hands means juggling: drop the
+   sword to fetch the key, carry the key through the gate (it opens on
+   touch), drop the key, fetch the sword again, then the chalice. ---- */
+function botObjective(p){
+  var chalice=itemById('chalice');
+  if(p.carrying==='chalice'){ p.plan=null; return {kind:'deliver', room:'gate', x:480, y:RY+80}; }
+  var gateOpen=!!state.gates['ember:E'];
+  if(gateOpen && p.plan==='key') p.plan=null; /* the key run is done */
+  var sword=looseItem('sword');
+  var key=looseItem('emberkey');
+  if(p.plan==='chalice'){
+    /* committed to taking the chalice — do not re-fetch the dropped sword */
+    if(chalice && !chalice.taken && chalice.carriedBy<0) return {kind:'fetch', item:chalice, room:chalice.room, x:chalice.x, y:chalice.y};
+    p.plan=null; /* chalice gone (bat?) — fall through to normal logic */
+  }
+  if(!gateOpen){
+    if(p.carrying==='emberkey') return {kind:'fetch', item:chalice, room:chalice.room, x:chalice.x, y:chalice.y};
+    if(p.plan==='key'){
+      /* committed to the key run: do NOT re-fetch the dropped sword */
+      if(key) return {kind:'fetch', item:key, room:key.room, x:key.x, y:key.y};
+      return {kind:'wait', room:p.room, x:p.x, y:p.y};
+    }
+    if(p.carrying==='sword' && key){ p.plan='key'; return {kind:'drop'}; } /* set the sword down, fetch the key */
+    if(p.carrying==='sword') return {kind:'wait', room:p.room, x:p.x, y:p.y}; /* key is with the bat — hold the sword */
+    if(p.carrying) return {kind:'drop'}; /* hands full of the wrong thing — set it down */
+    if(sword) return {kind:'fetch', item:sword, room:sword.room, x:sword.x, y:sword.y};
+    if(key) return {kind:'fetch', item:key, room:key.room, x:key.x, y:key.y};
+    return {kind:'wait', room:p.room, x:p.x, y:p.y};
+  }
+  /* gate open: the key is done, the sword is wanted again — until the
+     chalice itself is in reach, when the sword is set down for it */
+  if(p.carrying==='emberkey') return {kind:'drop'};
+  if(p.carrying && p.carrying!=='sword') return {kind:'drop'};
+  if(p.carrying==='sword' && chalice && !chalice.taken && chalice.carriedBy<0 && chalice.room===p.room){
+    p.plan='chalice'; return {kind:'drop'}; /* set the sword down, take the chalice */
+  }
+  if(!p.carrying && sword) return {kind:'fetch', item:sword, room:sword.room, x:sword.x, y:sword.y};
+  if(chalice && !chalice.taken && chalice.carriedBy<0) return {kind:'fetch', item:chalice, room:chalice.room, x:chalice.x, y:chalice.y};
+  if(chalice && chalice.carriedBy>=0 && chalice.carriedBy!==p.idx) return {kind:'wait', room:p.room, x:p.x, y:p.y};
+  return {kind:'wait', room:p.room, x:p.x, y:p.y};
+}
+function nearestDragon(p){
+  var best=null, bd=1e9;
+  for(var i=0;i<state.dragons.length;i++){
+    var d=state.dragons[i];
+    if(!d.alive || d.room!==p.room) continue;
+    var dd=Math.hypot(d.x-p.x, d.y-p.y);
+    if(dd<bd){ bd=dd; best=d; }
+  }
+  return {d:best, dist:bd};
+}
+function botOptions(p, obj, near){
+  var opts=[
+    {key:'go',   tag:'go',   score: obj.kind==='deliver'?0.9 : (obj.kind==='fetch'?0.85:0.3)},
+    {key:'grab', tag:'grab', score: (obj.kind==='fetch' && obj.item && obj.room===p.room)?0.9:0.15},
+    {key:'flee', tag:'flee', score: (near.d && !hasItem(p,'sword') && near.dist<140)?0.95:0.1},
+    {key:'slay', tag:'slay', score: (near.d && hasItem(p,'sword') && near.dist<90)?0.9:0.1}
+  ];
+  return opts;
+}
+function botThink(p, dt){
+  p.thinkT-=dt;
+  if(p.thinkT>0) return;
+  p.thinkT=(p.bot?p.bot.think:0.16);
+  var obj=botObjective(p);
+  var near=nearestDragon(p);
+  /* the bot's current objective item — pickups() only lets the WATCH bot
+     take this one, so it never scoops up a spent key on its way past */
+  p.objItem=(obj.kind==='fetch' && obj.item)? obj.item.id : null;
+  if(obj.kind==='drop'){ dropItem(p); p.target=null; return; }
+  /* panic reflex: unarmed and a dragon is right on top of you — run,
+     no vote. Brief and local: the bot is faster than any dragon, so a
+     short dodge is enough, and it never gets stuck fleeing a wall. */
+  if(!hasItem(p,'sword')) p.panicking=false;
+  if(!hasItem(p,'sword') && near.d && near.dist<70){
+    var pdx=p.x-near.d.x, pdy=p.y-near.d.y, pL=Math.hypot(pdx,pdy)||1;
+    p.target={x:p.x+pdx/pL*220, y:p.y+pdy/pL*220};
+    return;
+  }
+  var pick=null;
+  if(FE && fdAgent){
+    try{
+      var res=FE.decide(fdAgent,'first-delve',botOptions(p,obj,near),{});
+      fdTraces.push(res.trace);
+      pick=res.pick.key;
+    }catch(e){ pick=null; }
+  }
+  if(!pick){
+    /* legacy: highest scored option */
+    var opts=botOptions(p,obj,near), best=opts[0];
+    for(var i=1;i<opts.length;i++) if(opts[i].score>best.score) best=opts[i];
+    pick=best.key;
+  }
+  /* resolve the objective into a steering target point */
+  var tx=null, ty=null;
+  if(pick==='flee' && near.d){
+    var dx=p.x-near.d.x, dy=p.y-near.d.y, L=Math.hypot(dx,dy)||1;
+    tx=p.x+dx/L*200; ty=p.y+dy/L*200;
+  } else if(pick==='slay' && near.d){
+    tx=near.d.x; ty=near.d.y;
+  } else if(obj.kind==='fetch' || obj.kind==='deliver'){
+    if(obj.room===p.room){ tx=obj.x; ty=obj.y; }
+    else {
+      var path=bfs(p.room, obj.room, p.carrying, state.gates);
+      if(!path || path.length<2){ tx=p.x; ty=p.y; }
+      else {
+        var nextRoom=path[1], side=null;
+        var links=ROOMS[p.room].links;
+        for(var s in links) if(links[s]===nextRoom){ side=s; break; }
+        if(!side){ tx=p.x; ty=p.y; }
+        else { var dxy=doorXY(side); tx=dxy.x; ty=dxy.y;
+          /* aim AT the door (not inside the room) so the bot pushes
+             through the gap and the room change fires */
+        }
+      }
+    }
+  } else { tx=p.x; ty=p.y; }
+  /* personality error: the bot misjudges on purpose, never frame-perfect */
+  var err=p.bot? p.bot.err:14;
+  tx+=(Math.random()-0.5)*2*err;
+  ty+=(Math.random()-0.5)*2*err;
+  p.target={x:tx, y:ty};
+}
+/* ---- movement, doors, moat, gates ---- */
+function tryRoomChange(p, side){
+  var room=ROOMS[p.room];
+  var nx=room.links[side];
+  if(!nx) return false;
+  /* secret doors pass silently; locked doors need their key */
+  var lk=room.lock && room.lock[side];
+  if(lk && !state.gates[p.room+':'+side]){
+    if(p.carrying===lk){
+      state.gates[p.room+':'+side]=true;
+      state.gates[nx+':'+OPP[side]]=true;
+      setMsg('The '+itemById(lk).name+' turns — the gate grinds open.');
+      beep(520,0.15,'triangle',0.18);
+    } else {
+      setMsg('Locked — it needs the '+itemById(lk).name+'.');
+      return false;
+    }
+  }
+  p.room=nx;
+  var d=doorXY(OPP[side]);
+  if(OPP[side]==='N'){ p.x=d.x; p.y=RY+WALL+18; }
+  if(OPP[side]==='S'){ p.x=d.x; p.y=RY+RH-WALL-18; }
+  if(OPP[side]==='E'){ p.x=RX+RW-WALL-18; p.y=d.y; }
+  if(OPP[side]==='W'){ p.x=RX+WALL+18; p.y=d.y; }
+  onEnterRoom(p);
+  return true;
+}
+function onEnterRoom(p){
+  var r=ROOMS[p.room];
+  state.roomMsg=r.name; state.roomMsgT=2.2;
+  if(p.room==='chalice') setMsg('The Chalice Chamber — VERDANT stirs.');
+  else if(p.room==='hidden'){ setMsg('A hidden room… the wall glows: BUILT BY SHADDAI.'); }
+  else if(p.room==='crypt') setMsg('The Crypt — something hunts here.');
+  else setMsg(r.name+'.');
+}
+function inDoorGap(p, side){
+  var c=side==='N'||side==='S'? p.x : p.y;
+  var mid=side==='N'||side==='S'? RX+RW/2 : RY+RH/2;
+  return Math.abs(c-mid)<DOOR_W/2-6;
+}
+function moatBand(){
+  return {y0:RY+RH*0.42, y1:RY+RH*0.58};
+}
+function movePlayer(p, dx, dy, dt){
+  if(!p.alive || p.out) return;
+  var nx=p.x+dx*PLAYER_SPEED*dt, ny=p.y+dy*PLAYER_SPEED*dt;
+  var minX=RX+WALL+12, maxX=RX+RW-WALL-12, minY=RY+WALL+12, maxY=RY+RH-WALL-12;
+  /* door crossing: leave through a gap, arrive through the opposite side */
+  if(nx<minX && inDoorGap(p,'W') && ROOMS[p.room].links.W){ if(tryRoomChange(p,'W')) return; }
+  if(nx>maxX && inDoorGap(p,'E') && ROOMS[p.room].links.E){ if(tryRoomChange(p,'E')) return; }
+  if(ny<minY && inDoorGap(p,'N') && ROOMS[p.room].links.N){ if(tryRoomChange(p,'N')) return; }
+  if(ny>maxY && inDoorGap(p,'S') && ROOMS[p.room].links.S){ if(tryRoomChange(p,'S')) return; }
+  nx=Math.max(minX, Math.min(maxX, nx));
+  ny=Math.max(minY, Math.min(maxY, ny));
+  /* moat: the water band blocks crossing unless the Bridge is carried */
+  if(p.room==='moat' && ROOMS.moat.moat){
+    var mb=moatBand();
+    if(!hasItem(p,'bridge')){
+      if(p.y<mb.y0-10) ny=Math.min(ny, mb.y0-10);
+      else if(p.y>mb.y1+10) ny=Math.max(ny, mb.y1+10);
+      else ny=p.y; /* pushed into the band somehow — hold the line */
+    }
+  }
+  p.moving=(nx!==p.x || ny!==p.y);
+  if(p.moving) p.walk+=dt*10;
+  p.x=nx; p.y=ny;
+}
+/* ---- items: touch to pick up (one at a time), drop, magnet ---- */
+function pickups(p){
+  if(p.carrying) return;
+  for(var i=0;i<state.items.length;i++){
+    var it=state.items[i];
+    if(it.taken || it.batCarried || it.carriedBy>=0 || it.room!==p.room) continue;
+    if(p.dropCd>0 && it.id===p.dropItemId) continue; /* just set down — leave it */
+    /* the WATCH bot only ever takes its current objective item — except
+       the Sword, which is always worth grabbing — so it never scoops up
+       a spent key it dropped by the gate on its way past */
+    if(state.mode==='watch' && p.idx===0 && it.id!=='sword' && it.id!==p.objItem) continue;
+    if(Math.hypot(it.x-p.x, it.y-p.y)<28){
+      if(it.kind==='spark'){
+        it.taken=true; state.score+=250;
+        addFloat(p.x, p.y-30, '+250 SPARK', '#ffd75e');
+        beep(880,0.12,'triangle',0.2);
+      } else {
+        it.carriedBy=p.idx; p.carrying=it.id;
+        setMsg(p.name+' takes the '+it.name+'.');
+        beep(660,0.1,'triangle',0.18);
+        if(it.id==='chalice'){ state.score+=100; addFloat(p.x, p.y-30, '+100 CHALICE', '#ffd75e'); }
+      }
+    }
+  }
+}
+function dropItem(p){
+  if(!p.carrying) return false;
+  var it=itemById(p.carrying);
+  it.carriedBy=-1; it.room=p.room; it.x=p.x+18; it.y=p.y+14;
+  p.carrying=null;
+  /* brief no-grab window on the dropped item only — otherwise the bot
+     (and a mashing player) re-grabs it the same frame and never leaves */
+  p.dropCd=1.5; p.dropItemId=it.id;
+  setMsg(p.name+' sets down the '+it.name+'.');
+  return true;
+}
+function magnetPull(p, dt){
+  if(!hasItem(p,'magnet')) return;
+  for(var i=0;i<state.items.length;i++){
+    var it=state.items[i];
+    if(!it.metal || it.taken || it.carriedBy>=0 || it.room!==p.room) continue;
+    var d=Math.hypot(it.x-p.x, it.y-p.y);
+    if(d<230 && d>30){
+      var vx=(p.x-it.x)/d, vy=(p.y-it.y)/d;
+      it.x+=vx*130*dt; it.y+=vy*130*dt;
+    }
+  }
+}
+/* ---- dragons + bat ---- */
+function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function steerToward(m, tx, ty, speed, dt){
+  var dx=tx-m.x, dy=ty-m.y, L=Math.hypot(dx,dy);
+  if(L<4) return;
+  m.x+=dx/L*speed*dt; m.y+=dy/L*speed*dt;
+}
+function dragonStep(d, dt){
+  d.wing+=dt*8;
+  if(!d.alive){
+    d.respawnT-=dt;
+    if(d.respawnT<=0){
+      d.alive=true; d.room=d.lair; d.x=DRAGON_DEFS.filter(function(x){return x.id===d.id;})[0].x; d.y=DRAGON_DEFS.filter(function(x){return x.id===d.id;})[0].y;
+      setMsg(d.name+' crawls back from its lair.');
+    }
+    return;
+  }
+  /* pick the nearest living player as prey */
+  var prey=null, pd=1e9;
+  for(var i=0;i<state.players.length;i++){
+    var p=state.players[i];
+    if(!p.alive || p.out) continue;
+    var dd=(p.room===d.room)? dist(d,p) : roomDist(d.room,p.room,'__ALL__',state.gates)*300 + dist(d,p);
+    if(dd<pd){ pd=dd; prey=p; }
+  }
+  if(!prey) return;
+  var chase=false, tx=d.x, ty=d.y;
+  var HOME='__ALL__'; /* dragons are castle creatures — the delver's locked
+    gates do not stop them, so a guard that was lured out can always
+    find its way back to its lair */
+  if(d.style==='guard'){
+    if(d.room===d.lair && prey.room===d.room){ chase=true; tx=prey.x; ty=prey.y; }
+    else if(d.room!==d.lair){
+      /* lured out — head home through the doors */
+      var hpath=bfs(d.room, d.lair, HOME, state.gates);
+      if(hpath && hpath.length>=2){
+        var hside=null, hlinks=ROOMS[d.room].links;
+        for(var hs in hlinks) if(hlinks[hs]===hpath[1]){ hside=hs; break; }
+        if(hside){ var hd=doorXY(hside); tx=hd.x; ty=hd.y; }
+      } else { tx=480; ty=300; }
+    }
+    else { /* in the lair: drift back toward the chalice */
+      var ch=itemById('chalice');
+      tx=ch.room===d.room? ch.x : 480; ty=ch.room===d.room? ch.y : 300;
+    }
+  } else if(d.style==='hunter'){
+    var rd=roomDist(d.room, prey.room, HOME, state.gates);
+    if(prey.room===d.room){ chase=true; tx=prey.x; ty=prey.y; }
+    else if(rd<=2){
+      var path=bfs(d.room, prey.room, HOME, state.gates);
+      if(path && path.length>=2){
+        var side=null, links=ROOMS[d.room].links;
+        for(var s in links) if(links[s]===path[1]){ side=s; break; }
+        if(side){ var dxy=doorXY(side); tx=dxy.x; ty=dxy.y; }
+      }
+    } else {
+      d.roamT-=dt;
+      if(d.roamT<=0){
+        d.roamT=3+Math.random()*3;
+        var adjs=Object.keys(ROOMS[d.room].links);
+        var pick=adjs[Math.floor(Math.random()*adjs.length)];
+        d.tx=doorXY(pick).x; d.ty=doorXY(pick).y;
+      }
+      tx=d.tx; ty=d.ty;
+    }
+  } else { /* patrol: loop its lair, chase only in-room, head home if lured out */
+    if(d.room===d.lair && prey.room===d.room){ chase=true; tx=prey.x; ty=prey.y; }
+    else if(d.room!==d.lair){
+      var ppath=bfs(d.room, d.lair, HOME, state.gates);
+      if(ppath && ppath.length>=2){
+        var pside=null, plinks=ROOMS[d.room].links;
+        for(var ps in plinks) if(plinks[ps]===ppath[1]){ pside=ps; break; }
+        if(pside){ var pd=doorXY(pside); tx=pd.x; ty=pd.y; }
+      } else { tx=480; ty=300; }
+    }
+    else {
+      d.patrolA+=dt*0.5;
+      tx=480+Math.cos(d.patrolA)*220; ty=300+Math.sin(d.patrolA)*130;
+    }
+  }
+  steerToward(d, tx, ty, d.speed, dt);
+  /* clamp inside the room; cross doors when hunting through them */
+  var minX=RX+WALL+12, maxX=RX+RW-WALL-12, minY=RY+WALL+12, maxY=RY+RH-WALL-12;
+  if(d.x<minX && inDoorGap(d,'W') && ROOMS[d.room].links.W){ d.room=ROOMS[d.room].links.W; d.x=maxX; }
+  else if(d.x>maxX && inDoorGap(d,'E') && ROOMS[d.room].links.E){ d.room=ROOMS[d.room].links.E; d.x=minX; }
+  else if(d.y<minY && inDoorGap(d,'N') && ROOMS[d.room].links.N){ d.room=ROOMS[d.room].links.N; d.y=maxY; }
+  else if(d.y>maxY && inDoorGap(d,'S') && ROOMS[d.room].links.S){ d.room=ROOMS[d.room].links.S; d.y=minY; }
+  d.x=Math.max(minX, Math.min(maxX, d.x));
+  d.y=Math.max(minY, Math.min(maxY, d.y));
+  /* contact: sword slays, bare hands get eaten */
+  if(prey.room===d.room && dist(d,prey)<30){
+    if(hasItem(prey,'sword')){
+      d.alive=false; d.respawnT=RESPAWN_T;
+      state.score+=150;
+      addFloat(d.x, d.y-30, '+150 SLAY', '#ff5a3c');
+      setMsg(prey.name+' slays '+d.name+' with the Sword of Dawn!');
+      burst(d.x, d.y, d.color);
+      beep(220,0.25,'sawtooth',0.2);
+    } else {
+      eatPlayer(prey, d);
+    }
+  }
+}
+function eatPlayer(p, d){
+  p.lives--;
+  var it=carriedItem(p);
+  if(it){ it.carriedBy=-1; it.room=p.room; it.x=p.x; it.y=p.y+20; p.carrying=null; }
+  burst(p.x, p.y, '#ff3860');
+  beep(110,0.4,'sawtooth',0.25);
+  state.shake=8;
+  if(p.lives<=0){
+    p.alive=false; p.out=true;
+    setMsg(d.name+' eats '+p.name+' — no lives left!');
+    if(state.mode==='duel'){
+      var other=state.players[1-p.idx];
+      if(other.alive){ endGame(other.idx, 'delivers by default — the other delver is gone'); }
+      else endGame(-1,'both delvers eaten');
+    } else {
+      endGame(-1, d.name+' eats the last delver');
+    }
+  } else {
+    setMsg(d.name+' eats '+p.name+'! '+p.lives+' '+(p.lives===1?'life':'lives')+' left — back at the Gold Gate.');
+    p.room='gate'; p.x=480; p.y=420; p.plan=null; p.target=null;
+  }
+}
+function batStep(dt){
+  var b=state.bat;
+  b.flap+=dt*14;
+  b.wanderT-=dt;
+  if(b.wanderT<=0){
+    b.wanderT=2+Math.random()*2.5;
+    var adjs=Object.keys(ROOMS[b.room].links);
+    var side=adjs[Math.floor(Math.random()*adjs.length)];
+    var nx=ROOMS[b.room].links[side];
+    var dxy=doorXY(side);
+    b.tx=dxy.x; b.ty=dxy.y;
+    b.nextRoom=nx;
+  }
+  steerToward(b, b.tx, b.ty, 150, dt);
+  if(Math.hypot(b.tx-b.x, b.ty-b.y)<24 && b.nextRoom){
+    b.room=b.nextRoom; b.nextRoom=null;
+    b.x=RX+RW/2; b.y=RY+RH/2; b.tx=b.x; b.ty=b.y;
+  }
+  /* steal: if a player in this room carries something, snatch it — the
+     item rides with the bat until it is dropped somewhere strange */
+  if(!b.carrying){
+    for(var i=0;i<state.players.length;i++){
+      var p=state.players[i];
+      if(!p.alive || p.out || !p.carrying || p.room!==b.room) continue;
+      if(Math.random()<dt*0.12){
+        var it=itemById(p.carrying);
+        it.carriedBy=-1; it.batCarried=true; it.room=b.room; it.x=b.x; it.y=b.y;
+        p.carrying=null; b.carrying=it.id; b.dropT=3+Math.random()*3;
+        setMsg('SNATCHER steals the '+it.name+'!');
+        beep(980,0.12,'square',0.15);
+      }
+    }
+  } else {
+    /* the stolen item travels with the bat */
+    var held=itemById(b.carrying);
+    if(held){ held.room=b.room; held.x=b.x; held.y=b.y-14; }
+    b.dropT-=dt;
+    if(b.dropT<=0){
+      var it2=itemById(b.carrying);
+      var rooms=Object.keys(ROOMS);
+      it2.batCarried=false;
+      it2.room=rooms[Math.floor(Math.random()*rooms.length)];
+      it2.x=RX+120+Math.random()*(RW-240); it2.y=RY+120+Math.random()*(RH-240);
+      setMsg('SNATCHER drops the '+it2.name+' in the '+ROOMS[it2.room].name+'.');
+      b.carrying=null;
+    }
+  }
+}
+/* ---- win / lose ---- */
+function checkWin(p){
+  if(p.carrying!=='chalice' || p.room!=='gate') return;
+  if(Math.abs(p.x-480)<70 && p.y<RY+90){
+    var bonus=Math.max(0, 600-Math.floor(state.time))*5;
+    state.score+=1000+bonus;
+    endGame(p.idx, 'carries the Glow Chalice home — +'+(1000+bonus));
+  }
+}
+/* E44 REPAIR (defect 1, no record): a watch bout ends on a chalice win or on
+   lives-out, so every recorded bout is a genuine win or loss — solo-vs-field
+   recordResult like maze-chase/deepdig. The guard is marked BEFORE the
+   no-engine early return so a fallback game can never record later. */
+function recordWatchResult(){
+  if(state.mode!=='watch' || fdRecorded) return;
+  fdRecorded=true;
+  try{
+    var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+    if(FE){
+      if(!fdAgent) fdAgent=FE.loadAgent(fdAgentId);
+      if(fdAgent) FE.recordResult(fdAgent,'first-delve',null, state.winner===0?'win':'loss', fdTraces);
+    }
+  }catch(e){}
+}
+function endGame(winner, why){
+  if(state.phase==='over') return;
+  state.phase='over'; state.winner=winner;
+  if(winner>=0){
+    state.msg=state.players[winner].name+' WINS — '+why+'!';
+    if(state.score>state.hi){ state.hi=state.score; try{ localStorage.setItem('firstdelve.hi.v1',String(state.hi)); }catch(e){} }
+  } else {
+    state.msg='THE DELVE ENDS — '+why+'.';
+  }
+  if(state.mode==='watch'){ recordWatchResult(); }
+  setMsg(state.msg);
+}
+/* ---- audio ---- */
+var AC=null;
+function beep(f,dur,type,vol){
+  if(!state||state.muted) return;
+  try{
+    if(typeof AudioContext==='undefined' && typeof webkitAudioContext==='undefined') return;
+    if(!AC) AC=new (AudioContext||webkitAudioContext)();
+    var o=AC.createOscillator(), g=AC.createGain();
+    o.type=type||'square'; o.frequency.value=f;
+    g.gain.setValueAtTime(vol||0.15, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime+dur);
+  }catch(e){}
+}
+function burst(x,y,c){
+  for(var i=0;i<22;i++){
+    var a=Math.random()*Math.PI*2, sp=40+Math.random()*220;
+    state.parts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-60,life:0.5+Math.random()*0.5,t:0,c:Math.random()<0.5?c:'#ffffff',r:2+Math.random()*3});
+  }
+}
+function addFloat(x,y,txt,c){ state.floats.push({x:x,y:y,txt:txt,c:c,t:0,life:1.2}); }
+/* ---- save / load ---- */
+function saveState(){
+  if(!state) return false;
+  try{
+    localStorage.setItem('firstdelve.save.v1', JSON.stringify({
+      mode:state.mode, score:state.score, time:state.time, hi:state.hi,
+      gates:state.gates,
+      players:state.players.map(function(p){ return {room:p.room,x:p.x,y:p.y,lives:p.lives,carrying:p.carrying,alive:p.alive,out:p.out}; }),
+      items:state.items.map(function(it){ return {id:it.id,room:it.room,x:it.x,y:it.y,carriedBy:it.carriedBy,taken:it.taken}; }),
+      dragons:state.dragons.map(function(d){ return {id:d.id,room:d.room,x:d.x,y:d.y,alive:d.alive,respawnT:d.respawnT}; }),
+      bat:{room:state.bat.room,x:state.bat.x,y:state.bat.y,carrying:state.bat.carrying},
+      fdAgentId:fdAgentId, fdBout:fdBout, fdRecorded:fdRecorded
+    }));
+    setMsg('State saved — '+state.score+' pts, '+state.players[0].room+'.');
+    return true;
+  }catch(e){ return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('firstdelve.save.v1');
+    if(!raw){ setMsg('No saved state yet.'); return false; }
+    var s=JSON.parse(raw);
+    var keepHi=state?state.hi:0;
+    try{ keepHi=parseInt(localStorage.getItem('firstdelve.hi.v1')||'0',10)||keepHi; }catch(e){}
+    state=newState();
+    state.mode=s.mode; state.score=s.score; state.time=s.time||0; state.hi=s.hi||keepHi;
+    state.gates=s.gates||{};
+    s.players.forEach(function(sp,i){
+      var p=state.players[i];
+      p.room=sp.room; p.x=sp.x; p.y=sp.y; p.lives=sp.lives; p.carrying=sp.carrying; p.alive=sp.alive; p.out=sp.out;
+    });
+    s.items.forEach(function(si){
+      var it=itemById(si.id); if(!it) return;
+      it.room=si.room; it.x=si.x; it.y=si.y; it.carriedBy=si.carriedBy; it.taken=si.taken;
+    });
+    s.dragons.forEach(function(sd){
+      for(var i=0;i<state.dragons.length;i++) if(state.dragons[i].id===sd.id){
+        state.dragons[i].room=sd.room; state.dragons[i].x=sd.x; state.dragons[i].y=sd.y;
+        state.dragons[i].alive=sd.alive; state.dragons[i].respawnT=sd.respawnT;
+      }
+    });
+    if(s.bat){ state.bat.room=s.bat.room; state.bat.x=s.bat.x; state.bat.y=s.bat.y; state.bat.carrying=s.bat.carrying; }
+    fdSetupAgents(state.mode);
+    /* E44 REPAIR (defect 3, latent misattribution): a watch save restores its
+       own agent + cursor + recorded flag, so the loaded bout plays (and
+       records) under the agent that was actually playing. A solo save keeps
+       the current load's cursor — it must not rewind the rotation. Pre-save
+       traces stay session-only: fdSetupAgents already reset fdTraces above,
+       so they are NOT re-recorded. */
+    if(s.mode==='watch' && typeof s.fdAgentId==='string' && COUNCIL_IDS.indexOf(s.fdAgentId)>=0){
+      fdAgentId=s.fdAgentId; fdAgent=null;
+      if(FE){ try{ fdAgent=FE.loadAgent(fdAgentId); }catch(e){ fdAgent=null; } }
+      state.players[0].bot=BOT_PERSONAS[fdAgentId==='ZEROX'?'ZEROX':(fdAgentId==='TURTLE'?'TURTLE':'NEXUS')]||BOT_PERSONAS.NEXUS;
+      if(typeof s.fdBout==='number' && isFinite(s.fdBout) && s.fdBout>=0){ fdBout=s.fdBout; saveFdBout(); }
+      fdRecorded=s.fdRecorded===true;
+    }
+    setMsg('State loaded — '+state.score+' pts.');
+    syncButtons();
+    return true;
+  }catch(e){ setMsg('Save could not be loaded.'); return false; }
+}
+function setMsg(m){ if(state) state.msg=m; var el=$('msg'); if(el) el.textContent=m; }
+function syncButtons(){
+  var ids=['btnSolo','btnWatch','btnDuel'];
+  ids.forEach(function(id,i){
+    var b=$(id); if(!b) return;
+    var mode=['solo','watch','duel'][i];
+    if(b.classList) b.classList.toggle('active', state.mode===mode);
+  });
+  var fp=$('btnFP'); if(fp&&fp.classList) fp.classList.toggle('active', !!state.fp);
+}
+function startGame(mode){
+  var keepHi=state?state.hi:0;
+  try{ keepHi=parseInt(localStorage.getItem('firstdelve.hi.v1')||'0',10)||0; }catch(e){}
+  state=newState();
+  state.hi=keepHi;
+  state.mode=mode;
+  if(mode!=='duel'){
+    /* solo / watch: ORIN is not in the castle — an idle second delver
+       would just stand in the gate room for the dragons to eat */
+    state.players[1].alive=false; state.players[1].out=true;
+  }
+  fdSetupAgents(mode);
+  setMsg(state.msg);
+  syncButtons();
+}
+
+/* ---- update ---- */
+var keys={};
+function playerInput(p, dt){
+  var dx=0, dy=0;
+  if(p.dropCd>0) p.dropCd-=dt;
+  if(state.mode==='watch' && p.idx===0){
+    botThink(p, dt);
+    if(p.target){
+      var ddx=p.target.x-p.x, ddy=p.target.y-p.y, L=Math.hypot(ddx,ddy);
+      if(L>8){ dx=ddx/L; dy=ddy/L; }
+    }
+  } else if(p.tapT>0 && p.target){
+    /* tap-to-move (mobile canvas tap): steer until close or the timer ends */
+    p.tapT-=dt;
+    var tdx=p.target.x-p.x, tdy=p.target.y-p.y, TL=Math.hypot(tdx,tdy);
+    if(TL>10){ dx=tdx/TL; dy=tdy/TL; } else { p.tapT=0; }
+  } else if(state.mode==='duel'){
+    if(p.idx===0){
+      if(keys['a']) dx-=1; if(keys['d']) dx+=1;
+      if(keys['w']) dy-=1; if(keys['s']) dy+=1;
+    } else {
+      if(keys['arrowleft']) dx-=1; if(keys['arrowright']) dx+=1;
+      if(keys['arrowup']) dy-=1; if(keys['arrowdown']) dy+=1;
+    }
+  } else {
+    if(keys['arrowleft']||keys['a']) dx-=1;
+    if(keys['arrowright']||keys['d']) dx+=1;
+    if(keys['arrowup']||keys['w']) dy-=1;
+    if(keys['arrowdown']||keys['s']) dy+=1;
+  }
+  var L2=Math.hypot(dx,dy);
+  if(L2>0){ dx/=L2; dy/=L2; }
+  movePlayer(p, dx, dy, dt);
+  if(p.wantDrop){ p.wantDrop=false; dropItem(p); }
+  pickups(p);
+  magnetPull(p, dt);
+  checkWin(p);
+}
+function step(dt){
+  state.frame++; state.time+=dt;
+  if(state.shake>0) state.shake=Math.max(0,state.shake-dt*22);
+  if(state.roomMsgT>0) state.roomMsgT-=dt;
+  if(state.phase!=='playing'||state.paused){ stepParticles(dt); return; }
+  var active=state.mode==='duel'? [state.players[0],state.players[1]] : [state.players[0]];
+  for(var i=0;i<active.length;i++) playerInput(active[i], dt);
+  for(var j=0;j<state.dragons.length;j++) dragonStep(state.dragons[j], dt);
+  batStep(dt);
+  stepParticles(dt);
+}
+function stepParticles(dt){
+  for(var i=state.parts.length-1;i>=0;i--){
+    var p=state.parts[i]; p.t+=dt;
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=300*dt;
+    if(p.t>=p.life) state.parts.splice(i,1);
+  }
+  for(var j=state.floats.length-1;j>=0;j--){
+    var f=state.floats[j]; f.t+=dt; f.y-=28*dt;
+    if(f.t>=f.life) state.floats.splice(j,1);
+  }
+}
+/* ---- render: layered castle room ---- */
+var stars=[], motes=[], embers=[];
+for(var si=0;si<70;si++) stars.push({x:Math.random()*W,y:Math.random()*70,r:Math.random()*1.4+0.4,tw:Math.random()*6});
+for(var mi=0;mi<26;mi++) motes.push({x:Math.random()*W,y:60+Math.random()*480,s:0.2+Math.random()*0.5,ph:Math.random()*6});
+for(var ei=0;ei<18;ei++) embers.push({x:Math.random()*W,y:300+Math.random()*220,s:0.4+Math.random()*0.8,ph:Math.random()*6});
+function roomStyle(id){ return ROOMS[id].style; }
+function drawItem(it){
+  var x=it.x, y=it.y, bob=Math.sin(state.time*2+x)*2;
+  ctx.save(); ctx.translate(x, y+bob*0.4);
+  if(it.kind==='sword'){
+    ctx.rotate(-0.6);
+    ctx.strokeStyle='#c8d4e8'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(0,14); ctx.lineTo(0,-18); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(0,12); ctx.lineTo(0,-16); ctx.stroke();
+    ctx.fillStyle='#ffd75e'; ctx.fillRect(-8,12,16,4);
+    ctx.fillStyle='#8a5a1a'; ctx.fillRect(-2.5,16,5,9);
+    ctx.fillStyle='#ff3860'; ctx.beginPath(); ctx.arc(0,-18,2.5,0,Math.PI*2); ctx.fill();
+  } else if(it.kind==='key'){
+    var col=it.id==='emberkey'?'#ff8a3c':'#ffd75e';
+    ctx.strokeStyle=col; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(-4,0,7,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(3,0); ctx.lineTo(16,0); ctx.moveTo(12,0); ctx.lineTo(12,6); ctx.moveTo(16,0); ctx.lineTo(16,5); ctx.stroke();
+    ctx.globalAlpha=0.35+0.3*Math.sin(state.time*3);
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(0,0,14,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  } else if(it.kind==='bridge'){
+    ctx.fillStyle='#8a6a3a';
+    for(var b=0;b<3;b++){ ctx.fillRect(-20+b*2, -12+b*9, 40-b*4, 7); }
+    ctx.strokeStyle='#5a4020'; ctx.lineWidth=1.5;
+    ctx.strokeRect(-20,-12,40,25);
+  } else if(it.kind==='magnet'){
+    ctx.strokeStyle='#ff3860'; ctx.lineWidth=7;
+    ctx.beginPath(); ctx.arc(0,0,11,Math.PI,0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-11,0); ctx.lineTo(-11,10); ctx.moveTo(11,0); ctx.lineTo(11,10); ctx.stroke();
+    ctx.fillStyle='#e8e8e8'; ctx.fillRect(-14,-2,6,5); ctx.fillRect(8,-2,6,5);
+  } else if(it.kind==='chalice'){
+    var g=ctx.createRadialGradient(0,0,2,0,0,30);
+    g.addColorStop(0,'rgba(255,215,94,0.85)'); g.addColorStop(0.5,'rgba(255,179,71,0.25)'); g.addColorStop(1,'rgba(255,179,71,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,30,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffd75e';
+    ctx.beginPath(); ctx.moveTo(-13,-12); ctx.lineTo(13,-12); ctx.lineTo(9,2); ctx.lineTo(-9,2); ctx.closePath(); ctx.fill();
+    ctx.fillRect(-3,2,6,10); ctx.fillRect(-9,12,18,3);
+    ctx.strokeStyle='#fff3c4'; ctx.lineWidth=1.4; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.beginPath(); ctx.arc(-4,-8,2.5,0,Math.PI*2); ctx.fill();
+  } else if(it.kind==='spark'){
+    ctx.globalAlpha=0.6+0.4*Math.sin(state.time*4);
+    ctx.fillStyle='#35e0ff'; ctx.beginPath(); ctx.arc(0,0,9,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+}
+/* ---- CHAR2 sprite-stack helpers (visual only) ----
+   fdShade: 3-tone shading helper — dark core -> mid -> lit top. */
+function fdShade(hex,f){
+  var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r=Math.max(0,Math.min(255,Math.round(r*f))); g=Math.max(0,Math.min(255,Math.round(g*f))); b=Math.max(0,Math.min(255,Math.round(b*f)));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function drawDragon(d){
+  if(!d.alive) return;
+  var flap=Math.sin(d.wing)*0.5;
+  var sc=d.id==='gilded'?1.22:(d.id==='embermaw'?1.14:1.06);
+  var breathe=Math.sin(state.time*1.6+d.x*0.05)*0.012;
+  ctx.save(); ctx.translate(d.x, d.y); ctx.scale(sc,sc*(1+breathe)); ctx.rotate(Math.sin(d.wing*0.5)*0.02);
+  /* contact shadow + colour ground-glow */
+  ctx.globalAlpha=0.34; ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(0,21,32,7,0,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.10; ctx.fillStyle=d.color;
+  ctx.beginPath(); ctx.ellipse(0,20,40,10,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  /* segmented tail: stacked discs tapering to a rim-lit spade */
+  var tailPts=[[-20,3,5.2],[-27,5,4.4],[-34,8,3.6],[-40,11,2.8]];
+  for(var tp=0;tp<tailPts.length;tp++){
+    ctx.fillStyle=fdShade(d.dark,0.75+tp*0.14);
+    ctx.beginPath(); ctx.arc(tailPts[tp][0],tailPts[tp][1]+flap*tp*0.8,tailPts[tp][2],0,Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle=fdShade(d.color,0.9);
+  ctx.beginPath(); ctx.moveTo(-43,11+flap*2.4); ctx.lineTo(-52,6+flap*2.4); ctx.lineTo(-50,12+flap*2.4); ctx.lineTo(-52,17+flap*2.4); ctx.closePath(); ctx.fill();
+  /* clawed legs under the body */
+  ctx.fillStyle=fdShade(d.dark,0.8);
+  ctx.fillRect(-16,10,5,8); ctx.fillRect(10,10,5,8);
+  ctx.fillStyle='#d8cdb4';
+  for(var cl=0;cl<3;cl++){
+    ctx.beginPath(); ctx.moveTo(-17+cl*3.4,18); ctx.lineTo(-15.4+cl*3.4,21.5); ctx.lineTo(-13.8+cl*3.4,18); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(9+cl*3.4,18); ctx.lineTo(10.6+cl*3.4,21.5); ctx.lineTo(12.2+cl*3.4,18); ctx.closePath(); ctx.fill();
+  }
+  /* wings: layered membranes — dark back slice, mid membrane, lit inner
+     panel, bone struts, rim-lit leading edge */
+  for(var ws=-1;ws<=1;ws+=2){
+    ctx.save(); ctx.scale(ws,1);
+    ctx.fillStyle=fdShade(d.dark,0.5);
+    ctx.beginPath();
+    ctx.moveTo(6,-5); ctx.lineTo(32,-25-flap*11); ctx.lineTo(27,-6); ctx.lineTo(34,5+flap*6); ctx.lineTo(16,7); ctx.lineTo(5,4);
+    ctx.closePath(); ctx.fill();
+    ctx.translate(0,-1.6);
+    ctx.fillStyle=fdShade(d.dark,0.95);
+    ctx.beginPath();
+    ctx.moveTo(6,-5); ctx.lineTo(32,-25-flap*11); ctx.lineTo(27,-6); ctx.lineTo(34,5+flap*6); ctx.lineTo(16,7); ctx.lineTo(5,4);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle=fdShade(d.color,0.30);
+    ctx.beginPath();
+    ctx.moveTo(10,-4); ctx.lineTo(28,-19-flap*9); ctx.lineTo(24,-5); ctx.lineTo(29,3+flap*5); ctx.lineTo(15,4);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=fdShade(d.dark,0.55); ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(7,-4); ctx.lineTo(26,-7); ctx.moveTo(7,-3); ctx.lineTo(24,2); ctx.stroke();
+    ctx.strokeStyle=d.color; ctx.lineWidth=1.7; ctx.globalAlpha=0.95;
+    ctx.beginPath(); ctx.moveTo(6,-5); ctx.lineTo(32,-25-flap*11); ctx.stroke(); ctx.globalAlpha=1;
+    ctx.restore();
+  }
+  /* SPRITE STACK: body silhouette extruded in 6 slices, dark base
+     stepping up to the lit top — a heavy layered beast */
+  for(var k=6;k>=1;k--){
+    ctx.fillStyle=fdShade(d.dark,1.18-k*0.115);
+    ctx.beginPath(); ctx.ellipse(0,k*1.35,23,13.5,0,0,Math.PI*2); ctx.fill();
+  }
+  var g=ctx.createLinearGradient(0,-14,0,12);
+  g.addColorStop(0,fdShade(d.dark,2.1)); g.addColorStop(0.55,fdShade(d.dark,1.25)); g.addColorStop(1,fdShade(d.dark,0.72));
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.ellipse(0,0,23,13.5,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=d.color; ctx.lineWidth=1.8; ctx.globalAlpha=0.95; ctx.stroke(); ctx.globalAlpha=1;
+  /* belly plates */
+  ctx.strokeStyle=fdShade(d.color,0.75); ctx.lineWidth=1.3; ctx.globalAlpha=0.55;
+  for(var bp=0;bp<3;bp++){ ctx.beginPath(); ctx.ellipse(0,3+bp*3.4,15-bp*2.6,9-bp*1.4,0,Math.PI*0.25,Math.PI*0.75); ctx.stroke(); }
+  ctx.globalAlpha=1;
+  /* dorsal spikes: dark slice + lit top, rim in the dragon's colour */
+  var spikes=[[-17,-9,6],[-10,-12,8],[-2,-13,9],[6,-12,8],[13,-10,6]];
+  for(var si2=0;si2<spikes.length;si2++){
+    var sx=spikes[si2][0], sy=spikes[si2][1], sh=spikes[si2][2];
+    ctx.fillStyle=fdShade(d.dark,0.6);
+    ctx.beginPath(); ctx.moveTo(sx-3,sy+1.6); ctx.lineTo(sx,sy-sh+1.6); ctx.lineTo(sx+3,sy+1.6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=fdShade(d.color,0.85);
+    ctx.beginPath(); ctx.moveTo(sx-3,sy); ctx.lineTo(sx,sy-sh); ctx.lineTo(sx+3,sy); ctx.closePath(); ctx.fill();
+  }
+  /* neck: stacked segments rising to the head */
+  var neck, head;
+  if(d.id==='verdant'){ neck=[[16,-9,7.5],[24,-18,6.4],[31,-25,5.6]]; head=[36,-29]; }
+  else if(d.id==='embermaw'){ neck=[[16,-5,8.6],[25,-8,7.8]]; head=[34,-10]; }
+  else { neck=[[16,-8,7.8],[24,-15,6.8]]; head=[32,-19]; }
+  for(var nk=0;nk<neck.length;nk++){
+    ctx.fillStyle=fdShade(d.dark,0.85+nk*0.22);
+    ctx.beginPath(); ctx.arc(neck[nk][0],neck[nk][1]+2.2,neck[nk][2],0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=fdShade(d.dark,1.3+nk*0.22);
+    ctx.beginPath(); ctx.arc(neck[nk][0],neck[nk][1],neck[nk][2],0,Math.PI*2); ctx.fill();
+  }
+  var hx=head[0], hy=head[1];
+  ctx.save(); ctx.translate(hx,hy);
+  if(d.id==='verdant'){ /* long narrow snout, leaf-blade crest, swept horn */
+    ctx.fillStyle=fdShade(d.dark,0.65);
+    ctx.beginPath(); ctx.moveTo(-6,-4); ctx.lineTo(13,-2); ctx.lineTo(15,2); ctx.lineTo(4,6); ctx.lineTo(-6,5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=fdShade(d.dark,1.55);
+    ctx.beginPath(); ctx.moveTo(-7,-5); ctx.quadraticCurveTo(0,-9,8,-6); ctx.lineTo(14,-3); ctx.lineTo(15,1); ctx.lineTo(5,5); ctx.lineTo(-6,4); ctx.quadraticCurveTo(-9,0,-7,-5); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=fdShade(d.dark,0.5); ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-2,3.4); ctx.lineTo(13,1.4); ctx.stroke();
+    ctx.fillStyle='#e8f4d8';
+    ctx.beginPath(); ctx.moveTo(9,2); ctx.lineTo(10.6,5.6); ctx.lineTo(12,2.2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=fdShade(d.color,1.05); /* leaf crest blades */
+    ctx.beginPath(); ctx.moveTo(-2,-7); ctx.lineTo(-6,-16); ctx.lineTo(1,-9); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(2,-8); ctx.lineTo(1,-18); ctx.lineTo(7,-9); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(6,-7); ctx.lineTo(10,-15); ctx.lineTo(11,-6); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=d.color; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-4,-6); ctx.quadraticCurveTo(-11,-8,-13,-13); ctx.stroke();
+    ctx.fillStyle=d.color; ctx.globalAlpha=0.35; ctx.beginPath(); ctx.arc(3,-3,5.5,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    ctx.fillStyle=d.color; ctx.beginPath(); ctx.arc(3,-3,2.2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(3.6,-3.6,0.9,0,Math.PI*2); ctx.fill();
+  } else if(d.id==='embermaw'){ /* bulky skull, twin curved horns, wide chomping jaw */
+    var chomp=Math.max(0,Math.sin(state.time*2.6))*1.8;
+    ctx.fillStyle=fdShade(d.color,0.4); ctx.globalAlpha=0.5;
+    ctx.beginPath(); ctx.ellipse(6,7,10,5,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    ctx.strokeStyle='#d8c9a8'; ctx.lineCap='round';
+    ctx.lineWidth=4.4; ctx.beginPath(); ctx.moveTo(-3,-6); ctx.quadraticCurveTo(-12,-13,-16,-10); ctx.stroke();
+    ctx.lineWidth=3.8; ctx.beginPath(); ctx.moveTo(3,-8); ctx.quadraticCurveTo(-2,-17,-8,-16); ctx.stroke();
+    ctx.fillStyle=fdShade(d.dark,0.65);
+    ctx.beginPath(); ctx.moveTo(-8,-5); ctx.lineTo(12,-4); ctx.lineTo(17,1); ctx.lineTo(15,7+chomp); ctx.lineTo(-4,8+chomp); ctx.lineTo(-9,3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=fdShade(d.dark,1.5);
+    ctx.beginPath(); ctx.moveTo(-9,-6); ctx.quadraticCurveTo(2,-11,11,-7); ctx.lineTo(17,-2); ctx.lineTo(16,2); ctx.lineTo(4,4); ctx.lineTo(-7,3); ctx.quadraticCurveTo(-11,0,-9,-6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=fdShade(d.dark,1.05); /* heavy brow ridge */
+    ctx.beginPath(); ctx.moveTo(-6,-5); ctx.lineTo(8,-6); ctx.lineTo(9,-2.6); ctx.lineTo(-5,-2.2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=fdShade(d.dark,0.9); /* lower jaw */
+    ctx.beginPath(); ctx.moveTo(-4,4); ctx.lineTo(15,2.6); ctx.lineTo(14,7+chomp); ctx.lineTo(-2,8+chomp); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#fff'; /* fangs: two down, one up */
+    ctx.beginPath(); ctx.moveTo(11,3.4); ctx.lineTo(12.6,7.6); ctx.lineTo(14,3.2); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(4,3.8); ctx.lineTo(5.4,7.4); ctx.lineTo(7,3.6); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(9,7+chomp); ctx.lineTo(10.4,3.8+chomp); ctx.lineTo(12,6.8+chomp); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=d.color; ctx.globalAlpha=0.4; ctx.beginPath(); ctx.arc(1,-1,6,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    ctx.fillStyle=d.color; /* angry eye slit */
+    ctx.beginPath(); ctx.moveTo(-3.4,-2.2); ctx.lineTo(3.4,-1.2); ctx.lineTo(-3.4,0.2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#ffe9a8'; ctx.beginPath(); ctx.arc(0.4,-1,1,0,Math.PI*2); ctx.fill();
+  } else { /* GILDED: crowned sovereign — 5-spike gold crown, gem, nose horn */
+    ctx.fillStyle=fdShade(d.dark,0.65);
+    ctx.beginPath(); ctx.moveTo(-7,-4); ctx.lineTo(12,-3); ctx.lineTo(14,2); ctx.lineTo(4,6); ctx.lineTo(-7,5); ctx.closePath(); ctx.fill();
+    var hg=ctx.createLinearGradient(0,-9,0,6);
+    hg.addColorStop(0,fdShade(d.dark,2.2)); hg.addColorStop(1,fdShade(d.dark,1.1));
+    ctx.fillStyle=hg;
+    ctx.beginPath(); ctx.moveTo(-8,-5); ctx.quadraticCurveTo(0,-10,8,-6); ctx.lineTo(13,-3); ctx.lineTo(14,1); ctx.lineTo(5,5); ctx.lineTo(-6,4); ctx.quadraticCurveTo(-10,0,-8,-5); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=fdShade(d.color,1.1); ctx.lineWidth=1.5; /* gold plate arcs */
+    ctx.beginPath(); ctx.arc(0,-1,7.5,Math.PI*1.15,Math.PI*1.75); ctx.stroke();
+    ctx.fillStyle=fdShade(d.color,1.15); /* nose horn */
+    ctx.beginPath(); ctx.moveTo(11,-2); ctx.lineTo(17,-5); ctx.lineTo(13,2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#e8f4d8';
+    ctx.beginPath(); ctx.moveTo(8,2.4); ctx.lineTo(9.6,5.8); ctx.lineTo(11.4,2.2); ctx.closePath(); ctx.fill();
+    /* crown stack: dark slice under lit gold spikes + ruby core */
+    ctx.fillStyle=fdShade(d.color,0.55);
+    ctx.beginPath();
+    ctx.moveTo(-9,-8); ctx.lineTo(-7,-16); ctx.lineTo(-4,-10); ctx.lineTo(-1,-19); ctx.lineTo(2,-10); ctx.lineTo(5,-17); ctx.lineTo(8,-9); ctx.lineTo(4,-6.4); ctx.lineTo(-5,-6.4);
+    ctx.closePath(); ctx.fill();
+    var cg=ctx.createLinearGradient(0,-20,0,-6);
+    cg.addColorStop(0,'#fff3c4'); cg.addColorStop(0.5,fdShade(d.color,1.15)); cg.addColorStop(1,fdShade(d.color,0.8));
+    ctx.fillStyle=cg;
+    ctx.beginPath();
+    ctx.moveTo(-9,-9); ctx.lineTo(-7,-17); ctx.lineTo(-4,-11); ctx.lineTo(-1,-20); ctx.lineTo(2,-11); ctx.lineTo(5,-18); ctx.lineTo(8,-10); ctx.lineTo(4,-7.4); ctx.lineTo(-5,-7.4);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#ff3860'; ctx.globalAlpha=0.4; ctx.beginPath(); ctx.arc(-0.5,-8.6,4.4,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    ctx.fillStyle='#ff3860';
+    ctx.beginPath(); ctx.moveTo(-0.5,-11.4); ctx.lineTo(1.8,-8.6); ctx.lineTo(-0.5,-5.8); ctx.lineTo(-2.8,-8.6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=d.color; ctx.globalAlpha=0.35; ctx.beginPath(); ctx.arc(2,-3,5.5,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    ctx.fillStyle=d.color; ctx.beginPath(); ctx.arc(2,-3,2.2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(2.6,-3.6,0.9,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+  ctx.restore();
+}
+function drawBat(b){
+  var flap=Math.sin(b.flap)*0.6;
+  ctx.save(); ctx.translate(b.x, b.y);
+  /* faint ground shadow far below — the thief flies high */
+  ctx.globalAlpha=0.14; ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(0,30,13,3.4,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  /* wings: layered membranes with finger struts + violet rim light */
+  for(var ws=-1;ws<=1;ws+=2){
+    ctx.save(); ctx.scale(ws,1);
+    ctx.fillStyle='#0d0916';
+    ctx.beginPath();
+    ctx.moveTo(3,-2); ctx.lineTo(24,-14-flap*9); ctx.lineTo(15,1); ctx.lineTo(23,10+flap*7); ctx.lineTo(9,5); ctx.lineTo(3,3);
+    ctx.closePath(); ctx.fill();
+    ctx.translate(0,-1.4);
+    ctx.fillStyle='#1c1430';
+    ctx.beginPath();
+    ctx.moveTo(3,-2); ctx.lineTo(24,-14-flap*9); ctx.lineTo(15,1); ctx.lineTo(23,10+flap*7); ctx.lineTo(9,5); ctx.lineTo(3,3);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(138,92,255,0.20)';
+    ctx.beginPath();
+    ctx.moveTo(6,-2); ctx.lineTo(20,-10-flap*7); ctx.lineTo(13,0); ctx.lineTo(18,6+flap*5); ctx.lineTo(8,3);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(10,6,18,0.9)'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(4,-1); ctx.lineTo(15,0); ctx.moveTo(4,0); ctx.lineTo(12,4); ctx.stroke();
+    ctx.strokeStyle='#8a5cff'; ctx.lineWidth=1.3; ctx.globalAlpha=0.9;
+    ctx.beginPath(); ctx.moveTo(3,-2); ctx.lineTo(24,-14-flap*9); ctx.stroke(); ctx.globalAlpha=1;
+    ctx.fillStyle='#d8cdb4'; /* wing-tip claw hook */
+    ctx.beginPath(); ctx.moveTo(23,-14-flap*9); ctx.lineTo(26,-11-flap*9); ctx.lineTo(22.4,-10.6-flap*9); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  /* SPRITE STACK: body slices stepping down, dark core -> lit top */
+  for(var k=4;k>=1;k--){ ctx.fillStyle=fdShade('#241c33',1.1-k*0.14); ctx.beginPath(); ctx.ellipse(0,k*1.5,7.6,6.4,0,0,Math.PI*2); ctx.fill(); }
+  var bg2=ctx.createLinearGradient(0,-7,0,6);
+  bg2.addColorStop(0,'#3a2c55'); bg2.addColorStop(1,'#171126');
+  ctx.fillStyle=bg2; ctx.beginPath(); ctx.ellipse(0,0,7.6,6.4,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#8a5cff'; ctx.lineWidth=1.1; ctx.globalAlpha=0.8; ctx.stroke(); ctx.globalAlpha=1;
+  /* head stack: pointed ears, brow, fangs — a thief, not a pet */
+  ctx.fillStyle=fdShade('#241c33',0.7);
+  ctx.beginPath(); ctx.moveTo(-5,-7); ctx.lineTo(-6.4,-13); ctx.lineTo(-1.8,-9); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(5,-7); ctx.lineTo(6.4,-13); ctx.lineTo(1.8,-9); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#2e2145';
+  ctx.beginPath(); ctx.moveTo(-5,-7); ctx.lineTo(-6.4,-13.6); ctx.lineTo(-1.8,-9.4); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(5,-7); ctx.lineTo(6.4,-13.6); ctx.lineTo(1.8,-9.4); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#33264f'; ctx.beginPath(); ctx.arc(0,-4.6,5.2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ff3860'; ctx.globalAlpha=0.35;
+  ctx.beginPath(); ctx.arc(-2.4,-4.8,3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(2.4,-4.8,3,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  ctx.fillStyle='#ff3860';
+  ctx.beginPath(); ctx.arc(-2.4,-4.8,1.7,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(2.4,-4.8,1.7,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(-1.8,-5.4,0.6,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(3,-5.4,0.6,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e8e2f4'; /* twin fangs */
+  ctx.beginPath(); ctx.moveTo(-2.6,-0.8); ctx.lineTo(-1.8,1.8); ctx.lineTo(-1,-0.8); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(1,-0.8); ctx.lineTo(1.8,1.8); ctx.lineTo(2.6,-0.8); ctx.closePath(); ctx.fill();
+  /* clutching feet */
+  ctx.strokeStyle='#0d0916'; ctx.lineWidth=1.6; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-3,5.6); ctx.lineTo(-3.6,8.6); ctx.moveTo(3,5.6); ctx.lineTo(3.6,8.6); ctx.stroke();
+  if(b.carrying){
+    var it=itemById(b.carrying);
+    ctx.globalAlpha=0.9; ctx.fillStyle='#ffd75e'; ctx.font='700 9px "Share Tech Mono", monospace'; ctx.textAlign='center';
+    ctx.fillText(it? it.name.toUpperCase():'', 0, 17); ctx.textAlign='left'; ctx.globalAlpha=1;
+  }
+  ctx.restore();
+}
+function drawPlayer(p){
+  var bob=p.moving? Math.sin(p.walk)*2 : Math.sin(state.time*2+p.idx*2)*1.2;
+  var sway=Math.sin(state.time*2+p.idx*2);
+  var lean=p.moving? Math.sin(p.walk)*0.045 : sway*0.016;
+  ctx.save(); ctx.translate(p.x, p.y+bob*0.3); ctx.rotate(lean);
+  /* contact shadow + colour ground-glow */
+  ctx.globalAlpha=0.3; ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(0,17-bob*0.3,17,4.6,0,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.12; ctx.fillStyle=p.color;
+  ctx.beginPath(); ctx.ellipse(0,17-bob*0.3,23,6.4,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  /* armoured boots that shuffle while walking */
+  var step=p.moving? Math.sin(p.walk)*4 : 0;
+  ctx.fillStyle='#0d0a14';
+  ctx.fillRect(-8.6+step*0.4, 10, 6.6, 5.4); ctx.fillRect(2-step*0.4, 10, 6.6, 5.4);
+  ctx.fillStyle=fdShade(p.color,0.8);
+  ctx.fillRect(-8.6+step*0.4, 14, 6.6, 1.6); ctx.fillRect(2-step*0.4, 14, 6.6, 1.6);
+  /* cape: layered slices flowing behind, swaying with time */
+  for(var ck=3;ck>=0;ck--){
+    ctx.fillStyle=fdShade(p.dark,0.45+ck*0.16);
+    ctx.beginPath();
+    ctx.moveTo(-11,-7+ck*1.7); ctx.lineTo(11,-7+ck*1.7);
+    ctx.lineTo(15+sway*1.6,15+ck*1.7); ctx.quadraticCurveTo(0,19+ck*1.7,-15+sway*1.2,15+ck*1.7);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.strokeStyle=fdShade(p.color,0.9); ctx.lineWidth=1.3; ctx.globalAlpha=0.85;
+  ctx.beginPath(); ctx.moveTo(-15+sway*1.2,15); ctx.quadraticCurveTo(0,19,15+sway*1.6,15); ctx.stroke(); ctx.globalAlpha=1;
+  /* SPRITE STACK: torso silhouette extruded in 5 slices, dark base
+     stepping up to the lit armoured top plate */
+  function torsoPath(){
+    ctx.beginPath();
+    ctx.moveTo(-13,10); ctx.lineTo(-13,-4); ctx.quadraticCurveTo(-13,-14,0,-14); ctx.quadraticCurveTo(13,-14,13,-4); ctx.lineTo(13,10); ctx.quadraticCurveTo(0,14,-13,10);
+    ctx.closePath();
+  }
+  for(var k=5;k>=1;k--){
+    ctx.save(); ctx.translate(0,k*1.45);
+    ctx.fillStyle=fdShade(p.dark,1.16-k*0.13); torsoPath(); ctx.fill();
+    ctx.restore();
+  }
+  var g=ctx.createLinearGradient(0,-14,0,12);
+  g.addColorStop(0,'#57496a'); g.addColorStop(0.5,'#2a2138'); g.addColorStop(1,fdShade(p.dark,0.95));
+  ctx.fillStyle=g; torsoPath(); ctx.fill();
+  ctx.strokeStyle=p.color; ctx.lineWidth=1.8; ctx.globalAlpha=0.95; ctx.stroke(); ctx.globalAlpha=1;
+  /* torso plate seams + belt */
+  ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(-12,-1); ctx.lineTo(12,-1); ctx.moveTo(-12.6,5); ctx.lineTo(12.6,5); ctx.stroke();
+  ctx.fillStyle='#14101e'; ctx.fillRect(-12.4,7.4,24.8,3.4);
+  ctx.fillStyle=fdShade(p.color,1.05); ctx.fillRect(-2.2,7.8,4.4,2.6);
+  /* chest core: rim-lit diamond with a hot centre */
+  ctx.fillStyle=p.color; ctx.globalAlpha=0.30;
+  ctx.beginPath(); ctx.arc(0,1.6,7,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  ctx.fillStyle=p.color;
+  ctx.beginPath(); ctx.moveTo(0,-2.4); ctx.lineTo(3.2,1.6); ctx.lineTo(0,5.6); ctx.lineTo(-3.2,1.6); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#fff6e0'; ctx.beginPath(); ctx.arc(0,1.6,1.3,0,Math.PI*2); ctx.fill();
+  /* pauldrons: stacked shoulder plates, rim-lit */
+  for(var ps=-1;ps<=1;ps+=2){
+    ctx.save(); ctx.translate(ps*13.6,-6.4);
+    ctx.fillStyle=fdShade(p.dark,0.6); ctx.beginPath(); ctx.ellipse(0,2.2,6.2,4.6,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#3d3648'; ctx.beginPath(); ctx.ellipse(0,0,6.2,4.6,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle=p.color; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.ellipse(0,0,6.2,4.6,0,ps<0?Math.PI*1.05:Math.PI*1.55,ps<0?Math.PI*1.6:Math.PI*2.1); ctx.stroke();
+    ctx.fillStyle=fdShade(p.color,0.9); ctx.beginPath(); ctx.arc(0,-1.4,1.4,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  /* shield stack on the left arm: kite shield, rim + core emblem */
+  ctx.save(); ctx.translate(-19.5,0.5); ctx.rotate(-0.07+sway*0.02);
+  ctx.fillStyle=fdShade(p.dark,0.5);
+  ctx.beginPath(); ctx.moveTo(0,-11); ctx.quadraticCurveTo(7,-10,7,-3); ctx.quadraticCurveTo(7,5,0,12); ctx.quadraticCurveTo(-7,5,-7,-3); ctx.quadraticCurveTo(-7,-10,0,-11); ctx.closePath(); ctx.fill();
+  ctx.translate(0,-1.8);
+  var sg=ctx.createLinearGradient(0,-11,0,12);
+  sg.addColorStop(0,'#4a3f5c'); sg.addColorStop(1,'#1c1626');
+  ctx.fillStyle=sg;
+  ctx.beginPath(); ctx.moveTo(0,-11); ctx.quadraticCurveTo(7,-10,7,-3); ctx.quadraticCurveTo(7,5,0,12); ctx.quadraticCurveTo(-7,5,-7,-3); ctx.quadraticCurveTo(-7,-10,0,-11); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=p.color; ctx.lineWidth=1.7; ctx.stroke();
+  ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(0,11); ctx.stroke();
+  ctx.fillStyle=p.color;
+  ctx.beginPath(); ctx.moveTo(0,-4.4); ctx.lineTo(2.6,0); ctx.lineTo(0,4.4); ctx.lineTo(-2.6,0); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  /* helm stack: extruded dome slices, crest fin, T-visor with lit eyes */
+  for(var hk=3;hk>=1;hk--){
+    ctx.fillStyle=fdShade('#3d3648',1.05-hk*0.16);
+    ctx.beginPath();
+    ctx.moveTo(-9.6,-9+hk*1.3); ctx.quadraticCurveTo(-9.6,-19+hk*1.3,0,-19.6+hk*1.3); ctx.quadraticCurveTo(9.6,-19+hk*1.3,9.6,-9+hk*1.3);
+    ctx.closePath(); ctx.fill();
+  }
+  var hg2=ctx.createLinearGradient(0,-20,0,-8);
+  hg2.addColorStop(0,'#6a5c84'); hg2.addColorStop(0.6,'#3d3648'); hg2.addColorStop(1,'#241d33');
+  ctx.fillStyle=hg2;
+  ctx.beginPath();
+  ctx.moveTo(-9.6,-9); ctx.quadraticCurveTo(-9.6,-19,0,-19.6); ctx.quadraticCurveTo(9.6,-19,9.6,-9);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=p.color; ctx.lineWidth=1.6; ctx.globalAlpha=0.95;
+  ctx.beginPath(); ctx.moveTo(9.6,-9); ctx.quadraticCurveTo(9.6,-19,0,-19.6); ctx.stroke(); ctx.globalAlpha=1;
+  /* crest fin in the delver's colour */
+  ctx.fillStyle=fdShade(p.color,0.55);
+  ctx.beginPath(); ctx.moveTo(-1.6,-19); ctx.quadraticCurveTo(0,-27,2,-24); ctx.lineTo(1.8,-18.6); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=fdShade(p.color,1.0);
+  ctx.beginPath(); ctx.moveTo(-1.4,-19.2); ctx.quadraticCurveTo(0,-26,1.6,-23.4); ctx.lineTo(1.4,-18.8); ctx.closePath(); ctx.fill();
+  /* face plate + T-visor: glowing eyes read at mobile size */
+  ctx.fillStyle='#0a0618'; ctx.fillRect(-8.6,-15.4,17.2,6.8);
+  ctx.strokeStyle=fdShade(p.color,0.85); ctx.lineWidth=1.1; ctx.strokeRect(-8.6,-15.4,17.2,6.8);
+  ctx.fillStyle='#0a0618'; ctx.fillRect(-1.1,-8.6,2.2,3.4);
+  ctx.fillStyle=p.color; ctx.globalAlpha=0.35;
+  ctx.beginPath(); ctx.arc(-4.2,-12,3.4,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(4.2,-12,3.4,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  ctx.fillStyle=p.color;
+  ctx.beginPath(); ctx.moveTo(-6,-13); ctx.lineTo(-2.4,-12.2); ctx.lineTo(-6,-11.2); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(6,-13); ctx.lineTo(2.4,-12.2); ctx.lineTo(6,-11.2); ctx.closePath(); ctx.fill();
+  /* sword in hand when carried: stacked blade, gold guard, ruby pommel */
+  if(p.carrying==='sword'){
+    ctx.save(); ctx.translate(15.5,-3); ctx.rotate(0.72+Math.sin(p.walk||0)*0.05);
+    ctx.strokeStyle='#5a6a86'; ctx.lineWidth=4.4;
+    ctx.beginPath(); ctx.moveTo(1.6,1.6); ctx.lineTo(1.6,-19); ctx.stroke();
+    ctx.strokeStyle='#c8d4e8'; ctx.lineWidth=3.4;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-21); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(0,-2); ctx.lineTo(0,-19); ctx.stroke();
+    ctx.fillStyle='#ffd75e'; ctx.fillRect(-5.4,-0.6,10.8,3.2);
+    ctx.fillStyle='#8a5a1a'; ctx.fillRect(-2.2,2.6,4.4,6);
+    ctx.fillStyle='#ff3860'; ctx.beginPath(); ctx.arc(0,9.6,2.2,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  /* carried item rides above the delver */
+  if(p.carrying && p.carrying!=='sword'){
+    var it=itemById(p.carrying);
+    if(it){
+      ctx.save(); ctx.translate(0,-34); ctx.scale(0.7,0.7);
+      var keepX=it.x, keepY=it.y; it.x=0; it.y=0;
+      drawItem(it);
+      it.x=keepX; it.y=keepY;
+      ctx.restore();
+    }
+  }
+  /* name tag */
+  ctx.fillStyle=p.color; ctx.font='700 10px "Share Tech Mono", monospace'; ctx.textAlign='center';
+  ctx.fillText(p.name, 0, 28); ctx.textAlign='left';
+  ctx.restore();
+}
+
+function drawRoomBase(){
+  var room=ROOMS[state.players[0].room];
+  var style=room.style;
+  /* far layer: high window band — night sky, watchmoon, far towers */
+  var sky=ctx.createLinearGradient(0,RY,0,RY+64);
+  sky.addColorStop(0,'#0d1026'); sky.addColorStop(1,'#1a1430');
+  ctx.fillStyle=sky; ctx.fillRect(RX,RY,RW,64);
+  for(var s=0;s<stars.length;s++){
+    var st=stars[s];
+    ctx.globalAlpha=0.3+0.4*Math.abs(Math.sin(state.time*0.7+st.tw));
+    ctx.fillStyle='#ffe9c4'; ctx.fillRect(RX+((st.x+state.time*2)%RW), RY+6+(st.y%50), st.r, st.r);
+  }
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#ffe9a8'; ctx.beginPath(); ctx.arc(RX+RW-90, RY+26, 12, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#14102a';
+  var off=(state.time*2)%100;
+  ctx.beginPath(); ctx.moveTo(RX,RY+64);
+  for(var mx=RX;mx<=RX+RW;mx+=70) ctx.lineTo(mx+((mx/70)%2?12:-8), RY+64-18-((mx*7)%14));
+  ctx.lineTo(RX+RW,RY+64); ctx.closePath(); ctx.fill();
+  /* floor: flagstones, tinted per style */
+  var tint={gold:'#2a2118',hall:'#1e1c26',armory:'#221c1c',garden:'#18241a',ember:'#261512',chalice:'#141021',vault:'#221d16',moat:'#16202a',depths:'#120e1c',cellar:'#201a14',crypt:'#171a18',hidden:'#1a1430'}[style]||'#1c1a24';
+  var fl=ctx.createLinearGradient(0,RY+64,0,RY+RH);
+  fl.addColorStop(0,tint); fl.addColorStop(1,'#0d0a12');
+  ctx.fillStyle=fl; ctx.fillRect(RX,RY+64,RW,RH-64);
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+  for(var gx=RX+60;gx<RX+RW;gx+=60){ ctx.beginPath(); ctx.moveTo(gx,RY+64); ctx.lineTo(gx,RY+RH); ctx.stroke(); }
+  for(var gy=RY+124;gy<RY+RH;gy+=60){ ctx.beginPath(); ctx.moveTo(RX,gy); ctx.lineTo(RX+RW,gy); ctx.stroke(); }
+  /* style dressing */
+  if(style==='hall'||style==='gold'){
+    /* carpet runner */
+    ctx.fillStyle=style==='gold'?'rgba(255,179,71,0.16)':'rgba(0,255,136,0.12)';
+    ctx.fillRect(RX+RW/2-70, RY+64, 140, RH-64);
+    ctx.strokeStyle=style==='gold'?'rgba(255,215,94,0.5)':'rgba(0,255,136,0.4)';
+    ctx.strokeRect(RX+RW/2-70, RY+64, 140, RH-64);
+  }
+  if(style==='garden'){
+    ctx.fillStyle='rgba(61,220,120,0.10)';
+    for(var v=0;v<8;v++){ var vx=RX+80+v*100; ctx.beginPath(); ctx.arc(vx, RY+RH-40, 26, 0, Math.PI*2); ctx.fill(); }
+    /* fireflies */
+    for(var f=0;f<10;f++){
+      ctx.globalAlpha=0.4+0.5*Math.abs(Math.sin(state.time*1.4+f));
+      ctx.fillStyle='#b8ff9a'; ctx.beginPath(); ctx.arc(RX+60+((f*137+state.time*12)%(RW-120)), RY+120+((f*89)%300), 2.4, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+  if(style==='ember'){
+    ctx.strokeStyle='rgba(255,90,60,0.4)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(RX+120,RY+RH-60); ctx.lineTo(RX+300,RY+RH-30); ctx.lineTo(RX+520,RY+RH-70); ctx.lineTo(RX+760,RY+RH-40); ctx.stroke();
+  }
+  if(style==='crypt'){
+    ctx.fillStyle='rgba(200,210,220,0.5)';
+    ctx.fillRect(RX+90,RY+RH-70,26,8); ctx.fillRect(RX+120,RY+RH-58,14,6);
+    ctx.fillRect(RX+RW-140,RY+130,26,8); ctx.fillRect(RX+RW-110,RY+142,14,6);
+    ctx.fillStyle='rgba(120,255,180,0.25)';
+    for(var w=0;w<4;w++){ ctx.beginPath(); ctx.arc(RX+150+w*180, RY+150+((w*67)%260), 8+((w*13)%10), 0, Math.PI*2); ctx.fill(); }
+  }
+  if(style==='cellar'){
+    ctx.fillStyle='#4a3420';
+    ctx.fillRect(RX+80,RY+100,54,54); ctx.fillRect(RX+150,RY+100,54,54); ctx.fillRect(RX+RW-220,RY+RH-120,54,54);
+    ctx.strokeStyle='#2a1c10'; ctx.lineWidth=2;
+    ctx.strokeRect(RX+80,RY+100,54,54); ctx.strokeRect(RX+150,RY+100,54,54); ctx.strokeRect(RX+RW-220,RY+RH-120,54,54);
+  }
+  if(style==='vault'){
+    ctx.fillStyle='#ffd75e';
+    for(var c=0;c<14;c++){ ctx.globalAlpha=0.5+0.4*Math.sin(state.time*2+c); ctx.beginPath(); ctx.arc(RX+100+(c*53)%(RW-200), RY+RH-50-((c*29)%40), 3, 0, Math.PI*2); ctx.fill(); }
+    ctx.globalAlpha=1;
+  }
+  if(style==='chalice'){
+    /* pedestal glow under the chalice */
+    var pg=ctx.createRadialGradient(480,300,4,480,300,90);
+    pg.addColorStop(0,'rgba(255,215,94,0.22)'); pg.addColorStop(1,'rgba(255,215,94,0)');
+    ctx.fillStyle=pg; ctx.beginPath(); ctx.arc(480,300,90,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#3a3048'; ctx.fillRect(460,300,40,10); ctx.fillRect(452,310,56,8);
+  }
+  if(style==='hidden'){
+    ctx.fillStyle='rgba(255,215,94,0.9)'; ctx.font='900 30px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('BUILT BY SHADDAI', RX+RW/2, RY+150);
+    ctx.fillStyle='rgba(53,224,255,0.85)'; ctx.font='700 16px "Share Tech Mono", monospace';
+    ctx.fillText('THE COUNCIL DELVES', RX+RW/2, RY+182);
+    ctx.textAlign='left';
+    for(var sp=0;sp<12;sp++){
+      ctx.globalAlpha=0.4+0.5*Math.abs(Math.sin(state.time*2+sp));
+      ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(RX+80+(sp*67)%(RW-160), RY+220+((sp*41)%260), 2.5, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+  /* moat water band */
+  if(room.moat){
+    var mb=moatBand();
+    var wg=ctx.createLinearGradient(0,mb.y0,0,mb.y1);
+    wg.addColorStop(0,'#1e5a7a'); wg.addColorStop(0.5,'#2a7a9a'); wg.addColorStop(1,'#143a52');
+    ctx.fillStyle=wg; ctx.fillRect(RX,mb.y0,RW,mb.y1-mb.y0);
+    ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1.5;
+    for(var wl=0;wl<3;wl++){
+      var wy=mb.y0+14+wl*20;
+      ctx.beginPath();
+      for(var wx=RX;wx<=RX+RW;wx+=24) ctx.lineTo(wx, wy+Math.sin(state.time*2+wx*0.02+wl)*4);
+      ctx.stroke();
+    }
+    /* bridge posts */
+    ctx.fillStyle='#4a3420';
+    ctx.fillRect(RX+RW/2-70, mb.y0-8, 12, mb.y1-mb.y0+16);
+    ctx.fillRect(RX+RW/2+58, mb.y0-8, 12, mb.y1-mb.y0+16);
+  }
+  /* dust motes + embers */
+  for(var m=0;m<motes.length;m++){
+    var mo=motes[m];
+    ctx.globalAlpha=0.18+0.15*Math.sin(state.time*mo.s+mo.ph);
+    ctx.fillStyle='#ffdf9a'; ctx.fillRect((mo.x+state.time*6*mo.s)%W, mo.y, 2, 2);
+  }
+  ctx.globalAlpha=1;
+  if(style==='ember'){
+    for(var e=0;e<embers.length;e++){
+      var em=embers[e];
+      ctx.globalAlpha=0.3+0.4*Math.abs(Math.sin(state.time*em.s+em.ph));
+      ctx.fillStyle='#ff8a3c'; ctx.fillRect((em.x+state.time*10*em.s)%W, em.y, 2.5, 2.5);
+    }
+    ctx.globalAlpha=1;
+  }
+}
+function drawWalls(){
+  var room=ROOMS[state.players[0].room];
+  var locked=room.lock||{};
+  var secret=room.secret||{};
+  /* wall band: stone courses */
+  ctx.fillStyle='#241d2e';
+  ctx.fillRect(RX,RY,RW,WALL); ctx.fillRect(RX,RY+RH-WALL,RW,WALL);
+  ctx.fillRect(RX,RY,WALL,RH); ctx.fillRect(RX+RW-WALL,RY,WALL,RH);
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+  for(var wy=RY+7;wy<RY+RH;wy+=14){ ctx.beginPath(); ctx.moveTo(RX,wy); ctx.lineTo(RX+RW,wy); ctx.stroke(); }
+  /* torches on the top wall, flickering */
+  var torchXs=[RX+70, RX+RW/2-140, RX+RW/2+140, RX+RW-70];
+  for(var t=0;t<torchXs.length;t++){
+    var tx2=torchXs[t], fl2=0.6+0.4*Math.sin(state.time*7+t*2);
+    var tg=ctx.createRadialGradient(tx2,RY+WALL,1,tx2,RY+WALL,26);
+    tg.addColorStop(0,'rgba(255,179,71,'+(0.5*fl2)+')'); tg.addColorStop(1,'rgba(255,179,71,0)');
+    ctx.fillStyle=tg; ctx.beginPath(); ctx.arc(tx2,RY+WALL,26,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffb347'; ctx.beginPath(); ctx.arc(tx2,RY+WALL-2,3.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#5a4020'; ctx.fillRect(tx2-2,RY+WALL+2,4,7);
+  }
+  /* doors: gaps with arch frames; locked = barred gate; secret = cracked wall */
+  var sides=['N','S','E','W'];
+  for(var i=0;i<sides.length;i++){
+    var side=sides[i], link=room.links[side];
+    if(!link && !secret[side]) continue;
+    var d=doorXY(side);
+    if(secret[side]){
+      /* cracked wall: faint fissure lines, no open gap */
+      ctx.strokeStyle='rgba(255,215,94,0.35)'; ctx.lineWidth=1.4;
+      ctx.beginPath();
+      if(side==='E'){ ctx.moveTo(RX+RW-2,RY+RH/2-30); ctx.lineTo(RX+RW-8,RY+RH/2); ctx.lineTo(RX+RW-2,RY+RH/2+30); }
+      else { ctx.moveTo(RX+2,RY+RH/2-30); ctx.lineTo(RX+8,RY+RH/2); ctx.lineTo(RX+2,RY+RH/2+30); }
+      ctx.stroke();
+      continue;
+    }
+    ctx.fillStyle='#0d0a12';
+    if(side==='N') ctx.fillRect(d.x-DOOR_W/2, RY, DOOR_W, WALL+2);
+    if(side==='S') ctx.fillRect(d.x-DOOR_W/2, RY+RH-WALL-2, DOOR_W, WALL+2);
+    if(side==='W') ctx.fillRect(RX, d.y-DOOR_W/2, WALL+2, DOOR_W);
+    if(side==='E') ctx.fillRect(RX+RW-WALL-2, d.y-DOOR_W/2, WALL+2, DOOR_W);
+    /* arch frame */
+    ctx.strokeStyle='rgba(255,215,94,0.55)'; ctx.lineWidth=2;
+    if(side==='N'){ ctx.beginPath(); ctx.moveTo(d.x-DOOR_W/2,RY+WALL); ctx.lineTo(d.x-DOOR_W/2,RY); ctx.moveTo(d.x+DOOR_W/2,RY+WALL); ctx.lineTo(d.x+DOOR_W/2,RY); ctx.stroke(); }
+    if(side==='S'){ ctx.beginPath(); ctx.moveTo(d.x-DOOR_W/2,RY+RH-WALL); ctx.lineTo(d.x-DOOR_W/2,RY+RH); ctx.moveTo(d.x+DOOR_W/2,RY+RH-WALL); ctx.lineTo(d.x+DOOR_W/2,RY+RH); ctx.stroke(); }
+    if(side==='W'){ ctx.beginPath(); ctx.moveTo(RX+WALL,d.y-DOOR_W/2); ctx.lineTo(RX,d.y-DOOR_W/2); ctx.moveTo(RX+WALL,d.y+DOOR_W/2); ctx.lineTo(RX,d.y+DOOR_W/2); ctx.stroke(); }
+    if(side==='E'){ ctx.beginPath(); ctx.moveTo(RX+RW-WALL,d.y-DOOR_W/2); ctx.lineTo(RX+RW,d.y-DOOR_W/2); ctx.moveTo(RX+RW-WALL,d.y+DOOR_W/2); ctx.lineTo(RX+RW,d.y+DOOR_W/2); ctx.stroke(); }
+    if(locked[side] && !state.gates[state.players[0].room+':'+side]){
+      /* barred gate across the gap */
+      var col=locked[side]==='emberkey'?'#ff8a3c':'#ffd75e';
+      ctx.strokeStyle=col; ctx.lineWidth=3;
+      if(side==='N'||side==='S'){
+        var gy=side==='N'? RY+WALL/2 : RY+RH-WALL/2;
+        for(var bx2=-36;bx2<=36;bx2+=18){ ctx.beginPath(); ctx.moveTo(d.x+bx2,gy-8); ctx.lineTo(d.x+bx2,gy+8); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(d.x-44,gy); ctx.lineTo(d.x+44,gy); ctx.stroke();
+      } else {
+        var gx2=side==='W'? RX+WALL/2 : RX+RW-WALL/2;
+        for(var by2=-36;by2<=36;by2+=18){ ctx.beginPath(); ctx.moveTo(gx2-8,d.y+by2); ctx.lineTo(gx2+8,d.y+by2); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(gx2,d.y-44); ctx.lineTo(gx2,d.y+44); ctx.stroke();
+      }
+    }
+  }
+  /* win arch in the gate room */
+  if(room.win){
+    var ag=ctx.createRadialGradient(480,RY+30,2,480,RY+30,60);
+    ag.addColorStop(0,'rgba(255,215,94,0.4)'); ag.addColorStop(1,'rgba(255,215,94,0)');
+    ctx.fillStyle=ag; ctx.beginPath(); ctx.arc(480,RY+30,60,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#ffd75e'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(410,RY+64); ctx.lineTo(410,RY+16); ctx.quadraticCurveTo(480,RY-6,550,RY+16); ctx.lineTo(550,RY+64); ctx.stroke();
+    ctx.fillStyle='#ffd75e'; ctx.font='700 11px "Share Tech Mono", monospace'; ctx.textAlign='center';
+    ctx.fillText('GOLD GATE — BRING THE CHALICE', 480, RY+84); ctx.textAlign='left';
+  }
+}
+function draw(skipHUD){
+  ctx.save();
+  if(state.shake>0) ctx.translate((Math.random()-0.5)*state.shake,(Math.random()-0.5)*state.shake);
+  ctx.fillStyle='#05070d'; ctx.fillRect(0,0,W,H);
+  drawRoomBase();
+  drawWalls();
+  /* loose items in this room */
+  for(var i=0;i<state.items.length;i++){
+    var it=state.items[i];
+    if(it.taken || it.carriedBy>=0 || it.room!==state.players[0].room) continue;
+    drawItem(it);
+  }
+  /* dragons in this room */
+  for(var j=0;j<state.dragons.length;j++){
+    var d=state.dragons[j];
+    if(d.room===state.players[0].room) drawDragon(d);
+  }
+  /* bat */
+  if(state.bat.room===state.players[0].room) drawBat(state.bat);
+  /* players */
+  var active=state.mode==='duel'? [state.players[0],state.players[1]] : [state.players[0]];
+  for(var k=0;k<active.length;k++){
+    var p=active[k];
+    if(p.alive && p.room===state.players[0].room) drawPlayer(p);
+  }
+  /* particles */
+  for(var pi=0;pi<state.parts.length;pi++){
+    var pt=state.parts[pi];
+    ctx.globalAlpha=1-pt.t/pt.life;
+    ctx.fillStyle=pt.c; ctx.fillRect(pt.x-pt.r/2,pt.y-pt.r/2,pt.r,pt.r);
+  }
+  ctx.globalAlpha=1;
+  /* floating score text */
+  ctx.font='700 15px "Share Tech Mono", monospace'; ctx.textAlign='center';
+  for(var f=0;f<state.floats.length;f++){
+    var fl2=state.floats[f];
+    ctx.globalAlpha=1-fl2.t/fl2.life;
+    ctx.fillStyle=fl2.c; ctx.fillText(fl2.txt, fl2.x, fl2.y);
+  }
+  ctx.globalAlpha=1; ctx.textAlign='left';
+  /* room name banner */
+  if(state.roomMsgT>0){
+    ctx.globalAlpha=Math.min(1, state.roomMsgT);
+    ctx.fillStyle='rgba(255,215,94,0.95)'; ctx.font='800 17px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.roomMsg.toUpperCase(), W/2, RY+RH-18);
+    ctx.textAlign='left'; ctx.globalAlpha=1;
+  }
+  if(!skipHUD) drawHUD();
+  ctx.restore();
+}
+function drawHUD(){
+  ctx.fillStyle='rgba(7,10,18,0.85)'; ctx.fillRect(0,0,W,34);
+  var p0=state.players[0];
+  ctx.fillStyle='#ffb347'; ctx.font='800 15px Orbitron, sans-serif';
+  ctx.fillText('SERIN', 14, 22);
+  ctx.fillStyle='#ff3860'; ctx.font='700 14px "Share Tech Mono", monospace';
+  var hearts='';
+  for(var h=0;h<LIVES;h++) hearts+= h<p0.lives? '♥':'♡';
+  ctx.fillText(hearts, 84, 22);
+  ctx.fillStyle='#fff'; ctx.font='700 15px "Share Tech Mono", monospace';
+  ctx.fillText('SCORE '+state.score, 170, 22);
+  ctx.fillStyle='#ffd75e'; ctx.font='800 13px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText(ROOMS[p0.room].name.toUpperCase(), W/2, 22);
+  ctx.textAlign='left';
+  /* carried item slot */
+  var ci=carriedItem(p0);
+  ctx.fillStyle=ci?'#ffd75e':'rgba(255,255,255,0.4)'; ctx.font='700 12px "Share Tech Mono", monospace'; ctx.textAlign='right';
+  ctx.fillText(ci? 'CARRYING: '+ci.name.toUpperCase() : 'HANDS EMPTY', W-14, 22);
+  ctx.textAlign='left';
+  /* objective line */
+  ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.font='700 11px "Share Tech Mono", monospace';
+  var obj= p0.carrying==='chalice'? 'OBJECTIVE: carry the Chalice to the Gold Gate'
+    : (itemById('chalice').carriedBy>=0? 'OBJECTIVE: the Chalice is carried — take it home'
+    : 'OBJECTIVE: find the Glow Chalice');
+  ctx.fillText(obj, 14, 52);
+  ctx.textAlign='right';
+  ctx.fillText('HI '+state.hi+' · '+state.mode.toUpperCase()+(state.fp?' · DELVER-CAM':''), W-14, 52);
+  ctx.textAlign='left';
+  if(state.phase==='over'){
+    ctx.fillStyle='rgba(7,10,18,0.8)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=state.winner>=0?'#ffd75e':'#ff3860';
+    ctx.font='900 32px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.winner>=0? state.players[state.winner].name+' WINS THE DELVE' : 'THE DELVE ENDS', W/2, H/2-16);
+    ctx.fillStyle='#fff'; ctx.font='700 16px "Share Tech Mono", monospace';
+    ctx.fillText(state.msg, W/2, H/2+18);
+    ctx.fillText('SCORE '+state.score+'  ·  press R to delve again', W/2, H/2+46);
+    ctx.textAlign='left';
+  }
+  if(state.fp){
+    ctx.fillStyle='rgba(53,224,255,0.9)'; ctx.font='700 11px "Share Tech Mono", monospace'; ctx.textAlign='center';
+    ctx.fillText('DELVER-CAM · SERIN', W/2, H-14); ctx.textAlign='left';
+  }
+}
+/* ---- main loop ---- */
+var lastT=0;
+function loop(t){
+  var dt=1/60;
+  if(typeof t==='number' && lastT){ dt=Math.min(0.05,(t-lastT)/1000); }
+  if(typeof t==='number') lastT=t;
+  step(dt);
+  if(state.fp){
+    /* delver-cam: zoom onto SERIN; HUD stays in screen space */
+    ctx.save();
+    var zx=480, zy=300, z=1.8;
+    ctx.translate(zx,zy); ctx.scale(z,z);
+    ctx.translate(-state.players[0].x,-state.players[0].y);
+    draw(true);
+    ctx.restore();
+    drawHUD();
+    ctx.fillStyle='rgba(53,224,255,0.9)'; ctx.font='700 11px "Share Tech Mono", monospace'; ctx.textAlign='center';
+    ctx.fillText('DELVER-CAM · SERIN', W/2, H-14); ctx.textAlign='left';
+  } else {
+    draw();
+  }
+  requestAnimationFrame(loop);
+}
+/* ---- input ---- */
+function togglePause(){
+  if(!state) return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+  setMsg(state.paused?'Paused.':'Back to the delve.');
+}
+function toggleFP(){ if(!state) return; state.fp=!state.fp; syncButtons(); setMsg(state.fp?'Delver-cam on — riding SERIN.':'Delver-cam off.'); }
+function bind(id,fn){ var b=$(id); if(b) b.addEventListener('click',fn); }
+bind('btnSolo',function(){ startGame('solo'); });
+bind('btnWatch',function(){ startGame('watch'); });
+bind('btnDuel',function(){ startGame('duel'); });
+bind('btnFP',toggleFP);
+bind('btnPause',togglePause);
+bind('resumeBtn',togglePause);
+bind('saveBtn',function(){ saveState(); });
+bind('loadBtn',function(){ loadState(); });
+bind('restartBtn',function(){ togglePauseIf(); startGame(state.mode); });
+bind('quitArcadeBtn',function(){ window.location.href='../arcade.html'; });
+function togglePauseIf(){ if(state.paused) togglePause(); }
+bind('startBtn',togglePause);
+bind('selectBtn',toggleFP);
+bind('btnA',function(){ if(!state) return; if(state.mode==='duel'){ state.players[1].wantDrop=true; } else { var p=state.players[0]; if(p.carrying) dropItem(p); } });
+bind('btnB',toggleFP);
+document.querySelectorAll('#shellDeck .dpad button[data-k]').forEach(function(b){
+  var k=b.dataset.k;
+  function dn(){ keys[k==='down2'?'arrowdown':('arrow'+k)]=true; }
+  function up(){ keys[k==='down2'?'arrowdown':('arrow'+k)]=false; }
+  b.addEventListener('pointerdown',function(e){ e.preventDefault(); dn(); });
+  b.addEventListener('pointerup',up);
+  b.addEventListener('pointerleave',up);
+});
+addEventListener('keydown',function(e){
+  var k=(e.key||'').toLowerCase();
+  keys[k]=true;
+  if(k===' '||k==='e'){ e.preventDefault(); var p=state.players[0]; if(state.mode==='duel'&&false) return; if(p.carrying) dropItem(p); }
+  if(k==='enter'){ e.preventDefault(); if(state.mode==='duel'){ var p2=state.players[1]; if(p2.carrying) dropItem(p2); } }
+  if(k==='p') togglePause();
+  if(k==='r'){ startGame(state.mode); }
+  if(k==='v') toggleFP();
+  if(k==='m'){ state.muted=!state.muted; setMsg(state.muted?'Muted.':'Sound on.'); }
+});
+addEventListener('keyup',function(e){ keys[(e.key||'').toLowerCase()]=false; });
+cv.addEventListener('pointerdown',function(e){
+  /* tap the room: walk SERIN toward the tap */
+  var r=cv.getBoundingClientRect();
+  var x=(e.clientX-r.left)*(W/r.width), y=(e.clientY-r.top)*(H/r.height);
+  var p=state.players[0];
+  p.target={x:x, y:y};
+  p.tapT=0.8;
+});
+if(qs.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+/* ---- boot ---- */
+state=newState();
+try{ state.hi=parseInt(localStorage.getItem('firstdelve.hi.v1')||'0',10)||0; }catch(e){}
+if(qs.get('auto')==='watch') startGame('watch');
+else if(qs.get('auto')==='duel') startGame('duel');
+else startGame('solo');
+requestAnimationFrame(loop);
+/* debug / harness surface */
+window.__firstdelve={
+  state:function(){ return state; },
+  startGame:startGame,
+  debugKey:function(k,down){ keys[k.toLowerCase()]=!!down; },
+  debugDrop:function(pi){ return dropItem(state.players[pi||0]); },
+  debugToggleFP:toggleFP,
+  debugTogglePause:togglePause,
+  debugWarp:function(pi,room,x,y){ var p=state.players[pi||0]; p.room=room; p.x=x; p.y=y; onEnterRoom(p); return true; },
+  debugCarry:function(pi,itemId){ var p=state.players[pi||0]; var it=itemById(itemId); if(!it) return false; if(p.carrying){ var old=itemById(p.carrying); old.carriedBy=-1; old.room=p.room; old.x=p.x; old.y=p.y; } it.carriedBy=p.idx; it.taken=false; it.room=p.room; it.x=p.x; it.y=p.y; p.carrying=itemId; return true; },
+  debugDragon:function(id,room,x,y){ for(var i=0;i<state.dragons.length;i++) if(state.dragons[i].id===id){ state.dragons[i].room=room; state.dragons[i].x=x; state.dragons[i].y=y; state.dragons[i].alive=true; state.dragons[i].respawnT=0; return true; } return false; },
+  debugBat:function(room,x,y){ state.bat.room=room; state.bat.x=x; state.bat.y=y; state.bat.tx=x; state.bat.ty=y; state.bat.nextRoom=null; return true; },
+  debugSteal:function(){ /* force SNATCHER to steal the P1 carried item now */
+    var p=state.players[0]; if(!p.carrying) return false;
+    var it=itemById(p.carrying);
+    it.carriedBy=-1; it.batCarried=true; it.room=state.bat.room; it.x=state.bat.x; it.y=state.bat.y;
+    p.carrying=null; state.bat.carrying=it.id; state.bat.dropT=3; return true; },
+  debugSave:saveState, debugLoad:loadState,
+  debugMute:function(){ state.muted=!state.muted; return state.muted; },
+  debugTraces:function(){ return fdTraces; },
+  debugAgent:function(){ return fdAgentId; },
+  debugRecorded:function(){ return fdRecorded; },
+  debugBout:function(){ return fdBout; }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MAZE CHASE — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#070a12;--panel:#0e1420;--border:rgba(168,255,62,.25);--gold:#ffd75e;--green:#a8ff3e;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#e8f5dc;--dim:#8aa893}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(168,255,62,.07),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(7,10,18,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(168,255,62,.12)}
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*672/744));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*672/744))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(calc(100vw - 16px),calc((100vh - 190px)*672/744))}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(168,255,62,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(168,255,62,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a120c,#05080a);box-shadow:0 0 34px rgba(168,255,62,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#a8ff3e}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(168,255,62,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#a8ff3e;color:#04120a}
+  .dpad{position:relative;width:132px;height:132px;touch-action:none}
+  .dpad button{position:absolute;width:44px;height:44px;font-size:16px;padding:0}
+  .dpad .up{left:44px;top:0}.dpad .down{left:44px;top:88px}
+  .dpad .left{left:0;top:44px}.dpad .right{left:88px;top:44px}
+  .dpad .mid{position:absolute;left:44px;top:44px;width:44px;height:44px;background:#0a120c;border-color:rgba(168,255,62,.2);font-size:9px;color:#8aa893;pointer-events:none}
+  .abtns{display:flex;flex-direction:column;gap:10px;align-items:center;padding-top:8px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:16px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(7,10,18,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#0e1420;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .dpad{width:120px;height:120px}.dpad button{width:40px;height:40px}
+    .dpad .up{left:40px;top:0}.dpad .down{left:40px;top:80px}
+    .dpad .left{left:0;top:40px}.dpad .right{left:80px;top:40px}
+    .dpad .mid{left:40px;top:40px;width:40px;height:40px}
+    .abtns button{width:52px;height:52px}.shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>MAZE<span>CHASE</span></h1><span class="tag">Dot-chase · Four hunters · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="672" height="744"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The hunters wait. The sparks glow.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad" id="dpad">
+        <button class="up" id="dUp" title="Up">▲</button>
+        <button class="left" id="dLeft" title="Left">◀</button>
+        <div class="mid">MOVE</div>
+        <button class="right" id="dRight" title="Right">▶</button>
+        <button class="down" id="dDown" title="Down">▼</button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — chase cam">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button id="btnA" title="A — chase cam">A</button>
+        <button class="b" id="btnB" title="B — pause">B</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">Eat every spark. Dodge the hunt.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ Play<small>1P — you are PIP, vs 4 hunters</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>a bot plays PIP — bold or cautious, never perfect</small></button>
+    <button class="mbtn" id="btnCam">🎥 Chase cam<small>V — zoomed follow-camera on PIP</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — maze fills the screen</small></button>
+  </div>
+  <div class="help">
+    <b>MAZE CHASE</b> — You are <b style="color:#a8ff3e">PIP</b>, a spark-runner loose in the neon maze. Eat all <b>408 sparks</b> to clear the level; grab a <b style="color:#35e0ff">surge orb</b> and the hunters turn frightened — eat them for <b>200 · 400 · 800 · 1600</b>. An <b style="color:#ff9d3c">ember fruit</b> appears twice a level, worth 300–700. Four hunters run the documented targeting rules, each in their own style: <b style="color:#ff3860">BRAMBLE</b> chases your tile, <b style="color:#b78cff">FABLE</b> ambushes four tiles ahead of you, <b style="color:#35e0ff">TIDE</b> flanks off BRAMBLE's line, <b style="color:#ffd75e">WISP</b> hangs back when you get close. They scatter to their corners on a timer, then hunt again — faster every level.<br/>
+    <b>Controls:</b> <span class="k">arrows / WASD</span> steer · <span class="k">V</span> chase cam · <span class="k">P</span> pause (save / load in the menu) · <span class="k">R</span> restart · <span class="k">M</span> mute.<br/>
+    <b>WATCH</b> is a personality bot playing PIP — <b>ZEROX</b> gambles on tight corners, <b>TURTLE</b> plays it safe, <b>NEXUS</b> splits the difference. It scores its options through the Fallible Engine and sometimes walks straight into a hunter. That is the show.<br/>
+    📱 <b>Handheld shell:</b> D-pad steers, <span class="k">A</span> toggles chase cam, <span class="k">B</span> pauses, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit).<br/>
+    <b>First-person:</b> <span class="k">V</span> chase cam — eased follow camera with look-ahead + slew lean, hunter LOCK readout (gold + EAT! while frightened), PIP/sparks/surge gauges, speed lines on fast turns.<br/>
+    <b>Fullscreen:</b> <span class="k">F</span> — the maze fills the screen (Esc exits first).<br/>
+    <b>Clean-room:</b> dot-chase formula, our own code, characters, maze, names and art — the four targeting rules are implemented from documented behaviour, nothing copied.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   MAZE CHASE — original dot-chase maze game for the Shaddai Arcade.
+   Clean-room: the dot-chase FORMULA (maze, dots, power pellets, four
+   chasers with distinct targeting, scatter/chase timers, frightened
+   state, fruit bonus, levels that speed up) re-implemented from
+   documented behaviour in our own code. The four targeting rules are
+   the documented ghost-AI behaviours (direct chase / ambush-ahead /
+   flank-vector / shy-when-close), implemented here with ORIGINAL
+   characters, names, maze layout, art, scoring and tuning. No
+   reference code, sprites, names, maze or sounds were copied, run or
+   moved into this file. All characters, the maze, and the art are ours.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var CELL=24, COLS=28, ROWS=31, W=672, H=744;
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+
+/* ---------- maze: OUR OWN layout, 28x31, validated connected (408 sparks) ---------- */
+/* '#' wall · '.' spark · 'o' surge orb · '-' den gate (chasers only) · ' ' den floor */
+var MAP=[
+'############################',
+'#............##............#',
+'#o####.#####.##.#####.####o#',
+'#....#................#....#',
+'#.##.#.###.########.###.#.##',
+'#....#...#........#...#....#',
+'####.###.#.######.#.###.####',
+'#....#...#...##...#...#....#',
+'#.##.#.#######..#######.#.##',
+'#....#.........##..........#',
+'#.####.####.##.##.####.###.#',
+'#......#....#....#....#....#',
+'######.#.##.######.##.#.####',
+'#......#.####--##...#.#....#',
+'#.####.#.##      ##.#.#.##.#',
+'#....#...########...#...#..#',
+'####.#.##############.#.####',
+'#....#................#....#',
+'#.##.#####.########.#####.##',
+'#....#.....#......#.....#..#',
+'####.#.###.#.####.#.###.#.##',
+'#....#...#.#....#.#...#....#',
+'#.##.###.#.######.#.###.##.#',
+'#....#...#........#...#....#',
+'####.#.#####.##..####.#.####',
+'#....#.....#..##..#.....#..#',
+'#.##.####.##########.####.##',
+'#....#..............#......#',
+'#o##.#.#####.##.#####.#.##o#',
+'#............##............#',
+'############################'
+];
+var FRUIT_TILE={c:14, r:17};
+var PLAYER_SPAWN={c:14, r:23};
+var MODE_SCHEDULE=[['scatter',420],['chase',1200],['scatter',420],['chase',1200],['scatter',300],['chase',Infinity]];
+
+function tileChar(c,r){
+  if(c<0||c>=COLS||r<0||r>=ROWS) return '#';
+  return MAP[r][c];
+}
+function centerOf(c,r){ return {x:(c+0.5)*CELL, y:(r+0.5)*CELL}; }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function keyOf(c,r){ return c+','+r; }
+
+/* ---------- chaser definitions: original characters, documented targeting ---------- */
+var CHASER_DEFS=[
+  {name:'BRAMBLE', color:'#ff3860', dark:'#4a0f1e', personality:'chase',
+   corner:{c:26,r:1}, detail:'horns',
+   desc:'chases your tile'},
+  {name:'FABLE', color:'#b78cff', dark:'#241040', personality:'ambush',
+   corner:{c:1,r:1}, detail:'antenna',
+   desc:'ambushes 4 tiles ahead'},
+  {name:'TIDE', color:'#35e0ff', dark:'#0a2a36', personality:'flank',
+   corner:{c:26,r:29}, detail:'fins',
+   desc:'flanks off BRAMBLE'},
+  {name:'WISP', color:'#ffd75e', dark:'#3a2a05', personality:'shy',
+   corner:{c:1,r:29}, detail:'wisp',
+   desc:'shy when you are close'}
+];
+function buildChaser(def, c, r, dc, dr){
+  var p=centerOf(c,r);
+  return {name:def.name, color:def.color, dark:def.dark, personality:def.personality,
+    corner:def.corner, detail:def.detail, desc:def.desc,
+    x:p.x, y:p.y, dc:dc, dr:dr, tile:{c:c,r:r}, prev:{c:c,r:r},
+    mode:'scatter', frightT:0, inDen:false, exitT:0, moving:false,
+    forceReverse:false, bob:Math.random()*6.28, wob:0};
+}
+
+/* ---------- state ---------- */
+var state;
+function freshState(){
+  return {
+    phase:'title', mode:'solo', paused:false, cam:false, muted:false,
+    frame:0, level:1, score:0, hi:0, lives:3,
+    sparksLeft:0, sparksTotal:0, sparksEaten:0,
+    sparkSet:{}, orbSet:{}, fruitActive:false, fruitT:0, fruitValue:300,
+    frightT:0, chainIdx:0, chainValues:[200,400,800,1600],
+    modeIdx:0, modeT:0, readyT:0, dyingT:0, clearT:0, overT:0,
+    player:null, chasers:[], nextDir:null, keys:{},
+    particles:makeParticles(), stars:makeStars(), floaters:[],
+    watchGame:0, watchAgentId:'ZEROX', watchEngineAgent:null, watchTraces:[],
+    watchRecorded:false, banner:'', bannerT:0, shake:0, dpadDir:null
+  };
+}
+function makeParticles(){
+  var d=[]; for(var i=0;i<36;i++) d.push({x:Math.random()*W,y:Math.random()*H,r:0.6+Math.random()*1.6,sp:0.12+Math.random()*0.3,ph:Math.random()*6.28,c:Math.random()<0.5?'168,255,62':'255,215,94'});
+  return d;
+}
+function makeStars(){
+  var d=[]; for(var i=0;i<90;i++) d.push({x:Math.random()*W,y:Math.random()*150,r:0.5+Math.random()*1.3,ph:Math.random()*6.28});
+  return d;
+}
+state=freshState();
+try{ var saved=localStorage.getItem('maze-chase.hi'); if(saved) state.hi=parseInt(saved,10)||0; }catch(e){}
+/* E39 REPAIR (defect 3, frozen rotation): the watch rotation cursor persists
+   in localStorage ('maze-chase.watchGame'), seeded on load so a fresh load
+   continues the rotation instead of restarting at ZEROX every time. The
+   cursor only advances on an engine-loaded watch bout (see the auto-restart
+   path in update()); fallback play never consumes it. */
+try{ var _wg=JSON.parse(localStorage.getItem('maze-chase.watchGame')||'0')||0; if(isFinite(_wg)&&_wg>=0) state.watchGame=_wg; }catch(e){}
+function saveWatchGame(){ try{ localStorage.setItem('maze-chase.watchGame', JSON.stringify(state.watchGame)); }catch(e){} }
+
+function setMsg(t){ state.msg=t; if(msgEl) msgEl.textContent=t; }
+function setBanner(t){ state.banner=t; state.bannerT=150; }
+function floater(x,y,txt,color){
+  state.floaters.push({x:x,y:y,txt:txt,life:50,color:color||'#ffd75e'});
+}
+function scheduleMode(){ return MODE_SCHEDULE[Math.min(state.modeIdx, MODE_SCHEDULE.length-1)][0]; }
+function chaserSpeed(){
+  return Math.min(1.9 + 0.12*(state.level-1), 2.6);
+}
+function playerSpeed(){
+  return Math.min(2.5 + 0.05*(state.level-1), 2.7);
+}
+
+/* ---------- audio: tiny WebAudio blips, no copied sounds ---------- */
+var AC=null;
+function audio(){
+  try{
+    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume();
+    return AC;
+  }catch(e){ return null; }
+}
+function beep(f,d,type,v,when){
+  if(state.muted) return;
+  var ac=audio(); if(!ac) return;
+  try{
+    var o=ac.createOscillator(), g=ac.createGain();
+    o.type=type||'square'; o.frequency.value=f; g.gain.value=v||0.04;
+    var t=ac.currentTime+(when||0);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t); g.gain.exponentialRampToValueAtTime(0.0001, t+d); o.stop(t+d);
+  }catch(e){}
+}
+function sfxSpark(){ beep(880+(state.sparksEaten%8)*45, 0.05, 'square', 0.025); }
+function sfxOrb(){ beep(523,0.09,'square',0.05); beep(659,0.09,'square',0.05,0.08); beep(784,0.14,'square',0.05,0.16); }
+function sfxEat(){ beep(620,0.1,'sawtooth',0.05); beep(310,0.16,'sawtooth',0.05,0.08); }
+function sfxDeath(){ [440,392,330,262,196].forEach(function(f,i){ beep(f,0.14,'triangle',0.06,i*0.11); }); }
+function sfxClear(){ [523,659,784,1047].forEach(function(f,i){ beep(f,0.12,'square',0.05,i*0.1); }); }
+
+/* ---------- level build ---------- */
+function buildLevel(){
+  state.sparkSet={}; state.orbSet={}; state.sparksLeft=0; state.sparksTotal=0; state.sparksEaten=0;
+  for(var r=0;r<ROWS;r++) for(var c=0;c<COLS;c++){
+    var ch=MAP[r][c];
+    if(ch==='.'){ state.sparkSet[keyOf(c,r)]=true; state.sparksLeft++; state.sparksTotal++; }
+    else if(ch==='o'){ state.orbSet[keyOf(c,r)]=true; }
+  }
+  state.fruitActive=false; state.fruitT=0;
+  state.frightT=0; state.chainIdx=0;
+  state.modeIdx=0; state.modeT=0;
+}
+function resetPositions(){
+  var p=centerOf(PLAYER_SPAWN.c, PLAYER_SPAWN.r);
+  state.player={x:p.x, y:p.y, dc:-1, dr:0, tile:{c:PLAYER_SPAWN.c,r:PLAYER_SPAWN.r},
+    prev:{c:PLAYER_SPAWN.c+1,r:PLAYER_SPAWN.r}, moving:false, bob:0};
+  state.chasers=[
+    buildChaser(CHASER_DEFS[0], 14, 11, -1, 0),
+    buildChaser(CHASER_DEFS[1], 12, 14, 0, -1),
+    buildChaser(CHASER_DEFS[2], 15, 14, 0, -1),
+    buildChaser(CHASER_DEFS[3], 14, 14, 0, -1)
+  ];
+  state.chasers[0].mode=scheduleMode();
+  state.chasers[1].inDen=true; state.chasers[1].exitT=60;
+  state.chasers[2].inDen=true; state.chasers[2].exitT=240;
+  state.chasers[3].inDen=true; state.chasers[3].exitT=420;
+  state.nextDir=null;
+}
+function startGame(mode){
+  var keepHi=state.hi, keepWatch=state.watchGame, keepMuted=state.muted;
+  state=freshState();
+  state.hi=keepHi; state.watchGame=keepWatch; state.muted=keepMuted;
+  state.mode=mode||'solo';
+  state.level=1;
+  buildLevel();
+  resetPositions();
+  snapFpCam();
+  if(state.mode==='watch') setupWatchAgent();
+  state.phase='ready'; state.readyT=100;
+  setBanner(state.mode==='watch' ? 'WATCH — '+state.watchAgentId+' PLAYS PIP' : 'LEVEL 1 — EAT EVERY SPARK');
+  setMsg(state.mode==='watch'
+    ? 'Watching '+state.watchAgentId+' play PIP — bold, cautious, never perfect.'
+    : 'You are PIP. Arrows / WASD steer. Surge orbs turn the hunters frightened.');
+  if($('btnSolo')){ $('btnSolo').classList.toggle('active',state.mode==='solo'); $('btnWatch').classList.toggle('active',state.mode==='watch'); }
+}
+var WATCH_IDS=['ZEROX','TURTLE','NEXUS'];
+function setupWatchAgent(){
+  state.watchAgentId=WATCH_IDS[state.watchGame % WATCH_IDS.length];
+  state.watchEngineAgent=null;
+  try{ if(FE) state.watchEngineAgent=FE.loadAgent(state.watchAgentId); }catch(e){ state.watchEngineAgent=null; }
+  state.watchTraces=[];
+  state.watchRecorded=false;
+}
+function levelClear(){
+  state.phase='levelclear'; state.clearT=130;
+  var bonus=100*state.level;
+  state.score+=bonus;
+  floater(state.player.x, state.player.y, 'LEVEL CLEAR +'+bonus, '#a8ff3e');
+  setBanner('LEVEL '+state.level+' CLEAR  ·  +'+bonus);
+  sfxClear();
+}
+function nextLevel(){
+  state.level++;
+  buildLevel();
+  resetPositions();
+  state.phase='ready'; state.readyT=100;
+  setBanner('LEVEL '+state.level+' — HUNTERS FASTER');
+  setMsg('Level '+state.level+'. The hunters are quicker now — keep moving.');
+}
+function die(){
+  state.phase='dying'; state.dyingT=90;
+  setBanner('CAUGHT!');
+  sfxDeath();
+}
+function resolveDeath(){
+  state.lives--;
+  if(state.lives<=0){
+    state.phase='over'; state.overT=0;
+    if(state.score>state.hi){
+      state.hi=state.score;
+      try{ localStorage.setItem('maze-chase.hi', String(state.hi)); }catch(e){}
+    }
+    setBanner('GAME OVER — '+state.score);
+    setMsg('Game over. Score '+state.score+'. High '+state.hi+'. Press R to run it back.');
+    recordWatchResult(false);
+    return;
+  }
+  resetPositions();
+  state.phase='ready'; state.readyT=100;
+  setBanner('READY — '+state.lives+' '+(state.lives===1?'LIFE':'LIVES')+' LEFT');
+}
+function recordWatchResult(won){
+  if(state.mode!=='watch' || state.watchRecorded) return;
+  state.watchRecorded=true;
+  try{
+    if(FE && state.watchEngineAgent)
+      FE.recordResult(state.watchEngineAgent, 'maze-chase', null, won?'win':'loss', state.watchTraces);
+  }catch(e){}
+}
+
+/* ---------- movement: tile-centre stepping ---------- */
+function canEnterPlayer(c,r){
+  var ch=tileChar(c,r);
+  return ch!=='#' && ch!=='-';
+}
+function canEnterChaser(c,r,ch){
+  var t=tileChar(c,r);
+  if(ch.inDen) return t!=='#';
+  if(ch.mode==='eyes') return t!=='#';
+  return t!=='#' && t!=='-';
+}
+/* Step a mover one frame toward the centre of the tile ahead.
+   Returns 'arrived' (reached the next tile centre), 'blocked' (stopped
+   at the current centre, wall ahead) or 'moving'. */
+function stepMover(m, speed, canEnter){
+  var nc=m.tile.c+m.dc, nr=m.tile.r+m.dr;
+  var aheadOpen=canEnter(nc,nr);
+  var cc=centerOf(m.tile.c, m.tile.r);
+  var toCenter=(cc.x-m.x)*m.dc + (cc.y-m.y)*m.dr;
+  if(!aheadOpen && toCenter<=0.01){
+    m.x=cc.x; m.y=cc.y; m.moving=false;
+    return 'blocked';
+  }
+  var step=speed;
+  if(!aheadOpen) step=Math.min(step, Math.max(0,toCenter));
+  m.x+=m.dc*step; m.y+=m.dr*step; m.moving=true;
+  if(aheadOpen){
+    var ncx=(nc+0.5)*CELL, ncy=(nr+0.5)*CELL;
+    var dNext=(ncx-m.x)*m.dc + (ncy-m.y)*m.dr;
+    if(dNext<=0){
+      m.x=ncx; m.y=ncy;
+      m.prev=m.tile; m.tile={c:nc,r:nr};
+      return 'arrived';
+    }
+  }
+  return 'moving';
+}
+
+/* ---------- chaser targeting: the four documented rules, our characters ---------- */
+function chaserTarget(ch){
+  if(ch.mode==='eyes') return {c:13, r:13}; /* the den gate */
+  if(ch.mode==='scatter') return ch.corner;
+  if(ch.mode==='frightened') return ch.corner; /* unused: frightened picks at random */
+  return personalityTarget(ch);
+}
+function personalityTarget(ch){
+  var p=state.player.tile;
+  if(ch.personality==='chase') return {c:p.c, r:p.r};
+  if(ch.personality==='ambush'){
+    return {c:p.c+state.player.dc*4, r:p.r+state.player.dr*4};
+  }
+  if(ch.personality==='flank'){
+    var b=state.chasers[0].tile; /* BRAMBLE's tile */
+    return {c:2*p.c-b.c, r:2*p.r-b.r};
+  }
+  /* shy: chase when far, retreat to its corner when close */
+  var d=Math.hypot(ch.tile.c-p.c, ch.tile.r-p.r);
+  return d>8 ? {c:p.c, r:p.r} : ch.corner;
+}
+var DIRS=[{dc:0,dr:-1},{dc:-1,dr:0},{dc:0,dr:1},{dc:1,dr:0}]; /* up, left, down, right: tie-break order */
+function chooseDir(ch){
+  /* forced reverse on a mode switch — but only if the tile behind is
+     enterable (it is not when the den gate is behind the chaser); if it
+     is not, fall through to a normal pick instead of stranding the bot. */
+  if(ch.forceReverse){
+    var rd={dc:-ch.dc, dr:-ch.dr};
+    ch.forceReverse=false;
+    if(canEnterChaser(ch.tile.c+rd.dc, ch.tile.r+rd.dr, ch)) return rd;
+  }
+  var opts=[];
+  for(var i=0;i<4;i++){
+    var d=DIRS[i];
+    if(d.dc===-ch.dc && d.dr===-ch.dr) continue; /* no reversing */
+    if(canEnterChaser(ch.tile.c+d.dc, ch.tile.r+d.dr, ch)) opts.push(d);
+  }
+  if(!opts.length) return {dc:-ch.dc, dr:-ch.dr}; /* dead end: reverse */
+  if(ch.mode==='frightened') return opts[Math.floor(Math.random()*opts.length)];
+  var t=chaserTarget(ch);
+  var best=null, bestD=1e18;
+  for(var j=0;j<opts.length;j++){
+    var o=opts[j];
+    var nc=ch.tile.c+o.dc, nr=ch.tile.r+o.dr;
+    var dd=(nc-t.c)*(nc-t.c)+(nr-t.r)*(nr-t.r);
+    if(dd<bestD){ bestD=dd; best=o; }
+  }
+  return best;
+}
+function chaserArrived(ch){
+  /* eyes reached the gate: slide back into the den and come out again */
+  if(ch.mode==='eyes' && ch.tile.r===13 && (ch.tile.c===13 || ch.tile.c===14)){
+    ch.tile={c:ch.tile.c, r:14};
+    var p=centerOf(ch.tile.c, 14);
+    ch.x=p.x; ch.y=p.y;
+    ch.inDen=true; ch.exitT=0; ch.mode=scheduleMode();
+    ch.dc=0; ch.dr=-1;
+    return;
+  }
+  var d=chooseDir(ch);
+  ch.dc=d.dc; ch.dr=d.dr;
+}
+function stepChaser(ch){
+  if(ch.inDen){
+    if(ch.exitT>0){ ch.exitT--; ch.wob=Math.sin(state.frame*0.08)*2; return; }
+    /* steer to a gate column, then up through the gate */
+    if(ch.tile.c<13){ ch.dc=1; ch.dr=0; }
+    else if(ch.tile.c>14){ ch.dc=-1; ch.dr=0; }
+    else { ch.dc=0; ch.dr=-1; }
+    var res=stepMover(ch, 1.6, function(c,r){ return tileChar(c,r)!=='#'; });
+    if(res==='arrived' && ch.tile.r<=12){
+      ch.inDen=false; ch.mode=scheduleMode();
+      ch.dc=Math.random()<0.5?-1:1; ch.dr=0;
+    }
+    return;
+  }
+  ch.wob=0;
+  var speed=ch.mode==='eyes' ? 3.4 : (ch.mode==='frightened' ? 1.1 : chaserSpeed());
+  var r2=stepMover(ch, speed, function(c,r){ return canEnterChaser(c,r,ch); });
+  if(r2==='arrived') chaserArrived(ch);
+}
+
+/* ---------- eating ---------- */
+function eatAt(tile){
+  var k=keyOf(tile.c, tile.r);
+  if(state.sparkSet[k]){
+    delete state.sparkSet[k];
+    state.sparksLeft--; state.sparksEaten++;
+    state.score+=10;
+    floater((tile.c+0.5)*CELL, (tile.r+0.5)*CELL, '+10', '#ffd75e');
+    sfxSpark();
+    if(state.sparksEaten===70 || state.sparksEaten===170) spawnFruit();
+    if(state.sparksLeft<=0){ levelClear(); return; }
+  }
+  if(state.orbSet[k]){
+    delete state.orbSet[k];
+    state.score+=50;
+    floater((tile.c+0.5)*CELL, (tile.r+0.5)*CELL, '+50 SURGE!', '#35e0ff');
+    startFright();
+    sfxOrb();
+  }
+  if(state.fruitActive && tile.c===FRUIT_TILE.c && tile.r===FRUIT_TILE.r){
+    state.fruitActive=false;
+    state.score+=state.fruitValue;
+    floater((tile.c+0.5)*CELL, (tile.r+0.5)*CELL, '+'+state.fruitValue+' EMBER FRUIT!', '#ff9d3c');
+    beep(784,0.1,'square',0.05); beep(1047,0.16,'square',0.05,0.09);
+  }
+}
+function spawnFruit(){
+  state.fruitActive=true; state.fruitT=540;
+  state.fruitValue=state.level===1?300:(state.level===2?500:700);
+  setMsg('An ember fruit glows below the den — worth '+state.fruitValue+'!');
+}
+function startFright(){
+  state.frightT=Math.max(420-60*(state.level-1), 120);
+  state.chainIdx=0;
+  fpCam.punch=1; /* chase-cam zoom punch on the surge — visual only */
+  state.chasers.forEach(function(ch){
+    if(ch.mode==='eyes' || ch.inDen) return;
+    ch.mode='frightened'; ch.forceReverse=true;
+  });
+}
+function endFright(){
+  state.frightT=0;
+  state.chasers.forEach(function(ch){
+    if(ch.mode==='frightened'){ ch.mode=scheduleMode(); ch.forceReverse=true; }
+  });
+}
+function checkCollisions(){
+  if(state.phase!=='playing') return;
+  var p=state.player;
+  for(var i=0;i<state.chasers.length;i++){
+    var ch=state.chasers[i];
+    if(ch.inDen || ch.mode==='eyes') continue;
+    var d=Math.hypot(ch.x-p.x, ch.y-p.y);
+    if(d < CELL*0.55){
+      if(ch.mode==='frightened'){
+        var v=state.chainValues[Math.min(state.chainIdx, 3)];
+        state.chainIdx++;
+        state.score+=v;
+        floater(ch.x, ch.y, '+'+v+' '+ch.name+'!', ch.color);
+        ch.mode='eyes'; ch.frightT=0; ch.forceReverse=false;
+        fpCam.punch=1; /* chase-cam zoom punch on the eat — visual only */
+        sfxEat();
+      } else {
+        die();
+        return;
+      }
+    }
+  }
+}
+
+/* ---------- WATCH bot: a personality plays PIP via the Fallible Engine ---------- */
+var WATCH_STYLE={
+  ZEROX:  {dangerW:0.5, jitter:14, blunder:0.16, tag:'gamble'},
+  TURTLE: {dangerW:1.6, jitter:6,  blunder:0.06, tag:'cautious'},
+  NEXUS:  {dangerW:1.0, jitter:10, blunder:0.11, tag:'balanced'}
+};
+function watchDecide(){
+  var p=state.player;
+  var style=WATCH_STYLE[state.watchAgentId]||WATCH_STYLE.NEXUS;
+  var opts=[];
+  var nearDanger=0;
+  for(var i=0;i<4;i++){
+    var d=DIRS[i];
+    var nc=p.tile.c+d.dc, nr=p.tile.r+d.dr;
+    if(!canEnterPlayer(nc,nr)) continue;
+    var score=0;
+    var isReverse=(d.dc===-p.dc && d.dr===-p.dr);
+    if(isReverse) score-=20; /* reversing is legal but costly — it is the
+      only way out of a dead end, so it must stay an option */
+    /* raycast: sparks, orbs and fruit ahead */
+    for(var s=1;s<=8;s++){
+      var rc=p.tile.c+d.dc*s, rr=p.tile.r+d.dr*s;
+      var ch2=tileChar(rc,rr);
+      if(ch2==='#' || ch2==='-') break;
+      if(state.sparkSet[keyOf(rc,rr)]) score+=10;
+      if(state.orbSet[keyOf(rc,rr)]) score+=80;
+      if(state.fruitActive && rc===FRUIT_TILE.c && rr===FRUIT_TILE.r) score+=60;
+    }
+    /* danger: nearest hunter from the candidate tile */
+    var minD=99, minFright=false;
+    for(var j=0;j<state.chasers.length;j++){
+      var ch=state.chasers[j];
+      if(ch.inDen || ch.mode==='eyes') continue;
+      var dd=Math.hypot(ch.tile.c-nc, ch.tile.r-nr);
+      if(dd<minD){ minD=dd; minFright=(ch.mode==='frightened'); }
+    }
+    if(minD<=3){
+      nearDanger=1;
+      if(minFright) score+=40; /* chase a frightened hunter */
+      else score-=(4-minD)*30*style.dangerW;
+    }
+    score+=(Math.random()-0.5)*style.jitter;
+    opts.push({key:['up','left','down','right'][i], score:score/100,
+      tag: minFright?'hunt':(score>0.5?'greedy':'cautious'), dc:d.dc, dr:d.dr});
+  }
+  if(!opts.length) return;
+  var pick=null;
+  if(FE && state.watchEngineAgent){
+    try{
+      var res=FE.decide(state.watchEngineAgent, 'maze-chase', opts,
+        {timePressure: nearDanger?0.7:0});
+      state.watchTraces.push(res.trace);
+      pick=res.pick;
+    }catch(e){ pick=null; }
+  }
+  if(!pick){
+    /* built-in fallback: soft-max over scores + an explicit blunder rate */
+    if(Math.random()<style.blunder){
+      pick=opts[Math.floor(Math.random()*opts.length)];
+    } else {
+      var exps=opts.map(function(o){ return Math.exp(o.score*2); });
+      var sum=0; exps.forEach(function(e){ sum+=e; });
+      var r=Math.random()*sum;
+      for(var k=0;k<opts.length;k++){ r-=exps[k]; if(r<=0){ pick=opts[k]; break; } }
+      if(!pick) pick=opts[opts.length-1];
+    }
+    state.watchTraces.push({t:Date.now(), gameId:'maze-chase', agentId:state.watchAgentId,
+      pick:pick.key, pickTag:pick.tag||null, temperature:0.5, tiltLevel:0, fallback:true});
+  }
+  if(state.watchTraces.length>500) state.watchTraces.splice(0, state.watchTraces.length-500);
+  state.nextDir={dc:pick.dc, dr:pick.dr};
+}
+function playerArrived(){
+  eatAt(state.player.tile);
+  if(state.phase!=='playing') return;
+  if(state.mode==='watch') watchDecide();
+  applyNextDir();
+}
+function applyNextDir(){
+  var p=state.player;
+  if(!state.nextDir) return;
+  var d=state.nextDir;
+  if(canEnterPlayer(p.tile.c+d.dc, p.tile.r+d.dr)){
+    p.dc=d.dc; p.dr=d.dr;
+    state.nextDir=null;
+  }
+}
+
+/* ---------- first-person polish: eased chase camera + LOCK readout ----------
+   Presentation only: the camera, fog, halo, gauges and speed lines are
+   visual; no movement, collision, targeting or scoring rule is touched.
+   fpCam lives outside `state` (never saved); startGame/loadState/toggleCam
+   snap it to PIP. */
+var fpCam={x:0,y:0,zoom:2.1,vel:0,lean:0,punch:0};
+var FP_ZOOM=2.1, FP_EASE=0.12;
+function snapFpCam(){
+  if(!state.player) return;
+  fpCam.x=state.player.x; fpCam.y=state.player.y;
+  fpCam.zoom=FP_ZOOM; fpCam.vel=0; fpCam.lean=0; fpCam.punch=0;
+}
+function stepFpCam(){
+  if(!state.player) return;
+  /* look-ahead: the camera leads PIP by ~20px in the travel direction,
+     so a turn reads as a pan instead of a snap. */
+  var tx=state.player.x+state.player.dc*20, ty=state.player.y+state.player.dr*20;
+  var ox=fpCam.x, oy=fpCam.y;
+  fpCam.x+=(tx-fpCam.x)*FP_EASE;
+  fpCam.y+=(ty-fpCam.y)*FP_EASE;
+  fpCam.vel=Math.hypot(fpCam.x-ox, fpCam.y-oy);
+  /* lean: eased horizontal slew, ±8px, decays to 0 once settled */
+  var leanT=Math.max(-8, Math.min(8, (fpCam.x-ox)*3));
+  fpCam.lean+=(leanT-fpCam.lean)*0.15;
+  /* zoom punch (surge orb / hunter eaten) decays back to 2.1x */
+  fpCam.punch*=0.92;
+  fpCam.zoom+=(FP_ZOOM+fpCam.punch*0.15-fpCam.zoom)*FP_EASE;
+}
+/* The LOCK is a read, never a rule: the nearest hunter out of the den,
+   its distance in tiles and its state — gold + EAT! while frightened. */
+function computeFpLock(){
+  if(!state.player) return null;
+  var best=null, bestD=1e18;
+  for(var i=0;i<state.chasers.length;i++){
+    var ch=state.chasers[i];
+    if(ch.inDen) continue;
+    var d=Math.hypot(ch.x-state.player.x, ch.y-state.player.y)/CELL;
+    if(d<bestD){ bestD=d; best=ch; }
+  }
+  if(!best) return null;
+  return {name:best.name, color:best.color, dist:Math.round(bestD*10)/10,
+    mode:best.mode, eatable:best.mode==='frightened'};
+}
+
+/* ---------- update ---------- */
+function update(){
+  if(!state.paused) state.frame++;
+  if(state.bannerT>0) state.bannerT--;
+  if(state.shake>0) state.shake*=0.88;
+  state.particles.forEach(function(pt){
+    pt.y-=pt.sp; pt.x+=Math.sin(state.frame*0.01+pt.ph)*0.25;
+    if(pt.y<-4){ pt.y=H+4; pt.x=Math.random()*W; }
+  });
+  state.floaters.forEach(function(f){ f.y-=0.7; f.life--; });
+  state.floaters=state.floaters.filter(function(f){ return f.life>0; });
+  if(state.paused || state.phase==='title') return;
+  stepFpCam(); /* eased chase camera — frozen while paused, eases through ready/dying/clear/over */
+  if(state.phase==='ready'){
+    state.readyT--;
+    if(state.readyT<=0){ state.phase='playing'; setBanner('GO!'); }
+    return;
+  }
+  if(state.phase==='dying'){
+    state.dyingT--;
+    if(state.dyingT<=0) resolveDeath();
+    return;
+  }
+  if(state.phase==='levelclear'){
+    state.clearT--;
+    if(state.clearT<=0) nextLevel();
+    return;
+  }
+  if(state.phase==='over'){
+    state.overT++;
+    if(state.mode==='watch' && state.overT>220){
+      /* E39 REPAIR (defect 3): advance + persist the rotation cursor on an
+         engine-loaded watch bout, so the next load opens on the next agent. */
+      if(FE){ state.watchGame++; saveWatchGame(); }
+      startGame('watch');
+    }
+    return;
+  }
+  if(state.phase!=='playing') return;
+  /* scatter / chase schedule */
+  if(state.frightT>0){
+    state.frightT--;
+    if(state.frightT<=0) endFright();
+  } else {
+    state.modeT++;
+    var cur=MODE_SCHEDULE[Math.min(state.modeIdx, MODE_SCHEDULE.length-1)];
+    if(state.modeT>=cur[1] && state.modeIdx<MODE_SCHEDULE.length-1){
+      state.modeIdx++; state.modeT=0;
+      var nm=scheduleMode();
+      state.chasers.forEach(function(ch){
+        if(ch.mode==='eyes' || ch.inDen) return;
+        ch.mode=nm; ch.forceReverse=true;
+      });
+      setMsg(nm==='scatter' ? 'The hunters scatter to their corners…' : 'The hunters are on the chase!');
+    }
+  }
+  if(state.fruitActive){
+    state.fruitT--;
+    if(state.fruitT<=0) state.fruitActive=false;
+  }
+  /* player */
+  var p=state.player;
+  p.bob+=0.12;
+  if(!p.moving) applyNextDir();
+  /* WATCH stall recovery: if the bot drove PIP into a dead end and it
+     stopped, re-decide so the run never wedges. */
+  if(state.mode==='watch' && !p.moving && state.frame%30===0){ watchDecide(); applyNextDir(); }
+  var res=stepMover(p, playerSpeed(), canEnterPlayer);
+  if(res==='arrived') playerArrived();
+  /* chasers */
+  state.chasers.forEach(function(ch){ ch.bob+=0.1; stepChaser(ch); });
+  checkCollisions();
+}
+
+/* ---------- rendering: layered neon maze ---------- */
+function drawBackdrop(){
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a0618'); g.addColorStop(0.45,'#071018'); g.addColorStop(1,'#04120a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* far layer: starfield + distant neon skyline silhouettes */
+  state.stars.forEach(function(s){
+    ctx.globalAlpha=0.35+0.3*Math.sin(state.frame*0.02+s.ph);
+    ctx.fillStyle='#cfe8ff';
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#0d1420';
+  ctx.beginPath(); ctx.moveTo(0,150); ctx.lineTo(0,120); ctx.lineTo(60,120); ctx.lineTo(60,96); ctx.lineTo(110,96);
+  ctx.lineTo(110,128); ctx.lineTo(180,128); ctx.lineTo(180,104); ctx.lineTo(250,104); ctx.lineTo(250,132);
+  ctx.lineTo(330,132); ctx.lineTo(330,100); ctx.lineTo(400,100); ctx.lineTo(400,126); ctx.lineTo(470,126);
+  ctx.lineTo(470,98); ctx.lineTo(540,98); ctx.lineTo(540,130); ctx.lineTo(610,130); ctx.lineTo(610,108);
+  ctx.lineTo(672,108); ctx.lineTo(672,150); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(168,255,62,.5)';
+  for(var wx=20;wx<W;wx+=52){ ctx.fillRect(wx,118,3,3); }
+  /* moon glow */
+  ctx.save(); ctx.shadowColor='#a8ff3e'; ctx.shadowBlur=22;
+  ctx.fillStyle='#eaffb0'; ctx.beginPath(); ctx.arc(600,52,14,0,7); ctx.fill(); ctx.restore();
+}
+function wallRuns(){
+  var runs=[];
+  for(var r=0;r<ROWS;r++){
+    var c=0;
+    while(c<COLS){
+      if(MAP[r][c]==='#'){
+        var c0=c;
+        while(c<COLS && MAP[r][c]==='#') c++;
+        runs.push({x:c0*CELL, y:r*CELL, w:(c-c0)*CELL, h:CELL});
+      } else c++;
+    }
+  }
+  return runs;
+}
+var WALL_RUNS=null;
+function drawMaze(){
+  if(!WALL_RUNS) WALL_RUNS=wallRuns();
+  /* floor: dark panels + seams + glowing rune dots */
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0c1220'); g.addColorStop(0.5,'#0a1410'); g.addColorStop(1,'#081008');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(120,160,140,.07)'; ctx.lineWidth=1;
+  for(var gx=CELL;gx<W;gx+=CELL){ ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+  for(var gy=CELL;gy<H;gy+=CELL){ ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+  ctx.fillStyle='rgba(168,255,62,.16)';
+  for(var rx=2;rx<COLS;rx+=6) for(var ry=2;ry<ROWS;ry+=6){
+    if(tileChar(rx,ry)!=='#') ctx.fillRect(rx*CELL+11, ry*CELL+11, 2, 2);
+  }
+  /* den gate: striped bar */
+  ctx.fillStyle='#1a1420';
+  ctx.fillRect(13*CELL, 13*CELL, 2*CELL, CELL);
+  ctx.fillStyle='rgba(255,215,94,.75)';
+  for(var sx=13*CELL+3;sx<15*CELL-3;sx+=8){ ctx.fillRect(sx, 13*CELL+4, 4, CELL-8); }
+  /* walls: shaded neon blocks with top highlight, rivets, glow edge */
+  WALL_RUNS.forEach(function(w){
+    var wg=ctx.createLinearGradient(w.x,w.y,w.x,w.y+w.h);
+    wg.addColorStop(0,'#1c2a4a'); wg.addColorStop(0.5,'#101a2e'); wg.addColorStop(1,'#0a1220');
+    ctx.fillStyle=wg; ctx.fillRect(w.x,w.y,w.w,w.h);
+    ctx.fillStyle='rgba(255,255,255,.13)'; ctx.fillRect(w.x,w.y,w.w,3);
+    ctx.fillStyle='rgba(0,0,0,.4)'; ctx.fillRect(w.x,w.y+w.h-3,w.w,3);
+    ctx.save(); ctx.shadowColor='#2a6cff'; ctx.shadowBlur=9;
+    ctx.strokeStyle='rgba(64,140,255,.55)'; ctx.lineWidth=1.5;
+    ctx.strokeRect(w.x+1,w.y+1,w.w-2,w.h-2);
+    ctx.restore();
+    ctx.fillStyle='rgba(255,255,255,.22)';
+    for(var rx2=w.x+12;rx2<w.x+w.w-6;rx2+=36){
+      ctx.beginPath(); ctx.arc(rx2,w.y+w.h/2,1.8,0,7); ctx.fill();
+    }
+  });
+}
+function drawSparks(){
+  var pulse=0.7+0.3*Math.sin(state.frame*0.08);
+  for(var k in state.sparkSet){
+    var parts=k.split(',');
+    var x=(parseInt(parts[0],10)+0.5)*CELL, y=(parseInt(parts[1],10)+0.5)*CELL;
+    /* chase cam: far sparks fade into the fog around PIP (visual only) */
+    var fade=1;
+    if(state.cam && state.player){
+      var dd=Math.hypot(x-state.player.x, y-state.player.y);
+      fade=Math.max(0.3, Math.min(1, 1.15-dd/520));
+    }
+    ctx.save(); ctx.shadowColor='#ffd75e'; ctx.shadowBlur=6;
+    ctx.fillStyle='rgba(255,215,94,'+(pulse*fade).toFixed(2)+')';
+    ctx.beginPath(); ctx.arc(x,y,3,0,7); ctx.fill();
+    ctx.restore();
+  }
+  for(var k2 in state.orbSet){
+    var p2=k2.split(',');
+    var ox=(parseInt(p2[0],10)+0.5)*CELL, oy=(parseInt(p2[1],10)+0.5)*CELL;
+    var pr=7+2.5*Math.sin(state.frame*0.12);
+    var fade2=1;
+    if(state.cam && state.player){
+      var dd2=Math.hypot(ox-state.player.x, oy-state.player.y);
+      fade2=Math.max(0.4, Math.min(1, 1.15-dd2/520));
+    }
+    ctx.save(); ctx.globalAlpha=fade2; ctx.shadowColor='#35e0ff'; ctx.shadowBlur=16;
+    ctx.fillStyle='#bff3ff';
+    ctx.beginPath(); ctx.arc(ox,oy,pr,0,7); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle='rgba(53,224,255,.6)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(ox,oy,pr+5,0,7); ctx.stroke();
+  }
+  if(state.fruitActive){
+    var fx=(FRUIT_TILE.c+0.5)*CELL, fy=(FRUIT_TILE.r+0.5)*CELL+Math.sin(state.frame*0.1)*2;
+    ctx.save(); ctx.shadowColor='#ff9d3c'; ctx.shadowBlur=18;
+    ctx.fillStyle='#ff9d3c';
+    ctx.beginPath(); ctx.arc(fx,fy,8,0,7); ctx.fill();
+    ctx.fillStyle='#ffd75e';
+    ctx.beginPath(); ctx.arc(fx-2,fy-2,3,0,7); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle='#a8ff3e'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(fx,fy-8); ctx.lineTo(fx+3,fy-13); ctx.stroke();
+  }
+}
+/* ---------- CHAR STACKS (char sweep 2026-11-22) ----------
+   TRUE SPRITE STACKS at the contention/emberdeep standard: every
+   character is painted once into an offscreen canvas as a stack of
+   silhouette slices (dark core extruded down -> 3-tone shaded body ->
+   lit top with rim light + detail), then blitted per frame over a
+   grounded contact shadow with idle sway + movement lean. Faces and
+   pupils stay live so eyes track the player. Presentation only. */
+function mcShade(hex,f){
+  var n=parseInt(hex.slice(1),16);
+  var r=Math.max(0,Math.min(255,Math.round(((n>>16)&255)*f)));
+  var g=Math.max(0,Math.min(255,Math.round(((n>>8)&255)*f)));
+  var b=Math.max(0,Math.min(255,Math.round((n&255)*f)));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function mcTint(hex,t){
+  var n=parseInt(hex.slice(1),16);
+  var r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r=Math.round(r+(255-r)*t); g=Math.round(g+(255-g)*t); b=Math.round(b+(255-b)*t);
+  return 'rgb('+r+','+g+','+b+')';
+}
+var MC_STACK_CACHE={};
+function mcStack(key,painter,pal){
+  if(MC_STACK_CACHE[key]) return MC_STACK_CACHE[key];
+  var c=document.createElement('canvas'); c.width=76; c.height=84;
+  var g=c.getContext('2d');
+  if(g){
+    g.translate(38,38);
+    for(var i=6;i>=1;i--){
+      var f=0.34+(6-i)*0.07;
+      var sil={m:mcShade(pal.m,f), d:mcShade(pal.m,f*0.72), l:mcShade(pal.m,f),
+               glow:mcShade(pal.m,f), rim:mcShade(pal.m,f), det:false, face:'none'};
+      g.save(); g.translate(0,i*1.15); painter(g,sil); g.restore();
+    }
+    painter(g,pal);
+  }
+  MC_STACK_CACHE[key]=c;
+  return c;
+}
+/* shared 3-tone shading inside a clipped silhouette */
+function mcTone(g,pathFn,P,litX,litY,litRx,litRy){
+  g.save(); g.beginPath(); pathFn(g); g.clip();
+  g.fillStyle=P.d; g.globalAlpha=0.38; g.fillRect(-20,4,40,13); g.globalAlpha=1;
+  g.fillStyle=P.d; g.globalAlpha=0.26; g.fillRect(-20,-22,8,44); g.globalAlpha=1;
+  g.beginPath(); g.ellipse(litX,litY,litRx,litRy,-0.35,0,7);
+  g.fillStyle=P.l; g.globalAlpha=0.92; g.fill(); g.globalAlpha=1;
+  g.restore();
+}
+/* --- PIP: sleek armoured spark-runner (angular helm crest, swept
+       pauldrons, tapered torso, gold chest core, visor plate) --- */
+function pipPath(g){
+  g.moveTo(0,-13); g.lineTo(3.5,-9.5); g.lineTo(9,-7); g.lineTo(12,-2); g.lineTo(11,5);
+  g.lineTo(8,10); g.lineTo(4,8.5); g.lineTo(2,12); g.lineTo(-2,12); g.lineTo(-4,8.5);
+  g.lineTo(-8,10); g.lineTo(-11,5); g.lineTo(-12,-2); g.lineTo(-9,-7); g.lineTo(-3.5,-9.5);
+  g.closePath();
+}
+function pipPainter(g,P){
+  g.beginPath(); pipPath(g); g.fillStyle=P.m; g.fill();
+  mcTone(g,pipPath,P,-2,-6,6.5,4.2);
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=1.7; g.beginPath();
+    g.moveTo(0,-13); g.lineTo(3.5,-9.5); g.lineTo(9,-7); g.lineTo(12,-2); g.stroke();
+    g.fillStyle='#0a1405'; g.beginPath(); g.ellipse(0,-2.5,6.6,3.6,0,0,7); g.fill();
+    g.strokeStyle='rgba(0,0,0,.45)'; g.lineWidth=1; g.beginPath(); g.ellipse(0,-2.5,6.6,3.6,0,0,7); g.stroke();
+    g.fillStyle='#ffd75e'; g.beginPath();
+    g.moveTo(0,2.5); g.lineTo(2.4,5.4); g.lineTo(0,8.2); g.lineTo(-2.4,5.4); g.closePath(); g.fill();
+    g.strokeStyle=P.d; g.lineWidth=1.3; g.beginPath();
+    g.moveTo(-10,3); g.lineTo(-6,4.5); g.moveTo(10,3); g.lineTo(6,4.5); g.stroke();
+  }
+}
+var PIP_PAL={m:'#8ede4a', d:'#2c6e12', l:'#eaffa8', glow:'#a8ff3e', rim:'#f4ffd0', det:true, face:'hunt'};
+/* --- BRAMBLE: bulky brute, twin horns, heavy brow, spiked skirt --- */
+function bramblePath(g){
+  g.moveTo(-7,-8); g.lineTo(-14,-19); g.lineTo(-3,-12); g.closePath();
+  g.moveTo(7,-8); g.lineTo(14,-19); g.lineTo(3,-12); g.closePath();
+  g.moveTo(-11.5,9); g.lineTo(-11.5,-2); g.arc(0,-2,11.5,Math.PI,0); g.lineTo(11.5,9);
+  g.lineTo(7.5,5); g.lineTo(5,10.5); g.lineTo(2,5.5); g.lineTo(0,10.5); g.lineTo(-2,5.5);
+  g.lineTo(-5,10.5); g.lineTo(-7.5,5); g.closePath();
+}
+function bramblePainter(g,P){
+  g.beginPath(); bramblePath(g); g.fillStyle=P.m; g.fill();
+  mcTone(g,bramblePath,P,-3,-6.5,7.5,4.6);
+  if(P.det){
+    g.fillStyle=P.l;
+    g.beginPath(); g.moveTo(-14,-19); g.lineTo(-11.6,-14.6); g.lineTo(-9.4,-16.6); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(14,-19); g.lineTo(11.6,-14.6); g.lineTo(9.4,-16.6); g.closePath(); g.fill();
+    g.strokeStyle=P.rim; g.lineWidth=1.7; g.beginPath(); g.arc(0,-2,11.3,Math.PI*1.6,Math.PI*1.97); g.stroke();
+    if(P.face==='hunt'){
+      g.fillStyle=P.d; g.beginPath();
+      g.moveTo(-7.5,-6.2); g.lineTo(0,-4.4); g.lineTo(7.5,-6.2); g.lineTo(7.5,-8.8);
+      g.lineTo(0,-10.4); g.lineTo(-7.5,-8.8); g.closePath(); g.fill();
+      g.strokeStyle=P.d; g.lineWidth=1.2; g.beginPath();
+      g.moveTo(-6,4); g.lineTo(-2,7); g.moveTo(6,4); g.lineTo(2,7); g.stroke();
+    }
+  }
+}
+/* --- FABLE: tall slender stalker, antenna orb, crown fin, ONE
+       central hunting eye in a dark socket --- */
+function fablePath(g){
+  g.moveTo(2.8,-18.5); g.arc(0,-18.5,2.8,0,7); g.closePath();
+  g.rect(-0.9,-17.5,1.8,7);
+  g.moveTo(-4,-10); g.lineTo(0,-14.5); g.lineTo(4,-10); g.closePath();
+  g.moveTo(-8.5,9); g.lineTo(-8.5,-3); g.arc(0,-3,8.5,Math.PI,0); g.lineTo(8.5,9);
+  g.lineTo(4.5,5); g.lineTo(2.5,10.5); g.lineTo(0,5.5); g.lineTo(-2.5,10.5); g.lineTo(-4.5,5);
+  g.closePath();
+}
+function fablePainter(g,P){
+  g.beginPath(); fablePath(g); g.fillStyle=P.m; g.fill();
+  mcTone(g,fablePath,P,-2,-6,5,3.6);
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=1.5; g.beginPath(); g.arc(0,-3,8.3,Math.PI*1.62,Math.PI*1.95); g.stroke();
+    g.save(); g.shadowColor=P.glow; g.shadowBlur=7;
+    g.fillStyle=P.glow; g.beginPath(); g.arc(0,-18.5,2.4,0,7); g.fill(); g.restore();
+    g.fillStyle='#ffffff'; g.beginPath(); g.arc(0,-18.5,0.9,0,7); g.fill();
+    if(P.face==='hunt'){
+      g.fillStyle='#0d0a18'; g.beginPath(); g.ellipse(0,-2.5,5.8,6.4,0,0,7); g.fill();
+      g.strokeStyle=P.rim; g.lineWidth=1; g.beginPath(); g.ellipse(0,-2.5,5.8,6.4,0,0,7); g.stroke();
+      g.fillStyle=P.glow;
+      g.beginPath(); g.arc(-6,2,1.1,0,7); g.fill();
+      g.beginPath(); g.arc(6,2,1.1,0,7); g.fill();
+    }
+  }
+}
+/* --- TIDE: sleek flanker, blade fins, dorsal crest, tail spike --- */
+function tidePath(g){
+  g.moveTo(-9,-3); g.lineTo(-18,2); g.lineTo(-9,3.5); g.closePath();
+  g.moveTo(9,-3); g.lineTo(18,2); g.lineTo(9,3.5); g.closePath();
+  g.moveTo(-3,-10); g.quadraticCurveTo(0,-15.5,3.5,-9.5); g.closePath();
+  g.moveTo(-10,6); g.lineTo(-10,-2); g.arc(0,-2,10,Math.PI,0); g.lineTo(10,6);
+  g.lineTo(4,8); g.lineTo(0,12.5); g.lineTo(-4,8); g.closePath();
+}
+function tidePainter(g,P){
+  g.beginPath(); tidePath(g); g.fillStyle=P.m; g.fill();
+  mcTone(g,tidePath,P,-2.5,-5.5,6.5,4.2);
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=1.6; g.beginPath();
+    g.moveTo(-9,-3); g.lineTo(-18,2); g.moveTo(9,-3); g.lineTo(18,2); g.stroke();
+    g.strokeStyle=P.rim; g.lineWidth=1.5; g.beginPath(); g.arc(0,-2,9.8,Math.PI*1.6,Math.PI*1.95); g.stroke();
+    if(P.face==='hunt'){
+      g.strokeStyle=P.d; g.lineWidth=1.2; g.beginPath();
+      g.moveTo(-8,1); g.quadraticCurveTo(-9.5,3,-8,5);
+      g.moveTo(8,1); g.quadraticCurveTo(9.5,3,8,5); g.stroke();
+    }
+  }
+}
+/* --- WISP: flame wraith, S-curve teardrop, inner ember core --- */
+function wispPath(g){
+  g.moveTo(0,-15);
+  g.quadraticCurveTo(6,-9,7.5,-3); g.quadraticCurveTo(9,3,6,8);
+  g.lineTo(3,5.5); g.lineTo(1.5,10.5); g.lineTo(-1,6); g.lineTo(-3.5,11);
+  g.lineTo(-5,5.5); g.quadraticCurveTo(-9,2,-7.5,-4); g.quadraticCurveTo(-6,-10,0,-15);
+  g.closePath();
+}
+function wispPainter(g,P){
+  g.beginPath(); wispPath(g); g.fillStyle=P.m; g.fill();
+  mcTone(g,wispPath,P,-2,-6,4.5,3.4);
+  if(P.det){
+    g.beginPath();
+    g.moveTo(0,-8); g.quadraticCurveTo(3.4,-4,3.8,0); g.quadraticCurveTo(4,4,1.5,6.5);
+    g.lineTo(-1.5,6.5); g.quadraticCurveTo(-4,3,-3.6,-1); g.quadraticCurveTo(-3,-5,0,-8);
+    g.closePath(); g.fillStyle=P.l; g.globalAlpha=0.88; g.fill(); g.globalAlpha=1;
+    g.strokeStyle=P.rim; g.lineWidth=1.6; g.beginPath();
+    g.moveTo(0,-15); g.quadraticCurveTo(6,-9,7.5,-3); g.stroke();
+  }
+}
+var HUNTER_PAINTERS={horns:bramblePainter, antenna:fablePainter, fins:tidePainter, wisp:wispPainter};
+var FRIGHT_PAL={m:'#3a6fd8', d:'#14264d', l:'#8fb4f5', glow:'#dbe9ff', rim:'#ffffff', det:true, face:'fright'};
+function drawPip(){
+  var p=state.player;
+  var stack=mcStack('pip',pipPainter,PIP_PAL);
+  if(state.phase==='dying'){
+    var t=state.dyingT/90;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate((1-t)*6); ctx.globalAlpha=Math.max(0.1,t);
+    ctx.scale(t,t);
+    ctx.drawImage(stack,-38,-38);
+    ctx.restore();
+    return;
+  }
+  var bob=Math.sin(p.bob)*1.5;
+  ctx.save(); ctx.translate(p.x, p.y);
+  /* grounded contact shadow + colour pool — never bobs with the body */
+  ctx.fillStyle='rgba(168,255,62,.13)';
+  ctx.beginPath(); ctx.ellipse(0,15,14.5,4.6,0,0,7); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.42)';
+  ctx.beginPath(); ctx.ellipse(1,14.5,10.5,3.4,0,0,7); ctx.fill();
+  ctx.translate(0,bob);
+  ctx.rotate(p.dc*0.07 + Math.sin(state.frame*0.06)*0.02);
+  ctx.save(); ctx.shadowColor='#a8ff3e'; ctx.shadowBlur=13;
+  ctx.drawImage(stack,-38,-38);
+  ctx.restore();
+  /* visor slit: bright track that shifts with the travel direction */
+  var ex=p.dc*2.2, ey=p.dr*2.2;
+  ctx.save(); ctx.shadowColor='#d8ff7a'; ctx.shadowBlur=7;
+  ctx.fillStyle='#eaffb0';
+  ctx.beginPath(); ctx.ellipse(ex,-2.5+ey,4.6,1.7,0,0,7); ctx.fill();
+  ctx.fillStyle='#ffffff';
+  ctx.beginPath(); ctx.ellipse(ex,-2.5+ey,1.6,0.8,0,0,7); ctx.fill();
+  ctx.restore();
+  ctx.restore();
+}
+function drawChaser(ch){
+  if(ch.inDen && ch.exitT>0){
+    /* bobbing inside the den, half-hidden */
+    ctx.save(); ctx.globalAlpha=0.85;
+  }
+  var bob=Math.sin(ch.bob)*1.2 + (ch.wob||0);
+  var fright=ch.mode==='frightened';
+  var eyesOnly=ch.mode==='eyes';
+  if(eyesOnly){
+    /* eyes only, racing home — faint grounded shadow under the flight */
+    ctx.save(); ctx.translate(ch.x, ch.y+bob);
+    ctx.fillStyle='rgba(0,0,0,.25)';
+    ctx.beginPath(); ctx.ellipse(1,11-bob,8,2.4,0,0,7); ctx.fill();
+    var ex2=ch.dc*2, ey2=ch.dr*2;
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.ellipse(-4+ex2,-1+ey2,3.4,4.4,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(4+ex2,-1+ey2,3.4,4.4,0,0,7); ctx.fill();
+    ctx.fillStyle='#2a6cff';
+    ctx.beginPath(); ctx.arc(-4+ex2*1.6,-1+ey2*1.6,1.9,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(4+ex2*1.6,-1+ey2*1.6,1.9,0,7); ctx.fill();
+    ctx.restore();
+    if(ch.inDen) ctx.restore();
+    return;
+  }
+  var painter=HUNTER_PAINTERS[ch.detail]||wispPainter;
+  var pal=fright?FRIGHT_PAL:{m:mcTint(ch.color,0.10), d:ch.dark, l:mcTint(ch.color,0.55),
+    glow:mcTint(ch.color,0.8), rim:mcTint(ch.color,0.95), det:true, face:'hunt'};
+  var stack=mcStack((fright?'hf_':'h_')+(ch.detail||'wisp'),painter,pal);
+  ctx.save(); ctx.translate(ch.x, ch.y);
+  /* grounded contact shadow + colour pool — stays planted while it bobs */
+  ctx.fillStyle=fright?'rgba(90,140,255,.14)':mcTint(ch.color,0.1);
+  ctx.globalAlpha=0.16;
+  ctx.beginPath(); ctx.ellipse(0,14,15,4.6,0,0,7); ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(0,0,0,.4)';
+  ctx.beginPath(); ctx.ellipse(1,13.5,11,3.3,0,0,7); ctx.fill();
+  ctx.translate(0,bob);
+  ctx.rotate(ch.dc*0.05 + Math.sin(ch.bob*0.7)*0.03);
+  ctx.save(); ctx.shadowColor=fright?'#3a6fd8':ch.color; ctx.shadowBlur=12;
+  ctx.drawImage(stack,-38,-38);
+  ctx.restore();
+  if(fright){
+    /* frightened face: dot eyes + wavy mouth */
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(-3.5,-3,1.6,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(3.5,-3,1.6,0,7); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.3;
+    ctx.beginPath();
+    ctx.moveTo(-6,4);
+    for(var i=0;i<4;i++){ ctx.quadraticCurveTo(-4+i*3, 1.5, -2.5+i*3, 4); }
+    ctx.stroke();
+  } else {
+    /* hunting eyes: pupils track PIP's actual position (visual only) */
+    var tx=state.player?(state.player.x-ch.x):ch.dc;
+    var ty=state.player?(state.player.y-ch.y):ch.dr;
+    var tl=Math.hypot(tx,ty)||1, lx=tx/tl, ly=ty/tl;
+    if(ch.detail==='antenna'){
+      /* FABLE: one big central eye, pupil locked on PIP */
+      ctx.fillStyle='#fff';
+      ctx.beginPath(); ctx.ellipse(0,-2.5,4.2,4.9,0,0,7); ctx.fill();
+      ctx.fillStyle='#0a0a12';
+      ctx.beginPath(); ctx.arc(lx*1.7,-2.5+ly*1.8,2,0,7); ctx.fill();
+      ctx.fillStyle='#fff';
+      ctx.beginPath(); ctx.arc(lx*1.7-0.7,-2.5+ly*1.8-0.7,0.6,0,7); ctx.fill();
+    } else {
+      var slant=(ch.detail==='fins')?-0.35:(ch.detail==='wisp')?0.3:0;
+      [-1,1].forEach(function(s){
+        ctx.save(); ctx.translate(s*3.8,-2.6); ctx.rotate(s*slant);
+        ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.ellipse(0,0,2.6,3.4,0,0,7); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle='#0a0a12';
+        ctx.beginPath(); ctx.arc(s*3.8+lx*1.5,-2.6+ly*1.6,1.5,0,7); ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.9)';
+        ctx.beginPath(); ctx.arc(s*3.8+lx*1.5-0.5,-2.6+ly*1.6-0.6,0.5,0,7); ctx.fill();
+      });
+    }
+  }
+  ctx.restore();
+  if(ch.inDen && ch.exitT>0) ctx.restore();
+}
+
+function drawParticles(){
+  state.particles.forEach(function(pt){
+    ctx.globalAlpha=0.25+0.2*Math.sin(state.frame*0.02+pt.ph);
+    ctx.fillStyle='rgba('+pt.c+',1)';
+    ctx.beginPath(); ctx.arc(pt.x,pt.y,pt.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+function drawFloaters(){
+  state.floaters.forEach(function(f){
+    ctx.globalAlpha=Math.min(1,f.life/25);
+    ctx.fillStyle=f.color; ctx.font='bold 12px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(f.txt,f.x,f.y);
+  });
+  ctx.globalAlpha=1;
+}
+function drawHUD(){
+  ctx.fillStyle='rgba(7,10,18,.85)'; ctx.fillRect(0,0,W,30);
+  ctx.textAlign='left'; ctx.font='bold 13px "Orbitron",sans-serif';
+  ctx.fillStyle='#a8ff3e'; ctx.fillText('SCORE '+state.score, 10, 20);
+  ctx.fillStyle='#ffd75e'; ctx.fillText('HI '+state.hi, 150, 20);
+  ctx.fillStyle='#fff'; ctx.fillText('LEVEL '+state.level, 250, 20);
+  /* lives as mini PIPs */
+  for(var i=0;i<state.lives;i++){
+    ctx.fillStyle='#c8ff5e';
+    ctx.beginPath(); ctx.arc(360+i*20, 15, 6, 0, 7); ctx.fill();
+    ctx.fillStyle='#0a1a05';
+    ctx.beginPath(); ctx.arc(358+i*20,14,1.2,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(362+i*20,14,1.2,0,7); ctx.fill();
+  }
+  ctx.fillStyle='#8aa893'; ctx.font='12px "Share Tech Mono",monospace';
+  var modeTxt=state.mode==='watch' ? 'WATCH · '+state.watchAgentId : '1P · PIP';
+  ctx.fillText(modeTxt, 440, 20);
+  ctx.fillStyle='#35e0ff';
+  ctx.fillText('SPARKS '+state.sparksLeft, 570, 20);
+  if(state.frightT>0){
+    ctx.fillStyle='#35e0ff'; ctx.font='bold 12px "Orbitron",sans-serif';
+    ctx.fillText('SURGE '+Math.ceil(state.frightT/60)+'s', 10, 48);
+  }
+  if(state.fruitActive){
+    ctx.fillStyle='#ff9d3c'; ctx.font='bold 12px "Orbitron",sans-serif';
+    ctx.fillText('FRUIT '+state.fruitValue+' · '+Math.ceil(state.fruitT/60)+'s', W-170, 48);
+  }
+  if(state.bannerT>0){
+    ctx.fillStyle='rgba(7,10,18,.66)'; ctx.fillRect(W/2-300,56,600,32);
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 16px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.banner,W/2,78);
+  }
+}
+function drawTitle(){
+  ctx.fillStyle='rgba(7,10,18,.72)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.font='900 52px "Orbitron",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('MAZE CHASE',W/2,120);
+  ctx.fillStyle='#a8ff3e'; ctx.font='600 14px "Orbitron",sans-serif';
+  ctx.fillText('EAT EVERY SPARK · DODGE THE HUNT',W/2,152);
+  /* the cast, facing off */
+  var px=336, py=300;
+  ctx.save(); ctx.translate(px,py); ctx.scale(1.6,1.6);
+  var keep=state.player;
+  state.player={x:0,y:0,dc:1,dr:0,bob:0};
+  drawPip();
+  state.player=keep;
+  ctx.restore();
+  var names=['BRAMBLE','FABLE','TIDE','WISP'];
+  var cols=['#ff3860','#b78cff','#35e0ff','#ffd75e'];
+  for(var i=0;i<4;i++){
+    var cx=180+i*112, cy=300;
+    var fake={name:names[i],color:cols[i],dark:'#111',personality:'chase',corner:{c:0,r:0},
+      detail:['horns','antenna','fins','wisp'][i], x:cx, y:cy, dc:0, dr:1, tile:{c:0,r:0},
+      prev:{c:0,r:0}, mode:'chase', frightT:0, inDen:false, exitT:0, moving:false,
+      forceReverse:false, bob:i*1.4, wob:0};
+    ctx.save(); ctx.translate(cx,cy); ctx.scale(1.6,1.6); ctx.translate(-cx,-cy);
+    drawChaser(fake);
+    ctx.restore();
+    ctx.fillStyle=cols[i]; ctx.font='bold 12px "Orbitron",sans-serif';
+    ctx.fillText(names[i],cx,352);
+    ctx.fillStyle='#8aa893'; ctx.font='11px "Share Tech Mono",monospace';
+    ctx.fillText(CHASER_DEFS[i].desc,cx,370);
+  }
+  ctx.fillStyle='#e8f5dc'; ctx.font='16px "Rajdhani",sans-serif';
+  ctx.fillText('408 sparks, 4 surge orbs, 1 ember fruit — clear the maze before the hunters clear you.',W/2,430);
+  ctx.fillStyle='#8aa893'; ctx.font='13px "Share Tech Mono",monospace';
+  ctx.fillText('arrows / WASD steer · V chase cam · P pause · R restart · M mute',W/2,458);
+  ctx.fillStyle='#a8ff3e'; ctx.font='bold 14px "Orbitron",sans-serif';
+  ctx.fillText('CLICK PLAY — OR WATCH A BOT RUN THE MAZE',W/2,496);
+}
+function drawOver(){
+  ctx.fillStyle='rgba(7,2,6,.62)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#ff3860'; ctx.font='900 36px "Orbitron",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('GAME OVER',W/2,300);
+  ctx.fillStyle='#fff'; ctx.font='18px "Orbitron",sans-serif';
+  ctx.fillText('SCORE '+state.score+'   ·   HIGH '+state.hi+'   ·   LEVEL '+state.level,W/2,344);
+  ctx.fillStyle='#8aa893'; ctx.font='14px "Share Tech Mono",monospace';
+  ctx.fillText('Press R to run it back',W/2,378);
+}
+function drawWorld(){
+  drawBackdrop();
+  drawMaze();
+  drawSparks();
+  if(state.player) drawPip();
+  state.chasers.forEach(function(ch){ drawChaser(ch); });
+  drawParticles();
+  drawFloaters();
+}
+function drawCamFrame(){
+  /* side canopy beams: gradient + gold rivets + travelling cyan light */
+  [10, W-10].forEach(function(bx){
+    var bg=ctx.createLinearGradient(bx-5,0,bx+5,0);
+    bg.addColorStop(0,'rgba(168,255,62,0)');
+    bg.addColorStop(0.5,'rgba(20,40,28,0.85)');
+    bg.addColorStop(1,'rgba(168,255,62,0)');
+    ctx.fillStyle=bg; ctx.fillRect(bx-5,0,10,H);
+    ctx.fillStyle='rgba(255,215,94,.8)';
+    for(var ry=24;ry<H-16;ry+=72){ ctx.beginPath(); ctx.arc(bx,ry,1.8,0,7); ctx.fill(); }
+    var ly=(state.frame*2)%H;
+    ctx.save(); ctx.shadowColor='#35e0ff'; ctx.shadowBlur=8;
+    ctx.fillStyle='#bff3ff'; ctx.beginPath(); ctx.arc(bx,ly,2.6,0,7); ctx.fill();
+    ctx.restore();
+  });
+  /* glass glare streak, top-left to bottom-left */
+  ctx.fillStyle='rgba(255,255,255,0.045)';
+  ctx.beginPath();
+  ctx.moveTo(120,0); ctx.lineTo(200,0); ctx.lineTo(80,H); ctx.lineTo(0,H);
+  ctx.closePath(); ctx.fill();
+  /* corner brackets */
+  ctx.strokeStyle='rgba(168,255,62,.7)'; ctx.lineWidth=3;
+  var m=14, l=34;
+  [[m,m,1,1],[W-m,m,-1,1],[m,H-m,1,-1],[W-m,H-m,-1,-1]].forEach(function(c){
+    ctx.beginPath();
+    ctx.moveTo(c[0]+c[2]*l, c[1]); ctx.lineTo(c[0], c[1]); ctx.lineTo(c[0], c[1]+c[3]*l);
+    ctx.stroke();
+  });
+  /* crosshair: gold while a frightened hunter is the LOCK, green otherwise */
+  var lock=computeFpLock();
+  var gold=lock && lock.eatable;
+  ctx.strokeStyle=gold?'rgba(255,215,94,.95)':'rgba(168,255,62,.8)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W/2-16,H/2); ctx.lineTo(W/2+16,H/2);
+  ctx.moveTo(W/2,H/2-16); ctx.lineTo(W/2,H/2+16); ctx.stroke();
+  if(gold){
+    ctx.strokeStyle='rgba(255,215,94,.8)';
+    ctx.beginPath(); ctx.arc(W/2,H/2,24,0,7); ctx.stroke();
+  }
+  ctx.fillStyle='#a8ff3e'; ctx.font='bold 12px "Orbitron",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('CHASE CAM · PIP · V TO EXIT',W/2,H-16);
+}
+/* Radial speed lines from the crosshair — opacity tracks the camera slew
+   velocity: faint while PIP cruises, flaring on a fast turn/snap. */
+function drawSpeedLines(){
+  var op=Math.max(0, Math.min(0.35, (fpCam.vel-2.2)/10));
+  if(op<=0.01) return;
+  ctx.save();
+  ctx.strokeStyle='rgba(200,255,120,'+op.toFixed(2)+')';
+  ctx.lineWidth=1.5;
+  for(var i=0;i<16;i++){
+    var a=(i/16)*Math.PI*2 + state.frame*0.002;
+    var r0=170+((i*37)%60), r1=r0+34+fpCam.vel*3;
+    ctx.beginPath();
+    ctx.moveTo(W/2+Math.cos(a)*r0, H/2+Math.sin(a)*r0);
+    ctx.lineTo(W/2+Math.cos(a)*r1, H/2+Math.sin(a)*r1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+/* Radial depth fog around PIP — the maze falls away from the chase view. */
+function drawDepthFog(){
+  var g=ctx.createRadialGradient(W/2,H/2,120,W/2,H/2,480);
+  g.addColorStop(0,'rgba(4,8,12,0)');
+  g.addColorStop(1,'rgba(4,8,12,0.5)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+}
+/* Chase-cam gauges that read at a glance (screen space, below the banner
+   band so they never collide with the GO! / LEVEL banners). */
+function drawCamGauges(){
+  var py=92;
+  /* left panel: PIP lives + sparks progress + surge countdown */
+  var px=12, pw=150;
+  var ph=state.frightT>0?74:56;
+  ctx.fillStyle='rgba(7,10,18,0.72)';
+  ctx.fillRect(px,py,pw,ph);
+  ctx.strokeStyle='rgba(168,255,62,.45)'; ctx.lineWidth=1;
+  ctx.strokeRect(px+0.5,py+0.5,pw,ph);
+  ctx.fillStyle='#a8ff3e'; ctx.font='bold 11px "Orbitron",sans-serif'; ctx.textAlign='left';
+  ctx.fillText('PIP', px+10, py+16);
+  for(var i=0;i<3;i++){
+    ctx.fillStyle=i<state.lives?'#c8ff5e':'rgba(200,255,94,.2)';
+    ctx.beginPath(); ctx.arc(px+52+i*16, py+12, 5, 0, 7); ctx.fill();
+  }
+  ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(px+10, py+28, pw-20, 8);
+  ctx.fillStyle='#a8ff3e';
+  ctx.fillRect(px+10, py+28, (pw-20)*(1-state.sparksLeft/Math.max(1,state.sparksTotal)), 8);
+  ctx.fillStyle='#8aa893'; ctx.font='10px "Share Tech Mono",monospace';
+  ctx.fillText('SPARKS '+(state.sparksTotal-state.sparksLeft)+'/'+state.sparksTotal, px+10, py+50);
+  if(state.frightT>0){
+    ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(px+10, py+54, pw-20, 6);
+    ctx.fillStyle='#35e0ff';
+    ctx.fillRect(px+10, py+54, (pw-20)*(state.frightT/420), 6);
+    ctx.fillStyle='#35e0ff';
+    ctx.fillText('SURGE '+Math.ceil(state.frightT/60)+'s', px+10, py+66);
+  }
+  /* right panel: nearest-hunter LOCK readout (190 wide — the longest
+     line, "n.n tiles · FRIGHTENED — EAT!", needs ~165px at 10px mono) */
+  var lock=computeFpLock();
+  var qx=W-202, qw=190;
+  var qh=lock?56:40;
+  ctx.fillStyle='rgba(7,10,18,0.72)';
+  ctx.fillRect(qx,py,qw,qh);
+  ctx.strokeStyle=lock&&lock.eatable?'rgba(255,215,94,.6)':'rgba(168,255,62,.45)';
+  ctx.strokeRect(qx+0.5,py+0.5,qw,qh);
+  if(lock){
+    ctx.fillStyle=lock.eatable?'#ffd75e':lock.color;
+    ctx.font='bold 11px "Orbitron",sans-serif'; ctx.textAlign='left';
+    ctx.fillText('◈ '+lock.name, qx+10, py+16);
+    ctx.fillStyle='#e8f5dc'; ctx.font='10px "Share Tech Mono",monospace';
+    var modeWord=lock.mode==='frightened'?'FRIGHTENED — EAT!':lock.mode==='eyes'?'EYES — FLEEING':lock.mode==='scatter'?'SCATTER':'HUNTING';
+    ctx.fillText(lock.dist.toFixed(1)+' tiles · '+modeWord, qx+10, py+32);
+    ctx.fillStyle='#8aa893';
+    ctx.fillText('NEAREST HUNTER', qx+10, py+48);
+  } else {
+    ctx.fillStyle='#8aa893'; ctx.font='10px "Share Tech Mono",monospace';
+    ctx.fillText('NO HUNTER OUT', qx+10, py+24);
+  }
+}
+function render(){
+  ctx.save();
+  if(state.shake>0) ctx.translate((Math.random()-0.5)*state.shake,(Math.random()-0.5)*state.shake);
+  if(state.cam && state.phase!=='title' && state.player){
+    drawBackdrop();
+    ctx.save();
+    /* eased chase camera: look-ahead target, slew lean, breathing bob */
+    var bobY=Math.sin(state.frame*0.05)*2;
+    ctx.translate(W/2, H/2);
+    ctx.scale(fpCam.zoom, fpCam.zoom);
+    ctx.translate(-fpCam.x-fpCam.lean, -fpCam.y+bobY);
+    drawMaze(); drawSparks();
+    drawPip();
+    /* pulsing gold halo around PIP — the chase-cam anchor */
+    var haloR=24+2*Math.sin(state.frame*0.1);
+    ctx.strokeStyle='rgba(255,215,94,'+(0.22+0.08*Math.sin(state.frame*0.1)).toFixed(2)+')';
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(state.player.x, state.player.y, haloR, 0, 7); ctx.stroke();
+    state.chasers.forEach(function(ch){ drawChaser(ch); });
+    drawParticles(); drawFloaters();
+    ctx.restore();
+    drawSpeedLines();
+    drawDepthFog();
+    drawCamFrame();
+    drawCamGauges();
+    drawHUD();
+  } else {
+    drawWorld();
+    drawHUD();
+    if(state.phase==='title') drawTitle();
+    if(state.phase==='over') drawOver();
+  }
+  ctx.restore();
+}
+
+/* ---------- pause / save / load / views ---------- */
+function togglePause(){
+  if(state.phase==='title'||state.phase==='over') return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+}
+function toggleCam(){
+  state.cam=!state.cam;
+  if(state.cam) snapFpCam();
+  setMsg(state.cam?'Chase cam — zoomed in on PIP. V to exit.':'Full maze view.');
+}
+function toggleMute(){
+  state.muted=!state.muted;
+  setMsg(state.muted?'Muted.':'Sound on.');
+}
+function saveState(){
+  if(state.phase==='title') return false;
+  try{
+    localStorage.setItem('maze-chase.save', JSON.stringify({
+      v:1, mode:state.mode, level:state.level, score:state.score, lives:state.lives,
+      hi:state.hi, sparksLeft:state.sparksLeft, sparksEaten:state.sparksEaten,
+      sparkKeys:Object.keys(state.sparkSet), orbKeys:Object.keys(state.orbSet),
+      fruitActive:state.fruitActive, fruitT:state.fruitT, fruitValue:state.fruitValue,
+      frightT:state.frightT, chainIdx:state.chainIdx, modeIdx:state.modeIdx, modeT:state.modeT,
+      watchAgentId:state.watchAgentId, watchGame:state.watchGame, watchRecorded:state.watchRecorded,
+      player:{x:state.player.x,y:state.player.y,dc:state.player.dc,dr:state.player.dr,
+        c:state.player.tile.c,r:state.player.tile.r},
+      chasers:state.chasers.map(function(ch){
+        return {x:ch.x,y:ch.y,dc:ch.dc,dr:ch.dr,c:ch.tile.c,r:ch.tile.r,mode:ch.mode,
+          frightT:ch.frightT,inDen:ch.inDen,exitT:ch.exitT};
+      })
+    }));
+    setMsg('State saved — pick it up any time from the pause menu.');
+    return true;
+  }catch(e){ setMsg('Save failed in this browser.'); return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('maze-chase.save');
+    if(!raw){ setMsg('No saved state yet — play a level first.'); return false; }
+    var d=JSON.parse(raw);
+    if(d.v!==1) return false;
+    var keepHi=state.hi, keepWatch=state.watchGame, keepMuted=state.muted;
+    state=freshState();
+    state.mode=d.mode; state.level=d.level; state.score=d.score; state.lives=d.lives;
+    /* E39 REPAIR (defect 2, fresh-load misattribution): a watch save restores
+       its own cursor instead of the current load's, so the loaded bout plays
+       (and records) under the agent that was actually playing. A solo save
+       keeps the current load's cursor — it must not rewind the rotation. */
+    state.hi=d.hi||keepHi;
+    state.watchGame=(state.mode==='watch' && typeof d.watchGame==='number' && isFinite(d.watchGame) && d.watchGame>=0) ? d.watchGame : keepWatch;
+    state.muted=keepMuted;
+    state.sparksLeft=d.sparksLeft; state.sparksEaten=d.sparksEaten;
+    state.sparkSet={}; d.sparkKeys.forEach(function(k){ state.sparkSet[k]=true; });
+    state.orbSet={}; d.orbKeys.forEach(function(k){ state.orbSet[k]=true; });
+    state.sparksTotal=408;
+    state.fruitActive=d.fruitActive; state.fruitT=d.fruitT; state.fruitValue=d.fruitValue;
+    state.frightT=d.frightT; state.chainIdx=d.chainIdx;
+    state.modeIdx=d.modeIdx; state.modeT=d.modeT;
+    state.player={x:d.player.x,y:d.player.y,dc:d.player.dc,dr:d.player.dr,
+      tile:{c:d.player.c,r:d.player.r}, prev:{c:d.player.c-d.player.dc,r:d.player.r-d.player.dr},
+      moving:false, bob:0};
+    state.chasers=d.chasers.map(function(dc,i){
+      var def=CHASER_DEFS[i];
+      var ch=buildChaser(def, dc.c, dc.r, dc.dc, dc.dr);
+      ch.x=dc.x; ch.y=dc.y; ch.mode=dc.mode; ch.frightT=dc.frightT;
+      ch.inDen=dc.inDen; ch.exitT=dc.exitT;
+      return ch;
+    });
+    if(state.mode==='watch'){
+      setupWatchAgent();
+      /* E39 REPAIR (defect 2): setupWatchAgent resets the agent from the
+         cursor and clears the recorded flag — restore the saved agent (and
+         its engine agent) and the saved flag, so a loaded TURTLE bout
+         records as TURTLE and a bout already recorded cannot double-record.
+         Pre-save traces stay session-only: they are NOT re-recorded. */
+      if(typeof d.watchAgentId==='string' && WATCH_IDS.indexOf(d.watchAgentId)>=0){
+        state.watchAgentId=d.watchAgentId;
+        state.watchEngineAgent=null;
+        try{ if(FE) state.watchEngineAgent=FE.loadAgent(state.watchAgentId); }catch(e){ state.watchEngineAgent=null; }
+      }
+      state.watchRecorded=d.watchRecorded===true;
+      saveWatchGame();
+    }
+    state.phase='playing'; state.paused=false;
+    snapFpCam();
+    var ov=$('pauseOverlay'); if(ov) ov.style.display='none';
+    setMsg('Saved state loaded — level '+state.level+', score '+state.score+'.');
+    return true;
+  }catch(e){ setMsg('Load failed — save may be from an older build.'); return false; }
+}
+
+/* ---------- fullscreen ----------
+   The shell (stage on desktop, whole handheld console on phones) goes true
+   fullscreen via the Fullscreen API: button + F key toggle, Esc exits
+   before it can pause. Label follows the real fullscreen state. ---- */
+var fsShell=document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ var b=$('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — maze fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+
+/* ---------- input ---------- */
+var DIR_KEYS={
+  arrowup:{dc:0,dr:-1}, w:{dc:0,dr:-1},
+  arrowdown:{dc:0,dr:1}, s:{dc:0,dr:1},
+  arrowleft:{dc:-1,dr:0}, a:{dc:-1,dr:0},
+  arrowright:{dc:1,dr:0}, d:{dc:1,dr:0}
+};
+function keyName(e){ return (e.key||'').toLowerCase(); }
+document.addEventListener('keydown',function(e){
+  var k=keyName(e);
+  state.keys[k]=true;
+  if(DIR_KEYS[k]){ state.nextDir=DIR_KEYS[k]; if(state.phase==='title') startGame('solo'); }
+  if(k==='f'){ toggleFullscreen(); return; }
+  if(k==='escape' && isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ return; }
+  if(k==='p'||k==='escape'){ togglePause(); e.preventDefault(); }
+  if(k==='r'){ startGame(state.mode); }
+  if(k==='v'){ toggleCam(); }
+  if(k==='m'){ toggleMute(); }
+  if(['arrowleft','arrowright','arrowup','arrowdown',' '].indexOf(k)>=0) e.preventDefault();
+});
+document.addEventListener('keyup',function(e){ state.keys[keyName(e)]=false; });
+function bindBtn(id,fn){ var b=$(id); if(b) b.addEventListener('click',fn); }
+bindBtn('btnSolo',function(){ startGame('solo'); });
+bindBtn('btnWatch',function(){ startGame('watch'); });
+bindBtn('btnCam',function(){ toggleCam(); });
+bindBtn('btnPause',function(){ togglePause(); });
+bindBtn('btnFs',function(){ toggleFullscreen(); });
+bindBtn('resumeBtn',function(){ togglePause(); });
+bindBtn('saveBtn',function(){ saveState(); });
+bindBtn('loadBtn',function(){ loadState(); });
+bindBtn('restartBtn',function(){ var ov=$('pauseOverlay'); if(ov) ov.style.display='none'; state.paused=false; startGame(state.mode); });
+bindBtn('quitArcadeBtn',function(){ location.href='../arcade.html'; });
+bindBtn('startBtn',function(){ togglePause(); });
+bindBtn('selectBtn',function(){ toggleCam(); });
+bindBtn('btnA',function(){ toggleCam(); });
+bindBtn('btnB',function(){ togglePause(); });
+/* D-pad: press a direction to queue it */
+function bindDpad(id, dir){
+  var b=$(id); if(!b) return;
+  var fn=function(e){ if(e) e.preventDefault(); state.nextDir=dir; if(state.phase==='title') startGame('solo'); };
+  b.addEventListener('pointerdown',fn);
+  b.addEventListener('click',fn);
+}
+bindDpad('dUp',{dc:0,dr:-1});
+bindDpad('dDown',{dc:0,dr:1});
+bindDpad('dLeft',{dc:-1,dr:0});
+bindDpad('dRight',{dc:1,dr:0});
+
+/* ---------- boot ---------- */
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+if(q.get('auto')==='watch') startGame('watch');
+else if(q.get('auto')==='play') startGame('solo');
+
+function loop(){
+  update();
+  try{ render(); }catch(e){ /* headless stub contexts may lack gradients; logic still runs */ }
+  if(typeof requestAnimationFrame!=='function') return;
+  requestAnimationFrame(loop);
+}
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+
+/* test/debug surface — same shape as the other arcade games */
+window.__mazeChase={
+  get state(){ return {phase:state.phase,mode:state.mode,paused:state.paused,cam:state.cam,
+    frame:state.frame, level:state.level, score:state.score, hi:state.hi, lives:state.lives,
+    sparksLeft:state.sparksLeft, sparksTotal:state.sparksTotal, sparksEaten:state.sparksEaten,
+    frightT:state.frightT, chainIdx:state.chainIdx, fruitActive:state.fruitActive,
+    watchAgentId:state.watchAgentId, watchGame:state.watchGame,
+    watchRecorded:state.watchRecorded, watchTraces:state.watchTraces.length,
+    player: state.player ? {x:Math.round(state.player.x), y:Math.round(state.player.y),
+      c:state.player.tile.c, r:state.player.tile.r, dc:state.player.dc, dr:state.player.dr,
+      moving:state.player.moving} : null,
+    chasers: state.chasers.map(function(ch){ return {name:ch.name, x:Math.round(ch.x), y:Math.round(ch.y),
+      c:ch.tile.c, r:ch.tile.r, dc:ch.dc, dr:ch.dr, mode:ch.mode, frightT:ch.frightT,
+      inDen:ch.inDen, exitT:ch.exitT}; }),
+    banner:state.banner}; },
+  startGame:startGame,
+  debugTargets:function(){
+    return state.chasers.map(function(ch){
+      var t=chaserTarget(ch);
+      return {name:ch.name, personality:ch.personality, mode:ch.mode, target:{c:t.c, r:t.r}};
+    });
+  },
+  debugPlacePlayer:function(c,r,dc,dr){
+    var p=centerOf(c,r);
+    state.player.x=p.x; state.player.y=p.y;
+    state.player.tile={c:c,r:r}; state.player.prev={c:c-(dc||0),r:r-(dr||0)};
+    state.player.dc=(dc===undefined?-1:dc); state.player.dr=(dr===undefined?0:dr);
+    state.player.moving=false;
+  },
+  debugPlaceChaser:function(i,c,r,dc,dr,mode){
+    var ch=state.chasers[i]; var p=centerOf(c,r);
+    ch.x=p.x; ch.y=p.y; ch.tile={c:c,r:r}; ch.prev={c:c,r:r};
+    ch.dc=(dc===undefined?0:dc); ch.dr=(dr===undefined?-1:dr);
+    if(mode) ch.mode=mode;
+    ch.inDen=false; ch.exitT=0; ch.forceReverse=false;
+  },
+  debugSetNextDir:function(dc,dr){ state.nextDir={dc:dc,dr:dr}; },
+  debugKey:function(k,down){ state.keys[k]=!!down; if(down && DIR_KEYS[k]) state.nextDir=DIR_KEYS[k]; },
+  debugLeaveOneSpark:function(c,r){
+    state.sparkSet={}; state.sparkSet[keyOf(c,r)]=true;
+    state.sparksLeft=1; state.sparksEaten=state.sparksTotal-1;
+  },
+  debugSetFright:function(frames){
+    state.frightT=frames;
+    state.chasers.forEach(function(ch){ if(ch.mode!=='eyes' && !ch.inDen) ch.mode='frightened'; });
+  },
+  debugSparksLeft:function(){ return state.sparksLeft; },
+  debugHasSpark:function(c,r){ return !!state.sparkSet[keyOf(c,r)]; },
+  debugHasOrb:function(c,r){ return !!state.orbSet[keyOf(c,r)]; },
+  debugSave:saveState, debugLoad:loadState,
+  debugToggleCam:toggleCam, debugTogglePause:togglePause,
+  get fs(){return isFullscreen();},
+  toggleFullscreen:toggleFullscreen,
+  isFullscreen:isFullscreen,
+  get fpCam(){ return {x:Math.round(fpCam.x*100)/100, y:Math.round(fpCam.y*100)/100,
+    zoom:Math.round(fpCam.zoom*1000)/1000, vel:Math.round(fpCam.vel*1000)/1000,
+    lean:Math.round(fpCam.lean*1000)/1000, punch:Math.round(fpCam.punch*1000)/1000}; },
+  get fpLock(){ return computeFpLock(); },
+  debugTileChar:function(c,r){ return tileChar(c,r); },
+  debugWatchTraces:function(){ return state.watchTraces; }
+};
+</script>
+</body>
+</html>
