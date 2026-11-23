@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AR Cabinet Test — Shaddai Arcade</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #d9f5e8; font-family: system-ui, sans-serif;
+         background:
+           radial-gradient(90% 55% at 50% -8%, rgba(24, 110, 76, .38) 0%, rgba(24, 110, 76, 0) 60%),
+           radial-gradient(70% 40% at 85% 108%, rgba(146, 106, 24, .16) 0%, rgba(146, 106, 24, 0) 60%),
+           #04120d; }
+  header { padding: 20px 20px 8px; border-bottom: 1px solid rgba(255, 210, 87, .28);
+           box-shadow: 0 1px 0 rgba(47, 230, 168, .18), 0 12px 32px -18px rgba(47, 230, 168, .35); }
+  h1 { margin: 0; font-size: 23px; letter-spacing: .09em; color: #7dffc8;
+       text-shadow: 0 0 18px rgba(47, 230, 168, .45), 0 0 3px rgba(47, 230, 168, .6); }
+  .sub { color: #8fb8a9; font-size: 13.5px; margin-top: 4px; }
+  .sim { margin: 14px 20px 0; padding: 10px 14px; border: 1px solid #7a5b1d; border-radius: 10px;
+         background: rgba(60, 44, 4, .45); color: #ffd98a; font-size: 13.5px; line-height: 1.5; }
+  main { padding: 16px 20px 30px; display: grid; gap: 18px; max-width: 880px; margin: 0 auto; }
+  .stage { background:
+             radial-gradient(60% 34% at 50% 96%, rgba(47, 230, 168, .20) 0%, rgba(47, 230, 168, 0) 70%),
+             radial-gradient(120% 100% at 50% 0%, #0d3520 0%, #04120d 70%);
+           border: 1px solid #1d5c40; border-radius: 16px; overflow: hidden;
+           box-shadow: 0 0 0 1px rgba(255, 210, 87, .12), 0 24px 60px -24px rgba(0, 0, 0, .85),
+                       0 0 44px -8px rgba(47, 230, 168, .22), inset 0 0 60px rgba(0, 0, 0, .45); }
+  model-viewer { width: 100%; height: 520px; background: transparent; --poster-color: transparent; }
+  @media (max-width: 600px) { model-viewer { height: 430px; } }
+  .card { border: 1px solid #1d5c40; border-radius: 16px; padding: 16px;
+          background: linear-gradient(165deg, rgba(16, 58, 40, .55) 0%, rgba(6, 26, 19, .65) 55%);
+          box-shadow: inset 0 1px 0 rgba(255, 210, 87, .14), 0 16px 40px -22px rgba(0, 0, 0, .8); }
+  .card h2 { margin: 0 0 8px; font-size: 16px; color: #7dffc8; letter-spacing: .06em;
+             text-shadow: 0 0 12px rgba(47, 230, 168, .35); }
+  .card p { margin: 6px 0; color: #b7dccf; font-size: 14px; line-height: 1.55; }
+  #status { font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: #a9e8cd;
+            background: #02100b; border: 1px solid #14402e; border-radius: 10px; padding: 10px 12px; white-space: pre-wrap; }
+  .plat { display: grid; gap: 6px; font-size: 14px; color: #b7dccf; line-height: 1.5; }
+  .plat b { color: #7dffc8; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "../vendor/model-viewer/three.module.js",
+    "@monogrid/gainmap-js": "../vendor/model-viewer/gainmap-stub.js"
+} }
+</script>
+<script type="module">import '../vendor/model-viewer/model-viewer-module.js';</script>
+<script src="../games/ar-place.js"></script>
+</head>
+<body>
+<header>
+  <h1>AR CABINET — IN YOUR ROOM</h1>
+  <div class="sub">Shaddai Arcade · cross-platform phone AR · one cabinet, real size (0.62 m wide × 1.78 m tall)</div>
+</header>
+
+<div class="sim"><b>SIM — not yet device-verified.</b> This AR layer is built and structurally verified,
+but no phone has run it yet. On a real phone it places the cabinet in your actual room.
+Claims below are labelled per platform; nothing here pretends a desktop browser is a room.</div>
+
+<main>
+  <div class="stage">
+    <model-viewer id="cab" src="../assets/games/ar/cabinet.glb" ios-src="../assets/games/ar/cabinet.usdz"
+      ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" camera-controls
+      camera-orbit="30deg 68deg 2.9m" field-of-view="30deg"
+      environment-image="../assets/games/ar/env-room.png" exposure="1.18"
+      shadow-intensity="1.15" shadow-softness="0.55" tone-mapping="aces"
+      poster="../assets/games/covers/contention.png" alt="Shaddai Arcade cabinet">
+    </model-viewer>
+  </div>
+
+  <div class="card">
+    <h2>PUT IT IN YOUR ROOM</h2>
+    <div id="ar-slot"></div>
+    <p id="status">detecting…</p>
+  </div>
+
+  <div class="card">
+    <h2>HOW IT WORKS, HONESTLY</h2>
+    <div class="plat">
+      <div><b>iPhone / iPad (Safari):</b> AR Quick Look opens the cabinet (USDZ) and anchors it in your
+        room at real size — point at the floor, move to place. <b>Place-and-view only:</b> the screen
+        shows baked cover art. A live, playable game feed inside Quick Look is not possible, so live
+        play stays in the flat game.</div>
+      <div><b>Android (Chrome):</b> WebXR where the device supports it, Scene Viewer otherwise — same
+        cabinet (GLB), placed in your room at real size.</div>
+      <div><b>Desktop / anything else:</b> no fake AR. You get the 3D preview above and a
+        ROOM — SOON marker instead of a view we cannot honestly offer.</div>
+    </div>
+  </div>
+</main>
+
+<script>
+  (function () {
+    var d = ARPlace.detect();
+    document.getElementById('status').textContent =
+      'platform: ' + d.platform + '\nmode: ' + d.mode + (d.reason ? '\nnote: ' + d.reason : '');
+    ARPlace.mountButton(document.getElementById('ar-slot'), { game: 'contention' });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CASTLEBREAK — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#0a0618;--panel:#120a24;--border:rgba(255,179,71,.20);--gold:#ffb347;--green:#00ff88;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#e8dcf5;--dim:#8a7ba8}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(255,179,71,.10),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(10,6,24,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--gold)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--gold);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(255,179,71,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--gold);box-shadow:0 0 16px rgba(255,179,71,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(10,6,24,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#120a24;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  /* ---- fullscreen (FULLSCREEN standard): the shell — stage on desktop, the
+     whole handheld console on phones — goes true fullscreen via the
+     Fullscreen API. F toggles, the button toggles, Esc exits. ---- */
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*960/600));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*960/600))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(100vw,calc((100vh - 190px)*960/600))}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .abtns button{width:52px;height:52px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>CASTLE<span>BREAK</span></h1><span class="tag">Four warlords · One fireball · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="600"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The fireball waits for no one.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c"></button><button data-k="up">▲</button><button class="c"></button>
+        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
+        <button class="c"></button><button data-k="down2">▼</button><button class="c"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — toggle behind-shield view">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — behind-shield view">B</button>
+        <button id="btnA" title="A — shield dash">A</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">Four warlords. One fireball. Hold your gate.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ Defend<small>1P — you are Vera, vs 3 bot warlords</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>4 bot warlords, free-for-all</small></button>
+    <button class="mbtn" id="btnDuel">⚔ 2P Duel<small>You (Vera) vs a friend (Solm)</small></button>
+    <button class="mbtn" id="btnFP">🎥 Behind-shield view<small>V — camera at your gate</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — stage fills the screen</small></button>
+  </div>
+  <div class="help">
+    <b>CASTLEBREAK</b> — Four warlords hold the corners of the Ember Court: <b style="color:#00ff88">VERA the Warden</b>, <b style="color:#ff7a3c">KORG the Smith</b>, <b style="color:#35e0ff">MIRA the Tidecaller</b> and <b style="color:#ffd75e">SOLM the Judge</b>. One fireball ricochets around the court and <b>speeds up every time it is returned</b>. Slide your shield along your gate to send it back — slip, and it smashes through your rune-stones and strikes your warlord. Last castle standing takes the court.<br/>
+    <b>Controls:</b> <span class="k">mouse / drag</span> slides your shield along the gate, <span class="k">A / D</span> or <span class="k">← / →</span> nudge it, <span class="k">SHIFT</span> is a shield dash. In 2P, player 2 (Solm, gold) uses the <span class="k">arrow keys</span>. <span class="k">V</span> switches to <b>behind-shield view</b> — the camera drops to your gate and the fireball comes at you. <span class="k">P</span> pauses (save / load in the menu).<br/>
+    <b>First-person:</b> in behind-shield view the camera eases toward the fireball as it closes on your gate — a gold <b>◈ LOCK</b> marks the projected crossing, the shield console shows dash, gate position and ETA, and speed lines flare as the ball screams in.<br/>
+    <b>WATCH</b> is a 4-bot free-for-all with distinct styles — <b>KORG</b> chases every ball and overshoots, <b>MIRA</b> guards her core and never panics, <b>SOLM</b> gambles on wild lunges, <b>VERA</b> plays it steady. They misjudge on purpose — never frame-perfect.<br/>
+    ⛶ <b>Fullscreen:</b> <span class="k">F</span> or the Fullscreen button — the stage (on phones, the whole handheld shell) fills the screen; <span class="k">Esc</span> exits fullscreen.<br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: drag on the court (or D-pad) to slide your shield, <span class="k">A</span> dashes, <span class="k">B</span> toggles behind-shield view, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles the view.<br/>
+    <b>Clean-room:</b> Warlords formula, our own code, warlords, names and art — no copied assets, names or code.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   CASTLEBREAK — original four-corner fireball duel for the Shaddai Arcade.
+   Clean-room: the Warlords FORMULA (four corner castles, shield paddles on
+   the gate, one speeding fireball, breach the walls, strike the warlord)
+   re-implemented from documented behaviour in our own code. All warlords,
+   names, art, tuning and geometry are original. No reference code or assets
+   were copied, run or moved into this file.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var W=960, H=600;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+
+/* ---- Fallible Engine wiring (E12, 2026-11-21): in WATCH mode each bout is
+   a 4-way free-for-all — one council agent per warlord, rotating two
+   quartets across bouts; every bot paddle decision goes through
+   FallibleEngine.decide (the game scores intercept/defend/attack/hold
+   options, the engine samples by personality temperature). Engine absent
+   -> the legacy bots in stepBots below, unchanged. A bout yields 6
+   pairwise records (winner beats each loser; among losers the
+   later-eliminated beats the earlier-eliminated), so Elo moves pairwise
+   at K=24. Solo/duel bots also decide via the engine but record nothing
+   (human games — same rule as Capsule Clash solo). League page reads
+   per-game Elo generically, so 'castlebreak' appears there with no
+   league.html change. ---- */
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var COUNCIL_QUARTETS=[
+  ['SHADDAI','ZEROX','PIKADON','QUILL'],  /* VERA KORG MIRA SOLM */
+  ['ASIMOV','NEXUS','ORACLE','TURTLE']
+];
+var SOLO_IDS=[null,'ZEROX','PIKADON','QUILL'];  /* VERA is the human */
+var DUEL_IDS=[null,'ZEROX','PIKADON',null];     /* VERA + SOLM are human */
+var cbAgentIds=[null,null,null,null], cbAgents=[null,null,null,null];
+var cbTraces=[[],[],[],[]], cbFallOrder=[], cbRecorded=false, cbBout=0;
+/* E36 REPAIR (rotation frozen): cbBout persists in localStorage, seeded on
+   load and saved on advance — same pattern as skylance (E35). Before this
+   fix it reset to 0 on every load, so every fresh ?auto=watch restarted at
+   quartet Q0. The cursor advances only when the engine is present; a
+   fallback load never consumes it. */
+try{ cbBout=JSON.parse(localStorage.getItem('castlebreak.cbBout')||'0')||0; if(!isFinite(cbBout)||cbBout<0) cbBout=0; }catch(e){ cbBout=0; }
+function cbSaveBout(){ try{ localStorage.setItem('castlebreak.cbBout', JSON.stringify(cbBout)); }catch(e){} }
+function cbSetupAgents(mode){
+  var ids;
+  if(mode==='watch'){ ids=COUNCIL_QUARTETS[cbBout%COUNCIL_QUARTETS.length]; if(FE){ cbBout++; cbSaveBout(); } }
+  else if(mode==='solo'){ ids=SOLO_IDS; }
+  else if(mode==='duel'){ ids=DUEL_IDS; }
+  else { ids=[null,null,null,null]; }
+  cbAgentIds=FE?ids.slice():[null,null,null,null]; /* no engine -> no agents, even as labels */
+  cbAgents=[null,null,null,null];
+  cbTraces=[[],[],[],[]];
+  cbFallOrder=[]; cbRecorded=false;
+  if(FE){
+    ids.forEach(function(id,i){
+      if(!id) return;
+      try{ cbAgents[i]=FE.loadAgent(id); }catch(e){ cbAgents[i]=null; }
+    });
+  }
+}
+
+/* ---------- the four warlords (original characters) ---------- */
+var CASTLE_DEFS=[
+  {name:'VERA', title:'the Warden',     color:'#00ff88', dark:'#0a2e1e', helm:'horns',  p0:{x:250,y:0},   p1:{x:0,  y:250}, bot:{speed:6.5,react:14,err:26,home:0.50,drift:0.05}},
+  {name:'KORG', title:'the Smith',      color:'#ff7a3c', dark:'#33150a', helm:'anvil',  p0:{x:710,y:0},   p1:{x:960,y:250}, bot:{speed:8.5,react:10,err:38,home:0.50,drift:0.10}},
+  {name:'MIRA', title:'the Tidecaller', color:'#35e0ff', dark:'#0a2436', helm:'wave',   p0:{x:0,  y:350}, p1:{x:250,y:600}, bot:{speed:4.5,react:20,err:20,home:0.50,drift:0.00}},
+  {name:'SOLM', title:'the Judge',      color:'#ffd75e', dark:'#33270a', helm:'crown',  p0:{x:960,y:350}, p1:{x:710,y:600}, bot:{speed:7.5,react:16,err:48,home:0.50,drift:0.25}}
+];
+var GATE_LEN=Math.hypot(250,250); /* 353.55 */
+var PADDLE_HALF=48, PADDLE_MIN=53, PADDLE_MAX=GATE_LEN-53;
+
+function buildCastle(def){
+  var mx=(def.p0.x+def.p1.x)/2, my=(def.p0.y+def.p1.y)/2;
+  var dx=def.p1.x-def.p0.x, dy=def.p1.y-def.p0.y;
+  var tx=dx/GATE_LEN, ty=dy/GATE_LEN;
+  var nx=-dy/GATE_LEN, ny=dx/GATE_LEN;
+  if((480-mx)*nx+(300-my)*ny<0){ nx=-nx; ny=-ny; } /* normal -> arena centre */
+  var core={x:mx-nx*95, y:my-ny*95, r:16};
+  var blocks=[];
+  [28,52].forEach(function(d){
+    var cx=mx-nx*d, cy=my-ny*d;
+    var half=(GATE_LEN-2*d)/2;
+    for(var s=-half+11; s<=half-11; s+=28){
+      blocks.push({x:cx+tx*s, y:cy+ty*s, r:10, alive:true});
+    }
+  });
+  return {name:def.name, title:def.title, color:def.color, dark:def.dark, helm:def.helm,
+    p0:def.p0, p1:def.p1, tx:tx, ty:ty, nx:nx, ny:ny, mid:{x:mx,y:my},
+    core:core, blocks:blocks, alive:true, score:0,
+    paddle:{s:GATE_LEN/2, target:GATE_LEN/2, dashT:0, dashCd:0},
+    bot:def.bot, botTimer:0, botTarget:GATE_LEN/2, blink:0};
+}
+
+var state;
+function freshState(){
+  return {
+    phase:'title', mode:'solo', paused:false, fp:false,
+    frame:0, round:0, hi:0, winner:-1, winnerName:'',
+    castles:CASTLE_DEFS.map(buildCastle),
+    ball:{x:480,y:300,vx:0,vy:0,r:9,speed:0,alive:false,trail:[]},
+    lastTouch:-1, roundbreakT:0, overT:0,
+    particles:[], embers:makeEmbers(), stars:makeStars(),
+    banner:'', bannerT:0, shake:0, over:false, overHeld:false, msg:'',
+    watchIdx:0, watchKills:0, keys:{},
+    /* FP camera (visual only, never saved): eased zoom/focus/lean + speed
+       flare; snapped to the gate on start/load, frozen while paused. */
+    fpCam:{zoom:1.6,cx:(CASTLE_DEFS[0].p0.x+CASTLE_DEFS[0].p1.x)/2,
+      cy:(CASTLE_DEFS[0].p0.y+CASTLE_DEFS[0].p1.y)/2,lean:0,vel:0,prevS:GATE_LEN/2},
+    fpLock:null
+  };
+}
+function makeStars(){
+  var s=[]; for(var i=0;i<110;i++) s.push({x:Math.random()*W,y:Math.random()*260,r:Math.random()*1.6+0.4,tw:Math.random()*6.28});
+  return s;
+}
+function makeEmbers(){
+  var e=[]; for(var i=0;i<46;i++) e.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+0.6,sp:0.2+Math.random()*0.5,ph:Math.random()*6.28});
+  return e;
+}
+state=freshState();
+try{ var saved=localStorage.getItem('castlebreak.hi'); if(saved) state.hi=parseInt(saved,10)||0; }catch(e){}
+
+/* ---------- helpers ---------- */
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function setMsg(t){ state.msg=t; if(msgEl) msgEl.textContent=t; }
+function setBanner(t){ state.banner=t; state.bannerT=150; }
+function burst(x,y,color,n,sp){
+  for(var i=0;i<(n||10);i++){
+    var a=Math.random()*6.283, v=(sp||2)*(0.4+Math.random()*0.8);
+    state.particles.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:26+Math.random()*22,color:color,r:1.5+Math.random()*2.5});
+  }
+}
+function aliveCastles(){ return state.castles.filter(function(c){return c.alive;}); }
+
+/* ---------- flow ---------- */
+function startGame(mode){
+  state=freshState();
+  try{ var s=localStorage.getItem('castlebreak.hi'); if(s) state.hi=parseInt(s,10)||0; }catch(e){}
+  state.mode=mode||'solo';
+  cbSetupAgents(state.mode);
+  state.phase='playing';
+  state.round=1;
+  serveBall();
+  setBanner(mode==='watch'?'WATCH — FOUR WARLORDS':'ROUND 1 — HOLD YOUR GATE');
+  setMsg(mode==='watch'?'Watching four bot warlords fight for the court.':(mode==='duel'?'2P duel — Vera (A/D) vs Solm (arrows). Last castle standing wins.':'You are Vera. Slide your shield, return the fireball, break their walls.'));
+  if($('btnSolo')){ $('btnSolo').classList.toggle('active',mode==='solo'); $('btnWatch').classList.toggle('active',mode==='watch'); $('btnDuel').classList.toggle('active',mode==='duel'); }
+}
+function serveBall(){
+  var b=state.ball;
+  var live=aliveCastles();
+  var tgt=live[Math.floor(Math.random()*live.length)];
+  var a=Math.atan2(tgt.mid.y-300, tgt.mid.x-480) + (Math.random()-0.5)*0.9;
+  var sp=4.6+0.3*(state.round-1);
+  b.x=480; b.y=300; b.vx=Math.cos(a)*sp; b.vy=Math.sin(a)*sp;
+  b.speed=sp; b.alive=true; b.trail=[];
+  state.lastTouch=-1;
+}
+function castleFalls(idx, byIdx){
+  var c=state.castles[idx];
+  if(!c.alive) return;
+  c.alive=false;
+  burst(c.core.x,c.core.y,c.color,26,3.4);
+  burst(c.core.x,c.core.y,'#ffffff',12,2.2);
+  state.shake=14;
+  if(byIdx>=0 && byIdx!==idx){ state.castles[byIdx].score+=100; }
+  if(state.mode==='watch') state.watchKills++;
+  if(state.mode==='watch') cbFallOrder.push(idx);
+  setBanner(c.name+' HAS FALLEN');
+  setMsg(c.name+' '+c.title+' falls — '+(byIdx>=0?state.castles[byIdx].name+' takes the blow.':'the court claims another.'));
+  if(state.mode==='solo' && idx===0){
+    endGame(false);
+    return;
+  }
+  var live=aliveCastles();
+  if(live.length<=1){ endGame(true); return; }
+  state.phase='roundbreak'; state.roundbreakT=80;
+  state.round++;
+}
+function endGame(won){
+  state.phase='over'; state.over=true; state.overT=0;
+  var live=aliveCastles();
+  state.winner=live.length?state.castles.indexOf(live[0]):-1;
+  state.winnerName=state.winner>=0?state.castles[state.winner].name:'NONE';
+  recordCastlebreakBout();
+  var myScore=state.castles[0].score;
+  if(state.mode==='solo' && myScore>state.hi){
+    state.hi=myScore;
+    try{ localStorage.setItem('castlebreak.hi', String(state.hi)); }catch(e){}
+  }
+  if(state.mode==='solo' && !won){
+    setBanner('YOUR CASTLE HAS FALLEN');
+    setMsg(state.winnerName+' takes the court. Score '+myScore+' · Best '+state.hi+'. Press R to defend again.');
+  } else {
+    setBanner(state.winnerName+' TAKES THE COURT');
+    setMsg(state.winnerName+' stands alone. '+(state.mode==='solo'?'You win! Score '+myScore+' · Best '+state.hi+'.':'')+' Press R to play again.');
+  }
+}
+
+/* One WATCH bout = one 4-way free-for-all: 6 pairwise records — the winner
+   beats each loser, and among losers the later-eliminated beats the
+   earlier-eliminated (survival order). Each agent's bout traces go to all
+   three of its pairwise results: a bout really is three opponents faced,
+   so learning is credited per opponent, bounded by the engine's weight
+   clamp. Guarded so a bout records exactly once; an incomplete bout
+   (fewer than 4 in the finish order) records nothing rather than partials. */
+function recordCastlebreakBout(){
+  if(state.mode!=='watch'||cbRecorded) return;
+  cbRecorded=true;
+  if(!FE) return;
+  var winner=state.winner;
+  if(winner<0) return;
+  var order=[winner].concat(cbFallOrder.slice().reverse());
+  if(order.length<4) return;
+  var i,j;
+  for(i=0;i<order.length;i++){
+    for(j=i+1;j<order.length;j++){
+      var a=cbAgents[order[i]], b=cbAgents[order[j]];
+      if(!a||!b) continue;
+      try{ FE.recordMatch(a,b,'castlebreak','win',cbTraces[order[i]],cbTraces[order[j]]); }catch(e){}
+    }
+  }
+}
+
+/* ---------- physics ---------- */
+function gatePoint(c,s){ return {x:c.p0.x+c.tx*s, y:c.p0.y+c.ty*s}; }
+function projectOnGate(c,x,y){ return clamp((x-c.p0.x)*c.tx+(y-c.p0.y)*c.ty, PADDLE_MIN, PADDLE_MAX); }
+
+function stepBall(){
+  var b=state.ball;
+  if(!b.alive) return;
+  b.x+=b.vx; b.y+=b.vy;
+  b.trail.push({x:b.x,y:b.y}); if(b.trail.length>14) b.trail.shift();
+  /* arena walls */
+  if(b.x<b.r){ b.x=b.r; b.vx=Math.abs(b.vx); }
+  if(b.x>W-b.r){ b.x=W-b.r; b.vx=-Math.abs(b.vx); }
+  if(b.y<b.r){ b.y=b.r; b.vy=Math.abs(b.vy); }
+  if(b.y>H-b.r){ b.y=H-b.r; b.vy=-Math.abs(b.vy); }
+  /* shields (paddles) — reflect across the gate normal, add english */
+  state.castles.forEach(function(c,ci){
+    if(!c.alive) return;
+    var p=gatePoint(c,c.paddle.s);
+    var dx=b.x-p.x, dy=b.y-p.y;
+    var along=dx*c.tx+dy*c.ty;
+    var px=p.x+c.tx*clamp(along,-PADDLE_HALF,PADDLE_HALF);
+    var py=p.y+c.ty*clamp(along,-PADDLE_HALF,PADDLE_HALF);
+    var ddx=b.x-px, ddy=b.y-py;
+    var d=Math.hypot(ddx,ddy);
+    var vn=b.vx*c.nx+b.vy*c.ny; /* normal speed: <0 toward castle, >0 toward arena */
+    var sideN=(b.x-p.x)*c.nx+(b.y-p.y)*c.ny; /* >0 arena side, <0 courtyard side */
+    var approaching=(sideN>0 && vn<0)||(sideN<0 && vn>0);
+    if(d<b.r+8 && Math.abs(along)<PADDLE_HALF+8 && approaching){
+      /* reflect the normal component */
+      b.vx-=2*vn*c.nx; b.vy-=2*vn*c.ny;
+      /* english from where it struck the paddle */
+      var off=clamp(along/PADDLE_HALF,-1,1);
+      b.vx+=c.tx*off*1.8; b.vy+=c.ty*off*1.8;
+      /* speed up, capped */
+      var sp=Math.hypot(b.vx,b.vy);
+      var nsp=Math.min(sp*1.03+0.02, 11);
+      b.vx=b.vx/sp*nsp; b.vy=b.vy/sp*nsp; b.speed=nsp;
+      /* push out on the side it came from so it cannot stick or double-bounce */
+      var push=(b.r+9)-d;
+      var out=sideN>0?1:-1;
+      b.x+=c.nx*out*push; b.y+=c.ny*out*push;
+      state.lastTouch=ci;
+      burst(px,py,c.color,5,1.6);
+    }
+  });
+  /* rune-stone walls + warlord cores */
+  state.castles.forEach(function(c,ci){
+    if(!c.alive) return;
+    for(var i=0;i<c.blocks.length;i++){
+      var bl=c.blocks[i];
+      if(!bl.alive) continue;
+      var dx=b.x-bl.x, dy=b.y-bl.y;
+      var d=Math.hypot(dx,dy);
+      if(d<b.r+bl.r){
+        bl.alive=false;
+        /* Warlords-faithful: the fireball smashes THROUGH the stone, keeping
+           its course with a slight scatter — the wall does not stop it. */
+        var ang=(Math.random()-0.5)*0.3;
+        var ca=Math.cos(ang), sa=Math.sin(ang);
+        var nvx=b.vx*ca-b.vy*sa, nvy=b.vx*sa+b.vy*ca;
+        b.vx=nvx; b.vy=nvy;
+        var sp2=Math.hypot(b.vx,b.vy);
+        var nsp2=Math.min(sp2*1.01, 11);
+        b.vx=b.vx/sp2*nsp2; b.vy=b.vy/sp2*nsp2; b.speed=nsp2;
+        if(state.lastTouch>=0) state.castles[state.lastTouch].score+=10;
+        burst(bl.x,bl.y,c.color,8,2.2);
+        state.shake=Math.max(state.shake,3);
+        return;
+      }
+    }
+    var co=c.core;
+    var cdx=b.x-co.x, cdy=b.y-co.y;
+    if(Math.hypot(cdx,cdy)<b.r+co.r){
+      castleFalls(ci, state.lastTouch);
+    }
+  });
+}
+
+/* Score this bot's paddle options for the engine; tags name the reason the
+   option is attractive, so per-tag learning (E8) builds real strategies.
+   intercept cuts the fireball off at the projected crossing point (with
+   the warlord's own aim error kept — a skill trait, not a choice);
+   defend holds the warlord's home ground; attack takes the same
+   interception off-centre so the return flies at an angle toward a rival;
+   hold stays put. Scores are the GAME's heuristic — personality enters
+   only through the engine's temperature. The old drift wild-lunge is
+   retired as a separate rule: its role is now the attack option, picked
+   by softmax instead of by a coin flip. */
+function castleOptions(c,ci){
+  var b=state.ball;
+  var toward=b.alive && (b.vx*c.nx+b.vy*c.ny)<-0.2;
+  var proj=projectOnGate(c,b.x,b.y);
+  var home=GATE_LEN*c.bot.home+Math.sin(state.frame*0.01+ci*2)*26;
+  var attackAt=clamp(proj+(proj<GATE_LEN/2?90:-90),PADDLE_MIN,PADDLE_MAX);
+  return [
+    {key:'intercept', score:toward?0.85:0.10, tag:'intercept',
+     target:clamp(proj+(Math.random()-0.5)*c.bot.err*2,PADDLE_MIN,PADDLE_MAX)},
+    {key:'defend', score:toward?0.30:0.80, tag:'defend',
+     target:clamp(home,PADDLE_MIN,PADDLE_MAX)},
+    {key:'attack', score:toward?0.45:0.15, tag:'attack', target:attackAt},
+    {key:'hold', score:0.25, tag:'hold', target:c.paddle.s}
+  ];
+}
+/* Engine decision tick: returns true when the engine chose this bot's
+   target, false when the engine is absent (or no agent for this castle)
+   and the legacy logic in stepBots should run instead. Faster ball =
+   more time pressure = hotter temperature = more blunders. */
+function engineBotTick(c,ci){
+  if(!FE||!cbAgents[ci]) return false;
+  var opts=castleOptions(c,ci);
+  var tp=clamp(state.ball.speed/11,0,1);
+  var res=FE.decide(cbAgents[ci],'castlebreak',opts,{timePressure:tp});
+  cbTraces[ci].push(res.trace);
+  c.botTarget=res.pick.target;
+  return true;
+}
+
+/* ---------- bots (imperfect on purpose) ---------- */
+function stepBots(){
+  state.castles.forEach(function(c,ci){
+    var human=false;
+    if(state.mode==='solo' && ci===0) human=true;
+    if(state.mode==='duel' && (ci===0||ci===3)) human=true;
+    if(human || !c.alive) return;
+    var bot=c.bot;
+    c.botTimer--;
+    if(c.botTimer<=0){
+      c.botTimer=bot.react+Math.floor(Math.random()*8);
+      if(!engineBotTick(c,ci)){
+        var b=state.ball;
+        var toward=b.alive && (b.vx*c.nx+b.vy*c.ny)<-0.2;
+        var target;
+        if(toward){
+          target=projectOnGate(c,b.x,b.y);
+          target+=(Math.random()-0.5)*bot.err*2;
+        } else {
+          target=GATE_LEN*bot.home+Math.sin(state.frame*0.01+ci*2)*26;
+        }
+        if(Math.random()<bot.drift) target=60+Math.random()*(GATE_LEN-120);
+        c.botTarget=clamp(target,PADDLE_MIN,PADDLE_MAX);
+      }
+    }
+    movePaddle(c,c.botTarget,bot.speed);
+  });
+}
+function movePaddle(c,target,speed){
+  var p=c.paddle;
+  var d=target-p.s;
+  var step=clamp(d,-speed,speed);
+  p.s=clamp(p.s+step,PADDLE_MIN,PADDLE_MAX);
+  if(p.dashT>0){
+    p.s=clamp(p.s+clamp(d,-speed*1.2,speed*1.2),PADDLE_MIN,PADDLE_MAX);
+    p.dashT--;
+  }
+  if(p.dashCd>0) p.dashCd--;
+}
+function dashPaddle(ci){
+  var c=state.castles[ci];
+  if(!c || !c.alive) return false;
+  if(c.paddle.dashCd>0) return false;
+  c.paddle.dashT=12; c.paddle.dashCd=90;
+  return true;
+}
+
+/* ---------- first-person camera (visual only — never saved) ----------
+   The behind-shield camera eases toward the fireball as it closes on my
+   gate (zoom 1.6 -> ~2.15, focus slides from the gate mid toward the ball),
+   leans with the shield's slide velocity, and flares speed lines on the
+   ball's closing speed. The LOCK is the projected crossing of the ball's
+   current ray with my gate line — a read, not a rule: it never steers
+   anything, it only shows where the ball is headed. */
+function computeFpLock(){
+  var me=state.castles[0], b=state.ball;
+  if(!b.alive) return null;
+  var vn=b.vx*me.nx+b.vy*me.ny;
+  if(vn>=-0.05) return null; /* not coming at my gate */
+  var dn=(b.x-me.mid.x)*me.nx+(b.y-me.mid.y)*me.ny;
+  if(dn<=0) return null; /* already past the gate line */
+  var s=dn/(-vn); /* frames to the gate line */
+  if(s>420) return null;
+  var px=b.x+b.vx*s, py=b.y+b.vy*s;
+  var sg=(px-me.p0.x)*me.tx+(py-me.p0.y)*me.ty;
+  if(sg<PADDLE_MIN||sg>PADDLE_MAX) return null;
+  return {s:sg,x:px,y:py,eta:Math.round(s),dist:Math.round(Math.hypot(px-b.x,py-b.y)),speed:b.speed};
+}
+function stepFpCam(){
+  var fc=state.fpCam, me=state.castles[0], b=state.ball;
+  var w=0;
+  if(b.alive){
+    var dGate=(b.x-me.mid.x)*me.nx+(b.y-me.mid.y)*me.ny;
+    var vn=b.vx*me.nx+b.vy*me.ny;
+    w=clamp(1-dGate/520,0,1);
+    if(vn>=0) w*=0.35;
+  }
+  var tx=me.mid.x+(b.alive?(b.x-me.mid.x)*w*0.55:0);
+  var ty=me.mid.y+(b.alive?(b.y-me.mid.y)*w*0.55:0);
+  var tz=1.6+0.55*w;
+  var svel=me.paddle.s-fc.prevS; fc.prevS=me.paddle.s;
+  var tl=clamp(svel*0.012,-0.06,0.06);
+  var tv=0;
+  if(b.alive){
+    var vn2=b.vx*me.nx+b.vy*me.ny;
+    tv=(vn2<0?clamp(b.speed/11,0,1)*w:0);
+  }
+  fc.zoom+=(tz-fc.zoom)*0.10;
+  fc.cx+=(tx-fc.cx)*0.12; fc.cy+=(ty-fc.cy)*0.12;
+  fc.lean+=(tl-fc.lean)*0.10;
+  fc.vel+=(tv-fc.vel)*0.08;
+  var hx=(W/2)/fc.zoom, hy=(H/2)/fc.zoom;
+  fc.cx=clamp(fc.cx,hx,W-hx); fc.cy=clamp(fc.cy,hy,H-hy);
+  state.fpLock=computeFpLock();
+}
+
+/* ---------- update ---------- */
+function update(){
+  state.frame++;
+  if(state.bannerT>0) state.bannerT--;
+  if(state.shake>0) state.shake*=0.88;
+  state.embers.forEach(function(e){ e.y-=e.sp; e.x+=Math.sin(state.frame*0.01+e.ph)*0.3; if(e.y<-4){ e.y=H+4; e.x=Math.random()*W; } });
+  state.particles.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.03; p.life--; });
+  state.particles=state.particles.filter(function(p){ return p.life>0; });
+  state.castles.forEach(function(c){ if(state.frame%170===Math.floor(c.mid.x)%170) c.blink=6; if(c.blink>0) c.blink--; });
+  if(state.paused || state.phase==='title') return;
+  stepFpCam(); /* eases through roundbreak/over too, frozen while paused */
+  if(state.phase==='over'){
+    state.overT++;
+    /* E68: a loaded over-save is held on its result screen (overHeld) and
+       never auto-restarts — a finished bout must not silently burn a
+       rotation slot by starting a fresh bout. Fresh bouts still restart. */
+    if(state.mode==='watch' && state.overT>240 && !state.overHeld){
+      state.watchIdx=(state.watchIdx+1)%4;
+      startGame('watch');
+    }
+    return;
+  }
+  if(state.phase==='roundbreak'){
+    state.roundbreakT--;
+    if(state.roundbreakT<=0){ state.phase='playing'; serveBall(); setBanner('ROUND '+state.round+' — THE BALL RETURNS'); }
+    return;
+  }
+  /* human paddles */
+  var k=state.keys;
+  if(state.mode==='solo' || state.mode==='duel'){
+    var p0=state.castles[0];
+    if(p0.alive){
+      if(k['a']||k['arrowleft']) { p0.paddle.s=clamp(p0.paddle.s-7,PADDLE_MIN,PADDLE_MAX); p0.paddle.target=p0.paddle.s; }
+      if(k['d']||k['arrowright']) { p0.paddle.s=clamp(p0.paddle.s+7,PADDLE_MIN,PADDLE_MAX); p0.paddle.target=p0.paddle.s; }
+      if(k['shift']) dashPaddle(0);
+      if(p0.paddle.target!==p0.paddle.s && !k['a'] && !k['d'] && !k['arrowleft'] && !k['arrowright']) movePaddle(p0,p0.paddle.target,9);
+    }
+  }
+  if(state.mode==='duel'){
+    var p3=state.castles[3];
+    if(p3.alive){
+      if(k['j']) p3.paddle.s=clamp(p3.paddle.s-7,PADDLE_MIN,PADDLE_MAX);
+      if(k['l']) p3.paddle.s=clamp(p3.paddle.s+7,PADDLE_MIN,PADDLE_MAX);
+    }
+  }
+  stepBots();
+  stepBall();
+}
+
+/* ---------- rendering: layered arena ---------- */
+function drawArena(){
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a0618'); g.addColorStop(0.55,'#160a2e'); g.addColorStop(1,'#241028');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* far layer: stars + nebula + moon */
+  state.stars.forEach(function(s){
+    ctx.globalAlpha=0.35+0.4*Math.abs(Math.sin(state.frame*0.02+s.tw));
+    ctx.fillStyle='#cfe8ff'; ctx.fillRect(s.x,s.y,s.r,s.r);
+  });
+  ctx.globalAlpha=1;
+  var neb=ctx.createRadialGradient(760,90,4,760,90,150);
+  neb.addColorStop(0,'rgba(183,140,255,.16)'); neb.addColorStop(1,'rgba(183,140,255,0)');
+  ctx.fillStyle=neb; ctx.fillRect(600,0,320,240);
+  ctx.save(); ctx.shadowColor='#ffe9a8'; ctx.shadowBlur=34;
+  ctx.fillStyle='#ffe9a8'; ctx.beginPath(); ctx.arc(856,74,26,0,7); ctx.fill(); ctx.restore();
+  ctx.fillStyle='rgba(230,205,140,.5)'; ctx.beginPath(); ctx.arc(848,66,5,0,7); ctx.fill();
+  /* mid layer: floor grid + centre rune circle */
+  ctx.strokeStyle='rgba(120,90,180,.10)'; ctx.lineWidth=1;
+  for(var gx=60;gx<W;gx+=60){ ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+  for(var gy=60;gy<H;gy+=60){ ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+  ctx.save();
+  ctx.translate(480,300);
+  ctx.strokeStyle='rgba(255,179,71,.35)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(0,0,86,0,7); ctx.stroke();
+  ctx.strokeStyle='rgba(255,179,71,.14)';
+  ctx.beginPath(); ctx.arc(0,0,102,0,7); ctx.stroke();
+  ctx.rotate(state.frame*0.004);
+  ctx.strokeStyle='rgba(0,255,136,.30)';
+  for(var i=0;i<8;i++){ ctx.rotate(Math.PI/4); ctx.beginPath(); ctx.moveTo(0,-86); ctx.lineTo(0,-70); ctx.stroke(); }
+  ctx.restore();
+  /* ground structure: court border + banners */
+  ctx.strokeStyle='rgba(255,179,71,.5)'; ctx.lineWidth=2;
+  ctx.strokeRect(4,4,W-8,H-8);
+  ctx.strokeStyle='rgba(0,255,136,.22)'; ctx.lineWidth=5;
+  ctx.strokeRect(9,9,W-18,H-18);
+  [[480,4],[480,596]].forEach(function(bp){
+    ctx.fillStyle='#1a0f2e'; ctx.fillRect(bp[0]-16,bp[1]-4,32,26);
+    ctx.strokeStyle='rgba(255,179,71,.6)'; ctx.lineWidth=1; ctx.strokeRect(bp[0]-16,bp[1]-4,32,26);
+    ctx.fillStyle='#ffb347';
+    ctx.beginPath(); ctx.moveTo(bp[0],bp[1]+4); ctx.lineTo(bp[0]+7,bp[1]+13); ctx.lineTo(bp[0],bp[1]+22); ctx.lineTo(bp[0]-7,bp[1]+13); ctx.closePath(); ctx.fill();
+  });
+  /* torches at mid-edges, flickering */
+  [[480,26],[480,574],[26,300],[934,300]].forEach(function(tp,ti){
+    var fl=1+Math.sin(state.frame*0.11+ti*1.7)*0.25;
+    ctx.save(); ctx.shadowColor='#ff9d3c'; ctx.shadowBlur=18;
+    ctx.fillStyle='#ff7a3c';
+    ctx.beginPath(); ctx.moveTo(tp[0],tp[1]-12*fl); ctx.quadraticCurveTo(tp[0]+7,tp[1]-2,tp[0],tp[1]+4); ctx.quadraticCurveTo(tp[0]-7,tp[1]-2,tp[0],tp[1]-12*fl); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle='#3a2a1a'; ctx.fillRect(tp[0]-2,tp[1]+4,4,10);
+  });
+  /* ambient embers */
+  state.embers.forEach(function(e){
+    ctx.globalAlpha=0.5; ctx.fillStyle='#ffb347';
+    ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+/* ---------- sprite-stack shading helpers (presentation only) ---------- */
+function shadeHex(hex,amt){
+  var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  var t=amt<0?0:255, p=Math.abs(amt);
+  r=Math.round(r+(t-r)*p); g=Math.round(g+(t-g)*p); b=Math.round(b+(t-b)*p);
+  return 'rgb('+r+','+g+','+b+')';
+}
+function mixHex(a,b,t){
+  var na=parseInt(a.slice(1),16), nb=parseInt(b.slice(1),16);
+  var r=Math.round(((na>>16)&255)*(1-t)+((nb>>16)&255)*t),
+      g=Math.round(((na>>8)&255)*(1-t)+((nb>>8)&255)*t),
+      bl=Math.round((na&255)*(1-t)+(nb&255)*t);
+  return 'rgb('+r+','+g+','+bl+')';
+}
+
+/* ---------- warlord portraits: TRUE SPRITE STACK — extruded armour slices,
+   baked 3-tone shading (dark core -> mid -> lit top, light from above),
+   dramatic rim light in the warlord's colour, contact shadow, breathing.
+   Each lord keeps a distinct silhouette: Vera's horned warden helm, Korg's
+   anvil helm, Mira's wave crest, Solm's crown. ---------- */
+function drawWarlord(x,y,sc,c,t){
+  var tt=(t||state.frame);
+  var bob=Math.sin(tt*0.05+x*0.01)*1.4*sc;
+  var sway=Math.sin(tt*0.03+x*0.02)*0.02;
+  var br=1+Math.sin(tt*0.05+x*0.01)*0.016; /* idle breathing */
+  ctx.save();
+  ctx.translate(x,y+bob);
+  ctx.rotate(sway);
+  ctx.scale(sc,sc);
+  /* ground/contact shadow + breathing colour glow pool */
+  ctx.fillStyle='rgba(0,0,0,.52)';
+  ctx.beginPath(); ctx.ellipse(0,21,24,5.5,0,0,7); ctx.fill();
+  ctx.save(); ctx.globalAlpha=0.20+Math.sin(tt*0.06)*0.05;
+  ctx.fillStyle=c.color; ctx.beginPath(); ctx.ellipse(0,20,27,6.5,0,0,7); ctx.fill(); ctx.restore();
+  /* ---- CAPE: stacked slices spilling behind the shoulders — dark core
+     slices at the back, colour catching each lower edge ---- */
+  for(var ck=3;ck>=0;ck--){
+    var cw=16.5+ck*2.3, cy0=-3+ck*2.7, chh=21-ck*1.4;
+    ctx.fillStyle=ck===3?'rgba(4,3,8,.92)':mixHex(c.dark,c.color,0.10+(3-ck)*0.09);
+    ctx.beginPath();
+    ctx.moveTo(-cw,cy0); ctx.lineTo(cw,cy0);
+    ctx.lineTo(cw*0.84,cy0+chh); ctx.quadraticCurveTo(0,cy0+chh+3.2,-cw*0.84,cy0+chh);
+    ctx.closePath(); ctx.fill();
+    if(ck<3){ ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.stroke(); }
+  }
+  /* ---- TORSO: 6 stacked armour bands, each extruded downward in a
+     darkening shade and lit across its top edge (light from above) ---- */
+  var bands=6;
+  for(var bI=0;bI<bands;bI++){
+    var by=16.5-bI*3.4, bw=(15+bI*0.85)*br, tone=bI/(bands-1);
+    var bg2=ctx.createLinearGradient(0,by-4.4,0,by+1.6);
+    bg2.addColorStop(0,mixHex(c.dark,c.color,0.30+tone*0.48));
+    bg2.addColorStop(0.55,mixHex(c.dark,c.color,0.12+tone*0.26));
+    bg2.addColorStop(1,'rgba(5,4,10,.94)');
+    ctx.fillStyle=bg2;
+    ctx.beginPath();
+    ctx.moveTo(-bw,by-3); ctx.quadraticCurveTo(-bw-1.2,by-0.5,-bw+1.6,by+1.4);
+    ctx.lineTo(bw-1.6,by+1.4); ctx.quadraticCurveTo(bw+1.2,by-0.5,bw,by-3);
+    ctx.quadraticCurveTo(0,by-5,-bw,by-3);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,'+(0.08+tone*0.17).toFixed(3)+')'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-bw+1.2,by-3.1); ctx.quadraticCurveTo(0,by-5,bw-1.2,by-3.1); ctx.stroke();
+  }
+  /* chest plate: gradient slab over the bands + per-lord emblem */
+  var pg=ctx.createLinearGradient(0,-6,0,13);
+  pg.addColorStop(0,mixHex(c.dark,c.color,0.58)); pg.addColorStop(0.55,mixHex(c.dark,c.color,0.30)); pg.addColorStop(1,'rgba(6,5,12,.92)');
+  ctx.fillStyle=pg;
+  ctx.beginPath(); ctx.moveTo(-8,-5.5); ctx.lineTo(8,-5.5); ctx.lineTo(6.4,10.5); ctx.lineTo(0,13.5); ctx.lineTo(-6.4,10.5); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=1.2; ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.30)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(-8,-5.5); ctx.lineTo(8,-5.5); ctx.stroke();
+  ctx.save(); ctx.translate(0,2.6); ctx.strokeStyle=c.color; ctx.fillStyle=c.color; ctx.lineWidth=1.6;
+  ctx.shadowColor=c.color; ctx.shadowBlur=5;
+  if(c.helm==='horns'){ ctx.beginPath(); ctx.moveTo(0,-4.4); ctx.lineTo(3.6,0); ctx.lineTo(0,4.4); ctx.lineTo(-3.6,0); ctx.closePath(); ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,1.3,0,7); ctx.fill(); }
+  else if(c.helm==='anvil'){ ctx.strokeRect(-3.6,-3.2,7.2,6.4); ctx.fillRect(-1,-1,2,2); }
+  else if(c.helm==='wave'){ ctx.beginPath(); ctx.moveTo(-4.6,1.6); ctx.quadraticCurveTo(-2.2,-3.4,0.4,0.6); ctx.quadraticCurveTo(2.6,3.8,4.6,-1.8); ctx.stroke(); }
+  else { ctx.beginPath(); ctx.moveTo(-3.8,3.6); ctx.lineTo(0,-4.4); ctx.lineTo(3.8,3.6); ctx.closePath(); ctx.stroke(); }
+  ctx.restore();
+  /* belt + glowing buckle */
+  ctx.fillStyle='rgba(8,6,14,.96)'; ctx.fillRect(-13.5,14.6,27,3.6);
+  ctx.fillStyle=c.color; ctx.fillRect(-2.3,14.3,4.6,4.2);
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fillRect(-2.3,14.3,4.6,1.2);
+  /* ---- ARMS + PAULDRONS: 3 stacked discs per shoulder (dark base slice,
+     mid slice, lit cap), rim arc in the lord's colour, gauntlet fists ---- */
+  [-1,1].forEach(function(s){
+    ctx.strokeStyle=mixHex(c.dark,c.color,0.22); ctx.lineWidth=4.8; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(s*16,-1); ctx.lineTo(s*19.5,5.5); ctx.stroke();
+    for(var pk=2;pk>=0;pk--){
+      ctx.fillStyle=pk===2?'rgba(5,4,10,.92)':mixHex(c.dark,c.color,0.22+(2-pk)*0.22);
+      ctx.beginPath(); ctx.arc(s*16.5,-3.5-pk*2.1,6.1-pk*0.8,0,7); ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=0.8; ctx.stroke();
+    }
+    ctx.save(); ctx.shadowColor=c.color; ctx.shadowBlur=6;
+    ctx.strokeStyle=c.color; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(s*16.5,-7.6,4.9, s<0?Math.PI*1.02:Math.PI*1.52, s<0?Math.PI*1.62:Math.PI*2.12); ctx.stroke();
+    ctx.restore();
+    /* gauntlet: shaded fist block + knuckle highlight */
+    ctx.fillStyle=mixHex(c.dark,c.color,0.38);
+    ctx.beginPath(); ctx.arc(s*19.8,8,3.7,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.32)';
+    ctx.beginPath(); ctx.arc(s*19.8-1.1,6.7,1.4,0,7); ctx.fill();
+  });
+  /* ---- HEAD: extruded stack — dark jaw slice, mid slice, lit face ---- */
+  ctx.fillStyle='rgba(6,5,11,.95)'; ctx.fillRect(-4.5,-6.5,9,5); /* neck */
+  ctx.fillStyle='#57503f'; ctx.beginPath(); ctx.arc(0,-6.2,10.6,0,7); ctx.fill();
+  ctx.fillStyle='#8a8272'; ctx.beginPath(); ctx.arc(0,-7.4,10.6,0,7); ctx.fill();
+  var hg=ctx.createLinearGradient(0,-19,0,3);
+  hg.addColorStop(0,'#f0ead9'); hg.addColorStop(0.6,'#cfc7b4'); hg.addColorStop(1,'#8a8272');
+  ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(0,-8.6,10.6,0,7); ctx.fill();
+  /* ---- HELM: stacked slices per warlord ---- */
+  if(c.helm==='horns'){ /* VERA — horned warden helm */
+    for(var dk=0;dk<3;dk++){ /* dome slices first, horns flare over them */
+      ctx.fillStyle=mixHex(c.dark,c.color,0.26+dk*0.20);
+      ctx.beginPath(); ctx.arc(0,-11.5-dk*2.3,11-dk*1.7,Math.PI,0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,'+(0.10+dk*0.08)+')'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(0,-11.5-dk*2.3,11-dk*1.7,Math.PI*1.15,Math.PI*1.85); ctx.stroke();
+    }
+    [-1,1].forEach(function(s){
+      for(var hk=2;hk>=0;hk--){
+        ctx.fillStyle=hk===2?'rgba(5,4,10,.9)':mixHex(c.dark,c.color,0.42+(2-hk)*0.3);
+        ctx.beginPath();
+        ctx.moveTo(s*(8-hk*0.8),-13.5+hk*1.1);
+        ctx.quadraticCurveTo(s*(20-hk*1.6),-26+hk*1.4,s*(26.5-hk*1.8),-13+hk*1.2);
+        ctx.quadraticCurveTo(s*(17-hk*1.2),-16+hk*1,s*(9-hk*0.7),-8.5+hk*0.9);
+        ctx.closePath(); ctx.fill();
+        if(hk===0){ ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1;
+          ctx.beginPath(); ctx.moveTo(s*10,-14.5); ctx.quadraticCurveTo(s*20,-24,s*25,-14); ctx.stroke(); }
+      }
+    });
+  } else if(c.helm==='anvil'){ /* KORG — the smith's anvil helm */
+    var aw=[23,19,15];
+    for(var ak=0;ak<3;ak++){
+      ctx.fillStyle=mixHex(c.dark,c.color,0.26+ak*0.24);
+      ctx.fillRect(-aw[ak]/2,-15.5-ak*4.4,aw[ak],4.6);
+      ctx.fillStyle='rgba(255,255,255,'+(0.10+ak*0.09)+')';
+      ctx.fillRect(-aw[ak]/2,-15.5-ak*4.4,aw[ak],1.3);
+      ctx.fillStyle='rgba(0,0,0,.4)';
+      if(ak===1){ ctx.fillRect(-6,-18.6,2.6,2.6); ctx.fillRect(3.4,-18.6,2.6,2.6); }
+    }
+    ctx.fillStyle=mixHex(c.dark,c.color,0.4); ctx.fillRect(-10.5,-13.4,21,2.8); /* brow band */
+  } else if(c.helm==='wave'){ /* MIRA — tidecaller crest */
+    for(var wk=2;wk>=0;wk--){
+      ctx.fillStyle=wk===2?'rgba(5,4,10,.9)':mixHex(c.dark,c.color,0.32+(2-wk)*0.28);
+      ctx.beginPath();
+      ctx.moveTo(-11+wk*0.7,-10.5+wk*1);
+      ctx.quadraticCurveTo(-12.5+wk*0.7,-24+wk*1.6,2,-22.5+wk*1.4);
+      ctx.quadraticCurveTo(12.5-wk*0.7,-20.5+wk*1.2,10.5-wk*0.7,-8.5+wk*0.9);
+      ctx.quadraticCurveTo(2,-15+wk,-11+wk*0.7,-10.5+wk*1);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle='rgba(255,255,255,.45)';
+    ctx.beginPath(); ctx.arc(-4.5,-17.5,1.6,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(2,-19.5,1.2,0,7); ctx.fill();
+  } else { /* SOLM — the judge's crown, stacked band + spikes */
+    for(var sk=0;sk<4;sk++){
+      var sx0=-9+sk*6;
+      ctx.fillStyle='rgba(5,4,10,.85)';
+      ctx.beginPath(); ctx.moveTo(sx0-1,-12.5); ctx.lineTo(sx0+2,-23.5); ctx.lineTo(sx0+5,-12.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle=mixHex(c.dark,c.color,0.55);
+      ctx.beginPath(); ctx.moveTo(sx0,-12.5); ctx.lineTo(sx0+2,-22.5); ctx.lineTo(sx0+4,-12.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.35)';
+      ctx.beginPath(); ctx.moveTo(sx0+2,-22.5); ctx.lineTo(sx0+4,-12.5); ctx.lineTo(sx0+2.8,-12.5); ctx.closePath(); ctx.fill();
+    }
+    var cg=ctx.createLinearGradient(0,-15,0,-10);
+    cg.addColorStop(0,mixHex(c.dark,c.color,0.62)); cg.addColorStop(1,mixHex(c.dark,c.color,0.3));
+    ctx.fillStyle=cg; ctx.fillRect(-10.5,-14.6,21,4.4);
+    ctx.fillStyle='rgba(255,255,255,.3)'; ctx.fillRect(-10.5,-14.6,21,1.2);
+    ctx.save(); ctx.shadowColor='#fff3c4'; ctx.shadowBlur=6;
+    ctx.fillStyle='#fff3c4'; ctx.beginPath(); ctx.arc(0,-12.4,1.9,0,7); ctx.fill(); ctx.restore();
+  }
+  /* dramatic rim light: helm + face edge in the warlord's colour */
+  ctx.save(); ctx.shadowColor=c.color; ctx.shadowBlur=7;
+  ctx.strokeStyle=c.color; ctx.lineWidth=1.7;
+  ctx.beginPath(); ctx.arc(0,-8.6,10.6,-0.7,1.15); ctx.stroke();
+  ctx.restore();
+  /* visor slit + eyes that read at mobile size */
+  ctx.fillStyle='rgba(10,8,16,.88)';
+  ctx.beginPath(); ctx.moveTo(-8.6,-11); ctx.lineTo(8.6,-11); ctx.lineTo(7.6,-5.9); ctx.lineTo(-7.6,-5.9); ctx.closePath(); ctx.fill();
+  if(c.blink>0){
+    ctx.strokeStyle=c.color; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(-6,-8.4); ctx.lineTo(-2,-8.4); ctx.moveTo(2,-8.4); ctx.lineTo(6,-8.4); ctx.stroke();
+  } else {
+    ctx.save(); ctx.shadowColor=c.color; ctx.shadowBlur=6;
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath(); ctx.arc(-4,-8.4,1.9,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(4,-8.4,1.9,0,7); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle=c.color;
+    ctx.beginPath(); ctx.arc(-4,-8.4,0.8,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(4,-8.4,0.8,0,7); ctx.fill();
+  }
+  /* jaw guard: stacked plate + colour studs */
+  ctx.fillStyle='rgba(16,12,24,.92)'; ctx.fillRect(-6.4,-3.4,12.8,3.6);
+  ctx.fillStyle='rgba(255,255,255,.16)'; ctx.fillRect(-6.4,-3.4,12.8,1);
+  ctx.fillStyle=c.color; ctx.fillRect(-5,-2.2,2,1.6); ctx.fillRect(3,-2.2,2,1.6);
+  ctx.restore();
+}
+
+function drawCastle(c,ci){
+  if(!c.alive){
+    /* rubble: grey broken stones + smoke */
+    ctx.fillStyle='rgba(120,110,130,.25)';
+    c.blocks.forEach(function(bl){
+      if(!bl.alive) return;
+      ctx.beginPath(); ctx.moveTo(bl.x,bl.y-6); ctx.lineTo(bl.x+6,bl.y); ctx.lineTo(bl.x,bl.y+6); ctx.lineTo(bl.x-6,bl.y); ctx.closePath(); ctx.fill();
+    });
+    ctx.fillStyle='#5a5468';
+    ctx.font='bold 13px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText('FALLEN',c.core.x,c.core.y-24);
+    return;
+  }
+  /* corner floor tint: translucent colour wash over the castle triangle */
+  ctx.save(); ctx.globalAlpha=0.10; ctx.fillStyle=c.color;
+  ctx.beginPath(); ctx.moveTo(c.p0.x,c.p0.y); ctx.lineTo(c.p1.x,c.p1.y);
+  ctx.lineTo(c.p0.x===0||c.p1.x===0?0:960, c.p0.y===0||c.p1.y===0?0:600);
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  /* gate line */
+  ctx.strokeStyle=c.color; ctx.globalAlpha=0.35; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(c.p0.x,c.p0.y); ctx.lineTo(c.p1.x,c.p1.y); ctx.stroke();
+  ctx.globalAlpha=1;
+  /* rune-stone wall blocks */
+  c.blocks.forEach(function(bl){
+    if(!bl.alive) return;
+    /* SPRITE STACK (finishing pass 2026-11-22): dark base stone offset below
+       the lit rune-stone — wall blocks have thickness, not flat diamonds. */
+    ctx.fillStyle='rgba(6,4,12,.85)';
+    ctx.beginPath(); ctx.moveTo(bl.x,bl.y-5); ctx.lineTo(bl.x+9,bl.y+4); ctx.lineTo(bl.x,bl.y+13); ctx.lineTo(bl.x-9,bl.y+4); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.shadowColor=c.color; ctx.shadowBlur=8;
+    ctx.fillStyle=mixHex(c.dark,c.color,0.55);
+    ctx.beginPath(); ctx.moveTo(bl.x,bl.y-9); ctx.lineTo(bl.x+9,bl.y); ctx.lineTo(bl.x,bl.y+9); ctx.lineTo(bl.x-9,bl.y); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    /* 3-tone brick facets: lit top face, mid right face, dark core line */
+    ctx.fillStyle=mixHex(c.dark,c.color,0.92);
+    ctx.beginPath(); ctx.moveTo(bl.x,bl.y-9); ctx.lineTo(bl.x+9,bl.y); ctx.lineTo(bl.x,bl.y); ctx.lineTo(bl.x-9,bl.y); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.8)';
+    ctx.beginPath(); ctx.moveTo(bl.x,bl.y-5); ctx.lineTo(bl.x+4.5,bl.y-0.5); ctx.lineTo(bl.x,bl.y+1.5); ctx.lineTo(bl.x-4.5,bl.y-0.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(6,4,12,.55)';
+    ctx.beginPath(); ctx.moveTo(bl.x,bl.y+3.4); ctx.lineTo(bl.x+3,bl.y+0.6); ctx.lineTo(bl.x,bl.y+6.4); ctx.lineTo(bl.x-3,bl.y+0.6); ctx.closePath(); ctx.fill();
+  });
+  /* battlement towers flanking the core: stacked brick courses with
+     crenellations, 3-tone shading — the lord sits IN a place */
+  [-1,1].forEach(function(s){
+    var twx=c.core.x+c.tx*34*s, twy=c.core.y+c.ty*34*s;
+    for(var row=3;row>=0;row--){
+      var rw=15-row*1.6, rh=5.2, ry=twy+13-row*5.4;
+      var tg=ctx.createLinearGradient(0,ry-rh,0,ry+2);
+      tg.addColorStop(0,mixHex(c.dark,c.color,0.30+ (3-row)*0.13));
+      tg.addColorStop(1,'rgba(5,4,10,.94)');
+      ctx.fillStyle=tg;
+      ctx.fillRect(twx-rw,ry-rh,rw*2,rh+2);
+      ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=0.8; ctx.strokeRect(twx-rw,ry-rh,rw*2,rh+2);
+      ctx.strokeStyle='rgba(255,255,255,.13)';
+      ctx.beginPath(); ctx.moveTo(twx,ry-rh+1); ctx.lineTo(twx,ry+1); ctx.stroke();
+    }
+    /* crenellations: 3 merlons, lit tops, colour rim on the outer edge */
+    for(var mI=-1;mI<=1;mI++){
+      ctx.fillStyle=mixHex(c.dark,c.color,0.52);
+      ctx.fillRect(twx+mI*9-3.4,twy-13.5,6.8,5.4);
+      ctx.fillStyle='rgba(255,255,255,.28)'; ctx.fillRect(twx+mI*9-3.4,twy-13.5,6.8,1.4);
+    }
+    ctx.save(); ctx.shadowColor=c.color; ctx.shadowBlur=6;
+    ctx.strokeStyle=c.color; ctx.lineWidth=1.3; ctx.globalAlpha=0.8;
+    ctx.beginPath(); ctx.moveTo(twx-13,twy-8); ctx.lineTo(twx-13,twy+14); ctx.stroke();
+    ctx.restore(); ctx.globalAlpha=1;
+  });
+  /* warlord at the core, on a stepped glowing dais: 3 stacked rings,
+     dark base -> mid -> lit rim */
+  ctx.fillStyle='rgba(4,3,9,.9)';
+  ctx.beginPath(); ctx.ellipse(c.core.x,c.core.y+7,27,10,0,0,7); ctx.fill();
+  ctx.fillStyle=mixHex(c.dark,c.color,0.30);
+  ctx.beginPath(); ctx.ellipse(c.core.x,c.core.y+4.5,24.5,9,0,0,7); ctx.fill();
+  ctx.save(); ctx.shadowColor=c.color; ctx.shadowBlur=16;
+  ctx.strokeStyle=c.color; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(c.core.x,c.core.y,20,0,7); ctx.stroke();
+  ctx.restore();
+  var dg=ctx.createRadialGradient(c.core.x,c.core.y-6,2,c.core.x,c.core.y,20);
+  dg.addColorStop(0,mixHex(c.dark,c.color,0.34)); dg.addColorStop(1,c.dark);
+  ctx.fillStyle=dg;
+  ctx.beginPath(); ctx.arc(c.core.x,c.core.y,19,0,7); ctx.fill();
+  drawWarlord(c.core.x,c.core.y+2,1.15,c,state.frame+ci*40);
+  ctx.fillStyle=c.color; ctx.font='bold 11px "Orbitron",sans-serif'; ctx.textAlign='center';
+  ctx.fillText(c.name,c.core.x,c.core.y+34);
+}
+
+function drawPaddle(c){
+  if(!c.alive) return;
+  var p=gatePoint(c,c.paddle.s);
+  var ex=c.tx*PADDLE_HALF, ey=c.ty*PADDLE_HALF;
+  /* FP behind-shield: the lord stands AT the gate — bust drawn first so the
+     shield slab occludes the torso, helm + pauldrons + gauntlets reading at
+     the slab's edges. Presentation only. */
+  var fpLord = state.fp && state.phase!=='title' && c===state.castles[0];
+  if(fpLord){
+    drawWarlord(p.x-c.nx*17, p.y-c.ny*17, 0.92, c, state.frame);
+  }
+  ctx.save();
+  ctx.lineCap='round';
+  /* SPRITE STACK shield: 5 extruded slab layers stepping from the castle
+     side (dark core) toward the arena (lit face), each with its own tone */
+  var layers=[
+    {o:-8.5, w:15.5, col:'rgba(4,3,9,.95)'},
+    {o:-6.2, w:14.5, col:mixHex(c.dark,c.color,0.22)},
+    {o:-3.8, w:13.5, col:mixHex(c.dark,c.color,0.48)},
+    {o:-1.6, w:12.5, col:mixHex(c.dark,c.color,0.78)},
+    {o:0,    w:11,   col:c.color}
+  ];
+  layers.forEach(function(L,li){
+    ctx.save();
+    if(li===layers.length-1){ ctx.shadowColor=c.color; ctx.shadowBlur=15; }
+    ctx.strokeStyle=L.col; ctx.lineWidth=L.w;
+    ctx.beginPath();
+    ctx.moveTo(p.x-ex+c.nx*L.o, p.y-ey+c.ny*L.o);
+    ctx.lineTo(p.x+ex+c.nx*L.o, p.y+ey+c.ny*L.o);
+    ctx.stroke();
+    ctx.restore();
+  });
+  /* lit face: top sheen line + white-hot centre ridge */
+  ctx.strokeStyle='rgba(255,255,255,.38)'; ctx.lineWidth=3.4;
+  ctx.beginPath(); ctx.moveTo(p.x-ex+c.nx*2.6,p.y-ey+c.ny*2.6); ctx.lineTo(p.x+ex+c.nx*2.6,p.y+ey+c.ny*2.6); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(p.x-ex,p.y-ey); ctx.lineTo(p.x+ex,p.y+ey); ctx.stroke();
+  /* end caps: stacked rivet discs at both tips */
+  [-1,1].forEach(function(s){
+    var cxp=p.x+ex*s, cyp=p.y+ey*s;
+    ctx.fillStyle=mixHex(c.dark,c.color,0.3);
+    ctx.beginPath(); ctx.arc(cxp-c.nx*3.4,cyp-c.ny*3.4,5.6,0,7); ctx.fill();
+    ctx.fillStyle=mixHex(c.dark,c.color,0.62);
+    ctx.beginPath(); ctx.arc(cxp-c.nx*1.2,cyp-c.ny*1.2,4.6,0,7); ctx.fill();
+    ctx.fillStyle='#0c0a14'; ctx.beginPath(); ctx.arc(cxp,cyp,1.7,0,7); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(cxp-1,cyp-1,0.9,0,7); ctx.fill();
+  });
+  /* centre gem: the lord's sigil set into the slab */
+  ctx.save(); ctx.shadowColor=c.color; ctx.shadowBlur=9;
+  ctx.fillStyle='#ffffff';
+  ctx.beginPath(); ctx.moveTo(p.x,p.y-5.4); ctx.lineTo(p.x+4,p.y); ctx.lineTo(p.x,p.y+5.4); ctx.lineTo(p.x-4,p.y); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle=c.color;
+  ctx.beginPath(); ctx.moveTo(p.x,p.y-2.8); ctx.lineTo(p.x+2.1,p.y); ctx.lineTo(p.x,p.y+2.8); ctx.lineTo(p.x-2.1,p.y); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  if(c.paddle.dashT>0){
+    ctx.save(); ctx.globalAlpha=0.5; ctx.strokeStyle=c.color; ctx.lineWidth=8; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(p.x-ex*1.4,p.y-ey*1.4); ctx.lineTo(p.x+ex*1.4,p.y+ey*1.4); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawBall(){
+  var b=state.ball;
+  if(!b.alive || state.phase==='roundbreak') return;
+  b.trail.forEach(function(p,i){
+    ctx.globalAlpha=(i/b.trail.length)*0.5;
+    ctx.fillStyle='#ff7a3c';
+    ctx.beginPath(); ctx.arc(p.x,p.y,3+6*(i/b.trail.length),0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  ctx.save(); ctx.shadowColor='#ff5a1f'; ctx.shadowBlur=22;
+  var bg=ctx.createRadialGradient(b.x,b.y,1,b.x,b.y,16);
+  bg.addColorStop(0,'#fff6d8'); bg.addColorStop(0.45,'#ffb347'); bg.addColorStop(1,'rgba(255,90,31,0)');
+  ctx.fillStyle=bg; ctx.beginPath(); ctx.arc(b.x,b.y,16,0,7); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(b.x-2,b.y-2,3,0,7); ctx.fill();
+}
+function drawParticles(){
+  state.particles.forEach(function(p){
+    ctx.globalAlpha=Math.min(1,p.life/40); ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+/* ---------- HUD / title / game-over ---------- */
+function drawHUD(){
+  ctx.fillStyle='rgba(10,6,24,.78)'; ctx.fillRect(0,0,W,34);
+  ctx.textAlign='left'; ctx.font='bold 13px "Orbitron",sans-serif';
+  state.castles.forEach(function(c,i){
+    var x=14+i*200;
+    ctx.fillStyle=c.alive?c.color:'#5a5468';
+    ctx.beginPath(); ctx.arc(x+6,17,5,0,7); ctx.fill();
+    ctx.fillStyle=c.alive?'#fff':'#8a7ba8';
+    ctx.fillText(c.name+' '+c.score, x+16, 22);
+    if(!c.alive){ ctx.fillStyle='#ff3860'; ctx.fillText('✕', x+96, 22); }
+  });
+  ctx.fillStyle='#ffb347';
+  ctx.fillText('ROUND '+Math.max(1,state.round), 814, 22);
+  ctx.fillStyle='#8a7ba8'; ctx.font='12px "Share Tech Mono",monospace';
+  ctx.fillText('BEST '+state.hi, 896, 22);
+  if(state.bannerT>0){
+    ctx.fillStyle='rgba(10,6,24,.62)'; ctx.fillRect(W/2-300,52,600,34);
+    ctx.fillStyle='#ffb347'; ctx.font='bold 17px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.banner,W/2,76);
+  }
+  if(state.phase==='title'){
+    ctx.fillStyle='rgba(10,6,24,.72)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#fff'; ctx.font='900 54px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText('CASTLEBREAK',W/2,150);
+    ctx.fillStyle='#ffb347'; ctx.font='600 15px "Orbitron",sans-serif';
+    ctx.fillText('FOUR WARLORDS · ONE FIREBALL · LAST CASTLE STANDING',W/2,182);
+    state.castles.forEach(function(c,i){
+      var x=240+i*160;
+      drawWarlord(x,268,2.1,c,state.frame+i*50);
+      ctx.fillStyle=c.color; ctx.font='bold 15px "Orbitron",sans-serif';
+      ctx.fillText(c.name,x,330);
+      ctx.fillStyle='#c6b8e0'; ctx.font='13px "Rajdhani",sans-serif';
+      ctx.fillText(c.title,x,350);
+      ctx.fillStyle='#8a7ba8'; ctx.font='11px "Share Tech Mono",monospace';
+      ctx.fillText(c.bot.speed>=8?'chases everything':(c.bot.speed<=5?'guards her core':(c.bot.drift>=0.2?'gambles wild':'plays it steady')),x,368);
+    });
+    ctx.fillStyle='#e8dcf5'; ctx.font='16px "Rajdhani",sans-serif';
+    ctx.fillText('Slide your shield along your gate — return the fireball, smash their rune-stones, strike their warlord.',W/2,420);
+    ctx.fillStyle='#8a7ba8'; ctx.font='13px "Share Tech Mono",monospace';
+    ctx.fillText('Mouse / drag aim · A/D or ←/→ slide · SHIFT dash · V behind-shield view · P pause',W/2,448);
+    ctx.fillStyle='#00ff88'; ctx.font='bold 14px "Orbitron",sans-serif';
+    ctx.fillText('CLICK DEFEND TO PLAY — OR WATCH FOUR BOTS FIGHT IT OUT',W/2,486);
+  }
+  if(state.phase==='over'){
+    ctx.fillStyle='rgba(10,2,6,.62)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=state.winner>=0?state.castles[state.winner].color:'#ff3860';
+    ctx.font='900 38px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.winnerName+' TAKES THE COURT',W/2,260);
+    ctx.fillStyle='#fff'; ctx.font='18px "Orbitron",sans-serif';
+    ctx.fillText(state.castles.map(function(c){ return c.name+' '+c.score; }).join('   ·   '),W/2,306);
+    ctx.fillStyle='#8a7ba8'; ctx.font='14px "Share Tech Mono",monospace';
+    ctx.fillText('Best '+state.hi+'  ·  Press R to play again',W/2,340);
+  }
+}
+/* Shield console: dash + gate strip + LOCK readout, drawn in screen space
+   at the bottom of the behind-shield view. Presentation only. */
+function drawFpConsole(){
+  var me=state.castles[0], fc=state.fpCam, L=state.fpLock;
+  var y0=H-64, y1=H-10;
+  /* panel: gradient + gold top edge + rivets */
+  var pg=ctx.createLinearGradient(0,y0,0,y1);
+  pg.addColorStop(0,'#160d2c'); pg.addColorStop(1,'#0a0618');
+  ctx.fillStyle=pg; ctx.fillRect(10,y0,W-20,y1-y0);
+  ctx.fillStyle='#ffb347'; ctx.fillRect(10,y0,W-20,2);
+  ctx.strokeStyle='rgba(0,255,136,.5)'; ctx.lineWidth=2;
+  ctx.strokeRect(10,y0,W-20,y1-y0);
+  ctx.fillStyle='#ffb347';
+  [[16,y0+6],[W-16,y0+6],[16,y1-6],[W-16,y1-6]].forEach(function(r){
+    ctx.beginPath(); ctx.arc(r[0],r[1],2,0,7); ctx.fill();
+  });
+  /* left: DASH readiness + gate strip with shield + LOCK markers */
+  ctx.textAlign='left';
+  ctx.fillStyle='#8a7ba8'; ctx.font='10px "Share Tech Mono",monospace';
+  ctx.fillText('DASH',24,y0+17);
+  var dashFrac=me.paddle.dashCd>0?(1-me.paddle.dashCd/90):1;
+  ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(66,y0+9,110,8);
+  ctx.fillStyle=me.paddle.dashT>0?'#ffffff':(dashFrac>=1?'#ffb347':'#ff7a3c');
+  ctx.fillRect(66,y0+9,110*dashFrac,8);
+  ctx.fillStyle=dashFrac>=1?'#ffb347':'#8a7ba8';
+  ctx.font='bold 10px "Share Tech Mono",monospace';
+  ctx.fillText(me.paddle.dashT>0?'DASH!':(dashFrac>=1?'READY':'…'),182,y0+17);
+  ctx.fillStyle='#8a7ba8'; ctx.font='10px "Share Tech Mono",monospace';
+  ctx.fillText('GATE',24,y0+40);
+  ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(66,y0+37); ctx.lineTo(250,y0+37); ctx.stroke();
+  var shX=66+(me.paddle.s/GATE_LEN)*184;
+  ctx.fillStyle='#00ff88';
+  ctx.fillRect(shX-2,y0+28,4,18);
+  ctx.beginPath(); ctx.arc(shX,y0+37,4,0,7); ctx.fill();
+  if(L){
+    var lkX=66+(L.s/GATE_LEN)*184;
+    ctx.fillStyle='#ffd75e';
+    ctx.beginPath();
+    ctx.moveTo(lkX,y0+29); ctx.lineTo(lkX+5,y0+37); ctx.lineTo(lkX,y0+45); ctx.lineTo(lkX-5,y0+37);
+    ctx.closePath(); ctx.fill();
+  }
+  /* centre: view title */
+  ctx.textAlign='center';
+  ctx.fillStyle='#00ff88'; ctx.font='bold 13px "Orbitron",sans-serif';
+  ctx.fillText('BEHIND THE SHIELD · '+me.name,W/2,y0+20);
+  ctx.fillStyle='#8a7ba8'; ctx.font='10px "Share Tech Mono",monospace';
+  ctx.fillText('V TO EXIT · P PAUSE',W/2,y0+40);
+  /* right: LOCK readout — ETA + ball speed, flashing when the hit is close */
+  ctx.textAlign='left';
+  var warn=L && L.eta<60;
+  ctx.fillStyle=warn?(Math.sin(state.frame*0.3)>0?'#ff3860':'#ffd75e'):'#ffd75e';
+  ctx.font='bold 11px "Orbitron",sans-serif';
+  ctx.fillText('◈ LOCK',660,y0+17);
+  ctx.fillStyle='#e8dcf5'; ctx.font='11px "Share Tech Mono",monospace';
+  ctx.fillText(L?('ETA '+(L.eta/60).toFixed(1)+'s · BALL '+L.speed.toFixed(1)):'BALL CLEAR',660,y0+40);
+  ctx.fillStyle='#8a7ba8'; ctx.font='10px "Share Tech Mono",monospace';
+  ctx.fillText('CASTLES '+aliveCastles().length+' · ROUND '+Math.max(1,state.round),790,y0+17);
+  ctx.textAlign='center';
+}
+function drawFP(){
+  var me=state.castles[0], fc=state.fpCam, b=state.ball;
+  /* clear the full canvas first: the zoomed world does not cover the edges */
+  ctx.fillStyle='#0a0618'; ctx.fillRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(W/2,H/2);
+  ctx.rotate(fc.lean);
+  ctx.scale(fc.zoom,fc.zoom);
+  ctx.translate(-fc.cx,-fc.cy);
+  drawArena();
+  state.castles.forEach(function(c,ci){ drawCastle(c,ci); });
+  state.castles.forEach(function(c){ drawPaddle(c); });
+  drawBall(); drawParticles();
+  /* ball approach halo — the fireball's heat washes the court as it closes */
+  if(b.alive && state.fpLock){
+    var w=clamp(1-state.fpLock.dist/520,0,1);
+    var hg=ctx.createRadialGradient(b.x,b.y,4,b.x,b.y,70+50*w);
+    hg.addColorStop(0,'rgba(255,122,60,'+(0.28+0.30*w).toFixed(2)+')');
+    hg.addColorStop(1,'rgba(255,122,60,0)');
+    ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(b.x,b.y,70+50*w,0,7); ctx.fill();
+    /* gold LOCK reticle at the projected gate crossing + aim line */
+    var L=state.fpLock, pu=1+Math.sin(state.frame*0.18)*0.12;
+    ctx.save();
+    ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.arc(L.x,L.y,14*pu,0,7); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(L.x,L.y-22*pu); ctx.lineTo(L.x+7,L.y-7); ctx.lineTo(L.x+22*pu,L.y); ctx.lineTo(L.x+7,L.y+7);
+    ctx.lineTo(L.x,L.y+22*pu); ctx.lineTo(L.x-7,L.y+7); ctx.lineTo(L.x-22*pu,L.y); ctx.lineTo(L.x-7,L.y-7);
+    ctx.closePath(); ctx.stroke();
+    ctx.restore();
+    var sp=gatePoint(me,me.paddle.s);
+    ctx.save(); ctx.setLineDash([6,6]); ctx.strokeStyle='rgba(255,215,94,.55)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(sp.x,sp.y); ctx.lineTo(L.x,L.y); ctx.stroke(); ctx.restore();
+  }
+  ctx.restore();
+  /* ---- screen-space depth + light ---- */
+  if(b.alive){
+    /* radial depth fog around the fireball: the court falls away from it */
+    var bsx=(b.x-fc.cx)*fc.zoom+W/2, bsy=(b.y-fc.cy)*fc.zoom+H/2;
+    var fog=ctx.createRadialGradient(bsx,bsy,60,bsx,bsy,460);
+    fog.addColorStop(0,'rgba(10,6,24,0)');
+    fog.addColorStop(0.62,'rgba(10,6,24,.18)');
+    fog.addColorStop(1,'rgba(10,6,24,.62)');
+    ctx.fillStyle=fog; ctx.fillRect(0,0,W,H);
+  }
+  /* speed lines — flare with the fireball's closing speed */
+  if(fc.vel>0.05){
+    ctx.save();
+    ctx.translate(W/2,H/2);
+    for(var i=0;i<18;i++){
+      var a=(i*0.349)+Math.sin(state.frame*0.05+i*2.3)*0.06;
+      var r0=150+((i*67)%90), r1=r0+40+90*fc.vel;
+      ctx.strokeStyle='rgba(255,215,120,'+(fc.vel*0.34).toFixed(3)+')';
+      ctx.lineWidth=1.6;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);
+      ctx.lineTo(Math.cos(a)*r1,Math.sin(a)*r1);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* canopy beams: gradient struts + gold rivets at the screen edges */
+  [[0,1],[W-16,1]].forEach(function(bm){
+    var bg=ctx.createLinearGradient(bm[0],0,bm[0]+16,0);
+    if(bm[0]===0){ bg.addColorStop(0,'rgba(18,10,36,.95)'); bg.addColorStop(1,'rgba(18,10,36,0)'); }
+    else { bg.addColorStop(0,'rgba(18,10,36,0)'); bg.addColorStop(1,'rgba(18,10,36,.95)'); }
+    ctx.fillStyle=bg; ctx.fillRect(bm[0],0,16,H);
+    ctx.fillStyle='rgba(255,179,71,.7)';
+    [90,300,510].forEach(function(ry){
+      ctx.beginPath(); ctx.arc(bm[0]+8,ry,2.2,0,7); ctx.fill();
+    });
+  });
+  /* faint glass glare streak */
+  ctx.save(); ctx.globalAlpha=0.04; ctx.fillStyle='#ffffff';
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(340,0); ctx.lineTo(120,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  /* corner vignette */
+  var vg=ctx.createLinearGradient(0,0,0,H);
+  vg.addColorStop(0,'rgba(10,6,24,0)'); vg.addColorStop(0.82,'rgba(10,6,24,0)'); vg.addColorStop(1,'rgba(10,6,24,.85)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+  drawFpConsole();
+  drawHUD();
+}
+function render(){
+  ctx.save();
+  if(state.shake>0) ctx.translate((Math.random()-0.5)*state.shake,(Math.random()-0.5)*state.shake);
+  if(state.fp && state.phase!=='title') drawFP();
+  else {
+    drawArena();
+    state.castles.forEach(function(c,ci){ drawCastle(c,ci); });
+    state.castles.forEach(function(c){ drawPaddle(c); });
+    drawBall(); drawParticles(); drawHUD();
+  }
+  ctx.restore();
+}
+
+/* ---------- pause / save / load / views ---------- */
+function togglePause(){
+  if(state.phase==='title'||state.phase==='over') return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+}
+function toggleFP(){
+  state.fp=!state.fp;
+  setMsg(state.fp?'Behind-shield view — the fireball comes at you. V to exit.':'Court view.');
+}
+function saveState(){
+  if(state.phase==='title') return false;
+  try{
+    localStorage.setItem('castlebreak.save', JSON.stringify({
+      v:1, mode:state.mode, round:state.round, hi:state.hi,
+      /* E36: saved so loadState can resume the bout's agents + rotation */
+      cbAgents:(state.mode==='watch')?cbAgentIds.slice():[null,null,null,null],
+      cbBout:cbBout, cbRecorded:cbRecorded, cbFallOrder:cbFallOrder.slice(),
+      /* E68 (D1): persist each agent's decision-trace list so a resumed
+         bout records its FULL decisions, not post-load only. */
+      cbTraces:cbTraces.map(function(t){ return t.slice(); }),
+      /* E68 (E): persist the over state so a finished bout loads as over,
+         with its winner intact, instead of resurrecting as live play. */
+      over:state.phase==='over'||state.over===true,
+      winner:state.winner, winnerName:state.winnerName,
+      ball:{x:state.ball.x,y:state.ball.y,vx:state.ball.vx,vy:state.ball.vy,speed:state.ball.speed},
+      castles:state.castles.map(function(c){ return {alive:c.alive, score:c.score, s:c.paddle.s,
+        blocks:c.blocks.map(function(b){ return b.alive?1:0; })}; })
+    }));
+    setMsg('State saved — pick it up any time from the pause menu.');
+    return true;
+  }catch(e){ setMsg('Save failed in this browser.'); return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('castlebreak.save');
+    if(!raw){ setMsg('No saved state yet — play a round first.'); return false; }
+    var d=JSON.parse(raw);
+    if(d.v!==1) return false;
+    state=freshState();
+    state.mode=d.mode; state.round=d.round; state.hi=d.hi||0;
+    if(d.over===true){
+      /* E68 (E): an over-save loads as over — phase, winner and winnerName
+         restored, held on the result screen (overHeld) so it never re-ends,
+         never auto-restarts, and never consumes a rotation slot. */
+      state.phase='over'; state.over=true; state.overT=0; state.overHeld=true;
+      state.winner=(typeof d.winner==='number')?d.winner:-1;
+      state.winnerName=(typeof d.winnerName==='string'&&d.winnerName)?d.winnerName:(state.winner>=0?state.castles[state.winner].name:'NONE');
+    } else {
+      state.phase='playing';
+    }
+    state.ball.x=d.ball.x; state.ball.y=d.ball.y; state.ball.vx=d.ball.vx; state.ball.vy=d.ball.vy;
+    state.ball.speed=d.ball.speed; state.ball.alive=true; state.ball.trail=[];
+    d.castles.forEach(function(dc,i){
+      var c=state.castles[i];
+      c.alive=dc.alive; c.score=dc.score; c.paddle.s=dc.s; c.paddle.target=dc.s;
+      dc.blocks.forEach(function(al,j){ if(c.blocks[j]) c.blocks[j].alive=!!al; });
+    });
+    if(d.mode==='watch'){
+      /* E36 REPAIR (loadState drops the engine): restore the council agents
+         from the save (FE.loadAgent hydrates Elo/weights from the store),
+         the rotation cursor, the bout fall order and the recorded flag, so a
+         loaded WATCH save resumes engine decisions and records exactly one
+         match. E68 (D1): the decision traces are persisted in the save and
+         restored here — a resumed bout records its FULL decisions, pre-save
+         and post-load alike; traces are never re-recorded because the bout
+         records exactly once via the cbRecorded guard. A save taken after
+         the bout already recorded keeps cbRecorded=true, so the loaded bout
+         cannot double-record it. Old saves without cbAgents leave the
+         castles on legacy drift bots, as before; old saves without cbTraces
+         load with empty traces, as before. */
+      cbTraces=(Array.isArray(d.cbTraces)&&d.cbTraces.length===4)?d.cbTraces.map(function(t){ return Array.isArray(t)?t.slice():[]; }):[[],[],[],[]]; cbFallOrder=Array.isArray(d.cbFallOrder)?d.cbFallOrder.slice():[];
+      cbRecorded=d.cbRecorded===true;
+      cbAgentIds=[null,null,null,null]; cbAgents=[null,null,null,null];
+      if(FE&&Array.isArray(d.cbAgents)){
+        cbAgentIds=d.cbAgents.slice();
+        d.cbAgents.forEach(function(id,i){
+          if(!id) return;
+          try{ cbAgents[i]=FE.loadAgent(id); }catch(e){ cbAgents[i]=null; }
+        });
+      }
+      if(typeof d.cbBout==='number'&&isFinite(d.cbBout)&&d.cbBout>=0){ cbBout=d.cbBout; cbSaveBout(); }
+    }
+    state.paused=false;
+    var ov=$('pauseOverlay'); if(ov) ov.style.display='none';
+    setMsg(state.phase==='over'?('Saved result loaded — '+state.winnerName+' takes the court.'):'Saved state loaded — round '+state.round+'.');
+    return true;
+  }catch(e){ setMsg('Load failed — save may be from an older build.'); return false; }
+}
+
+/* ---------------- fullscreen (FULLSCREEN standard): the shell — stage on
+   desktop, the whole handheld console on phones — goes true fullscreen via
+   the Fullscreen API. F toggles, the button toggles, Esc exits (browser)
+   before it can pause. Label follows the real fullscreen state. ---- */
+var fsShell=document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ var b=$('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — stage fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+  updateFsBtn();
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+
+/* ---------- input ---------- */
+function keyName(e){ return (e.key||'').toLowerCase(); }
+document.addEventListener('keydown',function(e){
+  var k=keyName(e);
+  state.keys[k]=true;
+  if(k==='f'){ toggleFullscreen(); return; }
+  if(k==='escape' && isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ return; }
+  if(k==='p'||k==='escape'){ togglePause(); e.preventDefault(); }
+  if(k==='r'){ startGame(state.mode); }
+  if(k==='v'){ toggleFP(); }
+  if(['arrowleft','arrowright','arrowup','arrowdown',' '].indexOf(k)>=0) e.preventDefault();
+});
+document.addEventListener('keyup',function(e){ state.keys[keyName(e)]=false; });
+function canvasPoint(e){
+  var r=cv.getBoundingClientRect();
+  var cx=(e.clientX!==undefined?e.clientX:(e.touches&&e.touches[0]?e.touches[0].clientX:0));
+  var cy=(e.clientY!==undefined?e.clientY:(e.touches&&e.touches[0]?e.touches[0].clientY:0));
+  return {x:(cx-r.left)*(W/r.width), y:(cy-r.top)*(H/r.height)};
+}
+function aimFromPoint(pt){
+  if(state.mode!=='solo' && state.mode!=='duel') return;
+  var c=state.castles[0];
+  if(!c.alive) return;
+  var s=projectOnGate(c,pt.x,pt.y);
+  c.paddle.target=s; c.paddle.s=s;
+}
+cv.addEventListener('mousemove',function(e){ if(state.phase==='playing') aimFromPoint(canvasPoint(e)); });
+cv.addEventListener('mousedown',function(e){ if(state.phase==='playing') aimFromPoint(canvasPoint(e)); });
+cv.addEventListener('touchstart',function(e){ if(state.phase==='playing'){ e.preventDefault(); aimFromPoint(canvasPoint(e)); } },{passive:false});
+cv.addEventListener('touchmove',function(e){ if(state.phase==='playing'){ e.preventDefault(); aimFromPoint(canvasPoint(e)); } },{passive:false});
+function bindBtn(id,fn){ var b=$(id); if(b) b.addEventListener('click',fn); }
+bindBtn('btnSolo',function(){ startGame('solo'); });
+bindBtn('btnWatch',function(){ startGame('watch'); });
+bindBtn('btnDuel',function(){ startGame('duel'); });
+bindBtn('btnFP',function(){ toggleFP(); });
+bindBtn('btnPause',function(){ togglePause(); });
+bindBtn('btnFs',function(){ toggleFullscreen(); });
+bindBtn('resumeBtn',function(){ togglePause(); });
+bindBtn('saveBtn',function(){ saveState(); });
+bindBtn('loadBtn',function(){ loadState(); });
+bindBtn('restartBtn',function(){ var ov=$('pauseOverlay'); if(ov) ov.style.display='none'; state.paused=false; startGame(state.mode); });
+bindBtn('quitArcadeBtn',function(){ location.href='../arcade.html'; });
+bindBtn('startBtn',function(){ togglePause(); });
+bindBtn('selectBtn',function(){ toggleFP(); });
+bindBtn('btnA',function(){ dashPaddle(0); });
+bindBtn('btnB',function(){ toggleFP(); });
+document.querySelectorAll('[data-k]').forEach(function(b){
+  var k=b.getAttribute('data-k');
+  b.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    var c=state.castles[0];
+    if(!c || state.phase!=='playing') return;
+    if(k==='left') { c.paddle.target=clamp(c.paddle.target-46,PADDLE_MIN,PADDLE_MAX); c.paddle.s=c.paddle.target; }
+    if(k==='right'){ c.paddle.target=clamp(c.paddle.target+46,PADDLE_MIN,PADDLE_MAX); c.paddle.s=c.paddle.target; }
+    if(k==='up') dashPaddle(0);
+    if(k==='down'||k==='down2') toggleFP();
+  });
+});
+
+/* ---------- boot ---------- */
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+if(q.get('auto')==='watch') startGame('watch');
+else if(q.get('auto')==='play') startGame('solo');
+else if(q.get('auto')==='duel') startGame('duel');
+
+function loop(){
+  update();
+  try{ render(); }catch(e){ /* headless stub contexts may lack gradients; logic still runs */ }
+  if(typeof requestAnimationFrame!=='function') return;
+  requestAnimationFrame(loop);
+}
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+
+/* test/debug surface — same shape as the other arcade games */
+window.__castlebreak={
+  get state(){ return {phase:state.phase,mode:state.mode,paused:state.paused,fp:state.fp,frame:state.frame,
+    round:state.round,hi:state.hi,winner:state.winner,winnerName:state.winnerName,over:state.over,
+    ball:{x:state.ball.x,y:state.ball.y,vx:state.ball.vx,vy:state.ball.vy,speed:state.ball.speed,alive:state.ball.alive},
+    castles:state.castles.map(function(c){ return {name:c.name,alive:c.alive,score:c.score,
+      blocksAlive:c.blocks.filter(function(b){return b.alive;}).length,blocksTotal:c.blocks.length,
+      paddleS:c.paddle.s,core:{x:c.core.x,y:c.core.y}}; }),
+    lastTouch:state.lastTouch, watchKills:state.watchKills, banner:state.banner,
+    feAgents:cbAgentIds.slice(), feTraces:cbTraces.map(function(t){ return t.length; }),
+    cbFallOrder:cbFallOrder.slice(), cbBout:cbBout, cbRecorded:cbRecorded}; },
+  startGame:startGame,
+  get fpCam(){ return state.fpCam; },
+  get fpLock(){ return state.fpLock; },
+  debugPlaceBall:function(x,y,vx,vy){ var b=state.ball; b.x=x; b.y=y; b.vx=vx; b.vy=vy; b.speed=Math.hypot(vx,vy); b.alive=true; b.trail=[]; },
+  debugSetPaddle:function(ci,s){ var c=state.castles[ci]; c.paddle.s=clamp(s,PADDLE_MIN,PADDLE_MAX); c.paddle.target=c.paddle.s; },
+  debugMovePaddle:function(ci,s){ return this.debugSetPaddle(ci,s); },
+  debugTouch:function(x,y){ aimFromPoint({x:x,y:y}); },
+  debugClearBlocks:function(ci){ state.castles[ci].blocks.forEach(function(b){ b.alive=false; }); },
+  debugFallCastle:function(ci){ castleFalls(ci, state.lastTouch); },
+  debugSetBot:function(ci,patch){ var b=state.castles[ci].bot; for(var k in patch) b[k]=patch[k]; },
+  debugDash:function(ci){ return dashPaddle(ci||0); },
+  debugKey:function(k,down){ state.keys[k]=!!down; },
+  debugSave:saveState, debugLoad:loadState, debugToggleFP:toggleFP, debugTogglePause:togglePause,
+  get fs(){return isFullscreen();},
+  toggleFullscreen:toggleFullscreen,
+  isFullscreen:isFullscreen
+};
+</script>
+</body>
+</html>

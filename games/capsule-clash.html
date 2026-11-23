@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CAPSULE CLASH — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#04060a;--panel:#080b12;--border:rgba(120,150,200,.16);--cyan:#00f0ff;--mag:#ff5db1;--green:#00ff88;--gold:#ffd75e;--red:#ff3860;--text:#c6d2e4;--dim:#5d6b82}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(255,93,177,.08),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(6,9,14,.9);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--mag)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--cyan);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(255,93,177,.10)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--mag);box-shadow:0 0 16px rgba(255,93,177,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--cyan);font-size:12px}
+  /* ---- handheld shell (MOBILE PLAY standard, same as Skylance/Ghostline):
+     Original emerald/dark console frame — screen inside the shell, D-PAD left,
+     A/B right, START/SELECT pills below the screen. Never overlaps gameplay. ---- */
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #stageWrap{border-radius:10px;overflow:hidden;border:1px solid rgba(0,255,136,.25)}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:0}
+  .dpad button{font-size:15px;padding:0}
+  .dpad .dp-u{grid-area:1/2}.dpad .dp-l{grid-area:2/1}.dpad .dp-c{grid-area:2/2;background:#0a1210;border:1px solid rgba(0,255,136,.2)}
+  .dpad .dp-r{grid-area:2/3}.dpad .dp-d{grid-area:3/2}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  .ab-cluster{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .ab-row{display:flex;gap:14px;align-items:flex-end}
+  .ab{width:58px;height:58px;border-radius:50%;font-size:19px;font-weight:900}
+  .ab-a{background:#00ff88!important;color:#04120a!important;border-color:#00ff88!important}
+  .ab-b{background:#ff3860!important;border-color:#ff3860!important}
+  .ab-sub{display:flex;gap:6px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
+  .ab-sub span{width:58px;text-align:center}
+  /* ---- fullscreen (FULLSCREEN standard): the shell — stage on desktop, the
+     whole handheld console on phones. Target is #shell via the Fullscreen API.
+     F toggles, the button toggles, Esc exits (browser) before it can pause. ---- */
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*960/576));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*960/576))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(100vw,calc((100vh - 190px)*960/576))}
+  #pauseOverlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(4,6,10,.85);backdrop-filter:blur(2px);z-index:10}
+  #pauseOverlay h2{font-size:30px;color:#fff;letter-spacing:6px;text-shadow:0 0 22px rgba(255,93,177,.7);font-family:'Orbitron',sans-serif;margin:0}
+  #pauseOverlay .sub{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:2px}
+  #pauseOverlay .pbtn{min-width:240px;padding:12px 18px;background:var(--panel);border:1px solid var(--border);color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;text-transform:uppercase}
+  #pauseOverlay .pbtn:hover{border-color:var(--mag);box-shadow:0 0 16px rgba(255,93,177,.35)}
+  @media (max-width:560px){
+    .topbar{flex-wrap:wrap;gap:8px;padding:10px 12px}
+    .topbar h1{font-size:17px}
+    .topbar .tag{display:none}
+    .wrap{padding:12px 8px 40px}
+    .mbtn{min-width:100px;font-size:11px;padding:10px 6px}
+    .help{font-size:13px;padding:10px 12px}
+    #msg{font-size:12px}
+    .dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .ab{width:52px;height:52px}
+    .ab-sub span{width:52px}
+    .shell-pills{padding-top:28px}
+    #pauseOverlay .pbtn{min-width:210px;padding:11px 14px;font-size:12px}
+    #pauseOverlay{gap:7px;justify-content:flex-start;padding:10px 0;overflow-y:auto}
+    #pauseOverlay h2{font-size:18px;letter-spacing:4px}
+    #pauseOverlay .sub{display:none}
+    #pauseOverlay .pbtn{min-width:200px;padding:7px 12px;font-size:11px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:255,93,177}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>CAPSULE<span>CLASH</span></h1>
+  <div class="tag">Shaddai Arcade · Capsule Puzzler · Original IP</div>
+  <div class="spacer"></div>
+  <a class="back" href="../arcade.html">← Arcade</a>
+</div>
+<div class="wrap">
+  <div id="shell">
+  <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+  <div id="stageWrap"><canvas id="cv" width="960" height="576"></canvas>
+    <div id="pauseOverlay">
+      <h2>⏸ PAUSED</h2>
+      <div class="sub">ESC / P TO RESUME</div>
+      <button class="pbtn" id="resumeBtn">▶ Resume</button>
+      <button class="pbtn" id="saveBtn">💾 Save State</button>
+      <button class="pbtn" id="loadBtn">📂 Load State</button>
+      <button class="pbtn" id="restartBtn">↺ Restart</button>
+      <button class="pbtn" id="quitArcadeBtn">✕ Quit to Arcade</button>
+    </div>
+  </div>
+  <div id="shellDeck">
+    <div class="dpad">
+      <button class="dp-u" data-k="up" aria-label="Rotate">▲</button>
+      <button class="dp-l" data-k="left" aria-label="Left">◀</button>
+      <span class="dp-c"></span>
+      <button class="dp-r" data-k="right" aria-label="Right">▶</button>
+      <button class="dp-d" data-k="down" aria-label="Soft drop">▼</button>
+    </div>
+    <div class="shell-pills">
+      <button id="selectBtn" title="Select — toggle placement hint">SELECT</button>
+      <button id="startBtn" title="Start — open menu">START</button>
+    </div>
+    <div class="ab-cluster">
+      <div class="ab-row"><button class="ab ab-b" data-k="slam" title="B — slam capsule down">B</button><button class="ab ab-a" data-k="rotate" title="A — rotate capsule">A</button></div>
+      <div class="ab-sub"><span>SLAM</span><span>ROTATE</span></div>
+    </div>
+  </div>
+  </div>
+  <div id="msg">Drop capsules, match 4+ of a colour, and clear every glitch-bot out of the jar.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ 1P Clear the Jar<small>you vs the glitch-bots</small></button>
+    <button class="mbtn" id="btnVersus">⚔️ Versus CPU<small>clear your jar first — garbage flies</small></button>
+    <button class="mbtn" id="btnWatch">🤖 Watch · Bot vs Bot<small>two personalities duel</small></button>
+    <button class="mbtn" id="btnHint">💡 Hint<small>H — ghost placement</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>Esc / P</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — stage fills the screen</small></button>
+  </div>
+  <div class="help">
+    <b>Move</b> <span class="k">← / → or A / D</span> · <b>Rotate</b> <span class="k">↑ / W / X or tap A</span> · <b>Soft drop</b> <span class="k">↓ / S</span> · <b>Slam</b> <span class="k">SPACE / Z or tap B</span> — drops the capsule instantly · <b>Pause</b> <span class="k">P / ESC</span> · <b>Restart</b> <span class="k">R</span> · <b>Hint</b> <span class="k">H</span> shows the ghost of a good placement.<br/>
+    <b>The jar:</b> capsules fall two halves at a time. Line up <b>4+ of one colour</b> in a row or column and the whole run clears — including any <b>glitch-bots</b> caught in it: <b>BLIP</b> (cyan), <b>ZORP</b> (magenta), <b>GLEEK</b> (gold). Clears chain when the pieces above fall into new matches — chains multiply the score. Clear every glitch-bot to take the level; the next jar seeds more bots and falls faster. Stack to the top and the jar <b>tops out</b>.<br/>
+    <b>Versus:</b> clearing bots and chaining sends grey <b>slag</b> raining into your rival's jar — slag only shatters when a clear goes off next to it. First to clear their jar, or last jar standing, wins. <b>WATCH</b> is two personality bots duelling — <b>VEX</b> fast and aggressive, <b>ORBIT</b> patient and precise, <b>HALO</b> hunts chains, <b>NOVA</b> plays erratic. They misdrop and mistime on purpose — never frame-perfect.<br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: D-pad moves and soft-drops, <span class="k">▲</span> rotates, <span class="k">A</span> rotates, <span class="k">B</span> slams, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles the hint.<br/>
+    ⛶ <b>Fullscreen:</b> <span class="k">F</span> or the Fullscreen button — the stage (on phones, the whole handheld shell) fills the screen; <span class="k">Esc</span> exits fullscreen.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+"use strict";
+/* CAPSULE CLASH — original capsule puzzler for Shaddai Arcade.
+   Clean-room: behaviour informed by the documented capsule-puzzler formula
+   (two-half falling capsules, 4+ same-colour runs clear, virus-style
+   blockers seeded in the jar, versus garbage, chain combos). No code, names,
+   art or assets copied from any existing game — every bot, capsule and line
+   of code here is original. The Dr. Mario lineage is SPEC-ONLY; see
+   reference-repos/REFERENCE_INDEX.md (no licence / all-rights-reserved
+   sources are read as docs only, never run or copied). */
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const W=960, H=576;
+const COLS=8, ROWS=16;
+const COLORS=['#00f0ff','#ff5db1','#ffd75e'];          /* BLIP cyan, ZORP magenta, GLEEK gold */
+const COLOR_NAMES=['BLIP','ZORP','GLEEK'];
+const DARK=['#0a5a66','#6b1e45','#6b5410'];
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const hs=i=>{ const x=Math.sin(i*127.1+311.7)*43758.5453; return x-Math.floor(x); };
+const irnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const rndColor=()=>irnd(0,2);
+/* capsule orientation offsets: pivot cell + second cell */
+const ROT_OFF=[[1,0],[0,-1],[-1,0],[0,1]];
+/* Bot personalities — distinct, imperfect play styles. */
+const PERSONAS={
+ VEX:  {skill:0.92,react:3, noise:0.05,botW:1.0, style:'fast + aggressive'},
+ ORBIT:{skill:0.97,react:8, noise:0.02,botW:1.2, style:'patient + precise'},
+ HALO: {skill:0.90,react:5, noise:0.08,botW:1.6, style:'hunts chains'},
+ NOVA: {skill:0.62,react:4, noise:0.35,botW:0.8, style:'erratic'},
+};
+const BOT_COLORS={VEX:'#00f0ff',ORBIT:'#ffd75e',HALO:'#7dff9e',NOVA:'#ff5db1'};
+function pickPersona(exclude){ const names=Object.keys(PERSONAS).filter(n=>n!==exclude);
+  return names[irnd(0,names.length-1)]; }
+
+/* ---------------- Fallible Engine integration (E7b) ----------------
+   WATCH duels + the Versus CPU jar choose placements through
+   FallibleEngine.decide(); duel/match outcomes are recorded so Elo,
+   form, tilt and per-tag weights (E8) move. The built-in VEX/ORBIT/
+   HALO/NOVA personas stay as the engine-absent fallback: if
+   agent-engine.js fails to load, the game plays exactly as before.
+   Gameplay rules, scoring and physics are untouched — only how the
+   bot side CHOOSES a placement changes. */
+var FE = (typeof window !== 'undefined' && window.FallibleEngine) || null;
+var COUNCIL = ['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var COUNCIL_COLORS = {ASIMOV:'#00f0ff',SHADDAI:'#ffd75e',ZEROX:'#ff3860',ORACLE:'#00ff88',
+  NEXUS:'#ff5db1',TURTLE:'#7dff9e',QUILL:'#c58bff',PIKADON:'#ffa94d'};
+/* E33: rotation cursors persist across page loads (E31/E32 precedent) so
+   fresh loads keep cycling the council instead of restarting at
+   ASIMOV vs SHADDAI / ASIMOV every time. Keys are game-scoped. */
+function feCursor(key){
+  try{ var v=parseInt(localStorage.getItem(key)||'0',10); return isNaN(v)?0:v; }catch(e){ return 0; }
+}
+function feSaveCursor(key,val){ try{ localStorage.setItem(key,String(val)); }catch(e){} }
+var watchPairIdx = feCursor('capsule-clash.watchPairIdx'),
+    versusAgentIdx = feCursor('capsule-clash.versusAgentIdx'),
+    duelRecorded = false;
+function nextWatchPair(){
+  var a = COUNCIL[watchPairIdx % COUNCIL.length];
+  var b = COUNCIL[(watchPairIdx + 1) % COUNCIL.length];
+  watchPairIdx += 2;
+  feSaveCursor('capsule-clash.watchPairIdx', watchPairIdx);
+  return [a, b];
+}
+function nextVersusAgent(){
+  var id = COUNCIL[versusAgentIdx % COUNCIL.length];
+  versusAgentIdx++;
+  feSaveCursor('capsule-clash.versusAgentIdx', versusAgentIdx);
+  return id;
+}
+/* Placement score: the game's own heuristic (hits*100 + bots*800 -
+   holes*30 - top*8) plus a chain bonus and a slag-clear bonus, from the
+   same simulation the hint ghost uses. No per-bot noise or botW: the
+   engine's softmax temperature (personality x focus x tilt) supplies
+   the fallibility. Scores are scaled /100 for decide(), whose
+   temperature scale expects unit-range scores. */
+function placementScore(s){
+  return s.hits*100 + s.bots*800 - s.holes*30 - s.top*8
+    + (s.chain>=2 ? (s.chain-1)*150 : 0) + s.slag*50;
+}
+function placementTag(s){
+  if(s.bots>0) return 'clear-bots';
+  if(s.chain>=2) return 'chain';
+  if(s.slag>0) return 'slag-clear';
+  if(s.top>=12) return 'defensive';
+  return 'dump';
+}
+function recordWatchDuel(winnerJar){
+  if(duelRecorded || mode!=='watch') return;
+  var a=jars[0], b=jars[1];
+  if(!FE || !a || !b || !a.engineAgent || !b.engineAgent) return;
+  duelRecorded = true;
+  FE.recordMatch(a.engineAgent, b.engineAgent, 'capsule-clash',
+    winnerJar===a ? 'win' : 'loss', a.engineTraces, b.engineTraces);
+}
+function recordVersusResult(winnerJar){
+  if(duelRecorded || mode!=='versus') return;
+  var cpu=jars[1];
+  if(!FE || !cpu || !cpu.engineAgent) return;
+  duelRecorded = true;
+  FE.recordResult(cpu.engineAgent, 'capsule-clash', null,
+    winnerJar===cpu ? 'win' : 'loss', cpu.engineTraces);
+}
+
+/* ---------------- state ---------------- */
+let frame=0, phase='ready', /* ready|play|over */ mode='solo', /* solo|versus|watch */
+    paused=false, hint=false, level=1, winner=null, banner='', bannerT=0,
+    chainBanner='', chainBannerT=0, rematchT=0, elapsed=0;
+let jars=[];          /* 1 jar in solo, 2 in versus/watch */
+let bots=[];          /* per-jar bot controller (null for the human jar) */
+let popups=[];        /* floating score texts {x,y,text,t,color} */
+let particles=[];     /* ambient spores */
+for(let i=0;i<70;i++) particles.push({x:hs(i)*W,y:hs(i+500)*H,s:0.5+hs(i+900)*1.8,
+  v:0.12+hs(i+700)*0.3, a:0.08+hs(i+300)*0.25, c:hs(i+100)>0.5?'0,240,255':'255,93,177'});
+function emptyGrid(){ const g=[]; for(let y=0;y<ROWS;y++){ g.push(new Array(COLS).fill(null)); } return g; }
+function mkJar(name,color,isBot,persona){
+  return { name, color, isBot:!!isBot, persona:persona||null,
+    grid:emptyGrid(), capsule:null, next:{c1:rndColor(),c2:rndColor()},
+    score:0, botsLeft:0, level:1, incoming:0, fallT:0, fallEvery:40,
+    chain:0, maxChain:0, over:false, cleared:0, placed:0, clearT:0,
+    botTarget:null, botActT:0, botStuckT:0, dropHeld:false,
+    engineAgent:null, engineTraces:[] };   /* E7b: Fallible Engine agent + its decide traces */
+}
+function countBots(jar){ let n=0; for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++)
+  if(jar.grid[y][x] && jar.grid[y][x].t==='bot') n++; return n; }
+/* Seed glitch-bots in the lower rows, never pre-forming a 4-match. */
+function seedBots(jar,n){
+  let placed=0, guard=0;
+  while(placed<n && guard++<400){
+    const x=irnd(0,COLS-1), y=irnd(ROWS-9,ROWS-1), c=rndColor();
+    if(jar.grid[y][x]) continue;
+    jar.grid[y][x]={t:'bot',c,id:placed};
+    if(findMatches(jar.grid).length){ jar.grid[y][x]=null; continue; }
+    placed++;
+  }
+  jar.botsLeft=countBots(jar);
+}
+/* ---------------- board logic (pure on a grid) ---------------- */
+function cellAt(g,x,y){ return (x<0||x>=COLS||y<0||y>=ROWS)?{t:'wall'}:g[y][x]; }
+function capCells(cap){
+  const cells=[{x:cap.x,y:cap.y,c:cap.c1}];
+  if(cap.c2>=0){ const o=ROT_OFF[cap.rot]; cells.push({x:cap.x+o[0],y:cap.y+o[1],c:cap.c2}); }
+  return cells;
+}
+function canPlace(jar,cap,x,y,rot){
+  for(const c of capCells({x,y,rot,c1:cap.c1,c2:cap.c2})){
+    if(c.x<0||c.x>=COLS||c.y>=ROWS) return false;
+    if(c.y>=0 && jar.grid[c.y][c.x]) return false;
+  }
+  return true;
+}
+function findMatches(g){
+  const hits=new Set();
+  const key=(x,y)=>y*COLS+x;
+  for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++){
+    const cell=g[y][x]; if(!cell||cell.t==='slag') continue;
+    if(x+3<COLS){ let ok=true; for(let k=1;k<4;k++){ const n=g[y][x+k];
+      if(!n||n.t==='slag'||n.c!==cell.c){ ok=false; break; } }
+      if(ok) for(let k=0;k<4;k++) hits.add(key(x+k,y)); }
+    if(y+3<ROWS){ let ok=true; for(let k=1;k<4;k++){ const n=g[y+k][x];
+      if(!n||n.t==='slag'||n.c!==cell.c){ ok=false; break; } }
+      if(ok) for(let k=0;k<4;k++) hits.add(key(x,y+k)); }
+  }
+  return [...hits].map(k=>({x:k%COLS,y:Math.floor(k/COLS)}));
+}
+function applyGravity(g){
+  for(let x=0;x<COLS;x++){
+    let write=ROWS-1;
+    for(let y=ROWS-1;y>=0;y--){ if(g[y][x]){ if(write!==y){ g[write][x]=g[y][x]; g[y][x]=null; } write--; } }
+  }
+}
+function topHeight(g){ for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++)
+  if(g[y][x]) return y; return ROWS; }
+/* Resolve matches in a jar after a lock. Returns {cleared, bots, chain} and
+   sends garbage to the opponent jar when there is one. */
+function resolveJar(jar,foe){
+  let totalCleared=0, totalBots=0, chain=0;
+  for(let guard=0;guard<8;guard++){
+    const hits=findMatches(jar.grid);
+    if(!hits.length) break;
+    chain++;
+    let botsThis=0;
+    const slagHits=[];
+    for(const h of hits){
+      const cell=jar.grid[h.y][h.x];
+      if(cell && cell.t==='bot') botsThis++;
+      jar.grid[h.y][h.x]=null;
+      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const n=cellAt(jar.grid,h.x+dx,h.y+dy);
+        if(n && n.t==='slag') slagHits.push({x:h.x+dx,y:h.y+dy});
+      }
+    }
+    for(const s of slagHits) jar.grid[s.y][s.x]=null;
+    applyGravity(jar.grid);
+    const pts=(hits.length*100 + botsThis*300) * chain;
+    jar.score+=pts; totalCleared+=hits.length; totalBots+=botsThis;
+    jar.cleared+=hits.length;
+    addPopup(jar, '+'+pts, chain>=2?'CHAIN x'+chain+'!':'+'+pts);
+    if(chain>=2){ chainBanner='CHAIN x'+chain+'!'; chainBannerT=50; }
+    if(foe && (botsThis>0 || chain>1)){
+      const send=botsThis + (chain-1);
+      foe.incoming+=send;
+    }
+  }
+  jar.chain=chain; jar.maxChain=Math.max(jar.maxChain,chain);
+  return {cleared:totalCleared, bots:totalBots, chain};
+}
+function addPopup(jar,text,sub){
+  const pos=jarPos(jar);
+  popups.push({x:pos.x+pos.w/2, y:pos.y+40, text, t:70, color:'#ffd75e'});
+  if(popups.length>8) popups.shift();
+}
+function spawnCapsule(jar){
+  const cap={x:3, y:0, rot:0, c1:jar.next.c1, c2:jar.next.c2};
+  jar.next={c1:rndColor(),c2:rndColor()};
+  if(!canPlace(jar,cap,cap.x,cap.y,cap.rot)){ jar.over=true; return false; }
+  jar.capsule=cap; jar.fallT=0; jar.botTarget=null; jar.botStuckT=0;
+  return true;
+}
+function lockCapsule(jar,foe){
+  const cap=jar.capsule; if(!cap) return;
+  for(const c of capCells(cap)){
+    if(c.y>=0 && c.y<ROWS && c.x>=0 && c.x<COLS)
+      jar.grid[c.y][c.x]= cap.slag ? {t:'slag',c:null,id:jar.placed}
+                                   : {t:'cap',c:c.c,id:jar.placed};
+  }
+  jar.capsule=null; jar.placed++;
+  const res=resolveJar(jar,foe);
+  jar.botsLeft=countBots(jar);
+  if(jar.botsLeft===0 && !jar.over){
+    jar.clearT=70;
+    if(mode==='solo'){ levelUp(jar); return; }
+    else { winJar(jar); return; }
+  }
+  if(!jar.over){
+    if(jar.incoming>0) spawnSlag(jar);
+    else spawnCapsule(jar);
+  }
+}
+function levelUp(jar){
+  level++; jar.level=level;
+  jar.score+=1000*level;
+  banner='LEVEL '+level+' — JAR CLEAR!'; bannerT=90;
+  jar.grid=emptyGrid();
+  seedBots(jar, Math.min(6+level*2, 24));
+  jar.fallEvery=Math.max(6, 42-level*3);
+  spawnCapsule(jar);
+}
+function winJar(jar){
+  phase='over'; winner=jar.name;
+  banner=jar.name+' TAKES THE JAR!'; bannerT=9999;
+  if(mode==='watch'){ recordWatchDuel(jar); rematchT=60*4; }
+  else if(mode==='versus'){ recordVersusResult(jar); }
+}
+function spawnSlag(jar){
+  if(jar.incoming<=0) return;
+  jar.incoming--;
+  const col=irnd(0,COLS-1);
+  jar.capsule={x:col, y:0, rot:0, c1:-1, c2:-1, slag:true};
+}
+function moveCapsule(jar,dx){
+  const cap=jar.capsule; if(!cap||cap.slag) return false;
+  if(canPlace(jar,cap,cap.x+dx,cap.y,cap.rot)){ cap.x+=dx; return true; }
+  return false;
+}
+function rotateCapsule(jar){
+  const cap=jar.capsule; if(!cap||cap.slag) return false;
+  const nr=(cap.rot+1)%4;
+  if(canPlace(jar,cap,cap.x,cap.y,nr)){ cap.rot=nr; return true; }
+  for(const dx of [1,-1,2,-2]) if(canPlace(jar,cap,cap.x+dx,cap.y,nr)){ cap.x+=dx; cap.rot=nr; return true; }
+  return false;
+}
+function slamCapsule(jar,foe){
+  const cap=jar.capsule; if(!cap) return;
+  while(canPlace(jar,cap,cap.x,cap.y+1,cap.rot)) cap.y++;
+  lockCapsule(jar,foe);
+}
+function stepCapsule(jar,foe){
+  const cap=jar.capsule; if(!cap) return;
+  const every=jar.dropHeld? Math.max(2,Math.floor(jar.fallEvery/3)) : jar.fallEvery;
+  if(++jar.fallT < every) return;
+  jar.fallT=0;
+  if(canPlace(jar,cap,cap.x,cap.y+1,cap.rot)){ cap.y++; }
+  else lockCapsule(jar,foe);
+}
+/* ---------------- bot AI: personality-driven, imperfect ---------------- */
+function simulatePlacement(jar,rot,col){
+  /* drop the ACTIVE capsule at (col, rot) onto a grid copy */
+  const g=jar.grid.map(r=>r.slice());
+  const cap=jar.capsule;
+  const test={x:col,y:0,rot,c1:cap?cap.c1:jar.next.c1,c2:cap?cap.c2:jar.next.c2};
+  if(!canPlaceOn(g,test.x,test.y,test.rot)) return null;
+  while(canPlaceOn(g,test.x,test.y+1,test.rot)) test.y++;
+  for(const c of capCells(test)) if(c.y>=0) g[c.y][c.x]={t:'cap',c:c.c,id:-1};
+  const hits=findMatches(g);
+  let botsHit=0; for(const h of hits) if(jar.grid[h.y] && jar.grid[h.y][h.x] && jar.grid[h.y][h.x].t==='bot') botsHit++;
+  let holes=0; for(let x=0;x<COLS;x++){ let seen=false;
+    for(let y=0;y<ROWS;y++){ if(g[y][x]) seen=true; else if(seen) holes++; } }
+  const h=topHeight(g);
+  /* E7b: cascade the copy — chain depth + slag shattered next to clears.
+     (hits/holes/top above are the pre-cascade placement, as before.) */
+  let chain=0, slag=0;
+  for(let guard=0;guard<8;guard++){
+    const m=findMatches(g);
+    if(!m.length) break;
+    chain++;
+    for(const hh of m){
+      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const n=cellAt(g,hh.x+dx,hh.y+dy);
+        if(n && n.t==='slag') slag++;
+      }
+      g[hh.y][hh.x]=null;
+    }
+    applyGravity(g);
+  }
+  return {hits:hits.length, bots:botsHit, holes, top:h, rot, col, chain, slag};
+}
+function canPlaceOn(g,x,y,rot){
+  for(const c of capCells({x,y,rot,c1:0,c2:0})){
+    if(c.x<0||c.x>=COLS||c.y>=ROWS) return false;
+    if(c.y>=0 && g[c.y][c.x]) return false;
+  }
+  return true;
+}
+function chooseTarget(jar){
+  /* E7b: engine path — every candidate placement is scored by the game's
+     own heuristic and handed to FallibleEngine.decide(); the engine's
+     softmax (personality x focus x tilt) picks, and the learned per-tag
+     weights (E8) bias the pick. No legal placement -> legacy picker. */
+  if(jar.engineAgent && FE){
+    const options=[];
+    for(let rot=0;rot<4;rot++) for(let col=0;col<COLS;col++){
+      const s=simulatePlacement(jar,rot,col); if(!s) continue;
+      options.push({key:rot+':'+col, score:placementScore(s)/100, tag:placementTag(s), rot, col});
+    }
+    if(options.length){
+      const res=FE.decide(jar.engineAgent,'capsule-clash',options,
+        {timePressure: topHeight(jar.grid)<=3 ? 0.6 : 0});
+      jar.engineTraces.push(res.trace);
+      return {rot:res.pick.rot, col:res.pick.col};
+    }
+  }
+  const p=PERSONAS[jar.persona]||PERSONAS.VEX;
+  let best=null, bestScore=-1e9;
+  for(let rot=0;rot<4;rot++) for(let col=0;col<COLS;col++){
+    const s=simulatePlacement(jar,rot,col); if(!s) continue;
+    let score=s.hits*100 + s.bots*800*p.botW - s.holes*30 - s.top*8 + Math.random()*p.noise*400;
+    if(score>bestScore){ bestScore=score; best=s; }
+  }
+  if(!best || Math.random()>p.skill){
+    /* imperfect: random placement — retry until it fits at the top */
+    for(let t=0;t<10;t++){
+      const rot=irnd(0,3), col=irnd(0,COLS-1);
+      if(canPlaceOn(jar.grid.map(r=>r.slice()),col,0,rot)) return {rot, col};
+    }
+    return best || {rot:0, col:3};
+  }
+  return {rot:best.rot, col:best.col};
+}
+function stepBot(jar,idx){
+  const p=PERSONAS[jar.persona]||PERSONAS.VEX;
+  const cap=jar.capsule; if(!cap||phase!=='play') return;
+  if(cap.slag){ jar.dropHeld=true; return; }   /* slag just drops */
+  if(!jar.botTarget) jar.botTarget=chooseTarget(jar);
+  if(++jar.botActT < p.react) return;
+  jar.botActT=0;
+  const t=jar.botTarget;
+  if(cap.rot!==t.rot){ if(!rotateCapsule(jar)) jar.botStuckT++; }
+  else if(cap.x<t.col){ if(!moveCapsule(jar,1)) jar.botStuckT++; }
+  else if(cap.x>t.col){ if(!moveCapsule(jar,-1)) jar.botStuckT++; }
+  else jar.dropHeld=true;
+  if(jar.botStuckT>25){ jar.dropHeld=true; jar.botStuckT=0; }
+}
+
+/* ---------------- layout ---------------- */
+function jarPos(jar){
+  const i=jars.indexOf(jar);
+  if(mode==='solo') return {x:352, y:66, w:208, h:416, cell:26};
+  return i===0 ? {x:150, y:110, w:160, h:320, cell:20}
+               : {x:650, y:110, w:160, h:320, cell:20};
+}
+/* ---------------- modes ---------------- */
+function setMsg(t){ const m=document.getElementById('msg'); if(m) m.textContent=t; }
+function startSolo(){
+  mode='solo'; level=1; phase='play'; paused=false; winner=null; duelRecorded=false;
+  jars=[mkJar('VAX','#00ff88',false)];
+  jars[0].level=1; jars[0].fallEvery=39;
+  seedBots(jars[0],6); spawnCapsule(jars[0]);
+  banner='CLEAR THE JAR!'; bannerT=90;
+  setMsg('1P live — match 4+ of a colour to clear the glitch-bots.');
+  showPauseOverlay(false); refreshModeBtns();
+}
+function startVersus(){
+  mode='versus'; level=1; phase='play'; paused=false; winner=null; duelRecorded=false;
+  /* E7b: the CPU jar is a council agent when the engine is present
+     (rotating across matches); the built-in VEX bot is the fallback. */
+  let cpuName='SCRAP', cpuColor='#ff3860', cpuPersona='VEX', cpuAgent=null;
+  if(FE){
+    cpuName=nextVersusAgent();
+    cpuColor=COUNCIL_COLORS[cpuName];
+    cpuPersona=cpuName;
+    cpuAgent=FE.loadAgent(cpuName);
+  }
+  jars=[mkJar('VAX','#00ff88',false), mkJar(cpuName,cpuColor,true,cpuPersona)];
+  jars[1].engineAgent=cpuAgent;
+  for(const j of jars){ j.fallEvery=30; seedBots(j,6); spawnCapsule(j); }
+  banner='VERSUS — CLEAR YOUR JAR FIRST!'; bannerT=90;
+  setMsg('Versus live — clears send slag into '+cpuName+'\'s jar. First jar clear wins.');
+  showPauseOverlay(false); refreshModeBtns();
+}
+function startWatch(){
+  mode='watch'; level=1; phase='play'; paused=false; winner=null; rematchT=0; duelRecorded=false;
+  /* E7b: two council agents (rotating pairs) when the engine is present;
+     the built-in VEX/ORBIT/HALO/NOVA personas are the fallback. */
+  let p1, p2;
+  if(FE){
+    const pair=nextWatchPair(); p1=pair[0]; p2=pair[1];
+    jars=[mkJar(p1,COUNCIL_COLORS[p1],true,p1), mkJar(p2,COUNCIL_COLORS[p2],true,p2)];
+    jars[0].engineAgent=FE.loadAgent(p1);
+    jars[1].engineAgent=FE.loadAgent(p2);
+  } else {
+    p1=pickPersona(null); p2=pickPersona(p1);
+    jars=[mkJar(p1,BOT_COLORS[p1],true,p1), mkJar(p2,BOT_COLORS[p2],true,p2)];
+  }
+  for(const j of jars){ j.fallEvery=26; seedBots(j,6); spawnCapsule(j); }
+  banner='WATCH — '+p1+' vs '+p2; bannerT=90;
+  setMsg(FE
+    ? 'WATCH: '+p1+' vs '+p2+' — council agents duelling on the Fallible Engine.'
+    : 'WATCH: '+p1+' ('+PERSONAS[p1].style+') vs '+p2+' ('+PERSONAS[p2].style+') — imperfect on purpose.');
+  showPauseOverlay(false); refreshModeBtns();
+}
+function restartCurrent(){
+  if(mode==='solo') startSolo();
+  else if(mode==='versus') startVersus();
+  else startWatch();
+}
+/* ---------------- pause / save / load ---------------- */
+function showPauseOverlay(on){ const o=document.getElementById('pauseOverlay');
+  if(o) o.style.display=on?'flex':'none'; }
+function togglePause(){
+  if(phase==='ready') return;
+  paused=!paused; showPauseOverlay(paused);
+  setMsg(paused?'Paused — START / Esc to resume.':'Resumed.');
+}
+function saveState(){
+  if(!jars.length) return false;
+  /* E33 REPAIR D1 (E52 D3 / E60 D5 pattern): land unflushed engine traces
+     before the save, and persist the per-jar trace lists with the save, so
+     a resumed match's record carries the FULL decision count. */
+  if(FE && FE.flush){ try{ FE.flush(); }catch(e){} }
+  /* E33 REPAIR D2 (E52 D3b / E60 D5b pattern): persist the REAL phase +
+     winner + exactly-once flag — an over-save must restore as over, inert,
+     never as a live match that re-records. */
+  const data={mode, level, phase, winner, duelRecorded,
+    jars:jars.map(j=>({name:j.name,color:j.color,isBot:j.isBot,persona:j.persona,
+      grid:j.grid,score:j.score,botsLeft:j.botsLeft,next:j.next,incoming:j.incoming,
+      fallEvery:j.fallEvery,level:j.level,placed:j.placed,cleared:j.cleared,maxChain:j.maxChain,
+      engineTraces:(j.engineTraces||[]).slice()}))};
+  try{ localStorage.setItem('capsuleClashSave.v1',JSON.stringify(data)); return true; }
+  catch(e){ return false; }
+}
+function loadState(){
+  let raw=null;
+  try{ raw=localStorage.getItem('capsuleClashSave.v1'); }catch(e){ return false; }
+  if(!raw) return false;
+  let data; try{ data=JSON.parse(raw); }catch(e){ return false; }
+  mode=data.mode; level=data.level;
+  /* E33 REPAIR D2: restore the saved phase. An over-save restores as over
+     with its winner, and duelRecorded stays true (the record was already
+     filed when the match ended) so no later frame can re-record the same
+     bout. A play-save restores as play with the saved exactly-once flag. */
+  phase=(data.phase==='over'||data.phase==='play')?data.phase:'play';
+  paused=false; winner=(phase==='over')?(data.winner||null):null;
+  rematchT=0; duelRecorded=(phase==='over')?true:!!data.duelRecorded;
+  jars=data.jars.map(d=>{ const j=mkJar(d.name,d.color,d.isBot,d.persona);
+    j.grid=d.grid; j.score=d.score; j.botsLeft=d.botsLeft; j.next=d.next;
+    j.incoming=d.incoming; j.fallEvery=d.fallEvery; j.level=d.level;
+    j.placed=d.placed||0; j.cleared=d.cleared||0; j.maxChain=d.maxChain||0;
+    /* E33: restore the Fallible Engine agent for council jars (the save
+       stores the council id as persona). Without this a loaded WATCH save
+       played as VEX vs VEX fallback and recordWatchDuel early-returned,
+       so no further records. Solo/human jars have no council persona
+       and stay engine-free, as before. */
+    if(FE && COUNCIL.indexOf(d.persona)!==-1) j.engineAgent=FE.loadAgent(d.persona);
+    /* E33 REPAIR D1: restore the per-jar decide-trace lists saved with the
+       match, so the resumed match's record carries full decisions. */
+    if(d.engineTraces && Array.isArray(d.engineTraces)) j.engineTraces=d.engineTraces.slice();
+    spawnCapsule(j); return j; });
+  banner='STATE LOADED'; bannerT=60;
+  setMsg('Save state loaded.');
+  showPauseOverlay(false); refreshModeBtns();
+  return true;
+}
+/* ---------------- input ---------------- */
+const keys={};
+let moveCD=0;
+function humanJar(){ return jars[0]; }
+function handleKeyDown(code){
+  if(code==='KeyF'){ toggleFullscreen(); return; }
+  if(code==='Escape' && isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ return; }
+  if(code==='KeyP'||code==='Escape'){ togglePause(); return; }
+  if(code==='KeyR'){ restartCurrent(); return; }
+  if(code==='KeyH'){ toggleHint(); return; }
+  if(paused||phase!=='play') return;
+  const j=humanJar(); if(!j||j.isBot||!j.capsule) return;
+  const foe=jars[1]||null;
+  if(code==='ArrowLeft'||code==='KeyA'){ moveCapsule(j,-1); moveCD=7; }
+  else if(code==='ArrowRight'||code==='KeyD'){ moveCapsule(j,1); moveCD=7; }
+  else if(code==='ArrowUp'||code==='KeyW'||code==='KeyX'){ rotateCapsule(j); }
+  else if(code==='Space'||code==='KeyZ'){ slamCapsule(j,foe); }
+}
+document.addEventListener('keydown',e=>{
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code)) e.preventDefault();
+  if(!e.repeat) handleKeyDown(e.code);
+  keys[e.code]=true;
+});
+document.addEventListener('keyup',e=>{ keys[e.code]=false; });
+/* ---------------- fullscreen (FULLSCREEN standard): the shell — stage on
+   desktop, the whole handheld console on phones — goes true fullscreen via
+   the Fullscreen API. F toggles, the button toggles, Esc exits (browser)
+   before it can pause. Label follows the real fullscreen state. ---- */
+const fsShell=document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ const b=document.getElementById('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — stage fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+  updateFsBtn();
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+function toggleHint(){ hint=!hint; refreshModeBtns();
+  setMsg(hint?'Hint ON — the ghost shows a good landing spot.':'Hint OFF.'); }
+function refreshModeBtns(){
+  const set=(id,on)=>{ const el=document.getElementById(id); if(el) el.classList.toggle('active',!!on); };
+  set('btnSolo',mode==='solo'&&phase!=='ready');
+  set('btnVersus',mode==='versus'&&phase!=='ready');
+  set('btnWatch',mode==='watch'&&phase!=='ready');
+  set('btnHint',hint);
+}
+/* touch shell buttons */
+document.querySelectorAll('[data-k]').forEach(btn=>{
+  const k=btn.getAttribute('data-k');
+  const act=()=>{
+    if(paused||phase!=='play') return;
+    const j=humanJar(); if(!j||j.isBot||!j.capsule) return;
+    const foe=jars[1]||null;
+    if(k==='left') moveCapsule(j,-1);
+    else if(k==='right') moveCapsule(j,1);
+    else if(k==='up'||k==='rotate') rotateCapsule(j);
+    else if(k==='slam') slamCapsule(j,foe);
+  };
+  btn.addEventListener('pointerdown',e=>{ e.preventDefault();
+    if(k==='down'){ keys['ArrowDown']=true; } else act(); });
+  btn.addEventListener('pointerup',()=>{ if(k==='down') keys['ArrowDown']=false; });
+  btn.addEventListener('pointerleave',()=>{ if(k==='down') keys['ArrowDown']=false; });
+});
+/* ---------------- step ---------------- */
+function step(){
+  frame++; elapsed++;
+  for(const p of particles){ p.y-=p.v; if(p.y<-4){ p.y=H+4; p.x=hs(frame+p.s*1000)*W; } }
+  for(const p of popups) p.t--;
+  popups=popups.filter(p=>p.t>0);
+  if(bannerT>0) bannerT--;
+  if(chainBannerT>0) chainBannerT--;
+  if(phase==='over' && mode==='watch' && rematchT>0 && --rematchT===0){ startWatch(); return; }
+  if(phase!=='play'||paused) return;
+  /* human auto-repeat + soft drop */
+  const hj=humanJar();
+  if(hj && !hj.isBot && hj.capsule){
+    if(keys['ArrowLeft']||keys['KeyA']){ if(moveCD<=0){ moveCapsule(hj,-1); moveCD=7; } else moveCD--; }
+    else if(keys['ArrowRight']||keys['KeyD']){ if(moveCD<=0){ moveCapsule(hj,1); moveCD=7; } else moveCD--; }
+    else moveCD=0;
+    hj.dropHeld=!!(keys['ArrowDown']||keys['KeyS']);
+  }
+  for(let i=0;i<jars.length;i++){
+    const j=jars[i], foe=jars[1-i]||null;
+    if(j.over) continue;
+    if(j.isBot) stepBot(j,i);
+    stepCapsule(j, mode==='solo'?null:foe);
+  }
+  /* top-out ends the match */
+  for(let i=0;i<jars.length;i++){
+    const j=jars[i];
+    if(j.over && phase==='play'){
+      if(mode==='solo'){ phase='over'; winner=null;
+        banner='TOP OUT! THE JAR WINS'; bannerT=9999; }
+      else { winJar(jars[1-i]||j); }
+      break;
+    }
+  }
+}
+
+/* ---------------- drawing ---------------- */
+function rr(x,y,w,h,r){ ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+/* CHAR-SWEEP 2026-11-22: hex shade/multiply helper for baked 3-tone stacks */
+function shade(hex,f){ const n=parseInt(hex.slice(1),16);
+  const r=Math.max(0,Math.min(255,Math.round(((n>>16)&255)*f))),
+        g=Math.max(0,Math.min(255,Math.round(((n>>8)&255)*f))),
+        b=Math.max(0,Math.min(255,Math.round((n&255)*f)));
+  return 'rgb('+r+','+g+','+b+')'; }
+function drawBackground(){
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#030a12'); sky.addColorStop(0.5,'#06231c'); sky.addColorStop(1,'#0a1f14');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+  /* soft glow blobs */
+  let g=ctx.createRadialGradient(140,90,10,140,90,320);
+  g.addColorStop(0,'rgba(255,93,177,0.10)'); g.addColorStop(1,'rgba(255,93,177,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  g=ctx.createRadialGradient(840,500,10,840,500,340);
+  g.addColorStop(0,'rgba(0,240,255,0.09)'); g.addColorStop(1,'rgba(0,240,255,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* far layer: arcade-machine skyline silhouettes */
+  ctx.fillStyle='#04121a';
+  for(let i=0;i<14;i++){ const bx=i*72+((hs(i)*30)|0), bw=44+hs(i+50)*30, bh=60+hs(i+90)*90;
+    ctx.fillRect(bx,470-bh,bw,bh);
+    ctx.fillStyle='rgba(0,240,255,0.25)';
+    for(let wy=0;wy<3;wy++) for(let wx=0;wx<2;wx++)
+      if(hs(i*7+wy*3+wx)>0.5) ctx.fillRect(bx+6+wx*20,470-bh+10+wy*16,8,6);
+    ctx.fillStyle='#04121a';
+  }
+  /* mid layer: glowing pipes with travelling pulses */
+  for(const py of [128, 512]){
+    ctx.fillStyle='#0a2a22'; ctx.fillRect(0,py,W,10);
+    ctx.fillStyle='rgba(0,255,136,0.35)'; ctx.fillRect(0,py,W,1.5);
+    ctx.fillStyle='rgba(0,255,136,0.6)';
+    for(let k=0;k<3;k++){ const px=((frame*1.4+k*320+py)% (W+40))-20;
+      ctx.beginPath(); ctx.arc(px,py+5,3.5,0,7); ctx.fill(); }
+  }
+  /* floor: reflective dark band */
+  const fl=ctx.createLinearGradient(0,520,0,H);
+  fl.addColorStop(0,'#0a1a12'); fl.addColorStop(1,'#030805');
+  ctx.fillStyle=fl; ctx.fillRect(0,520,W,H-520);
+  ctx.fillStyle='rgba(0,255,136,0.18)'; ctx.fillRect(0,520,W,1);
+  /* ambient spores */
+  for(const p of particles){
+    ctx.fillStyle='rgba('+p.c+','+p.a.toFixed(2)+')';
+    ctx.fillRect(p.x,p.y,p.s,p.s);
+  }
+}
+function drawPill(px,py,cell,colorIdx,glow){
+  /* CHAR-SWEEP 2026-11-22: the capsule half IS a stack — silhouette slices
+     step down from a glossy lit top through the colour to a dark shell base,
+     so the pill has shell thickness and reads 3D in the jar. The two colour
+     halves stay pure + instantly readable for matching. */
+  const c=COLORS[colorIdx], dk=DARK[colorIdx];
+  const x=px+2, w=cell-4, rad=cell/2-1;
+  ctx.save();
+  if(glow){ ctx.shadowColor=c; ctx.shadowBlur=12; }
+  /* stacked shell slices: dark base -> mid -> colour, stepping up */
+  const tones=[dk,dk,shade(c,0.45),shade(c,0.7)];
+  for(let k=3;k>=0;k--){
+    ctx.fillStyle=tones[3-k];
+    rr(x,py+2+k*1.15,w,w,rad); ctx.fill();
+  }
+  ctx.shadowBlur=0;
+  /* lit top face: bright cap over the upper half, colour body below */
+  const g=ctx.createLinearGradient(px,py,px,py+cell);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(0.3,c); g.addColorStop(0.78,c); g.addColorStop(1,dk);
+  ctx.fillStyle=g;
+  rr(x,py+2,w,w,rad); ctx.fill();
+  /* shaded under-crescent: the shell curves away at the bottom */
+  ctx.fillStyle='rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.ellipse(px+cell/2,py+cell-3.5,cell*0.32,cell*0.13,0,0,Math.PI); ctx.fill();
+  /* rim light in the capsule's own colour along the right + top edge */
+  ctx.strokeStyle=shade(c,1.35); ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.arc(px+cell/2,py+cell/2,rad-0.5,-1.15,0.75); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(px+cell/2,py+cell/2,rad-0.5,Math.PI*1.08,Math.PI*1.5); ctx.stroke();
+  /* glossy lit top: tight specular streak, not a pastel blob highlight */
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  ctx.beginPath(); ctx.ellipse(px+cell*0.36,py+cell*0.24,cell*0.17,cell*0.07,-0.5,0,7); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.35)';
+  ctx.beginPath(); ctx.ellipse(px+cell*0.62,py+cell*0.68,cell*0.1,cell*0.045,-0.5,0,7); ctx.fill();
+  /* shell seam: dark outline keeps halves readable at mobile size */
+  ctx.strokeStyle='rgba(2,10,8,0.55)'; ctx.lineWidth=1;
+  rr(x,py+2,w,w,rad); ctx.stroke();
+  ctx.restore();
+}
+function drawGlitchBot(px,py,cell,colorIdx,id){
+  /* CHAR-SWEEP 2026-11-22: each glitch-bot IS a sprite stack — its own
+     angular silhouette is painted in slices stepping down from a lit top
+     face through mid tone to a dark core, with rim light in its own colour,
+     a grounded contact shadow, idle bob + breathing, and per-type / per-id
+     gear so no two bots read as the same blob recolored.
+     Types: 0 BLIP (peaked dome, cyclops visor) · 1 ZORP (spike star, slit
+     visor) · 2 GLEEK (flat-top helm, goggle lenses). */
+  const c=COLORS[colorIdx], dk=DARK[colorIdx];
+  const cx=px+cell/2;
+  const bobY=Math.sin(frame/9+id*1.7)*1.4;
+  const cy=py+cell/2+bobY;
+  const r=(cell/2-2)*(1+Math.sin(frame/16+id*2.3)*0.02); /* breathing */
+  const gear=id%3;
+  ctx.save();
+  /* contact shadow: stays on the cell floor while the body bobs */
+  ctx.fillStyle='rgba(0,0,0,0.42)';
+  ctx.beginPath(); ctx.ellipse(cx,py+cell-2.5,r*0.82,2.8,0,0,7); ctx.fill();
+  ctx.fillStyle=c; ctx.globalAlpha=0.14+Math.sin(frame/12+id)*0.03;
+  ctx.beginPath(); ctx.ellipse(cx,py+cell-2.5,r*0.95,3.6,0,0,7); ctx.fill();
+  ctx.globalAlpha=1;
+  /* silhouette path for this bot type (centred on 0,0, radius r) */
+  const sil=()=>{
+    ctx.beginPath();
+    if(colorIdx===1){ /* ZORP — sharp 8-spike star */
+      for(let i=0;i<8;i++){ const a=i*Math.PI/4+0.3, a2=a+Math.PI/8;
+        ctx.moveTo(Math.cos(a)*r*0.68,Math.sin(a)*r*0.68);
+        ctx.lineTo(Math.cos(a2)*(r+3.5),Math.sin(a2)*(r+3.5));
+        ctx.lineTo(Math.cos(a+Math.PI/4)*r*0.68,Math.sin(a+Math.PI/4)*r*0.68); }
+      ctx.closePath();
+    } else if(colorIdx===2){ /* GLEEK — flat-top helm, wide jaw */
+      ctx.moveTo(-r*0.82,r*0.88); ctx.lineTo(-r*0.95,-r*0.25); ctx.lineTo(-r*0.6,-r*0.82);
+      ctx.lineTo(r*0.6,-r*0.82); ctx.lineTo(r*0.95,-r*0.25); ctx.lineTo(r*0.82,r*0.88);
+      ctx.closePath();
+    } else { /* BLIP — peaked angular dome */
+      ctx.moveTo(-r*0.95,r*0.85); ctx.lineTo(-r*0.98,-r*0.05); ctx.lineTo(-r*0.5,-r*0.6);
+      ctx.lineTo(0,-r*0.98); ctx.lineTo(r*0.5,-r*0.6); ctx.lineTo(r*0.98,-r*0.05);
+      ctx.lineTo(r*0.95,r*0.85); ctx.closePath();
+    }
+  };
+  /* the stack: silhouette slices, dark core below -> lit top above */
+  ctx.translate(cx,cy);
+  const sliceTones=[0.16,0.3,0.48,0.68];
+  for(let k=4;k>=1;k--){ ctx.save(); ctx.translate(0,k*1.35);
+    ctx.fillStyle=shade(c,sliceTones[4-k]); sil(); ctx.fill(); ctx.restore(); }
+  /* lit top face: 3-tone baked shading, light from above-left */
+  const g=ctx.createLinearGradient(-r,-r,r,r*0.6);
+  g.addColorStop(0,shade(c,1.25)); g.addColorStop(0.45,c); g.addColorStop(1,dk);
+  ctx.fillStyle=g; sil(); ctx.fill();
+  /* left flank falls into shadow */
+  ctx.fillStyle='rgba(0,0,0,0.20)'; sil();
+  ctx.save(); ctx.clip();
+  ctx.fillRect(-r,-r,r*0.55,r*2);
+  ctx.restore();
+  /* rim light in the bot's own colour along the top-right silhouette */
+  ctx.strokeStyle=shade(c,1.5); ctx.lineWidth=1.6;
+  ctx.shadowColor=c; ctx.shadowBlur=6;
+  sil(); ctx.save(); ctx.clip();
+  ctx.strokeStyle=shade(c,1.5);
+  ctx.beginPath(); ctx.moveTo(r*0.1,-r*1.05); ctx.lineTo(r*1.1,-r*0.2); ctx.lineTo(r*1.05,r*0.7); ctx.stroke();
+  ctx.restore();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(2,10,8,0.5)'; ctx.lineWidth=1; sil(); ctx.stroke();
+  /* ---- gear + face (detail pass, reads at mobile size) ---- */
+  const eyeGlow=(ex,ey,er)=>{
+    ctx.fillStyle=c; ctx.shadowColor=c; ctx.shadowBlur=7;
+    ctx.beginPath(); ctx.arc(ex,ey,er,0,7); ctx.fill(); ctx.shadowBlur=0;
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(ex,ey,er*0.55,0,7); ctx.fill();
+  };
+  if(colorIdx===0){ /* BLIP — wide visor band + one big cyclops eye */
+    ctx.fillStyle='rgba(3,14,16,0.88)';
+    ctx.beginPath(); ctx.moveTo(-r*0.72,-r*0.34); ctx.lineTo(r*0.72,-r*0.34);
+    ctx.lineTo(r*0.6,r*0.16); ctx.lineTo(-r*0.6,r*0.16); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=shade(c,1.4); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-r*0.72,-r*0.34); ctx.lineTo(r*0.72,-r*0.34); ctx.stroke();
+    eyeGlow(((id%3)-1)*1.2,-r*0.09,r*0.21);
+    /* chin grille */
+    ctx.fillStyle='rgba(3,14,16,0.7)';
+    for(let i=-1;i<=1;i++) ctx.fillRect(i*r*0.22-1,r*0.42,2,r*0.2);
+    /* gear by id: 0 tall antenna · 1 twin stubs · 2 side ear caps */
+    ctx.strokeStyle='#dfe9ec'; ctx.lineWidth=1.6;
+    if(gear===0){ ctx.beginPath(); ctx.moveTo(0,-r*0.95); ctx.lineTo(0,-r*1.3); ctx.stroke();
+      ctx.fillStyle=c; ctx.shadowColor=c; ctx.shadowBlur=8;
+      ctx.beginPath(); ctx.arc(0,-r*1.36,2.4,0,7); ctx.fill(); ctx.shadowBlur=0; }
+    if(gear===1){ ctx.beginPath(); ctx.moveTo(-r*0.4,-r*0.8); ctx.lineTo(-r*0.52,-r*1.08);
+      ctx.moveTo(r*0.4,-r*0.8); ctx.lineTo(r*0.52,-r*1.08); ctx.stroke();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(-r*0.52,-r*1.1,1.8,0,7); ctx.arc(r*0.52,-r*1.1,1.8,0,7); ctx.fill(); }
+    if(gear===2){ ctx.fillStyle=dk;
+      ctx.beginPath(); ctx.arc(-r*0.98,-r*0.05,3,0,7); ctx.arc(r*0.98,-r*0.05,3,0,7); ctx.fill();
+      ctx.fillStyle=c; ctx.beginPath(); ctx.arc(-r*0.98,-r*0.05,1.4,0,7); ctx.arc(r*0.98,-r*0.05,1.4,0,7); ctx.fill(); }
+  } else if(colorIdx===1){ /* ZORP — angular slit visor, angled eye-slits */
+    ctx.fillStyle='rgba(16,2,10,0.9)';
+    ctx.beginPath(); ctx.moveTo(-r*0.78,-r*0.3); ctx.lineTo(r*0.78,-r*0.38);
+    ctx.lineTo(r*0.62,r*0.1); ctx.lineTo(-r*0.62,r*0.18); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=c; ctx.shadowColor=c; ctx.shadowBlur=7;
+    ctx.beginPath(); ctx.moveTo(-r*0.52,-r*0.12); ctx.lineTo(-r*0.14,-r*0.05); ctx.lineTo(-r*0.52,r*0.03); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(r*0.52,-r*0.2); ctx.lineTo(r*0.14,-r*0.13); ctx.lineTo(r*0.52,-r*0.05); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(-r*0.3,-r*0.05,1.3,0,7); ctx.arc(r*0.3,-r*0.13,1.3,0,7); ctx.fill();
+    /* jaw grille: jagged teeth vents */
+    ctx.strokeStyle='rgba(16,2,10,0.8)'; ctx.lineWidth=1.6;
+    ctx.beginPath();
+    for(let i=0;i<4;i++){ const tx=-r*0.36+i*r*0.24;
+      ctx.moveTo(tx,r*0.4); ctx.lineTo(tx+r*0.12,r*0.58); ctx.lineTo(tx+r*0.24,r*0.4); }
+    ctx.stroke();
+    /* gear by id: 0 brow ridge · 1 side fins · 2 crown spike */
+    ctx.fillStyle=dk;
+    if(gear===0){ ctx.beginPath(); ctx.moveTo(-r*0.7,-r*0.52); ctx.lineTo(r*0.7,-r*0.6); ctx.lineTo(r*0.5,-r*0.38); ctx.lineTo(-r*0.5,-r*0.44); ctx.closePath(); ctx.fill(); }
+    if(gear===1){ ctx.beginPath(); ctx.moveTo(-r*0.9,-r*0.1); ctx.lineTo(-r*1.25,r*0.12); ctx.lineTo(-r*0.88,r*0.3); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(r*0.9,-r*0.18); ctx.lineTo(r*1.25,r*0.04); ctx.lineTo(r*0.88,r*0.22); ctx.closePath(); ctx.fill(); }
+    if(gear===2){ ctx.beginPath(); ctx.moveTo(-2.5,-r*0.95); ctx.lineTo(0,-r*1.3); ctx.lineTo(2.5,-r*0.95); ctx.closePath(); ctx.fill(); }
+  } else { /* GLEEK — goggle lenses on a dark band, chin vents */
+    ctx.fillStyle='rgba(20,14,0,0.9)'; ctx.fillRect(-r*0.85,-r*0.3,r*1.7,r*0.42);
+    ctx.strokeStyle=shade(c,1.35); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-r*0.85,-r*0.3); ctx.lineTo(r*0.85,-r*0.3); ctx.stroke();
+    for(const sgn of [-1,1]){
+      ctx.fillStyle='#0b1a20'; ctx.beginPath(); ctx.arc(sgn*r*0.42,-r*0.09,r*0.27,0,7); ctx.fill();
+      ctx.strokeStyle='#dfe9ec'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(sgn*r*0.42,-r*0.09,r*0.27,0,7); ctx.stroke();
+      ctx.fillStyle='#bfefff'; ctx.beginPath(); ctx.arc(sgn*r*0.42,-r*0.09,r*0.17,0,7); ctx.fill();
+      ctx.fillStyle='#04120a'; ctx.beginPath(); ctx.arc(sgn*r*0.42+((id%3)-1),-r*0.09,r*0.09,0,7); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(sgn*r*0.42-1.5,-r*0.15,1.2,0,7); ctx.fill();
+    }
+    /* chin vents instead of cartoon teeth */
+    ctx.fillStyle='rgba(20,14,0,0.75)';
+    for(let i=-1;i<=1;i++) ctx.fillRect(i*r*0.26-2.5,r*0.44,5,2.2);
+    /* gear by id: 0 top knob · 1 ear caps · 2 brow stripe */
+    if(gear===0){ ctx.fillStyle=dk; ctx.fillRect(-2.5,-r*0.98,5,4);
+      ctx.fillStyle=c; ctx.shadowColor=c; ctx.shadowBlur=7;
+      ctx.beginPath(); ctx.arc(0,-r*1.02,2.2,0,7); ctx.fill(); ctx.shadowBlur=0; }
+    if(gear===1){ ctx.fillStyle=dk;
+      ctx.beginPath(); ctx.arc(-r*0.95,-r*0.02,3.2,0,7); ctx.arc(r*0.95,-r*0.02,3.2,0,7); ctx.fill();
+      ctx.fillStyle=shade(c,1.3); ctx.beginPath(); ctx.arc(-r*0.95,-r*0.02,1.4,0,7); ctx.arc(r*0.95,-r*0.02,1.4,0,7); ctx.fill(); }
+    if(gear===2){ ctx.fillStyle='rgba(20,14,0,0.65)'; ctx.fillRect(-r*0.5,-r*0.62,r,2.6); }
+  }
+  ctx.restore();
+}
+function drawSlag(px,py,cell){
+  /* CHAR-SWEEP 2026-11-22: slag is a molten stack — an irregular rock
+     silhouette (stable per cell via hs on position) painted in slices from
+     a dark cooled base up to a lit slate top, split by glowing molten seams
+     that pulse. Reads as hot wreckage, not a grey sticker. */
+  const cx=px+cell/2, cy=py+cell/2, r=cell/2-1.5;
+  const seed=(px*7+py*13)|0;
+  const pt=(i)=>{ const a=i*Math.PI/3.4-0.5, rr2=r*(0.82+hs(seed+i*3)*0.26);
+    return [Math.cos(a)*rr2,Math.sin(a)*rr2*0.92]; };
+  const rock=()=>{ ctx.beginPath();
+    for(let i=0;i<7;i++){ const p=pt(i);
+      if(i===0) ctx.moveTo(p[0],p[1]); else ctx.lineTo(p[0],p[1]); }
+    ctx.closePath(); };
+  ctx.save(); ctx.translate(cx,cy);
+  /* contact shadow */
+  ctx.fillStyle='rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.ellipse(0,cell/2-2.5,r*0.85,2.6,0,0,7); ctx.fill();
+  /* stack slices: near-black cooled base -> slate mid */
+  const tones=['#11151b','#1b212b','#28313e','#333f4e'];
+  for(let k=4;k>=1;k--){ ctx.save(); ctx.translate(0,k*1.2);
+    ctx.fillStyle=tones[4-k]; rock(); ctx.fill(); ctx.restore(); }
+  /* lit top face */
+  const g=ctx.createLinearGradient(0,-r,0,r);
+  g.addColorStop(0,'#5d6b82'); g.addColorStop(0.5,'#3a4552'); g.addColorStop(1,'#232a35');
+  ctx.fillStyle=g; rock(); ctx.fill();
+  /* top facet: one raised shard catches the light */
+  ctx.fillStyle='rgba(255,255,255,0.13)';
+  ctx.beginPath(); const f1=pt(5), f2=pt(6), f3=pt(0);
+  ctx.moveTo(f1[0]*0.7,f1[1]*0.7); ctx.lineTo(f2[0]*0.75,f2[1]*0.75); ctx.lineTo(0,-r*0.25); ctx.closePath(); ctx.fill();
+  /* rim: hot edge on the lit side, dark outline overall */
+  ctx.strokeStyle='rgba(255,170,90,0.5)'; ctx.lineWidth=1.3;
+  ctx.save(); rock(); ctx.clip();
+  ctx.beginPath(); ctx.moveTo(-r,-r*0.7); ctx.lineTo(r*0.4,-r*1.05); ctx.lineTo(r*1.05,-r*0.3); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=1; rock(); ctx.stroke();
+  /* molten seams: jagged glowing cracks, pulsing with the frame */
+  const pulse=0.65+Math.sin(frame/7+seed)*0.3;
+  ctx.lineCap='round';
+  for(const s of [0,1]){
+    const ox=(hs(seed+s*11)-0.5)*r*0.7, oy=(hs(seed+s*17)-0.5)*r*0.5;
+    ctx.strokeStyle='rgba(255,90,20,'+(0.85*pulse).toFixed(2)+')'; ctx.lineWidth=2.4;
+    ctx.shadowColor='#ff5a14'; ctx.shadowBlur=7*pulse;
+    ctx.beginPath(); ctx.moveTo(ox-r*0.42,oy-r*0.3); ctx.lineTo(ox-r*0.1,oy+0.5);
+    ctx.lineTo(ox+r*0.16,oy-r*0.08); ctx.lineTo(ox+r*0.44,oy+r*0.3); ctx.stroke();
+    ctx.strokeStyle='rgba(255,215,120,'+(0.95*pulse).toFixed(2)+')'; ctx.lineWidth=1.1;
+    ctx.beginPath(); ctx.moveTo(ox-r*0.42,oy-r*0.3); ctx.lineTo(ox-r*0.1,oy+0.5);
+    ctx.lineTo(ox+r*0.16,oy-r*0.08); ctx.lineTo(ox+r*0.44,oy+r*0.3); ctx.stroke();
+  }
+  ctx.shadowBlur=0;
+  /* ember core where the seams cross */
+  ctx.fillStyle='rgba(255,150,40,'+pulse.toFixed(2)+')';
+  ctx.shadowColor='#ff7a2e'; ctx.shadowBlur=9*pulse;
+  ctx.beginPath(); ctx.arc((hs(seed+5)-0.5)*r*0.5,(hs(seed+9)-0.5)*r*0.4,2.3,0,7); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(255,240,200,'+pulse.toFixed(2)+')';
+  ctx.beginPath(); ctx.arc((hs(seed+5)-0.5)*r*0.5,(hs(seed+9)-0.5)*r*0.4,1,0,7); ctx.fill();
+  ctx.restore();
+}
+function drawWright(px,py,s,main,accent,mood,lookX,celebrate){
+  /* CHAR-SWEEP 2026-11-22: VAX / RUST rebuilt as a sprite-stacked armoured
+     medic-engineer — angular torso + helm silhouettes painted in slices
+     (dark core -> mid -> lit top), dark-steel helm with a glowing visor
+     whose eyes track the capsule, two-tier pauldrons, shaded tube arms with
+     angular gauntlets, plated legs + boots, medic cross core, rim light in
+     the accent. Ground shadow stays planted while the body bobs/breathes. */
+  const bob=Math.sin(frame/10+px)*2, jump=celebrate? -Math.abs(Math.sin(frame/6))*10 : 0;
+  const breathe=1+Math.sin(frame/14+px)*0.015;
+  ctx.save();
+  ctx.translate(px,py);
+  /* ground shadow + accent glow pool: grounded, never bobs with the body */
+  ctx.fillStyle='rgba(0,0,0,0.45)';
+  ctx.beginPath(); ctx.ellipse(0,s*0.99,s*0.44,s*0.07,0,0,7); ctx.fill();
+  ctx.fillStyle=accent; ctx.globalAlpha=0.13+Math.sin(frame/12+px)*0.03;
+  ctx.beginPath(); ctx.ellipse(0,s*0.99,s*0.52,s*0.09,0,0,7); ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.translate(0,bob+jump);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  /* shaded tube limb: dark under-stroke, mid colour, top highlight */
+  const limb=(x0,y0,x1,y1,x2,y2,w,col)=>{
+    ctx.strokeStyle=shade(col,0.35); ctx.lineWidth=w;
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.strokeStyle=shade(col,0.75); ctx.lineWidth=Math.max(3,w-4);
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.22)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x0-1.5,y0-2); ctx.lineTo(x1-1.5,y1-2); ctx.lineTo(x2-1.5,y2-2); ctx.stroke();
+  };
+  /* angular gauntlet block at a hand point */
+  const gauntlet=(hx,hy,r,col)=>{
+    const gg=ctx.createLinearGradient(hx,hy-r,hx,hy+r);
+    gg.addColorStop(0,shade(col,1.15)); gg.addColorStop(0.55,shade(col,0.8)); gg.addColorStop(1,shade(col,0.35));
+    ctx.fillStyle=gg; ctx.beginPath();
+    ctx.moveTo(hx-r*0.7,hy-r*0.85); ctx.lineTo(hx+r*1.05,hy-r*0.55); ctx.lineTo(hx+r*1.25,hy);
+    ctx.lineTo(hx+r*1.05,hy+r*0.55); ctx.lineTo(hx-r*0.7,hy+r*0.85); ctx.lineTo(hx-r*1.02,hy);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=1.6; ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(hx+r*0.5,hy-r*0.5); ctx.lineTo(hx+r*1.08,hy); ctx.lineTo(hx+r*0.5,hy+r*0.5); ctx.stroke();
+  };
+  /* ---- legs: plated shins + armoured boots ---- */
+  for(const sgn of [-1,1]){
+    const hx2=sgn*s*0.15, kx=sgn*s*0.17, fx2=sgn*s*0.18;
+    limb(hx2,s*0.58,kx,s*0.78,fx2,s*0.93,s*0.13,main);
+    /* shin plate */
+    const pg=ctx.createLinearGradient(kx-s*0.07,0,kx+s*0.07,0);
+    pg.addColorStop(0,shade(main,0.95)); pg.addColorStop(1,shade(main,0.3));
+    ctx.fillStyle=pg; ctx.beginPath();
+    ctx.moveTo(kx-s*0.075,s*0.72); ctx.lineTo(kx+s*0.075,s*0.72);
+    ctx.lineTo(fx2+s*0.055,s*0.92); ctx.lineTo(fx2-s*0.055,s*0.92); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=1.4; ctx.stroke();
+    /* ankle cuff in the accent */
+    ctx.strokeStyle=accent; ctx.lineWidth=2.6;
+    ctx.beginPath(); ctx.arc(fx2,s*0.9,s*0.075,0,7); ctx.stroke();
+    /* boot: heel block + toe, lit top */
+    ctx.fillStyle=shade(main,0.4);
+    ctx.beginPath(); ctx.ellipse(fx2+sgn*s*0.03,s*0.965,s*0.11,s*0.045,0,0,7); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.25)';
+    ctx.beginPath(); ctx.ellipse(fx2+sgn*s*0.03,s*0.945,s*0.075,s*0.02,0,0,7); ctx.fill();
+  }
+  /* ---- back gear: medic pack behind the left shoulder ---- */
+  ctx.fillStyle=shade(main,0.3); rr(-s*0.58,-s*0.02,s*0.17,s*0.42,s*0.04); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=1.4; rr(-s*0.58,-s*0.02,s*0.17,s*0.42,s*0.04); ctx.stroke();
+  ctx.fillStyle=accent; ctx.globalAlpha=0.9;
+  ctx.fillRect(-s*0.515,s*0.1,s*0.045,s*0.16); ctx.fillRect(-s*0.557,s*0.155,s*0.13,s*0.045);
+  ctx.globalAlpha=1;
+  /* ---- torso: angular silhouette, stacked slices -> lit top ---- */
+  const torso=()=>{ ctx.beginPath();
+    ctx.moveTo(-s*0.42*breathe,-s*0.04); ctx.lineTo(s*0.42*breathe,-s*0.04);
+    ctx.lineTo(s*0.31,s*0.6); ctx.lineTo(-s*0.31,s*0.6); ctx.closePath(); };
+  const tTones=[0.14,0.26,0.42,0.6];
+  for(let k=4;k>=1;k--){ ctx.save(); ctx.translate(0,k*1.7);
+    ctx.fillStyle=shade(main,tTones[4-k]); torso(); ctx.fill(); ctx.restore(); }
+  const tg=ctx.createLinearGradient(0,-s*0.04,0,s*0.6);
+  tg.addColorStop(0,shade(main,1.2)); tg.addColorStop(0.45,shade(main,0.9)); tg.addColorStop(1,shade(main,0.32));
+  ctx.fillStyle=tg; torso(); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.20)'; ctx.save(); torso(); ctx.clip(); ctx.fillRect(-s*0.45,-s*0.04,s*0.34,s*0.66); ctx.restore();
+  ctx.strokeStyle='rgba(0,0,0,0.55)'; ctx.lineWidth=1.8; torso(); ctx.stroke();
+  /* segmented ab plates + centre seam */
+  ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=1.8;
+  for(let i=0;i<2;i++){ const ay=s*(0.36+i*0.11), aw=s*(0.3-i*0.03)*breathe;
+    ctx.beginPath(); ctx.moveTo(-aw,ay); ctx.lineTo(aw,ay); ctx.stroke(); }
+  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(-s*0.016,s*0.2,s*0.032,s*0.36);
+  /* chest panel: dark inset, medic cross core + status lights */
+  ctx.fillStyle='rgba(3,12,9,0.9)'; rr(-s*0.21,s*0.08,s*0.42,s*0.24,4); ctx.fill();
+  ctx.strokeStyle=shade(accent,0.8); ctx.lineWidth=1.2; rr(-s*0.21,s*0.08,s*0.42,s*0.24,4); ctx.stroke();
+  ctx.fillStyle=accent; ctx.shadowColor=accent; ctx.shadowBlur=8;
+  ctx.fillRect(-s*0.018,s*0.115,s*0.036,s*0.11); ctx.fillRect(-s*0.055,s*0.152,s*0.11,s*0.036);
+  ctx.shadowBlur=0;
+  for(let i=0;i<3;i++){
+    ctx.fillStyle=(frame>>4)%3===i? accent : 'rgba(255,255,255,0.28)';
+    ctx.beginPath(); ctx.arc(-s*0.13+i*s*0.13,s*0.275,2.6,0,7); ctx.fill();
+  }
+  /* belt + buckle */
+  ctx.strokeStyle=shade(main,0.4); ctx.lineWidth=s*0.05;
+  ctx.beginPath(); ctx.moveTo(-s*0.3,s*0.585); ctx.lineTo(s*0.3,s*0.585); ctx.stroke();
+  ctx.fillStyle=accent; ctx.beginPath(); ctx.arc(0,s*0.585,3.4,0,7); ctx.fill();
+  /* ---- pauldrons: two-tier, dark steel shell over colour plate ---- */
+  for(const sgn of [-1,1]){
+    const px2=sgn*s*0.42*breathe, py2=s*0.03, pr=s*0.135;
+    const og=ctx.createLinearGradient(px2-pr,py2-pr,px2+pr,py2+pr);
+    og.addColorStop(0,'#39424f'); og.addColorStop(1,'#05070a');
+    ctx.fillStyle=og; ctx.beginPath(); ctx.arc(px2,py2,pr+3,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=1.8; ctx.stroke();
+    const pg2=ctx.createLinearGradient(px2-pr,py2-pr,px2+pr,py2+pr);
+    pg2.addColorStop(0,shade(main,1.2)); pg2.addColorStop(1,shade(main,0.45));
+    ctx.fillStyle=pg2; ctx.beginPath(); ctx.arc(px2,py2,pr,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.arc(px2,py2,pr-2.5,Math.PI*1.05,Math.PI*1.7); ctx.stroke();
+    ctx.fillStyle=shade(main,0.3); ctx.beginPath(); ctx.arc(px2,py2,2.2,0,7); ctx.fill();
+  }
+  /* ---- arms: shaded tubes + gauntlets (right arm up when celebrating) ---- */
+  const sway=Math.sin(frame/11+px)*s*0.012;
+  limb(-s*0.42,s*0.1,-s*0.55,s*0.3,-s*0.57,s*0.48+sway,s*0.11,main);
+  gauntlet(-s*0.57,s*0.48+sway,s*0.075,accent);
+  if(celebrate){ limb(s*0.42,s*0.1,s*0.58,s*0.05,s*0.62,-s*0.28,s*0.11,main); gauntlet(s*0.62,-s*0.28,s*0.075,accent); }
+  else { limb(s*0.42,s*0.1,s*0.55,s*0.3,s*0.57,s*0.48-sway,s*0.11,main); gauntlet(s*0.57,s*0.48-sway,s*0.075,accent); }
+  /* ---- head: stacked angular helm, dark steel + accent visor ---- */
+  const hx=0, hy=-s*0.3+Math.sin(frame/9+px)*1.2, hr=s*0.335;
+  const helm=()=>{ ctx.beginPath();
+    ctx.moveTo(hx-hr*0.92,hy+hr*0.55); ctx.lineTo(hx-hr*0.98,hy-hr*0.18);
+    ctx.lineTo(hx-hr*0.55,hy-hr*0.8); ctx.lineTo(hx,hy-hr*1.0); ctx.lineTo(hx+hr*0.55,hy-hr*0.8);
+    ctx.lineTo(hx+hr*0.98,hy-hr*0.18); ctx.lineTo(hx+hr*0.92,hy+hr*0.55);
+    ctx.lineTo(hx+hr*0.5,hy+hr*0.92); ctx.lineTo(hx-hr*0.5,hy+hr*0.92); ctx.closePath(); };
+  const hTones=[0.1,0.18,0.3,0.45];
+  for(let k=4;k>=1;k--){ ctx.save(); ctx.translate(0,k*1.5);
+    ctx.fillStyle=shade(main,hTones[4-k]); helm(); ctx.fill(); ctx.restore(); }
+  const hg=ctx.createLinearGradient(hx-hr,hy-hr,hx+hr,hy+hr);
+  hg.addColorStop(0,'#39434f'); hg.addColorStop(0.5,'#11161d'); hg.addColorStop(1,'#04060a');
+  ctx.fillStyle=hg; helm(); ctx.fill();
+  ctx.strokeStyle=accent; ctx.lineWidth=2.2; helm(); ctx.stroke();
+  /* crown band in the bot's main colour + lit top edge */
+  ctx.strokeStyle=main; ctx.lineWidth=s*0.045;
+  ctx.beginPath(); ctx.moveTo(hx-hr*0.6,hy-hr*0.74); ctx.lineTo(hx,hy-hr*0.97); ctx.lineTo(hx+hr*0.6,hy-hr*0.74); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(hx-hr*0.55,hy-hr*0.78); ctx.lineTo(hx,hy-hr*1.0); ctx.stroke();
+  /* ear discs */
+  for(const sgn of [-1,1]){
+    ctx.fillStyle=shade(main,0.5); ctx.beginPath(); ctx.arc(hx+sgn*hr*0.97,hy+hr*0.1,s*0.045,0,7); ctx.fill();
+    ctx.fillStyle=accent; ctx.beginPath(); ctx.arc(hx+sgn*hr*0.97,hy+hr*0.1,s*0.02,0,7); ctx.fill();
+  }
+  /* antenna + beacon */
+  ctx.strokeStyle='#cfe8dd'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(hx+hr*0.3,hy-hr*0.85); ctx.lineTo(hx+hr*0.38,hy-hr*1.22); ctx.stroke();
+  ctx.fillStyle=accent; ctx.shadowColor=accent; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.arc(hx+hr*0.38,hy-hr*1.26,3.6,0,7); ctx.fill(); ctx.shadowBlur=0;
+  /* visor: angular dark faceplate, glowing eyes that track the capsule */
+  ctx.fillStyle=shade(accent,0.22);
+  ctx.beginPath();
+  ctx.moveTo(hx-hr*0.8,hy-hr*0.22); ctx.lineTo(hx+hr*0.8,hy-hr*0.22);
+  ctx.lineTo(hx+hr*0.66,hy+hr*0.34); ctx.lineTo(hx-hr*0.66,hy+hr*0.34); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.strokeStyle=accent; ctx.globalAlpha=0.6; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.moveTo(hx-hr*0.74,hy-hr*0.22); ctx.lineTo(hx+hr*0.74,hy-hr*0.22); ctx.stroke();
+  ctx.globalAlpha=1;
+  const lx=clamp(lookX,-1,1)*s*0.03, ey=hy+hr*0.02;
+  const eyeGlow=(ex,er)=>{
+    ctx.fillStyle=accent; ctx.shadowColor=accent; ctx.shadowBlur=11;
+    ctx.beginPath(); ctx.arc(ex,ey,er,0,7); ctx.fill(); ctx.shadowBlur=0;
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(ex+er*0.25,ey-er*0.25,er*0.42,0,7); ctx.fill();
+  };
+  if(mood==='happy'){
+    ctx.strokeStyle=accent; ctx.lineWidth=3; ctx.shadowColor=accent; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(hx-s*0.12+lx,ey+s*0.03,s*0.055,Math.PI,0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(hx+s*0.12+lx,ey+s*0.03,s*0.055,Math.PI,0); ctx.stroke();
+    ctx.shadowBlur=0;
+  } else if(mood==='worried'){
+    ctx.fillStyle=accent; ctx.shadowColor=accent; ctx.shadowBlur=9;
+    ctx.beginPath(); ctx.moveTo(hx-s*0.17+lx,ey-s*0.03); ctx.lineTo(hx-s*0.06+lx,ey+s*0.01); ctx.lineTo(hx-s*0.17+lx,ey+s*0.045); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(hx+s*0.17+lx,ey-s*0.03); ctx.lineTo(hx+s*0.06+lx,ey+s*0.01); ctx.lineTo(hx+s*0.17+lx,ey+s*0.045); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur=0;
+  } else {
+    eyeGlow(hx-s*0.12+lx,s*0.052); eyeGlow(hx+s*0.12+lx,s*0.052);
+  }
+  /* chin plate + mouth grille / worried line */
+  ctx.fillStyle=shade(main,0.45);
+  ctx.beginPath(); ctx.moveTo(hx-s*0.07,hy+hr*0.62); ctx.lineTo(hx+s*0.07,hy+hr*0.62);
+  ctx.lineTo(hx+s*0.04,hy+hr*0.86); ctx.lineTo(hx-s*0.04,hy+hr*0.86); ctx.closePath(); ctx.fill();
+  if(mood==='worried'){
+    ctx.strokeStyle=accent; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(hx-s*0.07,hy+hr*0.52);
+    ctx.quadraticCurveTo(hx,hy+hr*0.44,hx+s*0.07,hy+hr*0.52); ctx.stroke();
+  } else {
+    ctx.fillStyle='rgba(255,255,255,0.55)';
+    for(let i=-1;i<=1;i++) ctx.fillRect(hx+i*s*0.045-1.2,hy+hr*0.48,2.4,s*0.045);
+  }
+  /* ---- rim light: accent edge down the right silhouette ---- */
+  ctx.strokeStyle=accent; ctx.shadowColor=accent; ctx.shadowBlur=5; ctx.lineWidth=2.6;
+  ctx.beginPath(); ctx.moveTo(s*0.42*breathe,-s*0.02); ctx.lineTo(s*0.31,s*0.58); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(hx+hr*0.55,hy-hr*0.8); ctx.lineTo(hx+hr*0.97,hy-hr*0.15); ctx.lineTo(hx+hr*0.9,hy+hr*0.5); ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(-s*0.42*breathe,-s*0.02); ctx.lineTo(-s*0.31,s*0.58); ctx.stroke();
+  ctx.restore();
+}
+function ghostPlacement(jar){
+  /* deterministic best landing for the hint ghost (no persona noise) */
+  let best=null, bestScore=-1e9;
+  for(let rot=0;rot<4;rot++) for(let col=0;col<COLS;col++){
+    const s=simulatePlacement(jar,rot,col); if(!s) continue;
+    const score=s.hits*100 + s.bots*800 - s.holes*30 - s.top*8;
+    if(score>bestScore){ bestScore=score; best=s; }
+  }
+  if(!best) return null;
+  const test={x:best.col,y:0,rot:best.rot,c1:jar.capsule.c1,c2:jar.capsule.c2};
+  while(canPlaceOn(jar.grid.map(r=>r.slice()),test.x,test.y+1,test.rot)) test.y++;
+  return {cells:capCells(test)};
+}
+function drawJar(jar){
+  const pos=jarPos(jar), cell=pos.cell;
+  const x=pos.x, y=pos.y;
+  /* label + score */
+  ctx.textAlign='left'; ctx.font='bold 13px "Share Tech Mono"';
+  ctx.fillStyle=jar.color;
+  ctx.fillText(jar.name+'  ·  '+jar.score.toLocaleString(), x, y-26);
+  ctx.textAlign='right'; ctx.fillStyle='#ffd75e';
+  ctx.fillText('BOTS '+jar.botsLeft, x+pos.w, y-26);
+  ctx.textAlign='left';
+  /* next preview */
+  ctx.fillStyle='#5d6b82'; ctx.font='11px "Share Tech Mono"';
+  ctx.fillText('NEXT', x+pos.w+8, y+12);
+  drawPill(x+pos.w+8, y+18, 16, jar.next.c1, false);
+  drawPill(x+pos.w+8, y+36, 16, jar.next.c2, false);
+  if(jar.incoming>0){
+    ctx.fillStyle='#ff3860'; ctx.font='bold 12px "Share Tech Mono"';
+    ctx.fillText('⚠ SLAG x'+jar.incoming, x, y-8);
+  }
+  /* glass frame */
+  ctx.save();
+  ctx.fillStyle='rgba(2,12,10,0.78)';
+  ctx.fillRect(x-4,y-4,pos.w+8,pos.h+8);
+  ctx.strokeStyle='rgba(0,255,136,0.45)'; ctx.lineWidth=2;
+  ctx.strokeRect(x-4,y-4,pos.w+8,pos.h+8);
+  ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x+10,y-4); ctx.lineTo(x+10,y+pos.h+4); ctx.stroke();
+  /* grid */
+  ctx.strokeStyle='rgba(255,255,255,0.05)';
+  for(let gx=1;gx<COLS;gx++){ ctx.beginPath(); ctx.moveTo(x+gx*cell,y); ctx.lineTo(x+gx*cell,y+pos.h); ctx.stroke(); }
+  for(let gy=1;gy<ROWS;gy++){ ctx.beginPath(); ctx.moveTo(x,y+gy*cell); ctx.lineTo(x+pos.w,y+gy*cell); ctx.stroke(); }
+  /* cells */
+  for(let gy=0;gy<ROWS;gy++) for(let gx=0;gx<COLS;gx++){
+    const c=jar.grid[gy][gx]; if(!c) continue;
+    const px=x+gx*cell, py=y+gy*cell;
+    if(c.t==='cap') drawPill(px,py,cell,c.c,false);
+    else if(c.t==='bot') drawGlitchBot(px,py,cell,c.c,c.id||0);
+    else if(c.t==='slag') drawSlag(px,py,cell);
+  }
+  /* ghost hint */
+  if(hint && !jar.isBot && jar.capsule && !jar.capsule.slag){
+    const gh=ghostPlacement(jar);
+    if(gh) for(const c of gh.cells){
+      ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.setLineDash([4,3]); ctx.lineWidth=1.5;
+      ctx.strokeRect(x+c.x*cell+3, y+c.y*cell+3, cell-6, cell-6);
+      ctx.setLineDash([]);
+    }
+  }
+  /* active capsule */
+  const cap=jar.capsule;
+  if(cap){
+    /* landing guide */
+    ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x+cap.x*cell+cell/2, y); ctx.lineTo(x+cap.x*cell+cell/2, y+pos.h); ctx.stroke();
+    for(const c of capCells(cap)){
+      if(c.y<0) continue;
+      if(cap.slag) drawSlag(x+c.x*cell, y+c.y*cell, cell);
+      else drawPill(x+c.x*cell, y+c.y*cell, cell, c.c, true);
+    }
+  }
+  ctx.restore();
+  /* jar base glow */
+  ctx.fillStyle='rgba(0,255,136,0.25)';
+  ctx.fillRect(x-4, y+pos.h+4, pos.w+8, 3);
+}
+function draw(){
+  drawBackground();
+  /* solo side panel */
+  if(mode==='solo' && jars[0]){
+    const j=jars[0];
+    ctx.textAlign='left';
+    ctx.fillStyle='#5d6b82'; ctx.font='11px "Share Tech Mono"';
+    ctx.fillText('SCORE', 56, 120);
+    ctx.fillStyle='#fff'; ctx.font='900 30px Orbitron';
+    ctx.fillText(j.score.toLocaleString(), 56, 152);
+    ctx.fillStyle='#5d6b82'; ctx.font='11px "Share Tech Mono"';
+    ctx.fillText('LEVEL', 56, 190);
+    ctx.fillStyle='#00f0ff'; ctx.font='900 22px Orbitron';
+    ctx.fillText(''+level, 56, 216);
+    ctx.fillStyle='#5d6b82'; ctx.font='11px "Share Tech Mono"';
+    ctx.fillText('GLITCH-BOTS LEFT', 56, 254);
+    ctx.fillStyle='#ffd75e'; ctx.font='900 22px Orbitron';
+    ctx.fillText(''+j.botsLeft, 56, 280);
+    ctx.fillStyle='#5d6b82'; ctx.font='11px "Share Tech Mono"';
+    ctx.fillText('BEST CHAIN', 56, 318);
+    ctx.fillStyle='#ff5db1'; ctx.font='900 22px Orbitron';
+    ctx.fillText('x'+Math.max(1,j.maxChain), 56, 344);
+    ctx.fillStyle='#5d6b82'; ctx.font='12px "Share Tech Mono"';
+    ctx.fillText('BLIP · ZORP · GLEEK', 56, 400);
+    ctx.fillStyle='#c6d2e4'; ctx.font='12px "Share Tech Mono"';
+    ctx.fillText('match 4+ of a colour', 56, 420);
+    ctx.fillText('to clear the bots.', 56, 438);
+    /* VAX the wright-bot, watching the jar */
+    const lookX=j.capsule? clamp((j.capsule.x-3.5)/3.5,-1,1) : 0;
+    const mood=j.maxChain>=2?'happy':(topHeight(j.grid)<4?'worried':'idle');
+    drawWright(700, 470, 120, '#00ff88', '#00f0ff', mood, lookX, j.maxChain>=2 && j.clearT<0);
+    ctx.textAlign='center'; ctx.fillStyle='#00ff88'; ctx.font='bold 13px "Share Tech Mono"';
+    ctx.fillText('VAX · WRIGHT-BOT', 700, 356);
+    ctx.fillStyle='#5d6b82'; ctx.font='11px "Share Tech Mono"';
+    ctx.fillText('"drop it clean, chief."', 700, 374);
+  }
+  if(mode!=='solo' && jars.length===2){
+    /* versus / watch: a wright-bot beside each jar */
+    const lookA=jars[0].capsule? clamp((jars[0].capsule.x-3.5)/3.5,-1,1) : 0;
+    const lookB=jars[1].capsule? clamp((jars[1].capsule.x-3.5)/3.5,-1,1) : 0;
+    drawWright(80, 470, 110, '#00ff88', '#00f0ff',
+      jars[0].maxChain>=2?'happy':(topHeight(jars[0].grid)<4?'worried':'idle'), lookA, jars[0].maxChain>=2);
+    drawWright(880, 470, 110, '#ff3860', '#ffd75e',
+      jars[1].maxChain>=2?'happy':(topHeight(jars[1].grid)<4?'worried':'idle'), -lookB, jars[1].maxChain>=2);
+    ctx.textAlign='center'; ctx.fillStyle='#00ff88'; ctx.font='bold 12px "Share Tech Mono"';
+    ctx.fillText(jars[0].name+' · WRIGHT-BOT', 80, 366);
+    ctx.fillStyle='#ff3860';
+    ctx.fillText(jars[1].name+' · RUST-BOT', 880, 366);
+    /* versus score strip */
+    ctx.fillStyle='#fff'; ctx.font='900 20px Orbitron'; ctx.textAlign='center';
+    ctx.fillText(jars[0].score.toLocaleString()+'  —  '+jars[1].score.toLocaleString(), W/2, 56);
+    ctx.fillStyle='#5d6b82'; ctx.font='11px "Share Tech Mono"';
+    ctx.fillText(mode==='watch'?'WATCH · BOT vs BOT':'VERSUS · FIRST JAR CLEAR WINS', W/2, 76);
+  }
+  for(const j of jars) drawJar(j);
+  /* popups */
+  ctx.textAlign='center';
+  for(const p of popups){
+    ctx.fillStyle=p.color; ctx.font='900 18px Orbitron';
+    ctx.globalAlpha=clamp(p.t/40,0,1);
+    ctx.fillText(p.text, p.x, p.y-(70-p.t)*0.6);
+    ctx.globalAlpha=1;
+  }
+  /* banners */
+  if(chainBannerT>0){
+    ctx.textAlign='center'; ctx.fillStyle='#ffd75e'; ctx.font='900 30px Orbitron';
+    ctx.shadowColor='#ffd75e'; ctx.shadowBlur=18;
+    ctx.fillText(chainBanner, W/2, 300); ctx.shadowBlur=0;
+  }
+  if(bannerT>0 && banner){
+    ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,H/2-40,W,58);
+    ctx.textAlign='center'; ctx.fillStyle='#fff'; ctx.font='900 26px Orbitron';
+    ctx.fillText(banner, W/2, H/2-6);
+  }
+  if(phase==='over'){
+    ctx.fillStyle='rgba(0,0,0,0.62)'; ctx.fillRect(0,0,W,H);
+    ctx.textAlign='center';
+    ctx.fillStyle= mode==='solo'?'#ff3860':'#ffd75e'; ctx.font='900 38px Orbitron';
+    ctx.fillText(mode==='solo'?'TOP OUT!':(winner? winner+' WINS':'DRAW'), W/2, H/2-10);
+    ctx.fillStyle='#fff'; ctx.font='15px "Share Tech Mono"';
+    ctx.fillText(mode==='solo'?('final score '+jars[0].score.toLocaleString()+' · level '+level+' · press R to play again')
+      :(mode==='watch'?'rematch in a moment…':'press R for a rematch'), W/2, H/2+24);
+  }
+  if(phase==='ready'){
+    ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,W,H);
+    ctx.textAlign='center';
+    ctx.fillStyle='#fff'; ctx.font='900 44px Orbitron';
+    ctx.fillText('CAPSULE CLASH', W/2, H/2-18);
+    ctx.fillStyle='#ff5db1'; ctx.font='15px "Share Tech Mono"';
+    ctx.fillText('pick a mode — or WATCH two bots duel', W/2, H/2+14);
+  }
+}
+function loop(){ frame++; step(); draw(); requestAnimationFrame(loop); }
+
+/* ---------------- mode buttons ---------------- */
+document.getElementById('btnSolo').onclick=()=>{ startSolo(); };
+document.getElementById('btnVersus').onclick=()=>{ startVersus(); };
+document.getElementById('btnWatch').onclick=()=>{ startWatch(); };
+document.getElementById('btnHint').onclick=()=>{ toggleHint(); };
+document.getElementById('btnPause').onclick=()=>{ togglePause(); };
+document.getElementById('btnFs').onclick=()=>{ toggleFullscreen(); };
+document.getElementById('resumeBtn').onclick=()=>{ togglePause(); };
+document.getElementById('saveBtn').onclick=()=>{ if(saveState()) setMsg('State saved — load it back from the pause menu.'); };
+document.getElementById('loadBtn').onclick=()=>{ if(!loadState()) setMsg('No saved state yet.'); };
+document.getElementById('restartBtn').onclick=()=>{ paused=false; showPauseOverlay(false); restartCurrent(); };
+document.getElementById('quitArcadeBtn').onclick=()=>{ location.href='../arcade.html'; };
+document.getElementById('startBtn').onclick=()=>{ togglePause(); };
+document.getElementById('selectBtn').onclick=()=>{ toggleHint(); };
+const q=new URLSearchParams(location.search);
+if(q.get('auto')==='watch'){ startWatch(); }
+if(q.get('auto')==='play'){ startSolo(); }
+if(q.get('auto')==='versus'){ startVersus(); }
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+refreshModeBtns();
+window.__capsuleclash={get state(){return {phase,paused,mode,level,winner,hint,frame,fs:isFullscreen(),
+  engine:!!FE, agents:jars.map(j=>j.engineAgent?j.engineAgent.id:null),
+  traces:jars.map(j=>j.engineTraces.length),
+  jars:jars.map(j=>({name:j.name,score:j.score,botsLeft:j.botsLeft,level:j.level,over:j.over,
+    incoming:j.incoming,placed:j.placed,cleared:j.cleared,maxChain:j.maxChain,chain:j.chain,
+    capsule:j.capsule?{x:j.capsule.x,y:j.capsule.y,rot:j.capsule.rot,c1:j.capsule.c1,c2:j.capsule.c2,slag:!!j.capsule.slag}:null,
+    next:j.next,
+    grid:j.grid.map(r=>r.map(c=>c?{t:c.t,c:c.c}:null))}))};},
+ reset(){ phase='ready'; paused=false; jars=[]; level=1; winner=null; banner=''; bannerT=0; popups=[]; },
+ startSolo, startVersus, startWatch, togglePause, saveState, loadState, toggleFullscreen, isFullscreen,
+ debugKey(code,on){ keys[code]=!!on; if(on) handleKeyDown(code); },
+ debugSetCell(ji,x,y,type,color){
+   const j=jars[ji]; if(!j) return;
+   j.grid[y][x]= type? {t:type,c:color,id:900+ji*10+x} : null;
+   j.botsLeft=countBots(j);
+ },
+ debugPlaceCapsule(ji,x,y,rot,c1,c2){
+   const j=jars[ji]; if(!j) return;
+   j.capsule={x,y,rot,c1,c2}; j.fallT=0;
+ },
+ debugLock(ji){ const j=jars[ji]; if(j) lockCapsule(j, jars[1-ji]||null); },
+ debugSendGarbage(ji,n){ const j=jars[ji]; if(j) j.incoming+=n; },
+ debugTopOut(ji){ const j=jars[ji]; if(!j) return;
+   /* fill the spawn rows with slag — blocks the spawn, never matches away */
+   for(let y=0;y<3;y++) for(let x=0;x<COLS;x++) j.grid[y][x]={t:'slag',c:null,id:999}; },
+};
+loop();
+</script>
+</body>
+</html>

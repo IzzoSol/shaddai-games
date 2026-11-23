@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DASH CLIMBER — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#04120c;--panel:#071a12;--border:rgba(0,255,136,.22);--gold:#ffd75e;--green:#00ff88;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#dff5e6;--dim:#7ba894}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.10),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(4,18,12,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .roomBtn{flex:0 0 auto;min-width:0;padding:7px 10px;font-size:11px}
+  .roomBtn.locked{opacity:.35}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(4,18,12,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#071a12;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .abtns button{width:52px;height:52px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>DASH<span>CLIMBER</span></h1><span class="tag">Kip climbs the Shatterpeak · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="544"></canvas>
+      <div id="pauseOverlay"><div class="card"><h2>PAUSED</h2><p id="pauseText">The mountain waits.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart room</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="msg">KIP the courier-bot climbs the Shatterpeak. One dash per leap — spend it well.</div>
+    <div class="row">
+      <button class="mbtn" id="btnSolo">🧗 Climb<small>1P — 12 rooms, 3 bands</small></button>
+      <button class="mbtn" id="btnWatch">🤖 Watch race<small>ZEROX vs TURTLE — bot speedrun</small></button>
+      <button class="mbtn" id="btnCam">🎥 Climber-cam<small>V — zoomed follow cam</small></button>
+      <button class="mbtn" id="btnPause">⏸ Pause<small>P — save / load in menu</small></button>
+    </div>
+    <div class="row" id="roomRow"></div>
+    <div class="help">
+      <b>Controls:</b> <span class="k">← → / A D</span> run, <span class="k">Z / K / SPACE</span> jump, <span class="k">X / J / SHIFT</span> dash (8-way — hold a direction), <span class="k">↑ ↓</span> aim the dash up / down. Slide down walls and press jump to wall-jump. Spikes end the run back at the room start; springs bounce; dash crystals refill your dash; grab the sparks. <span class="k">V</span> toggles climber-cam, <span class="k">P</span> pauses, <span class="k">M</span> mutes, <span class="k">R</span> restarts the room.<br/>
+      📱 <b>Handheld shell:</b> on phones the game sits in its own console: D-pad to run and aim the dash, <span class="k">A</span> jumps, <span class="k">B</span> dashes, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles climber-cam.<br/>
+      <b>Clean-room note:</b> dash-climb mechanics follow the documented behaviour of the classic PICO-8 dash platformer (spec lane — read as text only, rewritten here in our own code). The mountain, the rooms, KIP and every line of art are original.
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c" tabindex="-1"></button><button id="dUp" title="Up — aim dash up">▲</button><button class="c" tabindex="-1"></button>
+        <button id="dLeft" title="Left">◀</button><button class="c" tabindex="-1"></button><button id="dRight" title="Right">▶</button>
+        <button class="c" tabindex="-1"></button><button id="dDown" title="Down — aim dash down">▼</button><button class="c" tabindex="-1"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="START — pause menu">START</button>
+        <button id="selectBtn" title="SELECT — climber-cam">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — dash">B</button>
+        <button id="btnA" title="A — jump">A</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* DASH CLIMBER — original IP. KIP the courier-bot climbs the 12-room Shatterpeak.
+   Mechanics follow the documented behaviour of the classic PICO-8 dash platformer
+   (SPEC LANE: read as text/docs only, rewritten here in our own JS — no code, art,
+   names or levels copied). Rooms, characters, art and story are all original. */
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var W=960, H=544, TILE=32, COLS=30, ROWS=17;
+var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+
+/* ---------- rooms: '#' solid, '^' spikes, 'S' spring, 'C' dash crystal,
+   '*' spark, 'D' door, 'P' player start. 30 cols x 17 rows each. ---------- */
+var ROOMS=[
+{name:'FIRST STEPS',band:0,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                *           #',
+'#              #####         #',
+'#    *           D           #',
+'#  #####      #####          #',
+'# P                          #',
+'##############################']},
+{name:'SPRING HOLLOW',band:0,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#              *             #',
+'#            #####           #',
+'#                            #',
+'#     *       C              #',
+'#   #####   #####     D      #',
+'# P                 #####    #',
+'#           #####            #',
+'#                 S          #',
+'##############################']},
+{name:'CRYSTAL GAP',band:0,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#          *                 #',
+'#        #####               #',
+'#                            #',
+'#    *        C        D     #',
+'#  #####    #####   #####    #',
+'# P                          #',
+'#        ^^^^^^^             #',
+'#      ###########           #',
+'#                            #',
+'##############################']},
+{name:'SPIKEWALL CLIMB',band:0,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                      D     #',
+'#                    #####   #',
+'#                            #',
+'#             *              #',
+'#           #####      #     #',
+'#                      #     #',
+'#    *         C       #     #',
+'#  #####     #####     #     #',
+'# P                    #     #',
+'#        ^^^           #     #',
+'#      #######         #     #',
+'#                      #     #',
+'#                      #     #',
+'##############################']},
+{name:'FROZEN STEPS',band:1,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                   *        #',
+'#                 #####      #',
+'#                            #',
+'#        *        C          #',
+'#      #####    #####       D#',
+'# P                       ####',
+'#      ^^^^^                 #',
+'#    #########               #',
+'##############################']},
+{name:'THE SHAFT',band:1,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#               D            #',
+'#             #####          #',
+'#                            #',
+'#        *                   #',
+'#      #####          #      #',
+'#                      #     #',
+'#    *       C         #     #',
+'#  #####   #####       #     #',
+'# P                     #    #',
+'#                #      #    #',
+'#                #           #',
+'#                #      #    #',
+'#                #           #',
+'##############################']},
+{name:'DOUBLE DASH',band:1,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                 *          #',
+'#               #####        #',
+'#                            #',
+'#      *      C       C    D #',
+'#    #####  #####   ##### ####',
+'# P                          #',
+'#          ^^^^^^^           #',
+'#        ###########         #',
+'#                            #',
+'##############################']},
+{name:'SPIKE GARDEN',band:1,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                       D    #',
+'#                     #####  #',
+'#                            #',
+'#        *          *        #',
+'#      #####      #####      #',
+'#                            #',
+'#    *      C                #',
+'#  #####  #####    ###       #',
+'# P             ^^^^^        #',
+'#           ##########       #',
+'#                            #',
+'##############################']},
+{name:'WINDY RIDGE',band:2,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                  *         #',
+'#                #####       #',
+'#                            #',
+'#     *       C          D   #',
+'#   #####   #####     #####  #',
+'# P                          #',
+'#         ^^^^^^^            #',
+'#       ###########          #',
+'#                            #',
+'##############################']},
+{name:'THE CHIMNEY',band:2,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#              D             #',
+'#            #####           #',
+'#                            #',
+'#        *                   #',
+'#      #####        #        #',
+'#                    #       #',
+'#    *      C        #       #',
+'#  #####  #####      #       #',
+'# P                   #      #',
+'#              #      #      #',
+'#              #             #',
+'#              #      #      #',
+'#              #             #',
+'##############################']},
+{name:'LAST LIGHT',band:2,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                      *     #',
+'#                    #####   #',
+'#                            #',
+'#         *      C           #',
+'#       #####  #####    D    #',
+'# P                   ########',
+'#        ^^^^^^^             #',
+'#      ###########           #',
+'#                            #',
+'#                            #',
+'##############################']},
+{name:'SHATTERPEAK DOOR',band:2,map:[
+'##############################',
+'#                            #',
+'#                            #',
+'#                            #',
+'#                       D    #',
+'#                     #####  #',
+'#                            #',
+'#          *         *       #',
+'#        #####      #####    #',
+'#                            #',
+'#    *        C              #',
+'#  #####    #####    #       #',
+'# P                  #       #',
+'#      ^^^^^         #       #',
+'#    #########       #       #',
+'#                    #       #',
+'##############################']}
+];
+var BANDS=[
+ {name:'BASE CAMP', sky:['#0a2a1c','#04120c'], far:'#0d3a26', mid:'#0f4a2e', rock:'#1d5c38', rockTop:'#2f8f52', accent:'#00ff88', particle:'#a8ffd0'},
+ {name:'ICE LEDGE', sky:['#0a2438','#040d18'], far:'#12395a', mid:'#164a75', rock:'#1c4a6e', rockTop:'#3f8fc4', accent:'#35e0ff', particle:'#cfeaff'},
+ {name:'SUMMIT', sky:['#241238','#0d0618'], far:'#3a1d5e', mid:'#4a2476', rock:'#4a2a6e', rockTop:'#9a6fd0', accent:'#ffd75e', particle:'#ffe9a8'}
+];
+
+/* ---------- audio: tiny WebAudio blips, M mutes ---------- */
+var audioCtx=null, muted=false;
+function blip(freq,dur,type,vol){
+  if(muted) return;
+  try{
+    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    var o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type||'square'; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.05, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function sfx(name){
+  if(name==='jump') blip(320,0.12,'square',0.04);
+  else if(name==='dash') blip(720,0.14,'sawtooth',0.05);
+  else if(name==='die') blip(110,0.25,'sawtooth',0.06);
+  else if(name==='spark') blip(980,0.10,'sine',0.05);
+  else if(name==='crystal') blip(1240,0.12,'sine',0.05);
+  else if(name==='door') { blip(520,0.12,'sine',0.05); setTimeout(function(){blip(780,0.18,'sine',0.05);},110); }
+  else if(name==='spring') blip(440,0.12,'triangle',0.05);
+}
+
+/* ---------- state ---------- */
+var state={
+  phase:'title', mode:'solo', paused:false, cam:false,
+  level:0, unlocked:0, frame:0, time:0, deaths:0, sparks:0, totalSparks:0,
+  hi:0, bestTotal:0, over:false, result:'', banner:'',
+  player:null, grid:null, start:null, door:null, springs:[], crystals:[], sparkTiles:[],
+  watch:null, feAgentId:null, feAgent:null, feTraces:[], feRecorded:false, overT:0,
+  particles:[], keys:{}, touch:{left:false,right:false,up:false,down:false},
+  wind:0
+};
+try{ var sv=localStorage.getItem('dashclimber.hi'); if(sv){ var o=JSON.parse(sv); state.unlocked=o.unlocked||0; state.bestTotal=o.bestTotal||0; } }catch(e){}
+function persistHi(){ try{ localStorage.setItem('dashclimber.hi', JSON.stringify({unlocked:state.unlocked,bestTotal:state.bestTotal})); }catch(e){} }
+var msgEl=document.getElementById('msg');
+function setMsg(t){ if(msgEl) msgEl.textContent=t; }
+
+/* ---------- level parsing ---------- */
+function parseLevel(idx){
+  var room=ROOMS[idx], grid=[], start=null, door=null, springs=[], crystals=[], sparkTiles=[];
+  for(var ty=0;ty<ROWS;ty++){
+    var row=room.map[ty];
+    for(var tx=0;tx<COLS;tx++){
+      var ch=row.charAt(tx), solid=(ch==='#');
+      grid.push(solid?1:0);
+      if(ch==='P') start={x:tx*TILE+6,y:ty*TILE+6};
+      else if(ch==='D') door={tx:tx,ty:ty,x:tx*TILE,y:ty*TILE};
+      else if(ch==='^') grid[grid.length-1]=2;
+      else if(ch==='S') springs.push({tx:tx,ty:ty,x:tx*TILE,y:ty*TILE,anim:0});
+      else if(ch==='C') crystals.push({tx:tx,ty:ty,x:tx*TILE,y:ty*TILE,taken:false,anim:0});
+      else if(ch==='*') sparkTiles.push({tx:tx,ty:ty,x:tx*TILE,y:ty*TILE,taken:false,anim:0});
+    }
+  }
+  return {grid:grid,start:start,door:door,springs:springs,crystals:crystals,sparkTiles:sparkTiles};
+}
+function tileAt(grid,tx,ty){
+  if(tx<0||tx>=COLS||ty<0||ty>=ROWS) return 1;
+  return grid[ty*COLS+tx];
+}
+function solidAt(grid,px,py){ return tileAt(grid,Math.floor(px/TILE),Math.floor(py/TILE))===1; }
+function loadLevel(idx){
+  var L=parseLevel(idx);
+  state.grid=L.grid; state.start=L.start; state.door=L.door;
+  state.springs=L.springs; state.crystals=L.crystals; state.sparkTiles=L.sparkTiles;
+  state.level=idx;
+  state.player=makeClimber(L.start.x,L.start.y,'#00ff88');
+  state.particles=[];
+  state.wind=(ROOMS[idx].band===2)?0.12:0;
+}
+function makeClimber(x,y,color){
+  return {x:x,y:y,w:20,h:26,vx:0,vy:0,face:1,onGround:false,coyote:0,buffer:0,
+    dashLeft:1,dashing:false,dashT:0,dashDX:0,dashDY:0,wallDir:0,controlLock:0,
+    dead:false,deadT:0,anim:0,runT:0,color:color,trail:[],stuckT:0,lastX:x};
+}
+
+/* ---------- physics: run / jump / 8-way dash / wall-slide / wall-jump ---------- */
+var GRAV=0.45, MAXFALL=9, ACCEL=0.55, AIR_ACCEL=0.35, MAXRUN=3.4, JUMP_V=-9.2;
+var DASH_SPEED=7.2, DASH_T=11, WALL_SLIDE=1.4;
+function stepClimber(p,input,room){
+  if(p.dead){ p.deadT--; if(p.deadT<=0) respawn(p,room); return; }
+  p.anim++; p.runT+=Math.abs(p.vx)>0.5?1:0;
+  if(p.controlLock>0) p.controlLock--;
+  var acc=p.onGround?ACCEL:AIR_ACCEL;
+  if(p.controlLock<=0){
+    if(input.left){ p.vx-=acc; p.face=-1; }
+    if(input.right){ p.vx+=acc; p.face=1; }
+    if(!input.left&&!input.right){
+      if(p.onGround) p.vx*=0.72; else p.vx*=0.985;
+    }
+  }
+  if(!p.dashing){
+    if(p.vx>MAXRUN) p.vx=MAXRUN; if(p.vx<-MAXRUN) p.vx=-MAXRUN;
+  }
+  if(input.jumpPressed){ p.buffer=7; }
+  if(p.buffer>0) p.buffer--;
+  if(p.onGround) p.coyote=6; else if(p.coyote>0) p.coyote--;
+  if(p.buffer>0&&(p.coyote>0||p.wallDir!==0)){
+    if(p.wallDir!==0&&p.coyote<=0){
+      p.vx=-p.wallDir*4.2; p.vy=-8.6; p.face=-p.wallDir; p.controlLock=8; p.wallDir=0;
+    } else {
+      p.vy=JUMP_V; p.onGround=false; p.coyote=0;
+    }
+    p.buffer=0; sfx('jump');
+  }
+  if(input.jumpReleased&&p.vy<0) p.vy*=0.45;
+  if(input.dashPressed&&p.dashLeft>0&&!p.dashing){
+    var dx=(input.right?1:0)-(input.left?1:0), dy=(input.down?1:0)-(input.up?1:0);
+    if(dx===0&&dy===0){ dx=p.face; dy=0; }
+    var len=Math.sqrt(dx*dx+dy*dy); dx/=len; dy/=len;
+    p.dashDX=dx; p.dashDY=dy; p.dashing=true; p.dashT=DASH_T; p.dashLeft--;
+    p.vx=dx*DASH_SPEED; p.vy=dy*DASH_SPEED; sfx('dash');
+    burst(p.x+p.w/2,p.y+p.h/2,p.color,8);
+  }
+  if(p.dashing){
+    p.dashT--;
+    p.vx=p.dashDX*DASH_SPEED; p.vy=p.dashDY*DASH_SPEED;
+    p.trail.push({x:p.x+p.w/2,y:p.y+p.h/2,t:10});
+    if(p.dashT<=0) p.dashing=false;
+  } else {
+    p.vy+=GRAV; if(p.vy>MAXFALL) p.vy=MAXFALL;
+    if(state.wind) p.vx+=state.wind*0.06;
+  }
+  p.wallDir=0;
+  if(!p.onGround&&p.vy>0&&!p.dashing){
+    if(p.vx<0&&solidAt(state.grid,p.x-2,p.y+p.h/2)) p.wallDir=-1;
+    else if(p.vx>0&&solidAt(state.grid,p.x+p.w+2,p.y+p.h/2)) p.wallDir=1;
+    if(p.wallDir!==0&&p.vy>WALL_SLIDE) p.vy=WALL_SLIDE;
+  }
+  moveAndCollide(p);
+  checkHazards(p);
+  if(p.trail.length){ for(var i=p.trail.length-1;i>=0;i--){ p.trail[i].t--; if(p.trail[i].t<=0) p.trail.splice(i,1); } }
+  if(Math.abs(p.x-p.lastX)<0.2&&p.onGround) p.stuckT++; else p.stuckT=0;
+  p.lastX=p.x;
+}
+function moveAndCollide(p){
+  var g=state.grid;
+  p.x+=p.vx;
+  var top=Math.floor(p.y/TILE), bot=Math.floor((p.y+p.h-1)/TILE);
+  if(p.vx>0){
+    var tx=Math.floor((p.x+p.w)/TILE);
+    for(var ty=top;ty<=bot;ty++) if(tileAt(g,tx,ty)===1){ p.x=tx*TILE-p.w-0.01; p.vx=0; break; }
+  } else if(p.vx<0){
+    var tx2=Math.floor(p.x/TILE);
+    for(var ty2=top;ty2<=bot;ty2++) if(tileAt(g,tx2,ty2)===1){ p.x=(tx2+1)*TILE+0.01; p.vx=0; break; }
+  }
+  var wasGround=p.onGround; p.onGround=false;
+  p.y+=p.vy;
+  var left=Math.floor(p.x/TILE), right=Math.floor((p.x+p.w-1)/TILE);
+  if(p.vy>0){
+    var ty3=Math.floor((p.y+p.h)/TILE);
+    for(var tx3=left;tx3<=right;tx3++) if(tileAt(g,tx3,ty3)===1){ p.y=ty3*TILE-p.h-0.01; p.vy=0; p.onGround=true; break; }
+  } else if(p.vy<0){
+    var ty4=Math.floor(p.y/TILE);
+    for(var tx4=left;tx4<=right;tx4++) if(tileAt(g,tx4,ty4)===1){ p.y=(ty4+1)*TILE+0.01; p.vy=0; break; }
+  }
+  if(p.onGround&&!wasGround){ p.dashLeft=1; }
+}
+function overlapsTile(p,tx,ty){
+  return p.x<tx*TILE+TILE&&p.x+p.w>tx*TILE&&p.y<ty*TILE+TILE&&p.y+p.h>ty*TILE;
+}
+function checkHazards(p){
+  var g=state.grid;
+  var x0=Math.floor(p.x/TILE), x1=Math.floor((p.x+p.w-1)/TILE);
+  var y0=Math.floor(p.y/TILE), y1=Math.floor((p.y+p.h-1)/TILE);
+  for(var ty=y0;ty<=y1;ty++) for(var tx=x0;tx<=x1;tx++){
+    if(tileAt(g,tx,ty)===2&&overlapsTile(p,tx,ty)){ kill(p); return; }
+  }
+  for(var i=0;i<state.springs.length;i++){
+    var s=state.springs[i];
+    if(overlapsTile(p,s.tx,s.ty)&&p.vy>=0){ p.vy=-13; p.onGround=false; s.anim=8; sfx('spring'); }
+  }
+  for(var j=0;j<state.crystals.length;j++){
+    var c=state.crystals[j];
+    if(!c.taken&&overlapsTile(p,c.tx,c.ty)){ c.taken=true; p.dashLeft=1; sfx('crystal'); burst(c.x+16,c.y+16,'#35e0ff',10); }
+  }
+  for(var k=0;k<state.sparkTiles.length;k++){
+    var sp=state.sparkTiles[k];
+    if(!sp.taken&&overlapsTile(p,sp.tx,sp.ty)){ sp.taken=true; state.sparks++; sfx('spark'); burst(sp.x+16,sp.y+16,'#ffd75e',8); }
+  }
+  var d=state.door;
+  if(d&&overlapsTile(p,d.tx,d.ty)){ roomComplete(p); }
+}
+function kill(p){
+  if(p.dead) return;
+  p.dead=true; p.deadT=45; state.deaths++; sfx('die');
+  burst(p.x+p.w/2,p.y+p.h/2,p.color,16);
+}
+function respawn(p,room){
+  p.x=state.start.x; p.y=state.start.y; p.vx=0; p.vy=0; p.dashLeft=1; p.dashing=false; p.dead=false; p.wallDir=0;
+}
+function roomComplete(p){
+  if(state.mode==='watch') return;
+  sfx('door');
+  state.totalSparks+=state.sparks;
+  state.sparks=0;
+  if(state.level>=state.unlocked&&state.level<ROOMS.length-1){ state.unlocked=state.level+1; persistHi(); }
+  if(state.level>=ROOMS.length-1){ runComplete(); return; }
+  var next=state.level+1;
+  loadLevel(next);
+  setMsg('ROOM '+(next+1)+' — '+ROOMS[next].name+' · '+BANDS[ROOMS[next].band].name);
+}
+function runComplete(){
+  state.phase='over'; state.over=true; state.result='win';
+  var t=state.time;
+  if(!state.bestTotal||t<state.bestTotal){ state.bestTotal=t; persistHi(); }
+  setMsg('SUMMIT REACHED in '+fmtTime(t)+' · best '+fmtTime(state.bestTotal)+' · press R to climb again.');
+}
+function fmtTime(frames){
+  var s=Math.floor(frames/60), m=Math.floor(s/60), r=s%60, t=Math.floor((frames%60)/6);
+  return (m<10?'0':'')+m+':'+(r<10?'0':'')+r+'.'+t;
+}
+function burst(x,y,color,n){
+  for(var i=0;i<n;i++) state.particles.push({x:x,y:y,vx:(Math.random()-0.5)*4,vy:(Math.random()-0.5)*4-1,t:24+Math.random()*12,color:color});
+}
+
+/* ---------- WATCH race: two council bots speedrun the same room ---------- */
+var WATCH_BOTS=[
+ {id:'ZEROX', color:'#ff3860', dashy:0.9, err:0.35, react:6},
+ {id:'TURTLE', color:'#35e0ff', dashy:0.35, err:0.08, react:18}
+];
+function feLoad(id){
+  if(!FE) return null;
+  try{ return FE.loadAgent(id); }catch(e){ return null; }
+}
+function startWatch(levelIdx){
+  loadLevel(levelIdx||0);
+  state.mode='watch'; state.phase='watch'; state.paused=false; state.over=false; state.result='';
+  state.time=0; state.deaths=0; state.sparks=0; state.totalSparks=0;
+  state.feTraces=[]; state.feRecorded=false; state.overT=0;
+  var bots=WATCH_BOTS.map(function(w){
+    return {id:w.id, color:w.color, dashy:w.dashy, err:w.err, react:w.react,
+      climber:makeClimber(state.start.x,state.start.y,w.color),
+      agent:feLoad(w.id), traces:[], prevJump:false, prevDash:false, waitT:0, hopCd:0, retreatT:0,
+      lastProgX:state.start.x, noProgT:0,
+      finished:false, finishFrame:0, dashDecided:false};
+  });
+  state.watch={bots:bots, winner:null, over:false};
+  state.feAgentId='ZEROX vs TURTLE';
+  setMsg('WATCH — ZEROX vs TURTLE race ROOM '+(state.level+1)+' '+ROOMS[state.level].name+'. Imperfect on purpose.');
+  hidePause();
+}
+function botInput(b){
+  var p=b.climber, d=state.door;
+  var cx=p.x+p.w/2, cy=p.y+p.h/2;
+  var dx=(d.x+16)-cx, dy=(d.y+16)-cy;
+  var inp={left:false,right:false,up:false,down:false,jumpPressed:false,jumpReleased:false,dashPressed:false};
+  if(b.finished) return inp;
+  /* stuck under a ceiling (door above, head bonks): back up and retry the edge */
+  if(b.retreatT>0){
+    b.retreatT--;
+    inp.left=dx>0; inp.right=dx<0;
+    inp.jumpReleased=true; b.prevJump=false; b.prevDash=false;
+    return inp;
+  }
+  if(p.onGround&&p.stuckT>60&&dy<-30){ b.retreatT=45; }
+  /* no-progress watch: bonking under a ceiling resets stuckT, so track x directly */
+  if(Math.abs(p.x-b.lastProgX)>24){ b.lastProgX=p.x; b.noProgT=0; } else { b.noProgT++; }
+  if(b.noProgT>150){ b.retreatT=60; b.noProgT=0; }
+  /* ceiling right above the head: jumping in place only bonks — walk out first */
+  var ceilingClose=solidAt(state.grid,p.x+p.w/2,p.y-12);
+  var jumpAllowed=!ceilingClose||p.wallDir!==0;
+  inp.left=dx<-6; inp.right=dx>6;
+  /* blocked ahead or gap ahead -> jump */
+  var aheadX=p.x+(p.face>0?p.w+8:-8), aheadY=p.y+8;
+  var blocked=solidAt(state.grid,aheadX,aheadY)||solidAt(state.grid,aheadX,p.y+p.h-4);
+  var groundAhead=solidAt(state.grid,p.x+p.w/2+p.face*34,p.y+p.h+30)||solidAt(state.grid,p.x+p.w/2+p.face*34,p.y+p.h+70);
+  var needJump=p.onGround&&(blocked||!groundAhead);
+  /* wall slide -> wall jump after reaction delay */
+  if(p.wallDir!==0){
+    b.waitT++;
+    if(b.waitT>=b.react) needJump=true;
+  } else b.waitT=0;
+  var jump=(needJump||(p.onGround&&dy<-40&&Math.abs(dx)<60))&&jumpAllowed;
+  /* ledge hop: a platform lip above-ahead means jump to climb onto it */
+  if(b.hopCd>0) b.hopCd--;
+  var ledge=solidAt(state.grid,p.x+p.w/2+p.face*36,p.y-8)||solidAt(state.grid,p.x+p.w/2+p.face*36,p.y-42);
+  if(p.onGround&&ledge&&b.hopCd<=0&&jumpAllowed){ jump=true; b.hopCd=25; }
+  inp.jumpPressed=jump&&!b.prevJump;
+  inp.jumpReleased=!jump&&b.prevJump;
+  b.prevJump=jump;
+  /* dash: ask the Fallible Engine when airborne with a dash and a reason */
+  var gapWide=!groundAhead&&p.onGround===false;
+  var reason=(gapWide&&Math.abs(dx)>40)||p.stuckT>50||(p.wallDir!==0&&p.vy>0);
+  var dash=false;
+  var ceilingAbove=solidAt(state.grid,p.x+p.w/2,p.y-40)||solidAt(state.grid,p.x+p.w/2+p.face*24,p.y-40);
+  if(dy<-20&&ceilingAbove) reason=false; /* dashing up into a ceiling is wasted */
+  if(reason&&p.dashLeft>0&&!p.dashing){
+    if(b.agent&&FE){
+      try{
+        var res=FE.decide(b.agent,'dash-climber',
+          [{key:'dash',score:0.5+b.dashy*0.4,tag:'dash-gap'},{key:'wait',score:0.5,tag:'hold'}],
+          {timePressure:Math.min(1,Math.abs(dx)/400)});
+        b.traces.push(res.trace); state.feTraces.push(res.trace);
+        dash=(res.pick&&res.pick.key==='dash');
+      }catch(e){ dash=Math.random()<b.dashy; }
+    } else {
+      dash=Math.random()<b.dashy;
+      /* engine-absent fallback: local stand-in trace only, never recorded
+         (same shape as the apex-drift / maze-chase fallback mirrors) */
+      var fb={standin:true,agentId:b.id,gameId:'dash-climber',
+        pick:dash?'dash':'wait',pickTag:dash?'dash-gap':'hold'};
+      b.traces.push(fb); state.feTraces.push(fb);
+    }
+    if(dash&&Math.random()<b.err){ inp.up=Math.random()<0.5; inp.down=!inp.up&&Math.random()<0.3; }
+    else { inp.up=dy<-20; inp.down=dy>60; }
+  }
+  inp.dashPressed=dash&&!b.prevDash;
+  b.prevDash=dash;
+  return inp;
+}
+function watchTick(){
+  var w=state.watch; if(!w) return;
+  var allDone=true;
+  w.bots.forEach(function(b){
+    if(b.finished) return;
+    stepClimber(b.climber, botInput(b));
+    if(overlapsTile(b.climber,state.door.tx,state.door.ty)){
+      b.finished=true; b.finishFrame=state.time;
+      setMsg(b.id+' takes ROOM '+(state.level+1)+' in '+fmtTime(state.time)+'!');
+    }
+    if(!b.finished) allDone=false;
+  });
+  if(allDone&&!w.over){
+    w.over=true; state.over=true; state.overT=0;
+    var b0=w.bots[0], b1=w.bots[1];
+    var tie=b0.finishFrame===b1.finishFrame;
+    var win=tie?null:(b0.finishFrame<b1.finishFrame?b0:b1);
+    w.winner=tie?null:win.id;
+    state.result=tie?'watch:draw':'watch:'+win.id;
+    if(tie) setMsg('RACE DRAW — both bots hit the door on frame '+b0.finishFrame+'. Press R for a rematch.');
+    else setMsg('RACE OVER — '+win.id+' wins ROOM '+(state.level+1)+' ('+fmtTime(win.finishFrame)+'). Press R for a rematch.');
+    /* E42: one paired record per race — winner win / loser loss (draw on a
+       same-frame finish), both sides rated against each other, each side's
+       own dash traces only. Guard set BEFORE the call (maze-chase order). */
+    if(FE&&b0.agent&&b1.agent&&!state.feRecorded){
+      state.feRecorded=true;
+      try{ FE.recordMatch(b0.agent,b1.agent,'dash-climber',tie?'draw':(win===b0?'win':'loss'),b0.traces,b1.traces); }catch(e){}
+    }
+  }
+}
+
+/* ---------- game flow ---------- */
+function startGame(mode,levelIdx){
+  if(mode==='watch'){ startWatch(levelIdx||0); return; }
+  loadLevel(levelIdx||0);
+  state.mode='solo'; state.phase='play'; state.paused=false; state.over=false; state.result='';
+  state.time=0; state.deaths=0; state.sparks=0; state.totalSparks=0;
+  state.feAgentId=null; state.feAgent=null; state.feTraces=[]; state.overT=0;
+  setMsg('ROOM '+(state.level+1)+' — '+ROOMS[state.level].name+' · '+BANDS[ROOMS[state.level].band].name+' · reach the gold door.');
+  hidePause();
+}
+function saveState(){
+  try{
+    localStorage.setItem('dashclimber.save', JSON.stringify({level:state.level,unlocked:state.unlocked,
+      sparks:state.totalSparks,deaths:state.deaths,time:state.time,bestTotal:state.bestTotal}));
+    setMsg('State saved — room '+(state.level+1)+', '+fmtTime(state.time)+'.');
+  }catch(e){ setMsg('Save failed (storage unavailable).'); }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('dashclimber.save'); if(!raw){ setMsg('No saved state yet.'); return; }
+    var o=JSON.parse(raw);
+    state.unlocked=Math.max(state.unlocked,o.unlocked||0); state.bestTotal=o.bestTotal||state.bestTotal;
+    loadLevel(o.level||0);
+    state.mode='solo'; state.phase='play'; state.paused=false; state.over=false;
+    state.time=o.time||0; state.deaths=o.deaths||0; state.totalSparks=o.sparks||0; state.sparks=0;
+    setMsg('State loaded — room '+(state.level+1)+' '+ROOMS[state.level].name+'.');
+    hidePause();
+  }catch(e){ setMsg('Load failed.'); }
+}
+function togglePause(){
+  if(state.phase==='title') return;
+  state.paused=!state.paused;
+  var ov=document.getElementById('pauseOverlay');
+  if(ov) ov.style.display=state.paused?'flex':'none';
+  if(state.paused) setMsg('Paused — save your climb, or take a breath.');
+}
+function hidePause(){
+  state.paused=false;
+  var ov=document.getElementById('pauseOverlay');
+  if(ov) ov.style.display='none';
+}
+function toggleCam(){ state.cam=!state.cam; setMsg(state.cam?'Climber-cam ON — riding with KIP. V to exit.':'Climber-cam OFF.'); }
+function toggleMute(){ muted=!muted; setMsg(muted?'Muted.':'Sound on.'); }
+
+/* ---------- input ---------- */
+var pressed={}, released={};
+function keyFor(code){
+  if(code==='ArrowLeft'||code==='KeyA') return 'left';
+  if(code==='ArrowRight'||code==='KeyD') return 'right';
+  if(code==='ArrowUp'||code==='KeyW') return 'up';
+  if(code==='ArrowDown'||code==='KeyS') return 'down';
+  if(code==='KeyZ'||code==='KeyK'||code==='Space') return 'jump';
+  if(code==='KeyX'||code==='KeyJ'||code==='ShiftLeft'||code==='ShiftRight') return 'dash';
+  return null;
+}
+document.addEventListener('keydown',function(e){
+  if(e.code==='KeyV'){ toggleCam(); return; }
+  if(e.code==='KeyP'){ togglePause(); return; }
+  if(e.code==='KeyM'){ toggleMute(); return; }
+  if(e.code==='KeyR'){ if(state.phase!=='title') startGame(state.mode,state.mode==='watch'?state.level:state.level); return; }
+  var k=keyFor(e.code);
+  if(k){
+    e.preventDefault();
+    if(!e.repeat){ state.keys[k]=true; pressed[k]=true; }
+  }
+});
+document.addEventListener('keyup',function(e){
+  var k=keyFor(e.code);
+  if(k){ state.keys[k]=false; released[k]=true; }
+});
+function readInput(){
+  var t=state.touch;
+  var inp={
+    left:!!(state.keys.left||t.left), right:!!(state.keys.right||t.right),
+    up:!!(state.keys.up||t.up), down:!!(state.keys.down||t.down),
+    jumpPressed:!!(pressed.jump||t.jumpPressed), jumpReleased:!!(released.jump),
+    dashPressed:!!(pressed.dash||t.dashPressed)
+  };
+  pressed={}; released={};
+  t.jumpPressed=false; t.dashPressed=false;
+  return inp;
+}
+function bindBtn(id,fn){
+  var el=document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('click',fn);
+  el.addEventListener('touchstart',function(e){ e.preventDefault(); fn(); },{passive:false});
+}
+function bindHold(id,down,up){
+  var el=document.getElementById(id);
+  if(!el) return;
+  var on=function(e){ e.preventDefault(); down(); };
+  var off=function(e){ e.preventDefault(); if(up) up(); };
+  el.addEventListener('mousedown',on); el.addEventListener('mouseup',off); el.addEventListener('mouseleave',off);
+  el.addEventListener('touchstart',on,{passive:false}); el.addEventListener('touchend',off,{passive:false});
+}
+bindBtn('btnSolo',function(){ startGame('solo',0); });
+bindBtn('btnWatch',function(){ startGame('watch',0); });
+bindBtn('btnCam',function(){ toggleCam(); });
+bindBtn('btnPause',function(){ togglePause(); });
+bindBtn('resumeBtn',function(){ togglePause(); });
+bindBtn('saveBtn',function(){ saveState(); });
+bindBtn('loadBtn',function(){ loadState(); });
+bindBtn('restartBtn',function(){ hidePause(); startGame(state.mode,state.level); });
+bindBtn('quitArcadeBtn',function(){ window.location.href='../arcade.html'; });
+bindBtn('startBtn',function(){ togglePause(); });
+bindBtn('selectBtn',function(){ toggleCam(); });
+bindBtn('btnA',function(){ pressed.jump=true; state.touch.jumpPressed=true; });
+bindBtn('btnB',function(){ pressed.dash=true; state.touch.dashPressed=true; });
+bindHold('dLeft',function(){ state.touch.left=true; },function(){ state.touch.left=false; });
+bindHold('dRight',function(){ state.touch.right=true; },function(){ state.touch.right=false; });
+bindHold('dUp',function(){ state.touch.up=true; },function(){ state.touch.up=false; });
+bindHold('dDown',function(){ state.touch.down=true; },function(){ state.touch.down=false; });
+if((typeof navigator!=='undefined'&&navigator.maxTouchPoints>0)||('ontouchstart' in window)) document.body.classList.add('touch');
+
+/* room select buttons */
+(function(){
+  var row=document.getElementById('roomRow'); if(!row) return;
+  ROOMS.forEach(function(r,i){
+    var b=document.createElement('button');
+    b.className='mbtn roomBtn'; b.textContent=(i+1)+' · '+r.name;
+    b.addEventListener('click',function(){
+      if(i>state.unlocked){ setMsg('Room '+(i+1)+' is locked — clear room '+state.unlocked+' first.'); return; }
+      startGame('solo',i);
+    });
+    row.appendChild(b);
+  });
+})();
+
+/* ---------- update ---------- */
+function update(){
+  state.frame++;
+  if(state.paused) return;
+  if(state.phase==='play'&&state.player){
+    state.time++;
+    stepClimber(state.player, readInput());
+    if(state.phase==='over') return;
+  } else if(state.phase==='watch'){
+    state.time++;
+    watchTick();
+    /* E42: WATCH auto-restart — after the race ends, start the next one
+       after 240 frames, engine only (without the engine the results
+       screen stays, legacy behaviour). */
+    if(state.watch&&state.watch.over&&FE){
+      state.overT++;
+      if(state.overT>240) startWatch(state.level);
+    }
+  }
+  state.crystals.forEach(function(c){ c.anim++; });
+  state.sparkTiles.forEach(function(s){ s.anim++; });
+  state.springs.forEach(function(s){ if(s.anim>0) s.anim--; });
+  for(var i=state.particles.length-1;i>=0;i--){
+    var pt=state.particles[i]; pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=0.08; pt.t--;
+    if(pt.t<=0) state.particles.splice(i,1);
+  }
+}
+
+/* ---------- rendering: layered mountain, rich climber, HUD ---------- */
+function drawBackground(band,ox){
+  var B=BANDS[band];
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,B.sky[0]); g.addColorStop(1,B.sky[1]);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* stars / drifting motes */
+  ctx.fillStyle=B.particle;
+  for(var i=0;i<46;i++){
+    var sx=((i*173+state.frame*0.12*(1+(i%3)*0.4))%(W+40))-20;
+    var sy=(i*97)%300;
+    ctx.globalAlpha=0.25+0.35*Math.abs(Math.sin(state.frame*0.02+i));
+    ctx.fillRect(sx-ox*0.02%W,sy,2,2);
+  }
+  ctx.globalAlpha=1;
+  /* far peaks */
+  ctx.fillStyle=B.far;
+  ctx.beginPath(); ctx.moveTo(0,H);
+  for(var x=0;x<=W;x+=120){ ctx.lineTo(x-ox*0.08%W, 300+((x*7)%90)); }
+  ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
+  /* mid ridge */
+  ctx.fillStyle=B.mid;
+  ctx.beginPath(); ctx.moveTo(0,H);
+  for(var x2=0;x2<=W;x2+=80){ ctx.lineTo(x2-ox*0.15%W, 380+((x2*13)%70)); }
+  ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
+  /* snow caps on far peaks */
+  ctx.fillStyle='rgba(255,255,255,.10)';
+  for(var p=0;p<5;p++){ var px=120+p*190-ox*0.08%W; ctx.beginPath(); ctx.moveTo(px-26,318); ctx.lineTo(px,288); ctx.lineTo(px+26,318); ctx.closePath(); ctx.fill(); }
+}
+function drawRoom(){
+  var B=BANDS[ROOMS[state.level].band];
+  for(var ty=0;ty<ROWS;ty++) for(var tx=0;tx<COLS;tx++){
+    var t=tileAt(state.grid,tx,ty), x=tx*TILE, y=ty*TILE;
+    if(t===1){
+      ctx.fillStyle=B.rock; ctx.fillRect(x,y,TILE,TILE);
+      if(tileAt(state.grid,tx,ty-1)!==1){ ctx.fillStyle=B.rockTop; ctx.fillRect(x,y,TILE,6); ctx.fillStyle='rgba(255,255,255,.14)'; ctx.fillRect(x,y,TILE,2); }
+      ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(x,y+TILE-4,TILE,4);
+      ctx.fillStyle='rgba(255,255,255,.05)'; ctx.fillRect(x+4,y+8,5,5);
+    } else if(t===2){
+      ctx.fillStyle=B.rock; ctx.fillRect(x,y,TILE,TILE);
+      ctx.fillStyle='#ff5a3c';
+      for(var s=0;s<3;s++){
+        ctx.beginPath(); ctx.moveTo(x+s*11,y+TILE); ctx.lineTo(x+s*11+5,y+8); ctx.lineTo(x+s*11+11,y+TILE); ctx.closePath(); ctx.fill();
+      }
+      ctx.fillStyle='rgba(255,255,255,.35)';
+      ctx.beginPath(); ctx.moveTo(x+5,y+8); ctx.lineTo(x+8,y+16); ctx.lineTo(x+2,y+16); ctx.closePath(); ctx.fill();
+    }
+  }
+  state.springs.forEach(function(sp){
+    var bob=sp.anim>0?-6:0;
+    ctx.fillStyle='#ffd75e'; ctx.fillRect(sp.x+6,sp.y+22+bob,20,8);
+    ctx.fillStyle='#b78cff'; ctx.fillRect(sp.x+8,sp.y+14+bob,16,8);
+    ctx.fillStyle='#fff'; ctx.fillRect(sp.x+10,sp.y+16+bob,12,3);
+  });
+  state.crystals.forEach(function(c){
+    if(c.taken) return;
+    var pulse=1+0.15*Math.sin(state.frame*0.08+c.anim);
+    ctx.save(); ctx.translate(c.x+16,c.y+16); ctx.rotate(Math.sin(state.frame*0.05+c.tx)*0.25); ctx.scale(pulse,pulse);
+    ctx.fillStyle='rgba(53,224,255,.25)'; ctx.beginPath(); ctx.arc(0,0,16,0,7); ctx.fill();
+    ctx.fillStyle='#35e0ff'; ctx.beginPath(); ctx.moveTo(0,-12); ctx.lineTo(9,0); ctx.lineTo(0,12); ctx.lineTo(-9,0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#eaffff'; ctx.beginPath(); ctx.moveTo(0,-7); ctx.lineTo(4,0); ctx.lineTo(0,7); ctx.lineTo(-4,0); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
+  state.sparkTiles.forEach(function(sp){
+    if(sp.taken) return;
+    var pu=1+0.2*Math.sin(state.frame*0.1+sp.tx);
+    ctx.save(); ctx.translate(sp.x+16,sp.y+16); ctx.scale(pu,pu);
+    ctx.fillStyle='rgba(255,215,94,.3)'; ctx.beginPath(); ctx.arc(0,0,13,0,7); ctx.fill();
+    ctx.fillStyle='#ffd75e';
+    ctx.beginPath();
+    for(var i=0;i<8;i++){ var a=i*Math.PI/4, r=i%2?4:10; ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r); }
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
+  var d=state.door;
+  if(d){
+    var glow=0.5+0.3*Math.sin(state.frame*0.06);
+    ctx.fillStyle='rgba(255,215,94,'+(glow*0.35)+')';
+    ctx.beginPath(); ctx.arc(d.x+16,d.y+16,26,0,7); ctx.fill();
+    ctx.fillStyle='#2a1a4a'; ctx.fillRect(d.x+4,d.y+2,24,30);
+    ctx.strokeStyle='#ffd75e'; ctx.lineWidth=3; ctx.strokeRect(d.x+4,d.y+2,24,30);
+    ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(d.x+16,d.y+16,7+2*Math.sin(state.frame*0.1),0,7); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(d.x+16,d.y+16,3,0,7); ctx.fill();
+  }
+  state.particles.forEach(function(pt){
+    ctx.globalAlpha=Math.max(0,pt.t/30); ctx.fillStyle=pt.color;
+    ctx.fillRect(pt.x-2,pt.y-2,4,4);
+  });
+  ctx.globalAlpha=1;
+}
+/* ---------- SPRITE STACK climber (char sweep 2026-11-22) ----------
+   KIP rebuilt as a true slice stack: silhouette slices layered bottom
+   to top with baked 3-tone shading (dark core -> mid -> lit top edge),
+   dramatic rim light in the climber's own colour, planted-feet run
+   cycle, dash lean/stretch, wall-cling pose and idle breathing.
+   Pure presentation: reads physics state, never writes it. */
+function climbShade(hex,amt){
+  var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  if(amt>=0){ r+=(255-r)*amt; g+=(255-g)*amt; b+=(255-b)*amt; }
+  else { r*=1+amt; g*=1+amt; b*=1+amt; }
+  return 'rgb('+(r|0)+','+(g|0)+','+(b|0)+')';
+}
+function drawClimber(p){
+  var col=p.color;
+  var dark=climbShade(col,-0.70), deep=climbShade(col,-0.40), mid=climbShade(col,-0.14),
+      lit=climbShade(col,0.48), pale=climbShade(col,0.80);
+  var steel='#26303e', steelD='#10151d', steelL='#63768c', gold='#ffd75e', goldD='#c9962e';
+  var cx=p.x+p.w/2, feet=p.y+p.h;
+  var running=p.onGround&&Math.abs(p.vx)>0.5;
+  var cling=(!p.onGround&&p.wallDir!==0);
+  var air=(!p.onGround&&!cling);
+  var F=cling?p.wallDir:p.face;
+  var stride=running?Math.sin(p.runT*0.55):0;
+  var bob=running?Math.abs(Math.sin(p.runT*0.55))*1.7:(p.onGround?Math.sin(p.anim*0.06)*0.6:0);
+  /* contact shadow + colour pool (shrinks/fades in the air) */
+  ctx.fillStyle='rgba(0,0,0,'+(p.onGround?0.36:0.20)+')';
+  ctx.beginPath(); ctx.ellipse(cx,feet+3,p.onGround?13:9.5,3,0,0,7); ctx.fill();
+  ctx.globalAlpha=0.10; ctx.fillStyle=col;
+  ctx.beginPath(); ctx.ellipse(cx,feet+3,12,3.2,0,0,7); ctx.fill(); ctx.globalAlpha=1;
+  /* dash trail: fading stacked ghosts of the same silhouette */
+  p.trail.forEach(function(t){
+    ctx.globalAlpha=Math.max(0,t.t/10)*0.38; ctx.fillStyle=col;
+    var tw=[9,13,14.5,13,8], ty=[9,3,-3,-8,-12];
+    for(var i=0;i<tw.length;i++) ctx.fillRect(t.x-tw[i]/2,t.y+ty[i]-1.6,tw[i],3.2);
+  });
+  ctx.globalAlpha=1;
+  ctx.save();
+  ctx.translate(cx,feet-bob);
+  if(p.dashing){
+    var da=Math.atan2(p.dashDY,p.dashDX);
+    ctx.rotate(da*0.28); ctx.scale(1.18,0.86);
+  } else if(running){
+    ctx.rotate(F*Math.min(1,Math.abs(p.vx)/3.4)*0.10);
+  } else if(cling){
+    ctx.translate(F*2.2,0); ctx.rotate(F*0.07);
+  }
+  if(p.onGround&&!running) ctx.scale(1,1+Math.sin(p.anim*0.06)*0.015); /* idle breathing */
+  if(p.dead) ctx.rotate(F*0.5);
+  /* slice helper: one horizontal armour slice, 3-tone baked shading —
+     main tone, lit top edge, dark under-seam */
+  function sl(u,y,w,fill,top){
+    var x=u-w/2;
+    ctx.fillStyle=fill;
+    ctx.beginPath();
+    ctx.moveTo(x+1.4,y); ctx.lineTo(x+w-1.4,y); ctx.lineTo(x+w,y+1.6); ctx.lineTo(x+w,y+3.1);
+    ctx.lineTo(x,y+3.1); ctx.lineTo(x,y+1.6); ctx.closePath(); ctx.fill();
+    if(top){ ctx.fillStyle=top; ctx.fillRect(x+1.6,y+0.3,w-3.2,1.25); }
+    ctx.fillStyle='rgba(0,0,0,.32)'; ctx.fillRect(x+1.2,y+2.5,w-2.4,0.8);
+  }
+  function block(u,y,w,h,fill,top){ /* gauntlet / pack block */
+    ctx.fillStyle=fill; ctx.fillRect(u-w/2,y,w,h);
+    if(top){ ctx.fillStyle=top; ctx.fillRect(u-w/2+1,y+0.5,w-2,1.3); }
+    ctx.fillStyle='rgba(0,0,0,.4)'; ctx.fillRect(u-w/2,y+h-1.1,w,1.1);
+  }
+  /* leg pose in facing space (u = forward) */
+  var fU,bU,fLift,bLift;
+  if(cling){ fU=5.6; fLift=4.5; bU=4.6; bLift=9.5; }
+  else if(air){ fU=4.6; fLift=1.2; bU=-3.4; bLift=4.2; }
+  else if(running){ fU=2.6+stride*3.6; fLift=stride<0?-stride*2.3:0; bU=-2.6-stride*3.6; bLift=stride>0?stride*2.3:0; }
+  else { fU=3.9; fLift=0; bU=-3.9; bLift=0; }
+  var fX=fU*F, bX=bU*F;
+  function leg(bx,lift,front){
+    sl(bx,-6.4-lift*0.55,front?5.6:5.2,front?steel:steelD,front?lit:steelL);   /* shin guard: steel, colour-lit trim */
+    sl(bx,-3.1-lift,front?8.6:8.0,steelD,steelL);                              /* boot */
+    ctx.fillStyle=front?mid:deep;                                              /* toe cap */
+    ctx.fillRect(F>0?bx+1.6:bx-4.3,-3.0-lift,2.7,2.2);
+    ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(bx-4.3,-0.7-lift,8.6,0.9);   /* sole */
+  }
+  /* scarf: gold, streams behind the neck, harder in a dash */
+  var sway=Math.sin(p.anim*0.18)*1.6+(p.dashing?2.5:0);
+  ctx.strokeStyle=goldD; ctx.lineWidth=3.6; ctx.beginPath();
+  ctx.moveTo(-F*4,-19.5);
+  ctx.quadraticCurveTo(-F*10,-18+sway*0.4,-F*(p.dashing?17:13),-19.5+sway);
+  ctx.stroke();
+  ctx.strokeStyle=gold; ctx.lineWidth=2.2; ctx.beginPath();
+  ctx.moveTo(-F*4,-20.1);
+  ctx.quadraticCurveTo(-F*10,-18.6+sway*0.4,-F*(p.dashing?17:13),-20.1+sway);
+  ctx.stroke();
+  /* back arm (far side, darker) — swings against the back leg */
+  var baU=-7.6+(running?stride*1.7:0);
+  sl(baU*F,-16.5,4.4,dark,null);
+  block(baU*F,-13.4,4.8,3.8,steelD,null);
+  /* backpack: steel slab on the far side, gold cap + blinking lamp */
+  sl(-F*8.6,-18.6,5.6,steelD,steelL);
+  sl(-F*8.6,-15.9,6.0,steel,null);
+  sl(-F*8.6,-13.2,5.6,steelD,null);
+  ctx.fillStyle=gold; ctx.fillRect(-F*8.6-2.4,-21.2,4.8,1.6);
+  if(Math.sin(p.anim*0.12)>0.2){ ctx.fillStyle=pale; ctx.beginPath(); ctx.arc(-F*8.6,-22.6,1.3,0,7); ctx.fill(); }
+  /* legs: back first, then front (planted — boots sit on the ground line) */
+  leg(bX,bLift,false);
+  leg(fX,fLift,true);
+  /* hip + belt */
+  sl(0,-9.6,13,dark,mid);
+  sl(0,-10.9,13.6,steelD,steelL);
+  ctx.fillStyle=gold; ctx.fillRect(-1.7,-11.1,3.4,2.4);
+  /* torso stack: three armour plates stepping up, tones rising */
+  sl(0,-13.6,14,deep,mid);
+  sl(0,-16.2,14.6,mid,lit);
+  sl(0,-18.8,13.8,col,pale);
+  /* chest core: lit diamond set into the top plate */
+  ctx.fillStyle=pale; ctx.beginPath();
+  ctx.moveTo(0,-19.6); ctx.lineTo(2.6,-17.2); ctx.lineTo(0,-14.8); ctx.lineTo(-2.6,-17.2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#ffffff'; ctx.beginPath();
+  ctx.moveTo(0,-18.4); ctx.lineTo(1.3,-17.2); ctx.lineTo(0,-16.0); ctx.lineTo(-1.3,-17.2); ctx.closePath(); ctx.fill();
+  /* shoulder pads */
+  sl(-F*6.9,-19.6,6.2,deep,null);
+  sl(F*6.9,-19.9,6.8,mid,lit);
+  /* front arm: hangs from the front shoulder, swings against the front leg;
+     raised to the wall in a cling, tucked back in a dash */
+  if(cling){
+    sl(F*8.2,-25.5,4.2,mid,lit);
+    block(F*8.6,-28.6,4.6,3.6,steel,steelL);
+  } else if(p.dashing){
+    sl(-F*1.5,-15.8,4.6,deep,null);
+    block(-F*4.5,-13.2,5.0,3.8,steel,steelL);
+  } else {
+    var faU=7.4+(running?-stride*1.9:(air?1.6:0));
+    sl(faU*F,-16.6,4.6,mid,lit);
+    block(faU*F,-13.5,5.2,4.0,steel,steelL);
+    ctx.fillStyle=lit; ctx.fillRect(faU*F-2.6,-13.5,5.2,1.1);
+  }
+  /* neck + helm stack */
+  sl(0,-21.3,5.4,steelD,null);
+  sl(0,-23.2,15.2,steelD,steelL);          /* brim */
+  sl(0,-25.8,13.6,deep,mid);               /* dome low */
+  sl(0,-28.3,11.4,mid,lit);                /* dome high */
+  sl(0,-30.6,7.2,col,pale);                /* crest */
+  ctx.fillStyle=gold; ctx.fillRect(-0.8,-33.4,1.6,2.8);   /* crest fin */
+  /* visor: dark band biased to the facing side, one bright eye slit */
+  ctx.fillStyle='#03130c'; ctx.fillRect(F>0?-4.6:-6.6,-26.9,11.2,3.6);
+  ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(F>0?-4.6:-6.6,-23.9,11.2,0.7);
+  ctx.fillStyle='#eaffff'; ctx.fillRect(F>0?1.2:-5.6, -25.9, 4.4, 1.7);
+  ctx.fillStyle=lit; ctx.fillRect(F>0?5.6:-6.8, -25.9, 1.2, 1.7);
+  /* dramatic rim light in the climber's colour, down the facing silhouette */
+  ctx.strokeStyle=lit; ctx.globalAlpha=0.9; ctx.lineWidth=1.5; ctx.beginPath();
+  ctx.moveTo(F*3.6,-30.4); ctx.lineTo(F*5.7,-28.1); ctx.lineTo(F*6.8,-25.6); ctx.lineTo(F*7.6,-23.0);
+  ctx.stroke();
+  ctx.globalAlpha=0.55; ctx.beginPath();
+  ctx.moveTo(F*7.3,-18.6); ctx.lineTo(F*7.0,-13.4); ctx.lineTo(F*6.5,-10.6);
+  ctx.stroke(); ctx.globalAlpha=1;
+  /* dash spark at the gauntlet */
+  if(p.dashing){ ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(F*9,-14,2.8,0,7); ctx.fill();
+    ctx.fillStyle=lit; ctx.beginPath(); ctx.arc(F*9,-14,4.6,0,7); ctx.globalAlpha=0.35; ctx.fill(); ctx.globalAlpha=1; }
+  ctx.restore();
+  /* dash pip above head */
+  if(p.dashLeft>0&&!p.dead){
+    ctx.fillStyle='#35e0ff'; ctx.beginPath(); ctx.arc(cx,p.y-9,3.5,0,7); ctx.fill();
+    ctx.fillStyle='#eaffff'; ctx.beginPath(); ctx.arc(cx,p.y-9,1.5,0,7); ctx.fill();
+  }
+}
+function drawHUD(){
+  var B=BANDS[ROOMS[state.level].band];
+  ctx.fillStyle='rgba(2,8,6,.72)'; ctx.fillRect(0,0,W,34);
+  ctx.fillStyle='#ffd75e'; ctx.font='bold 14px "Orbitron",sans-serif'; ctx.textAlign='left';
+  ctx.fillText('ROOM '+(state.level+1)+' · '+ROOMS[state.level].name,14,23);
+  ctx.fillStyle='#8fb8a2'; ctx.font='12px "Share Tech Mono",monospace'; ctx.textAlign='right';
+  var right='TIME '+fmtTime(state.time)+' · ✕'+state.deaths+' · ✦ '+(state.totalSparks+state.sparks)+'/36 · BEST '+fmtTime(state.bestTotal);
+  ctx.fillText(right,W-14,23);
+  if(state.mode==='watch'&&state.watch){
+    ctx.textAlign='center'; ctx.font='bold 13px "Orbitron",sans-serif';
+    state.watch.bots.forEach(function(b,i){
+      ctx.fillStyle=b.color;
+      ctx.fillText(b.id+(b.finished?' ✓ '+fmtTime(b.finishFrame):''), i===0?W*0.25:W*0.75, 58);
+    });
+  }
+  ctx.textAlign='left';
+}
+function drawTitle(){
+  ctx.fillStyle='rgba(2,8,6,.66)'; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.fillStyle='#00ff88'; ctx.font='900 64px "Orbitron",sans-serif';
+  ctx.fillText('DASH CLIMBER',W/2,190);
+  ctx.fillStyle='#ffd75e'; ctx.font='600 20px "Rajdhani",sans-serif';
+  ctx.fillText('KIP climbs the Shatterpeak — 12 rooms, 3 bands, one dash per leap.',W/2,228);
+  ctx.fillStyle='#dff5e6'; ctx.font='16px "Rajdhani",sans-serif';
+  ctx.fillText('Run · Jump · Wall-slide · 8-way Dash · Springs · Crystals · Sparks',W/2,262);
+  ctx.fillStyle='#8fb8a2'; ctx.font='14px "Share Tech Mono",monospace';
+  ctx.fillText('CLIMB to play · WATCH RACE for ZEROX vs TURTLE · rooms unlock as you clear them',W/2,296);
+  if(state.bestTotal) { ctx.fillStyle='#ffd75e'; ctx.fillText('BEST FULL CLIMB '+fmtTime(state.bestTotal),W/2,330); }
+  ctx.fillStyle='#35e0ff'; ctx.font='13px "Share Tech Mono",monospace';
+  ctx.fillText('← → run · Z / SPACE jump · X / SHIFT dash · V climber-cam · P pause · M mute',W/2,364);
+  ctx.textAlign='left';
+}
+function drawWorld(camX,camY,scale,climbers){
+  ctx.save();
+  ctx.scale(scale,scale);
+  ctx.translate(-camX,-camY);
+  drawBackground(ROOMS[state.level].band,camX);
+  drawRoom();
+  climbers.forEach(drawClimber);
+  ctx.restore();
+}
+function render(){
+  ctx.clearRect(0,0,W,H);
+  if(state.phase==='title'){
+    drawWorld(0,0,1,state.player?[state.player]:[]);
+    drawTitle();
+    return;
+  }
+  if(state.phase==='watch'&&state.watch){
+    /* split-screen race: camera follows each bot */
+    state.watch.bots.forEach(function(b,i){
+      ctx.save();
+      ctx.beginPath(); ctx.rect(i*480,0,480,H); ctx.clip();
+      ctx.translate(i*480,0);
+      var camX=Math.max(0,Math.min(W-480,b.climber.x+b.climber.w/2-240));
+      drawWorld(camX,0,1,[b.climber]);
+      ctx.fillStyle='rgba(2,8,6,.72)'; ctx.fillRect(0,H-30,480,30);
+      ctx.fillStyle=b.color; ctx.font='bold 14px "Orbitron",sans-serif'; ctx.textAlign='left';
+      ctx.fillText(b.id+(b.finished?' ✓ '+fmtTime(b.finishFrame):''),12,H-9);
+      ctx.fillStyle='#8fb8a2'; ctx.font='12px "Share Tech Mono",monospace'; ctx.textAlign='right';
+      var prog=Math.max(0,Math.min(1,(b.climber.x-state.start.x)/Math.max(1,(state.door.x-state.start.x))));
+      ctx.fillText('PROGRESS '+Math.round(prog*100)+'%',468,H-9);
+      ctx.restore();
+    });
+    ctx.fillStyle='#ffd75e'; ctx.fillRect(479,0,2,H);
+    drawHUD();
+    return;
+  }
+  if(state.cam&&state.player){
+    var p=state.player;
+    var camX=Math.max(0,Math.min(W-480,p.x+p.w/2-240));
+    var camY=Math.max(0,Math.min(H-272,p.y+p.h/2-136));
+    drawWorld(camX,camY,2,[p]);
+    ctx.fillStyle='rgba(2,8,6,.72)'; ctx.fillRect(0,0,W,34);
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 14px "Orbitron",sans-serif'; ctx.textAlign='left';
+    ctx.fillText('CLIMBER-CAM · ROOM '+(state.level+1)+' '+ROOMS[state.level].name,14,23);
+    ctx.fillStyle='#8fb8a2'; ctx.font='12px "Share Tech Mono",monospace'; ctx.textAlign='right';
+    ctx.fillText('TIME '+fmtTime(state.time)+' · ✕'+state.deaths+' · V TO EXIT CAM',W-14,23);
+    return;
+  }
+  drawWorld(0,0,1,state.player?[state.player]:[]);
+  drawHUD();
+  if(state.phase==='over'){
+    ctx.fillStyle='rgba(2,8,6,.66)'; ctx.fillRect(0,0,W,H);
+    ctx.textAlign='center';
+    ctx.fillStyle='#ffd75e'; ctx.font='900 44px "Orbitron",sans-serif';
+    ctx.fillText('SUMMIT REACHED',W/2,250);
+    ctx.fillStyle='#dff5e6'; ctx.font='20px "Rajdhani",sans-serif';
+    ctx.fillText('KIP stands on the Shatterpeak in '+fmtTime(state.time)+' · '+state.deaths+' falls · '+(state.totalSparks)+'/36 sparks',W/2,292);
+    ctx.fillStyle='#8fb8a2'; ctx.font='14px "Share Tech Mono",monospace';
+    ctx.fillText('Press R to climb again · CLIMB for room select',W/2,326);
+    ctx.textAlign='left';
+  }
+}
+function loop(){
+  update();
+  try{ render(); }catch(e){ /* headless stub contexts may lack gradients; logic still runs */ }
+  if(typeof requestAnimationFrame!=='function') return;
+  requestAnimationFrame(loop);
+}
+loadLevel(0);
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+
+/* test/debug surface — same shape as the other arcade games */
+window.__dashclimber={
+  get state(){ return {phase:state.phase,mode:state.mode,paused:state.paused,cam:state.cam,frame:state.frame,
+    level:state.level,unlocked:state.unlocked,time:state.time,deaths:state.deaths,
+    sparks:state.sparks,totalSparks:state.totalSparks,bestTotal:state.bestTotal,
+    over:state.over,result:state.result,muted:muted,
+    player:state.player?{x:state.player.x,y:state.player.y,vx:state.player.vx,vy:state.player.vy,
+      onGround:state.player.onGround,dashLeft:state.player.dashLeft,dashing:state.player.dashing,
+      wallDir:state.player.wallDir,dead:state.player.dead,coyote:state.player.coyote,face:state.player.face}:null,
+    door:state.door,grid:state.grid?state.grid.slice():null,
+    watch:state.watch?{winner:state.watch.winner,over:state.watch.over,
+      bots:state.watch.bots.map(function(b){return {id:b.id,traces:b.traces.length,x:b.climber.x,y:b.climber.y,finished:b.finished,finishFrame:b.finishFrame,dead:b.climber.dead,stuck:b.climber.stuckT,retreat:b.retreatT,dashLeft:b.climber.dashLeft,onGround:b.climber.onGround,vy:b.climber.vy};})}:null,
+    feAgent:state.feAgentId,feTraces:state.feTraces.length,feRecorded:state.feRecorded}; },
+  rooms:ROOMS,
+  startGame:startGame, loadLevel:loadLevel,
+  debugKey:function(k,down){ state.keys[k]=down; if(down) pressed[k]=true; else released[k]=true; },
+  debugPlace:function(x,y){ state.player.x=x; state.player.y=y; state.player.vx=0; state.player.vy=0; },
+  debugSetRoom:function(i){ loadLevel(i); state.phase='play'; state.mode='solo'; },
+  debugKill:function(){ kill(state.player); },
+  debugWatchTick:watchTick,
+  debugSave:saveState, debugLoad:loadState,
+  debugToggleCam:toggleCam, debugTogglePause:togglePause, debugToggleMute:toggleMute,
+  debugSetTime:function(f){ state.time=f; },
+  debugSetUnlocked:function(n){ state.unlocked=n; persistHi(); },
+  debugCrystals:function(){ return state.crystals; },
+  debugTouch:function(k,v){ state.touch[k]=v; },
+  debugSparks:function(){ return state.sparkTiles; }
+};
+</script>
+</body>
+</html>

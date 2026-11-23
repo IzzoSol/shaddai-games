@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DIVEFALL — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<!--
+  DIVEFALL — original first-person formation shooter (Galaga-formula, clean-room).
+  You are IN the cockpit: an enemy formation hangs in the dark ahead, ships peel
+  off and dive AT you along swooping curves. Original ships, names and art only.
+  Three.js r128 (MIT, Copyright 2010-2021 Three.js Authors) vendored at
+  /vendor/three.min.js — licence notice kept in that file. VR/AR buttons use the
+  arcade vr-kit (xr-session / xr-placement, MIT patterns) and are labelled SIM
+  until verified on real hardware; flat first-person is the verified mode.
+  No copyrighted characters, names, sprites or sounds. Mechanics are free;
+  expression is ours.
+-->
+<style>
+  :root{--bg:#02040a;--panel:#070b14;--border:rgba(120,150,200,.16);--cyan:#35e0ff;--green:#00ff88;--gold:#ffd75e;--red:#ff3860;--mag:#ff4fd8;--text:#c6d2e4;--dim:#5d6b82}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,224,255,.09),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(6,9,14,.9);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--cyan)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--cyan);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(53,224,255,.10);overflow:hidden}
+  #game{position:relative;width:100%;aspect-ratio:16/9;background:#01030a}
+  #game canvas{display:block;width:100%;height:100%}
+  /* cockpit frame: struts + vignette over the 3D view (pointer-events none) */
+  #cockpit{position:absolute;inset:0;pointer-events:none;z-index:3;
+    background:
+      radial-gradient(120% 90% at 50% 50%,transparent 55%,rgba(0,0,0,.55) 100%),
+      linear-gradient(180deg,rgba(53,224,255,.10),transparent 12%,transparent 88%,rgba(53,224,255,.10));
+    box-shadow:inset 0 0 0 2px rgba(53,224,255,.18), inset 0 0 60px rgba(0,0,0,.7)}
+  #cockpit:before{content:"";position:absolute;left:0;right:0;bottom:0;height:14%;
+    background:linear-gradient(180deg,transparent,rgba(2,6,12,.92));
+    clip-path:polygon(0 100%,0 55%,18% 0,82% 0,100% 55%,100% 100%)}
+  #cockpit:after{content:"";position:absolute;left:0;right:0;top:0;height:10%;
+    background:linear-gradient(0deg,transparent,rgba(2,6,12,.9));
+    clip-path:polygon(0 0,0 45%,22% 100%,78% 100%,100% 45%,100% 0)}
+  #hud{position:absolute;inset:0;pointer-events:none;z-index:4;font-family:'Share Tech Mono',monospace}
+  #hud .hud-tl{position:absolute;top:10px;left:12px;font-size:13px;letter-spacing:1px;color:#eaf6ff;text-shadow:0 0 8px rgba(53,224,255,.8)}
+  #hud .hud-tl b{color:var(--gold)}
+  #hud .hud-tr{position:absolute;top:10px;right:12px;font-size:13px;letter-spacing:1px;color:#eaf6ff;text-align:right;text-shadow:0 0 8px rgba(53,224,255,.8)}
+  #hud .hud-tr .fighters{color:var(--cyan);font-size:15px;letter-spacing:2px}
+  #hud .hud-bl{position:absolute;left:12px;bottom:10px;font-size:11px;color:var(--dim);letter-spacing:1px}
+  #hud .dualbar{position:absolute;left:12px;bottom:30px;width:150px;height:6px;border:1px solid rgba(53,224,255,.4);background:rgba(0,0,0,.5)}
+  #hud .dualbar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--gold))}
+  #hud .dualbar span{position:absolute;top:-14px;left:0;font-size:10px;color:var(--gold);letter-spacing:2px}
+  #crosshair{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;left:50%;top:50%;z-index:5;pointer-events:none}
+  #crosshair:before,#crosshair:after{content:"";position:absolute;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+  #crosshair:before{left:16px;top:0;width:2px;height:34px}
+  #crosshair:after{top:16px;left:0;height:2px;width:34px}
+  #crosshair i{position:absolute;inset:8px;border:1px solid rgba(53,224,255,.7);border-radius:50%}
+  #crosshair.lock:before,#crosshair.lock:after{background:var(--gold);box-shadow:0 0 10px var(--gold)}
+  #crosshair.lock i{border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,94,.8)}
+  /* cockpit dressing: diagonal canopy beams with gold rivets, side consoles
+     with a travelling status light, a faint glass glare streak */
+  #cockpit .beam{position:absolute;bottom:0;width:15%;height:54%;
+    border:1px solid rgba(53,224,255,.35);
+    background:
+      radial-gradient(circle 2px at 50% 18%,rgba(255,215,94,.9) 2px,transparent 3px),
+      radial-gradient(circle 2px at 50% 52%,rgba(255,215,94,.9) 2px,transparent 3px),
+      radial-gradient(circle 2px at 50% 84%,rgba(255,215,94,.9) 2px,transparent 3px),
+      linear-gradient(180deg,rgba(53,224,255,.30),rgba(53,224,255,.06))}
+  #cockpit .beam.bl{left:0;clip-path:polygon(0 100%,100% 100%,64% 0,0 0)}
+  #cockpit .beam.br{right:0;clip-path:polygon(0 100%,100% 100%,100% 0,36% 0)}
+  #cockpit .console{position:absolute;bottom:4%;width:21%;height:9%;
+    border:1px solid rgba(53,224,255,.32);
+    background:linear-gradient(180deg,rgba(6,12,20,.88),rgba(2,6,12,.94)),
+      repeating-linear-gradient(90deg,transparent 0 18px,rgba(53,224,255,.13) 18px 19px)}
+  #cockpit .console.cl{left:3%}
+  #cockpit .console.cr{right:3%}
+  #cockpit .console:before{content:"";position:absolute;top:5px;width:6px;height:6px;border-radius:50%;
+    background:#00ff88;box-shadow:0 0 8px #00ff88;animation:consoleDot 3.4s ease-in-out infinite}
+  @keyframes consoleDot{0%{left:6%;opacity:.5}50%{left:88%;opacity:1}100%{left:6%;opacity:.5}}
+  #cockpit .glare{position:absolute;inset:0;
+    background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.05) 48%,rgba(255,255,255,.02) 52%,transparent 58%)}
+  /* speed lines: radial streaks that strengthen while the camera slews */
+  #speedlines{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:0;
+    background:repeating-conic-gradient(from 0deg at 50% 50%,transparent 0 7deg,rgba(53,224,255,.10) 7deg 8deg,transparent 8deg 15deg);
+    -webkit-mask-image:radial-gradient(90% 90% at 50% 50%,transparent 46%,#000 78%);
+    mask-image:radial-gradient(90% 90% at 50% 50%,transparent 46%,#000 78%)}
+  /* FP gauges: fighters pips, hostiles + divers bars (left); lock + view (right) */
+  #fpLeft{position:absolute;left:12px;bottom:56px;font-size:11px;letter-spacing:1px;text-shadow:0 0 8px rgba(53,224,255,.6)}
+  #fpLeft .fp-row{display:flex;align-items:center;gap:7px;margin-top:4px}
+  #fpLeft .fp-lab{color:var(--dim);width:64px}
+  #fpPips{color:var(--cyan);font-size:13px;letter-spacing:3px}
+  #fpLeft .fp-bar{width:92px;height:6px;border:1px solid rgba(53,224,255,.4);background:rgba(0,0,0,.55)}
+  #fpLeft .fp-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold))}
+  #fpLeft .fp-num{color:#eaf6ff;min-width:18px;text-align:right}
+  #fpRight{position:absolute;right:12px;bottom:10px;text-align:right;font-size:11px;letter-spacing:1px;text-shadow:0 0 8px rgba(53,224,255,.6)}
+  #fpLockLine{color:var(--gold);font-size:12px}
+  #fpViewLine{color:var(--dim);margin-top:3px}
+  #flash{position:absolute;inset:0;background:radial-gradient(80% 80% at 50% 50%,rgba(255,56,96,.55),rgba(255,56,96,.15));opacity:0;pointer-events:none;z-index:6;transition:opacity .12s}
+  #vrNote{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;z-index:7;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--gold);background:rgba(2,6,12,.85);border:1px solid rgba(255,215,94,.4);padding:6px 10px;display:none;letter-spacing:1px;max-width:92%;text-align:center}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--cyan);box-shadow:0 0 16px rgba(53,224,255,.35);color:#fff}
+  .mbtn.vr{border-color:rgba(255,215,94,.5);color:var(--gold)}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--cyan);font-size:12px}
+  /* ---- handheld shell (MOBILE PLAY standard): emerald/dark console frame,
+     screen inside the shell, D-PAD left, A/B right, START/SELECT pills.
+     Never overlaps gameplay. ---- */
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #stageWrap{border-radius:10px;overflow:hidden;border:1px solid rgba(0,255,136,.25)}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:0}
+  .dpad button{font-size:15px;padding:0}
+  .dpad .dp-u{grid-area:1/2}.dpad .dp-l{grid-area:2/1}.dpad .dp-c{grid-area:2/2;background:#0a1210;border:1px solid rgba(0,255,136,.2)}
+  .dpad .dp-r{grid-area:2/3}.dpad .dp-d{grid-area:3/2}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  .ab-cluster{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .ab-row{display:flex;gap:14px;align-items:flex-end}
+  .ab{width:58px;height:58px;border-radius:50%;font-size:19px;font-weight:900}
+  .ab-a{background:#00ff88!important;color:#04120a!important;border-color:#00ff88!important}
+  .ab-b{background:#ff3860!important;border-color:#ff3860!important}
+  .ab-sub{display:flex;gap:6px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
+  .ab-sub span{width:58px;text-align:center}
+  /* ---- fullscreen (FULLSCREEN standard): the shell — stage on desktop, the
+     whole handheld console on phones — goes true fullscreen via the
+     Fullscreen API, the 16:9 stage keeping aspect and filling the frame. ---- */
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*960/540));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*960/540))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(100vw,calc((100vh - 190px)*960/540))}
+  #pauseOverlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(2,4,10,.88);backdrop-filter:blur(2px);z-index:10}
+  #pauseOverlay h2{font-size:30px;color:#fff;letter-spacing:6px;text-shadow:0 0 22px rgba(53,224,255,.7);font-family:'Orbitron',sans-serif;margin:0}
+  #pauseOverlay .sub{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:2px}
+  #pauseOverlay .pbtn{min-width:240px;padding:12px 18px;background:var(--panel);border:1px solid var(--border);color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;text-transform:uppercase}
+  #pauseOverlay .pbtn:hover{border-color:var(--cyan);box-shadow:0 0 16px rgba(53,224,255,.35)}
+  @media (max-width:560px){
+    .topbar{flex-wrap:wrap;gap:8px;padding:10px 12px}
+    .topbar h1{font-size:17px}
+    .topbar .tag{display:none}
+    .wrap{padding:12px 8px 40px}
+    .mbtn{min-width:100px;font-size:11px;padding:10px 6px}
+    .help{font-size:13px;padding:10px 12px}
+    #msg{font-size:12px}
+    .dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .ab{width:52px;height:52px}
+    .ab-sub span{width:52px}
+    .shell-pills{padding-top:28px}
+    #pauseOverlay .pbtn{min-width:210px;padding:11px 14px;font-size:12px}
+    #pauseOverlay{gap:7px;justify-content:flex-start;padding:10px 0;overflow-y:auto}
+    #pauseOverlay h2{font-size:18px;letter-spacing:4px}
+    #pauseOverlay .sub{display:none}
+    #fpLeft{bottom:44px;font-size:9px;left:8px}
+    #fpLeft .fp-lab{width:52px}
+    #fpLeft .fp-bar{width:58px}
+    #fpRight{right:8px;font-size:9px;bottom:34px}
+    #fpLockLine{font-size:10px}
+    #fpViewLine{display:none}
+    #hud .dualbar span{display:none}
+    #cockpit .console{height:12%}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:53,224,255}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../arcade.html">← ARCADE</a>
+  <h1>DIVEFALL <span>· FIRST-PERSON FORMATION SHOOTER</span></h1>
+  <div class="spacer"></div>
+  <span class="tag">VR / AR · SIM — FLAT FP VERIFIED</span>
+  <button id="muteBtn" class="mbtn" style="flex:0 0 auto;min-width:110px">SOUND: ON</button>
+</div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <div id="game"></div>
+      <div id="cockpit"><div class="beam bl"></div><div class="beam br"></div><div class="console cl"></div><div class="console cr"></div><div class="glare"></div></div>
+      <div id="speedlines"></div>
+      <div id="hud">
+        <div class="hud-tl">SCORE <b id="hudScore">0</b><br/>WAVE <b id="hudWave">1</b> · KILLS <b id="hudKills">0</b></div>
+        <div class="hud-tr"><span class="fighters" id="hudFighters">▲▲▲</span><br/><span id="hudMode">1P SOLO</span></div>
+        <div id="fpLeft">
+          <div class="fp-row"><span class="fp-lab">FIGHTERS</span><span id="fpPips">▲▲▲</span></div>
+          <div class="fp-row"><span class="fp-lab">HOSTILES</span><div class="fp-bar"><i id="fpHostiles"></i></div><span class="fp-num" id="fpHostilesN">32</span></div>
+          <div class="fp-row"><span class="fp-lab">DIVERS</span><div class="fp-bar"><i id="fpThreat"></i></div><span class="fp-num" id="fpThreatN">0</span></div>
+        </div>
+        <div id="fpRight">
+          <div id="fpLockLine">NO LOCK — SWEEP THE FORMATION</div>
+          <div id="fpViewLine">COCKPIT · 1P SOLO · WAVE 1</div>
+        </div>
+        <div class="dualbar" id="dualWrap" style="display:none"><span>DUAL CANNONS</span><i id="dualBar"></i></div>
+        <div class="hud-bl" id="hudHint">MOUSE AIM · CLICK / SPACE FIRE · P PAUSE</div>
+      </div>
+      <div id="crosshair"><i></i></div>
+      <div id="flash"></div>
+      <div id="vrNote"></div>
+      <div id="pauseOverlay">
+        <h2 id="pauseTitle">PAUSED</h2>
+        <div class="sub" id="pauseSub">DIVEFALL · START MENU</div>
+        <button class="pbtn" id="resumeBtn">RESUME</button>
+        <button class="pbtn" id="saveBtn">SAVE STATE</button>
+        <button class="pbtn" id="loadBtn">LOAD STATE</button>
+        <button class="pbtn" id="restartBtn">RESTART RUN</button>
+        <button class="pbtn" id="quitArcadeBtn">QUIT TO ARCADE</button>
+      </div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="dp-u" data-k="up">▲</button>
+        <button class="dp-l" data-k="left">◀</button>
+        <button class="dp-c" data-k="center">·</button>
+        <button class="dp-r" data-k="right">▶</button>
+        <button class="dp-d" data-k="down">▼</button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn">START</button>
+        <button id="selectBtn">SELECT · VIEW</button>
+      </div>
+      <div class="ab-cluster">
+        <div class="ab-row">
+          <button class="ab ab-b" id="btnB">B</button>
+          <button class="ab ab-a" id="btnA">A</button>
+        </div>
+        <div class="ab-sub"><span>BURST</span><span>FIRE</span></div>
+      </div>
+    </div>
+  </div>
+  <div id="msg">DIVEFALL — the formation hangs ahead. Pick a mode.</div>
+  <div class="row">
+    <button class="mbtn active" id="btnSolo">1P SOLO<small>you fly · waves rise</small></button>
+    <button class="mbtn" id="btnWatch">WATCH<small>bot pilot flies · camera rides along</small></button>
+    <button class="mbtn vr" id="btnVR">ENTER VR (SIM)<small>WebXR via vr-kit · needs a headset</small></button>
+    <button class="mbtn vr" id="btnAR">AR VIEW (SIM)<small>formation over your room · needs AR device</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — stage fills the screen</small></button>
+  </div>
+  <div class="help">
+    <b>The dive:</b> you are <b>in the cockpit</b> — the enemy formation hangs in the dark ahead of you.
+    Ships peel off and <b>dive straight at you</b> along swooping curves. Shoot them before they reach you.
+    <b>DRIFTER</b> (cyan) dives slow and straight. <b>DART</b> (magenta) dives fast and tight.
+    <b>WEAVER</b> (gold) weaves side to side and takes two hits. <b>SNATCHER</b> (red) is the thief: if it
+    reaches you while you still hold spare fighters, its capture beam <b>steals one</b> — shoot it down
+    while it carries your fighter to win it back and unlock <b>DUAL CANNONS</b>.<br/>
+    <b>Controls:</b> <span class="k">MOUSE</span> aim · <span class="k">CLICK / SPACE</span> fire (hold) ·
+    <span class="k">B / SHIFT</span> burst (3-shot fan) · <span class="k">V</span> cockpit / chase view ·
+    <span class="k">P / START</span> pause + save/load · <span class="k">M</span> mute · <span class="k">R</span> restart.
+    On phones: drag the screen to aim, <span class="k">A</span> fires, <span class="k">B</span> bursts, D-pad nudges aim.<br/>
+    <b>VR / AR:</b> the <span class="k">ENTER VR</span> and <span class="k">AR VIEW</span> buttons run on the arcade vr-kit.
+    With no headset available for testing they are labelled <b>SIM</b> — flat first-person is the verified mode.<br/>
+    <b>First-person:</b> the cockpit camera eases onto your aim and banks into the turn — it never snaps.
+    The crosshair turns gold with a <b>◈ LOCK</b> readout when it sits on a ship. The lower-left gauges read
+    <b>fighters</b>, <b>hostiles left</b> and <b>divers inbound</b> at a glance; <span class="k">V</span> swaps
+    cockpit / chase view.<br/>
+    ⛶ <b>Fullscreen:</b> <span class="k">F</span> or the Fullscreen button — the stage (on phones, the whole handheld shell) fills the screen; <span class="k">Esc</span> exits fullscreen.
+  </div>
+</div>
+<script src="../vendor/three.min.js"></script>
+<script src="../vr-kit/xr-session.js"></script>
+<script src="../vr-kit/xr-placement.js"></script>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* DIVEFALL core — clean-room Galaga-formula, first-person. All ships, names,
+   numbers and art are original. Simulation state is plain data; the Three.js
+   layer is a thin render sync (syncGfx), so the sim is testable headless. */
+(function(){
+var $=function(id){return document.getElementById(id);};
+var qs={}; try{ new URLSearchParams(location.search).forEach(function(v,k){qs[k]=v;}); }catch(e){}
+var THREE=(typeof window!=='undefined'&&window.THREE)||null;
+var isTouch=false;
+try{ isTouch=(typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches)||(typeof navigator!=='undefined'&&navigator.maxTouchPoints>0)||qs.touch==='1'; }catch(e){}
+if(isTouch&&document.body&&document.body.classList)document.body.classList.add('touch');
+
+/* ---------------- types (original) ---------------- */
+var TYPES={
+  DRIFTER:{hp:1,score:100,color:0x35e0ff,css:'#35e0ff'},
+  DART:{hp:1,score:150,color:0xff4fd8,css:'#ff4fd8'},
+  WEAVER:{hp:2,score:250,color:0xffd75e,css:'#ffd75e'},
+  SNATCHER:{hp:2,score:400,color:0xff3860,css:'#ff3860'}
+};
+var SAVE_KEY='divefall-save-v1';
+var state={phase:'title',mode:'solo',score:0,wave:0,fighters:3,dual:0,paused:false,muted:false,
+  kills:0,shots:0,hits:0,watchRestarts:0,view:'cockpit',fpLock:null};
+var enemies=[],shots=[],parts=[];
+/* FP camera visual state (presentation only, never saved): eased yaw/pitch
+   toward the aim, roll lean while catching up, chase-view dolly, and the
+   angular-velocity proxy that drives the speed-line overlay. */
+var fpCam={yaw:0,pitch:0,roll:0,chaseZ:0,chaseY:0,vel:0};
+var aim={x:0,y:0};           /* world coords on the z=-40 aim plane */
+var fireCd=0,burstCd=0,diveTimer=2.5,formT=0,invuln=0,flashT=0,waveClearT=0,gameOverT=0;
+var mouseDown=false,keys={};
+var touch={left:false,right:false,up:false,down:false,fire:false};
+var watchBot=null,botTarget=null,botPickT=0,botAimNoise={x:0,y:0};
+var BOTS=[
+  {name:'VEX', err:2.6, rate:0.24, pref:'diver'},   /* aggressive, sloppy */
+  {name:'ORBIT',err:1.0, rate:0.50, pref:'formation'}, /* patient, precise */
+  {name:'HALO', err:1.5, rate:0.34, pref:'diver'}    /* diver-hunter */
+];
+
+/* ---------------- Fallible Engine wiring (E14, 2026-11-21): in WATCH mode
+   one council agent flies per bout, rotating across bouts (bout n:
+   COUNCIL_IDS[n%8], so 8 bouts give every agent exactly one bout). Every
+   bot target-pick tick goes through FallibleEngine.decide — the game scores
+   diver-hunt / formation-focus / snatcher-hunt / burst-fire / hold-fire
+   options, the engine samples by personality temperature. Engine absent ->
+   the legacy personality bot in watchStep below, unchanged. A bout records
+   one recordResult (win = score >= 3000, ~60% of a wave-1 clear; else loss),
+   so Elo moves at K=24 vs the 1200 field. Solo play records nothing;
+   save/load, score and waves are untouched. The league page reads per-game
+   Elo generically, so 'divefall' appears there with no league.html change. */
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var DF_WIN_SCORE=3000;
+/* E34: rotation cursor persists across page loads (E31/E32/E33 precedent)
+   so fresh loads keep cycling the council instead of restarting at
+   ASIMOV every time. Key is game-scoped. */
+function dfCursor(){ try{ var v=parseInt(localStorage.getItem('divefall.dfBout')||'0',10); return isNaN(v)?0:v; }catch(e){ return 0; } }
+function dfSaveCursor(v){ try{ localStorage.setItem('divefall.dfBout',String(v)); }catch(e){} }
+var dfAgentId=null, dfAgent=null, dfTraces=[], dfRecorded=false, dfBout=dfCursor(), dfHolding=false;
+function dfSetupAgent(){
+  dfAgentId=FE?COUNCIL_IDS[dfBout%8]:null; if(FE){ dfBout++; dfSaveCursor(dfBout); } /* no engine -> no agent, even as a label; fallback never consumes the cursor */
+  dfAgent=null; dfTraces=[]; dfRecorded=false; dfHolding=false;
+  if(FE){ try{ dfAgent=FE.loadAgent(dfAgentId); }catch(e){ dfAgent=null; } }
+  /* simulant matrix: archetype rides on top of the council personality */
+  dfArch=(dfAgentId&&ARCH_BY_AGENT[dfAgentId])||null;
+  if(dfArchOverride) dfArch=dfArchOverride;
+  dfGrudge=null; dfBreakT=0;
+  dfAnchor={x:(dfBout%2===0?-9:9), y:6};
+  dfBehaviour=[];
+  if(dfArch) dfLog('bout',{agent:dfAgentId});
+}
+function dfClearAgent(){
+  dfAgentId=null; dfAgent=null; dfTraces=[]; dfRecorded=false; dfHolding=false;
+  dfArch=null; dfGrudge=null; dfBreakT=0;
+}
+/* E34 REPAIR D2: re-attach a saved watch agent WITHOUT consuming a rotation
+   cursor slot (the bout already took its slot when it was set up). Mirrors
+   dfSetupAgent minus the cursor advance and the trace/recorded reset, so a
+   watch save resumes as the same bout instead of converting to solo. */
+function dfRestoreAgent(agentId){
+  dfAgentId=COUNCIL_IDS.indexOf(agentId)>=0?agentId:null;
+  dfAgent=null; dfHolding=false;
+  if(FE&&dfAgentId){ try{ dfAgent=FE.loadAgent(dfAgentId); }catch(e){ dfAgent=null; } }
+  dfArch=(dfAgentId&&ARCH_BY_AGENT[dfAgentId])||null;
+  if(dfArchOverride) dfArch=dfArchOverride;
+  dfGrudge=null; dfBreakT=0;
+  dfAnchor={x:(COUNCIL_IDS.indexOf(dfAgentId)%2===0?-9:9), y:6};
+  dfBehaviour=[];
+  if(dfArch) dfLog('bout',{agent:dfAgentId});
+}
+/* Score this bout's target/fire options for the engine; tags name the reason
+   the option is attractive, so per-tag learning (E8) builds real strategies.
+   Scores are the GAME's heuristic — personality enters only through the
+   engine's temperature. */
+function dfOptions(){
+  var carrying=false, divers=0, formers=0;
+  for(var i=0;i<enemies.length;i++){
+    var e=enemies[i];
+    if(e.type==='SNATCHER'&&e.carrying) carrying=true;
+    if(e.state==='diving') divers++;
+    else if(e.state==='form') formers++;
+  }
+  var opts=[
+    {key:'diver-hunt',      tag:'diver-hunt',      score:divers>0?0.80:0.10},
+    {key:'formation-focus', tag:'formation-focus', score:formers>0?0.50:0.10},
+    {key:'snatcher-hunt',   tag:'snatcher-hunt',   score:carrying?0.90:0.05},
+    {key:'burst-fire',      tag:'burst-fire',      score:divers>0?0.45:0.15},
+    {key:'hold-fire',       tag:'hold-fire',       score:(divers===0&&!carrying)?0.60:0.20}
+  ];
+  return dfApplyArchBias(opts);
+}
+/* One WATCH bout = one recordResult for the flying agent, guarded so a bout
+   records exactly once. */
+function recordDivefallResult(){
+  if(state.mode!=='watch'||dfRecorded) return;
+  dfRecorded=true;
+  if(!FE||!dfAgent) return;
+  try{ FE.recordResult(dfAgent,'divefall',null,state.score>=DF_WIN_SCORE?'win':'loss',dfTraces); }catch(e){}
+}
+
+/* ---------------- Simulant matrix (2026-11-21): a behaviour archetype
+   layered ON TOP of each WATCH pilot's council personality. Modelled on the
+   documented Perfect Dark Simulant CONCEPT — a difficulty axis crossed with
+   behaviour archetypes — SPEC lane: concept only; every name, number and
+   rule here is ours, written for Divefall. The matrix lives in the game, not
+   the engine, on purpose: per the engine's API contract the GAME scores the
+   options and owns target selection, so archetypes are expressed as score
+   biases in dfOptions() + target/fire rules in watchStep(), while the engine
+   keeps sampling by council personality temperature. Difficulty axis:
+   intensity I scales with wave — I = clamp(0.55 + 0.07*(wave-1), 0.55, 1) —
+   so archetype traits sharpen as waves rise. Behaviours are observable:
+   every pick / grudge / break is appended to dfBehaviour for the harness. */
+var ARCHETYPES={
+  VENDETTA:{rateMul:1.10, errMul:1.00},  /* fixates on whoever last downed it */
+  SKITTISH:{rateMul:0.85, errMul:1.00},  /* breaks off + repositions after a loss */
+  ARBITER:{rateMul:1.00, errMul:0.90},   /* targets the highest-value ship alive */
+  BASTION:{rateMul:0.80, errMul:0.85},   /* holds, survival first, closest threat first */
+  DAREDEVIL:{rateMul:1.50, errMul:1.25}, /* riskiest line: bursts, centre of the action */
+  OPAL:{rateMul:0.70, errMul:0.60}       /* camper: holds a vantage, long-range picks only */
+};
+var ARCH_BY_AGENT={
+  ASIMOV:'ARBITER', SHADDAI:'BASTION', ZEROX:'DAREDEVIL', ORACLE:'OPAL',
+  NEXUS:'VENDETTA', TURTLE:'SKITTISH', QUILL:'DAREDEVIL', PIKADON:'SKITTISH'
+};
+var dfArch=null, dfArchOverride=null;
+var dfGrudge=null;              /* VENDETTA: {type, ttl} */
+var dfBreakT=0;                 /* SKITTISH: seconds of break-off remaining */
+var dfAnchor={x:9,y:6};         /* OPAL: this bout's vantage point */
+var dfBehaviour=[];             /* observable behaviour events, capped */
+function dfIntensity(){ return Math.min(1, 0.55+0.07*Math.max(0,state.wave-1)); }
+function dfErrMul(){ return (dfArch&&ARCHETYPES[dfArch])?ARCHETYPES[dfArch].errMul:1; }
+function dfRateMul(){ return (dfArch&&ARCHETYPES[dfArch])?ARCHETYPES[dfArch].rateMul:1; }
+function dfLog(kind,data){
+  var ev={t:Math.round(formT*10)/10, kind:kind, arch:dfArch};
+  if(data) for(var k in data) ev[k]=data[k];
+  dfBehaviour.push(ev);
+  if(dfBehaviour.length>600) dfBehaviour.splice(0,dfBehaviour.length-600);
+}
+function dfLeaderType(){
+  var best=null, bs=-1;
+  for(var i=0;i<enemies.length;i++){
+    var s=TYPES[enemies[i].type].score;
+    if(s>bs){ bs=s; best=enemies[i].type; }
+  }
+  return best;
+}
+function dfLogPick(pickKey,target,pool){
+  var lt=dfLeaderType();
+  dfLog('pick',{pick:pickKey,
+    targetType:target?target.type:null,
+    leaderType:lt,
+    leaderInPool:!!(lt&&pool&&pool.some(function(e){return e.type===lt;})),
+    grudgeType:dfGrudge?dfGrudge.type:null,
+    grudgeAlive:!!(dfGrudge&&enemies.some(function(e){return e.type===dfGrudge.type;}))});
+}
+/* Archetype target selection over the engine-chosen pool. Returns an enemy
+   or null (OPAL with nothing crossing its vantage holds position). */
+function dfPickTarget(pool){
+  if(!pool.length) return null;
+  var i, t=null;
+  if(dfArch==='VENDETTA'&&dfGrudge){
+    var g=pool.filter(function(e){return e.type===dfGrudge.type;});
+    if(g.length) return g[Math.floor(Math.random()*g.length)];
+  }
+  if(dfArch==='OPAL'){
+    var bt=null, bd=1e9;
+    for(i=0;i<pool.length;i++){
+      var dd=Math.hypot(pool[i].x-dfAnchor.x, pool[i].y-dfAnchor.y);
+      if(dd<bd){ bd=dd; bt=pool[i]; }
+    }
+    return (bt&&bd<=7.5)?bt:null;
+  }
+  if(dfArch==='ARBITER'){
+    var lt=dfLeaderType();
+    var lp=pool.filter(function(e){return e.type===lt;});
+    var src=lp.length?lp:pool;
+    t=src[0]; for(i=1;i<src.length;i++) if(src[i].z>t.z) t=src[i];
+    return t;
+  }
+  if(dfArch==='BASTION'){
+    t=pool[0]; for(i=1;i<pool.length;i++) if(pool[i].z>t.z) t=pool[i];
+    return t;
+  }
+  if(dfArch==='SKITTISH'){
+    t=pool[0]; for(i=1;i<pool.length;i++) if(pool[i].z<t.z) t=pool[i];
+    return t;
+  }
+  if(dfArch==='DAREDEVIL'){
+    var bc=1e9;
+    for(i=0;i<pool.length;i++){
+      var dc=Math.abs(pool[i].x)+Math.abs(pool[i].y-6);
+      if(dc<bc){ bc=dc; t=pool[i]; }
+    }
+    return t;
+  }
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+/* The pilot lost a fighter (diver impact or a SNATCHER steal): archetype
+   reactions live here so every downed path feeds the same behaviours. */
+function dfOnDowned(e){
+  if(state.mode!=='watch'||!dfArch||!e||!e.type) return;
+  if(dfArch==='VENDETTA'){
+    dfGrudge={type:e.type, ttl:6+6*dfIntensity()};
+    dfLog('grudge',{type:e.type});
+  }else if(dfArch==='SKITTISH'){
+    dfBreakT=1.6+1.6*dfIntensity();
+    dfHolding=true; botTarget=null;
+    dfLog('break-start',{type:e.type});
+  }
+}
+function dfApplyArchBias(opts){
+  if(!dfArch) return opts;
+  var I=dfIntensity();
+  function adj(key,d){
+    for(var i=0;i<opts.length;i++) if(opts[i].key===key)
+      opts[i].score=Math.max(0.02,Math.min(0.98,opts[i].score+d));
+  }
+  if(dfArch==='VENDETTA'){
+    if(dfGrudge){
+      adj('diver-hunt',0.25*I);
+      if(dfGrudge.type==='SNATCHER') adj('snatcher-hunt',0.30*I);
+    }
+  }else if(dfArch==='SKITTISH'){
+    adj('hold-fire',0.20*I); adj('burst-fire',-0.15*I);
+    if(dfBreakT>0) for(var j=0;j<opts.length;j++)
+      opts[j].score=(opts[j].key==='hold-fire')?0.95:0.02;
+  }else if(dfArch==='ARBITER'){
+    var lt=dfLeaderType();
+    if(lt==='SNATCHER') adj('snatcher-hunt',0.30*I);
+    if(lt) adj('formation-focus',0.18*I);
+  }else if(dfArch==='BASTION'){
+    adj('hold-fire',0.15*I); adj('burst-fire',-0.12*I);
+  }else if(dfArch==='DAREDEVIL'){
+    adj('burst-fire',0.30*I); adj('diver-hunt',0.15*I); adj('hold-fire',-0.25*I);
+  }else if(dfArch==='OPAL'){
+    adj('formation-focus',0.25*I); adj('diver-hunt',-0.15*I); adj('burst-fire',-0.10*I);
+  }
+  return opts;
+}
+var nextId=1;
+function rnd(a,b){return a+Math.random()*(b-a);}
+
+/* ---------------- audio (tiny, guarded) ---------------- */
+var AC=null;
+function beep(freq,dur,type,vol){
+  if(state.muted) return;
+  try{
+    if(typeof window==='undefined'||!window.AudioContext) return;
+    if(!AC) AC=new window.AudioContext();
+    if(AC.state==='suspended') AC.resume();
+    var o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||'square'; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.05,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+dur);
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+dur);
+  }catch(e){}
+}
+
+/* ---------------- formation ---------------- */
+function waveComp(){
+  return [
+    ['DRIFTER','DRIFTER','DRIFTER','DRIFTER','DRIFTER','DRIFTER','DRIFTER','DRIFTER'],
+    ['DRIFTER','DART','DRIFTER','DRIFTER','DRIFTER','DRIFTER','DART','DRIFTER'],
+    ['WEAVER','DRIFTER','DRIFTER','WEAVER','WEAVER','DRIFTER','DRIFTER','WEAVER'],
+    ['SNATCHER','DART','DRIFTER','DRIFTER','DRIFTER','DRIFTER','DART','SNATCHER']
+  ];
+}
+function spawnWave(w){
+  state.wave=w; enemies=[]; shots=[]; diveTimer=2.2; waveClearT=0;
+  var comp=waveComp();
+  for(var r=0;r<comp.length;r++) for(var c=0;c<comp[r].length;c++){
+    var t=comp[r][c];
+    enemies.push({id:nextId++,type:t,hp:TYPES[t].hp,
+      hx:(c-3.5)*3.4,hy:3.4+r*2.8,hz:-36-r*2.2,
+      x:0,y:0,z:0,state:'form',t:0,dur:3,curve:null,carrying:false,ph:rnd(0,6.28),spin:rnd(0,6.28)});
+  }
+  setMsg('WAVE '+w+' — formation inbound. '+enemies.length+' ships.');
+}
+function formationOffset(){
+  return {x:Math.sin(formT*0.35)*1.6, y:Math.sin(formT*0.27)*0.8};
+}
+function bez(p0,p1,p2,t){
+  var u=1-t;
+  return {x:u*u*p0.x+2*u*t*p1.x+t*t*p2.x,
+          y:u*u*p0.y+2*u*t*p1.y+t*t*p2.y,
+          z:u*u*p0.z+2*u*t*p1.z+t*t*p2.z};
+}
+function startDive(e){
+  var tx=rnd(-6,6), ty=rnd(-2,6);
+  e.state='diving'; e.t=0;
+  e.dur=Math.max(2.0, 3.4-state.wave*0.12);
+  e.curve={p0:{x:e.x,y:e.y,z:e.z},
+    p1:{x:(e.x+tx)/2+rnd(-7,7), y:(e.y+ty)/2+rnd(2,6), z:-18},
+    p2:{x:tx,y:ty,z:4}};
+}
+function divers(){ var n=0; for(var i=0;i<enemies.length;i++) if(enemies[i].state==='diving') n++; return n; }
+function formers(){ var n=0; for(var i=0;i<enemies.length;i++) if(enemies[i].state==='form') n++; return n; }
+
+/* ---------------- combat ---------------- */
+function fire(){
+  if(state.phase!=='playing'||state.paused||fireCd>0) return;
+  fireCd=state.dual>0?0.16:0.22;
+  var n=state.dual>0?2:1;
+  for(var i=0;i<n;i++){
+    var ox=n===2?(i===0?-0.55:0.55):0;
+    var dx=aim.x-ox, dy=aim.y, dz=-40;
+    var len=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    shots.push({x:ox,y:0,z:0,vx:dx/len*95,vy:dy/len*95,vz:dz/len*95,life:1.2});
+  }
+  state.shots+=n; beep(880,0.05,'square',0.04);
+}
+function burst(){
+  if(state.phase!=='playing'||state.paused||burstCd>0) return;
+  burstCd=1.5;
+  [-3,0,3].forEach(function(off){
+    var dx=aim.x+off, dy=aim.y, dz=-40, len=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    shots.push({x:0,y:0,z:0,vx:dx/len*95,vy:dy/len*95,vz:dz/len*95,life:1.2});
+  });
+  state.shots+=3; beep(660,0.08,'sawtooth',0.05);
+}
+function explode(x,y,z,color){
+  for(var i=0;i<16;i++){
+    parts.push({x:x,y:y,z:z,vx:rnd(-9,9),vy:rnd(-9,9),vz:rnd(-9,9),life:rnd(0.3,0.8),max:0.8,color:color});
+  }
+}
+function killEnemy(e){
+  var T=TYPES[e.type];
+  state.score+=T.score; state.kills++; state.hits++;
+  explode(e.x,e.y,e.z,T.color);
+  beep(120,0.25,'sawtooth',0.07);
+  if(e.carrying){
+    state.fighters=Math.min(3,state.fighters+1); state.dual=20;
+    setMsg('FIGHTER RECOVERED — DUAL CANNONS ONLINE!');
+  }
+  var ix=enemies.indexOf(e); if(ix>=0) enemies.splice(ix,1);
+}
+function hitPlayer(e){
+  if(state.invuln>0) return;
+  state.fighters--; state.invuln=2; flashT=0.5;
+  dfOnDowned(e);
+  explode(0,0,-6,0xff3860); beep(70,0.4,'sawtooth',0.09);
+  setMsg(state.fighters>0?'HIT! Fighter down — '+state.fighters+' left.':'HIT! No fighters left.');
+  if(state.fighters<=0) gameOver();
+}
+function gameOver(){
+  state.phase='gameover'; gameOverT=2.2;
+  recordDivefallResult();
+  setMsg('GAME OVER — final score '+state.score+'. '+(state.mode==='watch'?'Watch bot restarts…':'Press R to fly again.'));
+}
+function arrive(e){
+  /* a diver reached the camera plane */
+  if(e.type==='SNATCHER'&&!e.carrying&&state.fighters>1){
+    state.fighters--; e.carrying=true;
+    dfOnDowned(e);
+    setMsg('SNATCHER STOLE A FIGHTER — shoot it down to win it back!');
+    beep(300,0.3,'sawtooth',0.08);
+    sendHome(e); return;
+  }
+  if(Math.abs(e.x)<2.2&&Math.abs(e.y)<2.2){
+    explode(e.x,e.y,e.z,TYPES[e.type].color);
+    var ix=enemies.indexOf(e); if(ix>=0) enemies.splice(ix,1);
+    hitPlayer(e); return;
+  }
+  sendHome(e); /* near miss — it loops back to the formation */
+}
+function sendHome(e){
+  e.state='returning'; e.t=0;
+  var top=e.carrying?12.5:3.4;
+  e.curve={p0:{x:e.x,y:e.y,z:e.z},
+    p1:{x:e.x+rnd(-4,4),y:10,z:-16},
+    p2:{x:Math.max(-12,Math.min(12,e.x)),y:top,z:-36}};
+  if(e.carrying){ e.hx=Math.max(-12,Math.min(12,e.x)); e.hy=top; e.hz=-36; }
+}
+
+/* ---------------- update ---------------- */
+function update(dt){
+  formT+=dt;
+  if(state.dual>0) state.dual=Math.max(0,state.dual-dt);
+  if(state.invuln>0) state.invuln-=dt;
+  if(flashT>0) flashT-=dt;
+  if(dfGrudge){ dfGrudge.ttl-=dt; if(dfGrudge.ttl<=0){ dfLog('grudge-end',{type:dfGrudge.type}); dfGrudge=null; } }
+  if(fireCd>0) fireCd-=dt;
+  if(burstCd>0) burstCd-=dt;
+  var off=formationOffset();
+  /* enemies */
+  for(var i=enemies.length-1;i>=0;i--){
+    var e=enemies[i];
+    if(e.state==='form'){
+      e.x=e.hx+off.x+Math.sin(formT*0.9+e.ph)*0.3;
+      e.y=e.hy+off.y;
+      e.z=e.hz;
+    }else if(e.state==='diving'||e.state==='returning'){
+      var dur=e.state==='diving'?e.dur:1.2;
+      e.t+=dt/dur;
+      if(e.t>=1){
+        if(e.state==='diving'){ arrive(e); }
+        else { e.state='form'; e.t=0; }
+      }else{
+        var p=bez(e.curve.p0,e.curve.p1,e.curve.p2,Math.min(1,e.t));
+        e.x=p.x; e.y=p.y; e.z=p.z;
+      }
+    }
+  }
+  /* dive scheduling */
+  if(state.phase==='playing'){
+    var maxDivers=Math.min(2+state.wave,6);
+    if(divers()<maxDivers&&formers()>0){
+      diveTimer-=dt;
+      if(diveTimer<=0){
+        var cand=enemies.filter(function(x){return x.state==='form';});
+        if(cand.length) startDive(cand[Math.floor(Math.random()*cand.length)]);
+        diveTimer=Math.max(0.9,2.6-state.wave*0.15);
+      }
+    }
+    /* wave clear */
+    if(enemies.length===0){
+      if(waveClearT===0){ state.score+=500*state.wave; setMsg('WAVE '+state.wave+' CLEAR — bonus +'+(500*state.wave)); waveClearT=1.6; }
+      waveClearT-=dt;
+      if(waveClearT<=0) spawnWave(state.wave+1);
+    }
+  }
+  /* shots */
+  for(var s=shots.length-1;s>=0;s--){
+    var sh=shots[s];
+    sh.x+=sh.vx*dt; sh.y+=sh.vy*dt; sh.z+=sh.vz*dt; sh.life-=dt;
+    var dead=sh.life<=0||sh.z<-70;
+    if(!dead){
+      for(var j=enemies.length-1;j>=0;j--){
+        var en=enemies[j];
+        if(Math.abs(sh.z-en.z)<1.6&&Math.hypot(sh.x-en.x,sh.y-en.y)<1.7){
+          en.hp--; dead=true;
+          if(en.hp<=0) killEnemy(en);
+          else beep(440,0.04,'square',0.03);
+          break;
+        }
+      }
+    }
+    if(dead) shots.splice(s,1);
+  }
+  /* particles */
+  for(var p=parts.length-1;p>=0;p--){
+    var pt=parts[p];
+    pt.x+=pt.vx*dt; pt.y+=pt.vy*dt; pt.z+=pt.vz*dt; pt.life-=dt;
+    if(pt.life<=0) parts.splice(p,1);
+  }
+  /* held fire */
+  if((mouseDown||keys.Space||touch.fire)&&state.phase==='playing') fire();
+  /* keyboard aim nudge */
+  var spd=22*dt;
+  if(keys.ArrowLeft||keys.KeyA||touch.left) aim.x=Math.max(-14,aim.x-spd);
+  if(keys.ArrowRight||keys.KeyD||touch.right) aim.x=Math.min(14,aim.x+spd);
+  if(keys.ArrowUp||keys.KeyW||touch.up) aim.y=Math.min(13,aim.y+spd);
+  if(keys.ArrowDown||keys.KeyS||touch.down) aim.y=Math.max(-13,aim.y-spd);
+  /* watch bot */
+  if(state.mode==='watch'&&state.phase==='playing') watchStep(dt);
+  /* FP camera: ease toward the aim (never a snap), lean with the catch-up,
+     dolly the chase view in/out — visual only, frozen while paused because
+     update() does not run then. */
+  stepFpCam();
+  /* game over auto-restart in watch */
+  if(state.phase==='gameover'){
+    gameOverT-=dt;
+    if(gameOverT<=0){
+      if(state.mode==='watch'){ state.watchRestarts++; startGame('watch'); }
+    }
+  }
+}
+
+/* ---------------- FP camera (presentation only) ---------------- */
+function stepFpCam(){
+  var ty=-aim.x*0.014, tp=aim.y*0.014;
+  fpCam.vel=Math.abs(ty-fpCam.yaw)+Math.abs(tp-fpCam.pitch);
+  fpCam.yaw+=(ty-fpCam.yaw)*0.12;
+  fpCam.pitch+=(tp-fpCam.pitch)*0.12;
+  var rollT=Math.max(-0.05,Math.min(0.05,(ty-fpCam.yaw)*2.5));
+  fpCam.roll+=(rollT-fpCam.roll)*0.12;
+  var chase=state.view==='chase';
+  fpCam.chaseZ+=((chase?7:0)-fpCam.chaseZ)*0.08;
+  fpCam.chaseY+=((chase?3:0)-fpCam.chaseY)*0.08;
+}
+
+/* ---------------- watch bot (imperfect, personality-driven) ---------------- */
+function watchStep(dt){
+  if(!watchBot) return;
+  /* SKITTISH break-off: after losing a fighter it stops firing and
+     repositions to the far side, low, until the break timer runs out. */
+  if(dfArch==='SKITTISH'&&dfBreakT>0){
+    dfBreakT-=dt;
+    dfHolding=true; botTarget=null;
+    var rx=aim.x>0?-11:11, rk=Math.min(1,dt*3);
+    aim.x+=(rx-aim.x)*rk; aim.y+=(-6-aim.y)*rk;
+    if(dfBreakT<=0){ dfBreakT=0; dfLog('break-end',{}); }
+    return;
+  }
+  botPickT-=dt;
+  if(botPickT<=0){
+    botPickT=0.35;
+    botTarget=null; dfHolding=false;
+    var pick=null;
+    if(FE&&dfAgent){
+      try{
+        var res=FE.decide(dfAgent,'divefall',dfOptions(),{timePressure:divers()>0?0.5:0});
+        dfTraces.push(res.trace);
+        pick=res.pick;
+      }catch(e){ pick=null; }
+    }
+    if(pick){
+      /* engine pick: choose the target pool (and burst / hold) for this window */
+      var pool=[];
+      if(pick.key==='snatcher-hunt'){
+        pool=enemies.filter(function(e){return e.type==='SNATCHER'&&e.carrying;});
+        if(!pool.length) pool=enemies.filter(function(e){return e.state==='diving';});
+      }else if(pick.key==='diver-hunt'){
+        pool=enemies.filter(function(e){return e.state==='diving';});
+      }else if(pick.key==='burst-fire'){
+        pool=enemies.filter(function(e){return e.state==='diving';});
+        if(!pool.length) pool=enemies.slice();
+        if(pool.length) burst();
+      }else if(pick.key==='hold-fire'){
+        dfHolding=true;
+        dfLogPick(pick.key,null,pool);
+        return;
+      }
+      if(!pool.length) pool=enemies.slice();
+      /* VENDETTA fixation: while a grudge is live, the grudge type IS the pool */
+      if(dfArch==='VENDETTA'&&dfGrudge){
+        var gall=enemies.filter(function(e){return e.type===dfGrudge.type;});
+        if(gall.length) pool=gall;
+      }
+      if(!pool.length){ botTarget=null; dfLogPick(pick.key,null,pool); return; }
+      botTarget=dfPickTarget(pool);
+      dfLogPick(pick.key,botTarget,pool);
+      botAimNoise={x:rnd(-1,1)*watchBot.err*dfErrMul(), y:rnd(-1,1)*watchBot.err*dfErrMul()};
+    }else{
+      /* legacy personality pick (engine absent or decide failed) — unchanged */
+      var lpool=enemies.filter(function(e){return e.state==='diving';});
+      if(watchBot.pref==='formation'||lpool.length===0) lpool=enemies.slice();
+      if(!lpool.length){ botTarget=null; return; }
+      botTarget=lpool[Math.floor(Math.random()*lpool.length)];
+      botAimNoise={x:rnd(-1,1)*watchBot.err*dfErrMul(), y:rnd(-1,1)*watchBot.err*dfErrMul()};
+    }
+  }
+  if(botTarget&&enemies.indexOf(botTarget)<0){ botTarget=null; }
+  if(!botTarget){
+    /* OPAL holds its vantage: aim rests on the anchor until a target
+       crosses it — it does not chase. */
+    if(dfArch==='OPAL'){
+      var ka=Math.min(1,dt*4);
+      aim.x+=(dfAnchor.x-aim.x)*ka; aim.y+=(dfAnchor.y-aim.y)*ka;
+    }
+    return;
+  }
+  var tx=Math.max(-14,Math.min(14,botTarget.x+botAimNoise.x));
+  var ty=Math.max(-13,Math.min(13,botTarget.y+botAimNoise.y));
+  var k=Math.min(1,dt*6);
+  aim.x+=(tx-aim.x)*k; aim.y+=(ty-aim.y)*k;
+  if(!dfHolding&&Math.hypot(aim.x-botTarget.x,aim.y-botTarget.y)<2.2&&Math.random()<watchBot.rate*dfRateMul()*dt*10) fire();
+}
+
+/* ---------------- game flow ---------------- */
+function startGame(mode){
+  state.mode=mode||'solo';
+  state.score=0; state.kills=0; state.shots=0; state.hits=0;
+  state.fighters=3; state.dual=0; state.invuln=0; state.paused=false;
+  state.phase='playing'; state.fpLock=null;
+  fpCam.yaw=0; fpCam.pitch=0; fpCam.roll=0; fpCam.chaseZ=0; fpCam.chaseY=0; fpCam.vel=0;
+  if(mode==='watch'){
+    dfSetupAgent();
+    watchBot=BOTS[Math.floor(Math.random()*BOTS.length)];
+  }else{
+    watchBot=null; dfClearAgent();
+  }
+  spawnWave(1);
+  if(mode==='watch'&&watchBot) setMsg(dfAgentId
+    ?('WATCH — '+dfAgentId+(dfArch?' · '+dfArch:'')+' is flying ('+watchBot.name+' stick). Camera rides along.')
+    :('WATCH — '+watchBot.name+' is flying. Camera rides along.'));
+  hidePause();
+  syncButtons();
+}
+function setMsg(t){ var m=$('msg'); if(m) m.textContent=t; }
+function showPause(title,sub){
+  state.paused=true;
+  var o=$('pauseOverlay'); if(o) o.style.display='flex';
+  var t=$('pauseTitle'); if(t) t.textContent=title||'PAUSED';
+  var s=$('pauseSub'); if(s) s.textContent=sub||('DIVEFALL · WAVE '+state.wave+' · SCORE '+state.score);
+}
+function hidePause(){
+  state.paused=false;
+  var o=$('pauseOverlay'); if(o) o.style.display='none';
+}
+/* E34 REPAIR D1: persist the watch bout with the save. FE.flush() lands the
+   engine's unflushed decide traces (persist is throttled at 200 traces), and
+   the blob carries the game's own trace list plus mode/agent/phase/recorded
+   so loadGame can resume the same watch bout (D2). Trace entries are plain
+   JSON-safe objects (engine decide(), E28), so the slice stringifies. */
+function saveGame(){
+  try{
+    if(FE&&FE.flush){ try{ FE.flush(); }catch(e){} }
+    localStorage.setItem(SAVE_KEY,JSON.stringify({score:state.score,wave:state.wave,fighters:state.fighters,dual:state.dual,ts:Date.now(),mode:state.mode,agent:dfAgentId,phase:state.phase,recorded:dfRecorded,traces:dfTraces.slice()}));
+    setMsg('STATE SAVED — wave '+state.wave+', score '+state.score+'.');
+  }catch(e){ setMsg('Save failed — storage unavailable.'); }
+}
+/* E34 REPAIR D2: restore the saved bout instead of converting to solo. A
+   watch save reloads its agent (dfRestoreAgent, no cursor consumed), its
+   traces and its recorded flag, so the resumed bout decides on and records
+   the full trace history. An over-save reloads as gameover + recorded, so
+   it stays inert — no phantom re-record (watch auto-restart after 2.2s is
+   the game's normal watch behaviour and starts a fresh bout). Old saves
+   without the new keys load as before (solo, no agent). */
+function loadGame(){
+  try{
+    var raw=localStorage.getItem(SAVE_KEY);
+    if(!raw){ setMsg('No saved state yet — fly first, then START → SAVE STATE.'); return; }
+    var d=JSON.parse(raw);
+    state.score=d.score||0; state.fighters=d.fighters||3; state.dual=d.dual||0;
+    state.phase=(d.phase==='gameover'||d.phase==='playing')?d.phase:'playing';
+    state.mode=(d.mode==='watch'||d.mode==='solo')?d.mode:'solo';
+    state.fpLock=null;
+    fpCam.yaw=0; fpCam.pitch=0; fpCam.roll=0; fpCam.chaseZ=0; fpCam.chaseY=0; fpCam.vel=0;
+    if(state.phase==='gameover') gameOverT=2.2;
+    if(state.mode==='watch'&&d.agent&&FE){
+      dfRestoreAgent(d.agent);
+      dfTraces=(d.traces&&Array.isArray(d.traces))?d.traces.slice():[];
+      dfRecorded=!!d.recorded;
+      watchBot=BOTS[Math.floor(Math.random()*BOTS.length)];
+    }else if(state.mode==='watch'){
+      /* engine missing on this load: watch flies with the legacy stick bot,
+         same as a fresh watch start with no engine — no agent, no record. */
+      watchBot=BOTS[Math.floor(Math.random()*BOTS.length)]; dfClearAgent();
+    }else{
+      watchBot=null; dfClearAgent();
+    }
+    spawnWave(Math.max(1,d.wave||1));
+    hidePause(); syncButtons();
+    setMsg('STATE LOADED — wave '+state.wave+', score '+state.score+'.');
+  }catch(e){ setMsg('Load failed — saved state unreadable.'); }
+}
+
+/* ---------------- graphics: Three.js layer + 2D fallback ---------------- */
+var gfx=null, gfx2d=null;
+function glowTexture(){
+  var c=document.createElement('canvas'); c.width=c.height=128;
+  var g=c.getContext('2d');
+  var gr=g.createRadialGradient(64,64,4,64,64,64);
+  gr.addColorStop(0,'rgba(255,255,255,0.9)');
+  gr.addColorStop(0.35,'rgba(255,255,255,0.28)');
+  gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr; g.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+}
+/* CHAR3 (sprite stacking, 3D adaptation): every craft is a STACK of
+   hexagonal hull slices stepped along its axis, each slice offset
+   vertically (deck steps) and toned dark core -> mid -> lit nose/top
+   (light from above), wrapped in a BackSide rim shell in the craft's own
+   colour, with a lit spine plate, a dark keel, layered wing plates and a
+   bright housed cockpit eye. Silhouettes are per-type: DRIFTER = armoured
+   delta fighter with twin prongs, DART = needle dart with a fin stack,
+   WEAVER = ringed pod dart with side pods, SNATCHER = clawed capture
+   craft with an under-slung cage (the stolen fighter shows inside it). */
+var SHIP_PAL={
+  DRIFTER:{dark:0x07242f,mid:0x0f6d86,lit:0x35e0ff,rim:0xbdf3ff},
+  DART:{dark:0x2c0722,mid:0x8f1f74,lit:0xff4fd8,rim:0xffd0f4},
+  WEAVER:{dark:0x2c2104,mid:0x8f6d0f,lit:0xffd75e,rim:0xfff0b3},
+  SNATCHER:{dark:0x2c060d,mid:0x8f1626,lit:0xff3860,rim:0xffc2cf}
+};
+var SHIP_PROF={
+  DRIFTER:{r:[0.20,0.48,0.74,0.88,0.62],th:0.50,wing:1.15,eye:0.22},
+  DART:{r:[0.08,0.24,0.40,0.50,0.36],th:0.62,wing:0.70,eye:0.16},
+  WEAVER:{r:[0.26,0.58,0.88,1.00,0.72],th:0.52,wing:1.30,eye:0.19},
+  SNATCHER:{r:[0.30,0.62,0.92,1.08,0.78],th:0.55,wing:0.95,eye:0.30}
+};
+function buildShipMesh(type){
+  var T=TYPES[type], P=SHIP_PAL[type], PR=SHIP_PROF[type];
+  var grp=new THREE.Group();
+  function sm(hex,ei){ return new THREE.MeshStandardMaterial({color:hex,emissive:hex,emissiveIntensity:ei,metalness:0.65,roughness:0.38}); }
+  var matDark=sm(P.dark,0.10), matMid=sm(P.mid,0.30), matLit=sm(P.lit,0.48);
+  var matHullDark=sm(0x0a0f18,0.05);
+  var mats=[matLit,matMid,matMid,matDark,matDark];
+  var maxR=0, i, sd;
+  for(i=0;i<PR.r.length;i++) if(PR.r[i]>maxR) maxR=PR.r[i];
+  /* hull slice stack: lit nose (front) to dark core (rear); each slice is
+     a flattened hex prism stepped down in Y toward the rear, so the hull
+     reads as stacked armour plates with real volume, not a flat cone */
+  for(i=0;i<PR.r.length;i++){
+    var sl=new THREE.Mesh(new THREE.CylinderGeometry(PR.r[i],PR.r[i]*0.94,PR.th,6),mats[i]);
+    sl.rotation.x=Math.PI/2; sl.scale.z=0.68;
+    sl.position.set(0,0.10-i*0.045,1.05-i*(PR.th+0.06));
+    grp.add(sl);
+  }
+  var frontZ=1.05+PR.th/2, rearZ=1.05-4*(PR.th+0.06)-PR.th/2, lenZ=frontZ-rearZ, midZ=(frontZ+rearZ)/2;
+  /* rim shell: slightly larger BackSide hull in the craft's colour — the
+     dramatic rim light along the silhouette edge */
+  var rim=new THREE.Mesh(new THREE.CylinderGeometry(maxR*1.13,maxR*1.13,lenZ*0.94,6),
+    new THREE.MeshBasicMaterial({color:P.lit,side:THREE.BackSide,transparent:true,opacity:0.30}));
+  rim.rotation.x=Math.PI/2; rim.scale.z=0.72; rim.position.set(0,0.0,midZ); grp.add(rim);
+  /* lit spine plate on top + dark keel below (baked 3-tone vertical read) */
+  var spine=new THREE.Mesh(new THREE.BoxGeometry(0.30,0.09,lenZ*0.66),matLit);
+  spine.position.set(0,maxR*0.60,midZ+0.1); grp.add(spine);
+  var keel=new THREE.Mesh(new THREE.BoxGeometry(0.46,0.11,lenZ*0.52),matHullDark);
+  keel.position.set(0,-maxR*0.60,midZ); grp.add(keel);
+  /* layered wing plates: dark plate under, mid plate over, rim tip light */
+  [-1,1].forEach(function(s){
+    var wD=new THREE.Mesh(new THREE.BoxGeometry(PR.wing,0.07,0.66),matDark);
+    wD.position.set(s*(maxR+PR.wing/2-0.18),-0.09,-0.35); wD.rotation.z=s*-0.10; wD.rotation.y=s*0.16; grp.add(wD);
+    var wM=new THREE.Mesh(new THREE.BoxGeometry(PR.wing*0.92,0.06,0.54),matMid);
+    wM.position.set(s*(maxR+PR.wing/2-0.20),0.0,-0.35); wM.rotation.z=s*-0.10; wM.rotation.y=s*0.16; grp.add(wM);
+    var tip=new THREE.Mesh(new THREE.BoxGeometry(0.10,0.10,0.30),
+      new THREE.MeshBasicMaterial({color:P.rim}));
+    tip.position.set(s*(maxR+PR.wing-0.22),-0.03,-0.42); grp.add(tip);
+  });
+  /* housed cockpit eye: dark housing + bright core + glow, reads at
+     mobile size; WEAVER gets twin eyes */
+  function addEye(x,er){
+    var hs=new THREE.Mesh(new THREE.SphereGeometry(er*1.5,10,10),matHullDark);
+    hs.position.set(x,0.16,frontZ-0.04); grp.add(hs);
+    var ey=new THREE.Mesh(new THREE.SphereGeometry(er,12,12),
+      new THREE.MeshBasicMaterial({color:0xffffff}));
+    ey.position.set(x,0.16,frontZ+0.08); grp.add(ey);
+    try{
+      var eg=new THREE.Sprite(new THREE.SpriteMaterial({map:gfx.glowTex,color:P.rim,transparent:true,opacity:0.85,blending:THREE.AdditiveBlending,depthWrite:false}));
+      eg.scale.set(er*7,er*7,1); eg.position.set(x,0.16,frontZ+0.22); grp.add(eg);
+    }catch(e){}
+  }
+  if(type==='WEAVER'){ addEye(-0.32,PR.eye); addEye(0.32,PR.eye); }
+  else addEye(0,PR.eye);
+  /* engine glow at the rear (grounding light) + soft halo */
+  try{
+    var eng=new THREE.Sprite(new THREE.SpriteMaterial({map:gfx.glowTex,color:P.lit,transparent:true,opacity:0.55,blending:THREE.AdditiveBlending,depthWrite:false}));
+    eng.scale.set(2.1,2.1,1); eng.position.set(0,-0.02,rearZ-0.35); grp.add(eng);
+    var halo=new THREE.Sprite(new THREE.SpriteMaterial({map:gfx.glowTex,color:T.color,transparent:true,opacity:0.32,blending:THREE.AdditiveBlending,depthWrite:false}));
+    halo.scale.set(4.4,4.4,1); grp.add(halo);
+    grp.userData.halo=halo;
+  }catch(e){}
+  if(type==='DRIFTER'){
+    /* twin nose prongs + rear stabilisers: armoured fighter silhouette */
+    [-1,1].forEach(function(s){
+      var pr=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.55,5),matLit);
+      pr.rotation.x=Math.PI/2; pr.position.set(s*0.30,0.02,frontZ+0.22); grp.add(pr);
+      var stb=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.44,0.34),matMid);
+      stb.position.set(s*0.34,maxR*0.55,rearZ+0.25); stb.rotation.z=s*0.25; grp.add(stb);
+    });
+  }
+  if(type==='DART'){
+    /* long needle nose + stepped fin stack: sleek weaving dart */
+    var needle=new THREE.Mesh(new THREE.ConeGeometry(0.09,1.05,5),matLit);
+    needle.rotation.x=Math.PI/2; needle.position.set(0,0.08,frontZ+0.45); grp.add(needle);
+    for(i=0;i<3;i++){
+      var fin=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.34+i*0.16,0.36),[matDark,matMid,matLit][i]);
+      fin.position.set(0,maxR*0.55+0.14+i*0.13,-0.35-i*0.22); fin.rotation.x=-0.18; grp.add(fin);
+    }
+  }
+  if(type==='WEAVER'){
+    /* twin gyro rings (wobble-animated in syncGfx) + layered side pods */
+    grp.userData.rings=[];
+    [[1.38,0.06,matLit,-0.05],[1.55,0.05,matMid,-0.48]].forEach(function(rd){
+      var ring=new THREE.Mesh(new THREE.TorusGeometry(rd[0],rd[1],8,30),
+        new THREE.MeshBasicMaterial({color:rd[2]===matLit?P.lit:P.mid}));
+      ring.position.set(0,0,rd[3]); grp.add(ring); grp.userData.rings.push(ring);
+    });
+    [-1,1].forEach(function(s){
+      var pod=new THREE.Mesh(new THREE.CylinderGeometry(0.27,0.24,0.85,6),matMid);
+      pod.rotation.x=Math.PI/2; pod.scale.z=0.8; pod.position.set(s*1.12,-0.06,-0.15); grp.add(pod);
+      var podTip=new THREE.Mesh(new THREE.SphereGeometry(0.11,8,8),
+        new THREE.MeshBasicMaterial({color:P.rim}));
+      podTip.position.set(s*1.12,-0.06,0.32); grp.add(podTip);
+    });
+  }
+  var beam=null;
+  if(type==='SNATCHER'){
+    beam=new THREE.Mesh(new THREE.CylinderGeometry(0.35,1.1,9,8,1,true),
+      new THREE.MeshBasicMaterial({color:0xff3860,transparent:true,opacity:0.0,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false}));
+    beam.rotation.x=Math.PI/2; beam.position.set(0,0,4.5); beam.visible=false;
+    grp.add(beam);
+    /* articulated claw arms on shoulder pivots (open/close in syncGfx) */
+    grp.userData.claws=[];
+    [-1,1].forEach(function(s){
+      var cg=new THREE.Group(); cg.position.set(s*0.85,-0.08,0.55);
+      var arm=new THREE.Mesh(new THREE.BoxGeometry(0.17,0.17,0.95),matMid);
+      arm.position.set(s*0.12,0,0.40); arm.rotation.y=s*-0.22; cg.add(arm);
+      var fore=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.13,0.85),matDark);
+      fore.position.set(s*0.34,0,1.05); fore.rotation.y=s*0.38; cg.add(fore);
+      var pin=new THREE.Mesh(new THREE.ConeGeometry(0.10,0.52,5),matLit);
+      pin.rotation.x=Math.PI/2; pin.rotation.z=s*0.45; pin.position.set(s*0.28,0,1.58); cg.add(pin);
+      cg.userData.side=s;
+      grp.add(cg); grp.userData.claws.push(cg);
+    });
+    /* under-slung capture cage; the stolen fighter shows inside it */
+    [[-0.4,-0.3],[0.4,-0.3],[-0.4,0.3],[0.4,0.3]].forEach(function(cn){
+      var bar=new THREE.Mesh(new THREE.BoxGeometry(0.055,0.55,0.055),matDark);
+      bar.position.set(cn[0],-0.90,cn[1]); grp.add(bar);
+    });
+    var frame=new THREE.Mesh(new THREE.BoxGeometry(0.92,0.07,0.72),matMid);
+    frame.position.set(0,-1.18,0); grp.add(frame);
+    var cap=new THREE.Mesh(new THREE.ConeGeometry(0.30,0.85,5),sm(SHIP_PAL.DRIFTER.lit,0.5));
+    cap.rotation.x=Math.PI/2; cap.position.set(0,-0.94,0); cap.visible=false; grp.add(cap);
+    grp.userData.captive=cap;
+  }
+  grp.scale.set(1.35,1.35,1.35);
+  grp.userData.beam=beam;
+  return grp;
+}
+/* The player's own fighter, seen as nose + layered wingtips at the bottom
+   of the cockpit view: the same slice-stack treatment (dark -> mid -> lit
+   slices reaching away, gold spine accent, gold wingtip lights), parented
+   to the camera so it rides every view. */
+function buildPlayerMesh(){
+  var P=SHIP_PAL.DRIFTER;
+  function sm(hex,ei){ return new THREE.MeshStandardMaterial({color:hex,emissive:hex,emissiveIntensity:ei,metalness:0.65,roughness:0.38}); }
+  var grp=new THREE.Group();
+  var dark=sm(0x0a1420,0.08), mid=sm(P.mid,0.20), lit=sm(P.lit,0.30), gold=sm(0xffd75e,0.32);
+  [[0.24,0.30,mid],[0.17,-0.10,mid],[0.10,-0.55,lit],[0.04,-0.95,lit]].forEach(function(pr){
+    var m=new THREE.Mesh(new THREE.CylinderGeometry(pr[0],pr[0]*0.94,0.5,6),pr[2]);
+    m.rotation.x=Math.PI/2; m.scale.z=0.62; m.position.set(0,0,pr[1]); grp.add(m);
+  });
+  var spine=new THREE.Mesh(new THREE.BoxGeometry(0.10,0.05,1.1),gold);
+  spine.position.set(0,0.13,-0.30); grp.add(spine);
+  [-1,1].forEach(function(s){
+    var w1=new THREE.Mesh(new THREE.BoxGeometry(0.95,0.045,0.45),dark);
+    w1.position.set(s*0.78,-0.05,0.22); w1.rotation.z=s*-0.07; grp.add(w1);
+    var w2=new THREE.Mesh(new THREE.BoxGeometry(0.85,0.04,0.36),mid);
+    w2.position.set(s*0.76,0.0,0.22); w2.rotation.z=s*-0.07; grp.add(w2);
+    var tip=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,0.26),
+      new THREE.MeshBasicMaterial({color:0xffd75e}));
+    tip.position.set(s*1.22,-0.08,0.22); grp.add(tip);
+  });
+  return grp;
+}
+function initGfx(){
+  if(!THREE) return false;
+  try{
+    var host=$('game');
+    var renderer=new THREE.WebGLRenderer({antialias:true});
+    renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+    var scene=new THREE.Scene();
+    scene.background=new THREE.Color(0x01030a);
+    scene.fog=new THREE.Fog(0x01030a,60,180);
+    var camera=new THREE.PerspectiveCamera(62,16/9,0.1,400);
+    camera.position.set(0,0,0);
+    camera.rotation.order='YXZ';
+    scene.add(camera); /* so the camera-parented player fighter renders */
+    scene.add(new THREE.AmbientLight(0x8899bb,0.75));
+    var dl=new THREE.DirectionalLight(0xffffff,0.9); dl.position.set(5,10,5); scene.add(dl);
+    gfx={renderer:renderer,scene:scene,camera:camera,glowTex:glowTexture(),
+      meshes:{},shotMeshes:[],starGeo:null,partGeo:null,partPts:null,dust:null,nebulae:[]};
+    /* far layer: starfield */
+    var n=900, pos=new Float32Array(n*3);
+    for(var i=0;i<n;i++){ pos[i*3]=rnd(-140,140); pos[i*3+1]=rnd(-70,70); pos[i*3+2]=rnd(-160,-25); }
+    var sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xcfe8ff,size:0.7,transparent:true,opacity:0.9})));
+    /* mid layer: nebulas (canvas gradient sprites) */
+    [['#123a5e',-55,26,-115,150,70],['#3d1050',60,-18,-120,170,80],['#0a4a3a',10,34,-125,130,60]].forEach(function(nb){
+      var c=document.createElement('canvas'); c.width=256; c.height=128;
+      var g=c.getContext('2d');
+      var gr=g.createRadialGradient(128,64,6,128,64,120);
+      gr.addColorStop(0,nb[0]); gr.addColorStop(1,'rgba(0,0,0,0)');
+      g.fillStyle=gr; g.fillRect(0,0,256,128);
+      var m=new THREE.Mesh(new THREE.PlaneGeometry(nb[4],nb[5]),
+        new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,opacity:0.55,blending:THREE.AdditiveBlending,depthWrite:false}));
+      m.position.set(nb[1],nb[2],nb[3]); scene.add(m); gfx.nebulae.push(m);
+    });
+    /* far layer: ringed planet silhouette */
+    var planet=new THREE.Mesh(new THREE.SphereGeometry(26,24,24),
+      new THREE.MeshStandardMaterial({color:0x0d3a2e,emissive:0x062a1e,emissiveIntensity:0.7,roughness:1}));
+    planet.position.set(-72,-30,-135); scene.add(planet);
+    var ring=new THREE.Mesh(new THREE.RingGeometry(32,46,48),
+      new THREE.MeshBasicMaterial({color:0xffd75e,transparent:true,opacity:0.3,side:THREE.DoubleSide}));
+    ring.position.copy(planet.position); ring.rotation.x=1.15; ring.rotation.y=0.3; scene.add(ring);
+    /* FP depth: a pulsing glow behind the formation (the light the ships
+       hang in) + faint range rings so the void reads as deep, not flat. */
+    var fg=new THREE.Sprite(new THREE.SpriteMaterial({map:gfx.glowTex,color:0x35e0ff,transparent:true,opacity:0.12,blending:THREE.AdditiveBlending,depthWrite:false}));
+    fg.scale.set(72,34,1); fg.position.set(0,8,-38); scene.add(fg); gfx.formGlow=fg;
+    gfx.rings=[];
+    [[-20,13],[-28,17],[-36,21]].forEach(function(rr){
+      var ringM=new THREE.Mesh(new THREE.RingGeometry(rr[1]-0.25,rr[1]+0.25,64),
+        new THREE.MeshBasicMaterial({color:0x35e0ff,transparent:true,opacity:0.05,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false}));
+      ringM.position.set(0,6,rr[0]); scene.add(ringM); gfx.rings.push(ringM);
+    });
+    /* near dust motes for parallax */
+    var dn=120, dp=new Float32Array(dn*3);
+    for(var j=0;j<dn;j++){ dp[j*3]=rnd(-18,18); dp[j*3+1]=rnd(-10,10); dp[j*3+2]=rnd(-34,-4); }
+    var dg=new THREE.BufferGeometry(); dg.setAttribute('position',new THREE.Float32BufferAttribute(dp,3));
+    gfx.dust=new THREE.Points(dg,new THREE.PointsMaterial({color:0x9fd8ff,size:0.35,transparent:true,opacity:0.7}));
+    scene.add(gfx.dust);
+    /* explosion particles */
+    var pg=new THREE.BufferGeometry();
+    pg.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(16*3*8),3));
+    gfx.partGeo=pg;
+    gfx.partPts=new THREE.Points(pg,new THREE.PointsMaterial({color:0xffffff,size:0.9,transparent:true,opacity:0.95}));
+    gfx.partPts.visible=false; scene.add(gfx.partPts);
+    /* player's fighter: stacked nose + wingtips riding the camera */
+    var pm=buildPlayerMesh(); pm.position.set(0,-1.02,-2.4); pm.scale.set(0.78,0.78,0.78); camera.add(pm); gfx.playerMesh=pm;
+    host.appendChild(renderer.domElement);
+    resizeGfx();
+    return true;
+  }catch(e){ gfx=null; return false; }
+}
+function resizeGfx(){
+  if(!gfx) return;
+  var host=$('game'); if(!host) return;
+  var w=host.clientWidth||960, h=host.clientHeight||540;
+  gfx.renderer.setSize(w,h,false);
+  gfx.camera.aspect=w/h; gfx.camera.updateProjectionMatrix();
+}
+function syncGfx(){
+  if(!gfx) return;
+  var seen={};
+  enemies.forEach(function(e){
+    seen[e.id]=true;
+    var m=gfx.meshes[e.id];
+    if(!m){ m=buildShipMesh(e.type); gfx.meshes[e.id]=m; gfx.scene.add(m); }
+    m.position.set(e.x,e.y,e.z);
+    /* CHAR3 motion (presentation only — sim positions untouched): idle
+       bob/sway, a WEAVER lateral weave overlay while diving, and banking
+       from the craft's lateral velocity, so the stacked hulls lean into
+       their dives instead of sliding flat. */
+    var sway=Math.sin(formT*2.2+e.ph);
+    m.position.y+=sway*0.06;
+    if(e.type==='WEAVER'&&e.state==='diving') m.position.x+=Math.sin(formT*7+e.ph)*0.18;
+    m.lookAt(0,0,2);
+    var dxv=(m.userData.px===undefined)?0:(e.x-m.userData.px);
+    m.userData.px=e.x;
+    var bank=e.state==='diving'?Math.max(-0.55,Math.min(0.55,-dxv*1.3)):sway*0.05;
+    m.rotation.z+=bank;
+    if(m.userData.halo) m.userData.halo.material.opacity=0.28+0.10*Math.sin(formT*3.1+e.ph);
+    if(m.userData.rings) m.userData.rings.forEach(function(rg2,ri){ rg2.rotation.x=Math.sin(formT*1.4+e.ph+ri*1.7)*0.38; rg2.rotation.y=Math.cos(formT*1.1+e.ph+ri)*0.30; });
+    if(m.userData.claws) m.userData.claws.forEach(function(cg){ cg.rotation.y=cg.userData.side*(0.10+0.10*Math.sin(formT*2.6+e.ph)); });
+    if(m.userData.captive) m.userData.captive.visible=!!e.carrying;
+    if(m.userData.beam){
+      var diving=e.state==='diving';
+      m.userData.beam.visible=diving;
+      m.userData.beam.material.opacity=diving?0.55:0;
+    }
+    m.visible=true;
+  });
+  Object.keys(gfx.meshes).forEach(function(id){
+    if(!seen[id]){ gfx.scene.remove(gfx.meshes[id]); delete gfx.meshes[id]; }
+  });
+  /* shots */
+  while(gfx.shotMeshes.length<shots.length){
+    var sm=new THREE.Mesh(new THREE.SphereGeometry(0.22,8,8),
+      new THREE.MeshBasicMaterial({color:0x9ff3ff}));
+    sm.scale.set(1,1,4); gfx.shotMeshes.push(sm); gfx.scene.add(sm);
+  }
+  gfx.shotMeshes.forEach(function(sm,i){
+    if(i<shots.length){ sm.visible=true; sm.position.set(shots[i].x,shots[i].y,shots[i].z); }
+    else sm.visible=false;
+  });
+  /* particles */
+  if(parts.length){
+    var arr=gfx.partGeo.attributes.position.array;
+    for(var i=0;i<parts.length*3&&i<arr.length;i++){
+      var pt=parts[Math.floor(i/3)];
+      arr[i]=i%3===0?pt.x:(i%3===1?pt.y:pt.z);
+    }
+    gfx.partGeo.attributes.position.needsUpdate=true;
+    gfx.partGeo.setDrawRange(0,parts.length);
+    gfx.partPts.visible=true;
+  }else gfx.partPts.visible=false;
+  /* formation glow breathes with the formation clock (frozen on pause) */
+  if(gfx.formGlow) gfx.formGlow.material.opacity=0.09+0.05*Math.sin(formT*1.2);
+  gfx.rings.forEach(function(rg,i){ rg.material.opacity=0.035+0.02*Math.sin(formT*0.9+i*1.3); });
+  /* camera: cockpit ride — eased yaw/pitch follow the aim, roll leans with
+     the catch-up, chase view dollies back smoothly; a slow breathing bob
+     keeps the cockpit alive. Values come from stepFpCam() (frozen on pause). */
+  gfx.camera.position.set(0,fpCam.chaseY+Math.sin(formT*1.4)*0.05,fpCam.chaseZ);
+  gfx.camera.rotation.y=fpCam.yaw;
+  gfx.camera.rotation.x=fpCam.pitch;
+  gfx.camera.rotation.z=fpCam.roll;
+  /* player fighter breathing bob (rides the camera in every view) */
+  if(gfx.playerMesh){
+    gfx.playerMesh.position.y=-1.02+Math.sin(formT*1.4)*0.012;
+    gfx.playerMesh.rotation.z=Math.sin(formT*0.8)*0.012;
+  }
+  gfx.renderer.render(gfx.scene,gfx.camera);
+}
+/* 2D fallback: if WebGL/THREE is unavailable, draw the same scene flat. */
+function init2D(){
+  try{
+    var host=$('game'); if(!host) return false;
+    var c=document.createElement('canvas');
+    c.width=960; c.height=540;
+    host.appendChild(c);
+    var stars=[]; for(var i=0;i<220;i++) stars.push({x:Math.random()*960,y:Math.random()*540,r:Math.random()*1.4+0.3});
+    gfx2d={canvas:c,ctx:c.getContext('2d'),stars:stars};
+    return true;
+  }catch(e){ return false; }
+}
+function draw2D(){
+  if(!gfx2d) return;
+  var g=gfx2d.ctx,W=960,H=540;
+  var grad=g.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#020614'); grad.addColorStop(0.6,'#04101f'); grad.addColorStop(1,'#01030a');
+  g.fillStyle=grad; g.fillRect(0,0,W,H);
+  gfx2d.stars.forEach(function(s){ g.fillStyle='rgba(207,232,255,0.85)'; g.fillRect(s.x,s.y,s.r,s.r); });
+  /* FP depth (2D mirrors the 3D layer): pulsing formation glow + range rings */
+  var fg2=g.createRadialGradient(W/2,H*0.32,10,W/2,H*0.32,240);
+  fg2.addColorStop(0,'rgba(53,224,255,'+(0.10+0.05*Math.sin(formT*1.2))+')');
+  fg2.addColorStop(1,'rgba(53,224,255,0)');
+  g.fillStyle=fg2; g.fillRect(0,0,W,H);
+  g.strokeStyle='rgba(53,224,255,0.07)'; g.lineWidth=2;
+  [150,210,270].forEach(function(r){ g.beginPath(); g.ellipse(W/2,H*0.42,r,r*0.36,0,0,6.29); g.stroke(); });
+  g.fillStyle='#0d3a2e'; g.beginPath(); g.arc(120,470,90,0,6.29); g.fill();
+  g.strokeStyle='rgba(255,215,94,0.4)'; g.lineWidth=5;
+  g.beginPath(); g.ellipse(120,470,140,26,-0.4,0,6.29); g.stroke();
+  function proj(e){ return {x:W/2+e.x*22, y:H/2-e.y*22, s:Math.max(4,26+e.z*0.28)}; }
+  var DF2D={DRIFTER:['#07242f','#0f6d86','#35e0ff','#bdf3ff'],DART:['#2c0722','#8f1f74','#ff4fd8','#ffd0f4'],WEAVER:['#2c2104','#8f6d0f','#ffd75e','#fff0b3'],SNATCHER:['#2c060d','#8f1626','#ff3860','#ffc2cf']};
+  enemies.forEach(function(e){
+    var p=proj(e), C=DF2D[e.type], s=p.s;
+    /* CHAR3 2D stack: the silhouette is extruded downward in slices —
+       dark base -> mid -> lit top face — with a rim stroke and a bright
+       eye on the lit face, so the fallback reads volumetric too. Each
+       type keeps its own silhouette (needle dart / ringed weaver /
+       clawed snatcher / delta drifter). */
+    function sil(sc){
+      g.beginPath();
+      if(e.type==='DART'){ g.moveTo(0,-s*1.25*sc); g.lineTo(s*0.34*sc,s*0.55*sc); g.lineTo(0,s*0.28*sc); g.lineTo(-s*0.34*sc,s*0.55*sc); }
+      else if(e.type==='SNATCHER'){ g.moveTo(0,-s*0.95*sc); g.lineTo(s*0.62*sc,-s*0.2*sc); g.lineTo(s*0.85*sc,s*0.6*sc); g.lineTo(0,s*0.35*sc); g.lineTo(-s*0.85*sc,s*0.6*sc); g.lineTo(-s*0.62*sc,-s*0.2*sc); }
+      else { g.moveTo(0,-s*sc); g.lineTo(s*0.72*sc,s*0.6*sc); g.lineTo(0,s*0.25*sc); g.lineTo(-s*0.72*sc,s*0.6*sc); }
+      g.closePath();
+    }
+    g.save(); g.translate(p.x,p.y+Math.sin(formT*2.2+e.ph)*1.5);
+    for(var li=0;li<4;li++){
+      g.save(); g.translate(0,(3-li)*s*0.10);
+      g.fillStyle=(li===3)?C[2]:C[Math.min(1,li)];
+      if(li===3){ g.shadowColor=C[2]; g.shadowBlur=14; }
+      sil(1-(3-li)*0.05); g.fill(); g.restore();
+    }
+    g.strokeStyle=C[3]; g.lineWidth=Math.max(1,s*0.06); sil(1); g.stroke();
+    if(e.type==='WEAVER'){
+      g.strokeStyle=C[2]; g.lineWidth=Math.max(1.5,s*0.09);
+      g.beginPath(); g.ellipse(0,0,s*1.05,s*0.5,Math.sin(formT*1.4+e.ph)*0.2,0,6.29); g.stroke();
+    }
+    if(e.type==='SNATCHER'){
+      g.strokeStyle=C[2]; g.lineWidth=Math.max(1.5,s*0.10);
+      [-1,1].forEach(function(sd2){ g.beginPath(); g.moveTo(sd2*s*0.7,s*0.3); g.quadraticCurveTo(sd2*s*1.15,s*0.75,sd2*s*0.8,s*1.05); g.stroke(); });
+      if(e.carrying){ g.fillStyle='#35e0ff'; g.beginPath(); g.moveTo(0,s*0.95); g.lineTo(s*0.2,s*1.3); g.lineTo(-s*0.2,s*1.3); g.closePath(); g.fill(); }
+    }
+    var er=(e.type==='SNATCHER'?s*0.20:s*0.14);
+    g.fillStyle='#ffffff'; g.beginPath(); g.arc(0,-s*0.15,er,0,6.29); g.fill();
+    g.fillStyle=C[3]; g.beginPath(); g.arc(0,-s*0.15,er*0.55,0,6.29); g.fill();
+    g.restore();
+  });
+  shots.forEach(function(sh){
+    var p=proj(sh);
+    g.fillStyle='#9ff3ff'; g.shadowColor='#9ff3ff'; g.shadowBlur=10;
+    g.beginPath(); g.arc(p.x,p.y,3,0,6.29); g.fill();
+  });
+  parts.forEach(function(pt){
+    var p=proj(pt);
+    g.fillStyle='rgba(255,255,255,0.9)';
+    g.beginPath(); g.arc(p.x,p.y,2.5,0,6.29); g.fill();
+  });
+}
+
+/* ---------------- HUD ---------------- */
+function syncHUD(){
+  var el;
+  el=$('hudScore'); if(el) el.textContent=state.score;
+  el=$('hudWave'); if(el) el.textContent=Math.max(1,state.wave);
+  el=$('hudKills'); if(el) el.textContent=state.kills;
+  el=$('hudFighters'); if(el) el.textContent='▲'.repeat(Math.max(0,state.fighters))||'—';
+  el=$('hudMode'); if(el) el.textContent=state.mode==='watch'
+    ?(dfAgentId?('WATCH · '+dfAgentId+(dfArch?' · '+dfArch:'')):('WATCH'+(watchBot?' · '+watchBot.name:'')))
+    :'1P SOLO';
+  var dw=$('dualWrap'); if(dw) dw.style.display=state.dual>0?'block':'none';
+  var db=$('dualBar'); if(db) db.style.width=Math.min(100,state.dual/20*100)+'%';
+  var fl=$('flash'); if(fl) fl.style.opacity=flashT>0?Math.min(1,flashT*2):0;
+  var ch=$('crosshair');
+  if(ch){
+    var host=$('game');
+    var r=host?host.getBoundingClientRect():{width:960,height:540};
+    ch.style.left=(50+aim.x/14*42)+'%';
+    ch.style.top=(50-aim.y/13*38)+'%';
+  }
+  /* FP LOCK + gauges (presentation only — fire rules untouched): the nearest
+     ship to the aim within ~2.5 world units is the lock; the crosshair turns
+     gold and the right panel reads its type + range. */
+  var lock=null, lockD=1e9;
+  if(state.phase==='playing'){
+    for(var ei=0;ei<enemies.length;ei++){
+      var en=enemies[ei], d=Math.hypot(en.x-aim.x,en.y-aim.y);
+      if(d<lockD){ lockD=d; lock=en; }
+    }
+    if(lockD>2.5) lock=null;
+  }
+  state.fpLock=lock?{type:lock.type,range:Math.max(0,Math.round(-lock.z))}:null;
+  if(ch&&ch.classList) ch.classList.toggle('lock',!!lock);
+  var lk=$('fpLockLine');
+  if(lk) lk.textContent=lock?('◈ LOCK '+lock.type+' · RNG '+Math.max(0,Math.round(-lock.z))+'m'):'NO LOCK — SWEEP THE FORMATION';
+  var vw=$('fpViewLine');
+  if(vw) vw.textContent=(state.view==='chase'?'CHASE VIEW':'COCKPIT')+' · '+(state.mode==='watch'?'WATCH':'1P SOLO')+' · WAVE '+Math.max(1,state.wave);
+  var pp=$('fpPips');
+  if(pp){ pp.textContent='▲'.repeat(Math.max(0,state.fighters))+'△'.repeat(Math.max(0,3-state.fighters)); pp.style.color=state.dual>0?'#ffd75e':'#35e0ff'; }
+  var hb=$('fpHostiles');
+  if(hb) hb.style.width=Math.min(100,enemies.length/32*100)+'%';
+  var hn=$('fpHostilesN');
+  if(hn) hn.textContent=enemies.length;
+  var dv=divers();
+  var tb=$('fpThreat');
+  if(tb){ tb.style.width=Math.min(100,dv/6*100)+'%'; tb.style.background=dv>=4?'#ff3860':(dv>=2?'#ffd75e':'#00ff88'); }
+  var tn=$('fpThreatN');
+  if(tn) tn.textContent=dv;
+  /* speed lines: the faster the camera is slewing, the stronger the streaks */
+  var sl=$('speedlines');
+  if(sl) sl.style.opacity=Math.min(0.5,fpCam.vel*2.2).toFixed(2);
+  var hint=$('hudHint');
+  if(hint) hint.textContent=isTouch?'DRAG TO AIM · A FIRE · B BURST · START MENU':'MOUSE AIM · CLICK / SPACE FIRE · P PAUSE';
+}
+function syncButtons(){
+  [['btnSolo','solo'],['btnWatch','watch']].forEach(function(pair){
+    var b=$(pair[0]); if(b) b.classList.toggle('active',state.mode===pair[1]);
+  });
+  var mb=$('muteBtn'); if(mb) mb.textContent=state.muted?'SOUND: OFF':'SOUND: ON';
+}
+
+/* ---------------- VR / AR (vr-kit; SIM until device-verified) ---------------- */
+function vrNote(t,ms){
+  var n=$('vrNote'); if(!n) return;
+  n.textContent=t; n.style.display='block';
+  setTimeout(function(){ n.style.display='none'; },ms||6000);
+}
+function enterVR(){
+  if(typeof window==='undefined'||!window.ShaddaiXR||!window.ShaddaiXR.session){
+    vrNote('VR kit not loaded here — flat first-person is the verified mode. (SIM)'); return;
+  }
+  var S=window.ShaddaiXR.session;
+  S.detect().then(function(sup){
+    if(!sup.hasXR){ vrNote('No WebXR on this device — flat first-person is the verified mode. (SIM)'); return; }
+    return S.startSession('immersive-vr',{}).then(function(res){
+      vrNote(res&&res.ok?'VR session started — formation in your headset. (SIM until device-verified)':'VR session declined — flat first-person still works. (SIM)');
+    });
+  }).catch(function(){ vrNote('VR unavailable here — flat first-person is the verified mode. (SIM)'); });
+}
+function enterAR(){
+  if(typeof window==='undefined'||!window.ShaddaiXR||!window.ShaddaiXR.session){
+    vrNote('AR kit not loaded here — the formation stays on screen. (SIM)'); return;
+  }
+  var S=window.ShaddaiXR.session;
+  S.detect().then(function(sup){
+    if(!sup.hasXR){ vrNote('No WebXR AR on this device — the formation over your room needs an AR device. (SIM)'); return; }
+    return S.startSession('immersive-ar',{optionalFeatures:['hit-test']}).then(function(res){
+      vrNote(res&&res.ok?'AR session started — formation placed over your room via hit-test. (SIM until device-verified)':'AR session declined — flat first-person still works. (SIM)');
+    });
+  }).catch(function(){ vrNote('AR unavailable here — flat first-person is the verified mode. (SIM)'); });
+}
+
+/* ---------------- input ---------------- */
+function bindHold(el,down,up){
+  if(!el) return;
+  ['pointerdown','mousedown','touchstart'].forEach(function(ev){
+    el.addEventListener(ev,function(e){ e.preventDefault(); down(); },{passive:false});
+  });
+  ['pointerup','pointerleave','mouseup','touchend','touchcancel'].forEach(function(ev){
+    el.addEventListener(ev,function(e){ e.preventDefault(); if(up) up(); },{passive:false});
+  });
+}
+function aimFromEvent(e){
+  var host=$('game'); if(!host) return;
+  var r=host.getBoundingClientRect();
+  var cx=(e.clientX!==undefined?e.clientX:(e.touches&&e.touches[0]?e.touches[0].clientX:0));
+  var cy=(e.clientY!==undefined?e.clientY:(e.touches&&e.touches[0]?e.touches[0].clientY:0));
+  aim.x=Math.max(-14,Math.min(14,(cx-r.left)/r.width*2-1)*14);
+  aim.y=Math.max(-13,Math.min(13,(1-(cy-r.top)/r.height*2)*13));
+}
+function wireInput(){
+  var host=$('game');
+  if(host){
+    host.addEventListener('mousemove',function(e){ aimFromEvent(e); });
+    host.addEventListener('mousedown',function(e){ aimFromEvent(e); mouseDown=true; });
+    if(typeof window!=='undefined'&&window.addEventListener){
+      window.addEventListener('mouseup',function(){ mouseDown=false; });
+      window.addEventListener('resize',function(){ resizeGfx(); });
+    }
+    host.addEventListener('touchstart',function(e){ e.preventDefault(); aimFromEvent(e); },{passive:false});
+    host.addEventListener('touchmove',function(e){ e.preventDefault(); aimFromEvent(e); },{passive:false});
+  }
+  document.addEventListener('keydown',function(e){
+    if(e.repeat) return;
+    keys[e.code]=true;
+    if(e.code==='Space'){ e.preventDefault(); }
+    if(e.code==='KeyF'){ toggleFullscreen(); return; }
+    if(e.code==='Escape' && isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ return; }
+    if(e.code==='KeyP'||e.code==='Escape'){
+      if(state.phase==='playing'){ if(state.paused) hidePause(); else showPause(); }
+    }
+    if(e.code==='KeyM'){ state.muted=!state.muted; syncButtons(); }
+    if(e.code==='KeyR'){ startGame(state.mode); }
+    if(e.code==='KeyV'){ state.view=state.view==='cockpit'?'chase':'cockpit'; }
+    if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyB'){ burst(); }
+  });
+  document.addEventListener('keyup',function(e){ keys[e.code]=false; });
+  document.querySelectorAll('.dpad button[data-k]').forEach(function(b){
+    var k=b.getAttribute('data-k');
+    bindHold(b,function(){ if(k==='center')return; touch[k]=true; },function(){ if(k==='center')return; touch[k]=false; });
+  });
+  bindHold($('btnA'),function(){ touch.fire=true; },function(){ touch.fire=false; });
+  bindHold($('btnB'),function(){ burst(); },null);
+  bindHold($('startBtn'),function(){
+    if(state.phase==='playing'){ if(state.paused) hidePause(); else showPause(); }
+    else startGame('solo');
+  },null);
+  bindHold($('selectBtn'),function(){ state.view=state.view==='cockpit'?'chase':'cockpit'; },null);
+  var on=function(id,fn){ var b=$(id); if(b) b.addEventListener('click',fn); };
+  on('btnSolo',function(){ startGame('solo'); });
+  on('btnWatch',function(){ startGame('watch'); });
+  on('btnVR',enterVR);
+  on('btnAR',enterAR);
+  on('btnFs',function(){ toggleFullscreen(); });
+  on('muteBtn',function(){ state.muted=!state.muted; syncButtons(); });
+  on('resumeBtn',function(){ hidePause(); });
+  on('saveBtn',saveGame);
+  on('loadBtn',loadGame);
+  on('restartBtn',function(){ startGame(state.mode); });
+  on('quitArcadeBtn',function(){ location.href='../arcade.html'; });
+}
+
+/* ---------------- fullscreen (FULLSCREEN standard): the shell — stage on
+   desktop, the whole handheld console on phones — goes true fullscreen via
+   the Fullscreen API. F toggles, the button toggles, Esc exits (browser)
+   before it can pause. Label follows the real fullscreen state. ---- */
+var fsShell=document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ var b=document.getElementById('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — stage fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+  updateFsBtn();
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+
+/* ---------------- boot + loop ---------------- */
+function boot(){
+  wireInput();
+  syncButtons();
+  if(!initGfx()){ if(!init2D()){ setMsg('Could not start a renderer — check WebGL.'); } }
+  spawnWave(1); /* title backdrop: formation drifts, no diving yet */
+  if(qs.auto==='watch') startGame('watch');
+  else if(qs.auto==='play') startGame('solo');
+  var last=0;
+  function loop(ts){
+    requestAnimationFrame(loop);
+    var now=typeof ts==='number'?ts:(typeof performance!=='undefined'&&performance.now?performance.now():Date.now());
+    var dt=Math.min(0.05,last?((now-last)/1000):0.016);
+    last=now;
+    if(!state.paused) update(dt);
+    if(gfx) syncGfx(); else draw2D();
+    syncHUD();
+  }
+  requestAnimationFrame(loop);
+}
+if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',boot); }
+else boot();
+
+/* test hooks (vm harness + screenshots) */
+window.__divefall={
+  get state(){return state;},
+  get fs(){return isFullscreen();},
+  toggleFullscreen:toggleFullscreen,
+  isFullscreen:isFullscreen,
+  get enemies(){return enemies;},
+  get shots(){return shots;},
+  get parts(){return parts;},
+  aim:aim,
+  get watchBot(){return watchBot;},
+  get feAgentId(){return dfAgentId;},
+  get feTraces(){return dfTraces.length;},
+  get dfRecorded(){return dfRecorded;},
+  get dfBout(){return dfBout;},
+  get arch(){return dfArch;},
+  get archetypes(){return Object.keys(ARCHETYPES);},
+  get agentArchMap(){return ARCH_BY_AGENT;},
+  get behaviour(){return dfBehaviour;},
+  get grudge(){return dfGrudge;},
+  get breakT(){return dfBreakT;},
+  get anchor(){return dfAnchor;},
+  get gfxOK(){return !!gfx;},
+  get gfx2dOK(){return !!gfx2d;},
+  get fpCam(){return fpCam;},
+  get fpLock(){return state.fpLock;},
+  get gfxInfo(){return gfx?{formGlow:!!gfx.formGlow,rings:gfx.rings?gfx.rings.length:0}:null;},
+  debugView:function(v){ state.view=v||(state.view==='cockpit'?'chase':'cockpit'); },
+  debugStart:function(mode){ startGame(mode); },
+  debugSetArch:function(k){ dfArchOverride=k||null; },
+  debugDownedBy:function(type){ dfOnDowned({type:type||'DART'}); },
+  debugAim:function(x,y){ aim.x=x; aim.y=y; },
+  debugFire:function(){ fire(); },
+  debugBurst:function(){ burst(); },
+  debugSetFighters:function(n){ state.fighters=n; },
+  debugSpawnDiver:function(type){
+    var cand=enemies.filter(function(e){return e.state==='form';});
+    var e=cand.length?cand[0]:null;
+    if(!e) return null;
+    if(type){ e.type=type; e.hp=TYPES[type].hp; }
+    startDive(e); return e.id;
+  },
+  debugKillAll:function(){ enemies.slice().forEach(function(e){ killEnemy(e); }); },
+  debugSave:function(){ saveGame(); },
+  debugPause:function(){ if(state.paused) hidePause(); else showPause(); },
+  debugLoad:function(){ loadGame(); }
+};
+})();
+</script>
+</body>
+</html>

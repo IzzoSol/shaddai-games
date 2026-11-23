@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>NIGHTFALL — Objective FPS · Shaddai Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--acc:#35e0ff;--gold:#ffd75e;--emer:#00ff88;--red:#ff3860;--ink:#e8f6ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:#04070c;color:var(--ink);font-family:'Share Tech Mono',monospace;min-height:100vh}
+  a{color:var(--acc)}
+  .topbar{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid rgba(53,224,255,.25);background:linear-gradient(90deg,#06121a,#04070c)}
+  .topbar h1{font-family:'Orbitron',sans-serif;font-size:22px;margin:0;letter-spacing:4px}
+  .topbar h1 span{color:var(--acc)}
+  .tag{font-size:11px;color:#9fd8e8;letter-spacing:1px}
+  .spacer{flex:1}
+  .back{font-size:12px;text-decoration:none;border:1px solid rgba(53,224,255,.4);padding:6px 10px;border-radius:8px}
+  .wrap{max-width:1020px;margin:0 auto;padding:14px 14px 40px}
+  #shell{border:1px solid rgba(53,224,255,.25);border-radius:18px;padding:12px;background:linear-gradient(180deg,#071019,#04070c)}
+  #shell .shell-brand{display:none}
+  #shellDeck{display:none}
+  canvas{display:block;width:100%;height:auto;border-radius:10px;background:#000;touch-action:none}
+  .hud{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .hud .box{flex:1;min-width:150px;border:1px solid rgba(53,224,255,.3);border-radius:10px;padding:8px 10px;background:rgba(6,18,26,.7);font-size:12px;line-height:1.6}
+  .hud .box b{color:var(--gold);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px}
+  .obj-done{color:var(--emer);text-decoration:line-through}
+  .alert-calm{color:var(--emer)} .alert-susp{color:var(--gold)} .alert-hot{color:var(--red)}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  /* arcade tile standard: holographic glass, thick emerald rim, one gold accent, per-game tint */
+  .mbtn{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;color:#fff;cursor:pointer;
+    background:linear-gradient(160deg,rgba(53,224,255,.16),rgba(6,18,26,.85) 55%,rgba(53,224,255,.10));
+    border:2px solid rgba(0,255,136,.75);border-radius:12px;padding:10px 14px;min-width:120px;text-align:left;
+    box-shadow:0 0 0 1px rgba(255,215,94,.35),0 0 18px rgba(0,255,136,.18),inset 0 0 22px rgba(53,224,255,.10)}
+  .mbtn small{display:block;font-family:'Share Tech Mono',monospace;font-size:10px;color:#9fd8e8;margin-top:3px;letter-spacing:0}
+  .mbtn:hover{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 24px rgba(255,215,94,.35),inset 0 0 22px rgba(53,224,255,.16)}
+  .mbtn.active{border-color:var(--gold);background:linear-gradient(160deg,rgba(255,215,94,.22),rgba(6,18,26,.9) 55%,rgba(53,224,255,.12))}
+  .mbtn.vr{border-color:rgba(53,224,255,.75)}
+  #msg{margin-top:10px;min-height:20px;font-size:13px;color:#cfeeff}
+  #feed{margin-top:6px;font-size:11px;color:#8fb8c8;min-height:34px;line-height:1.5}
+  .help{margin-top:14px;font-size:12px;line-height:1.8;color:#a8c8d8;border:1px solid rgba(53,224,255,.18);border-radius:10px;padding:12px;background:rgba(6,18,26,.5)}
+  .help b{color:var(--gold)} .k{display:inline-block;border:1px solid #4a6a7a;border-radius:4px;padding:0 6px;background:#0a1820;color:#fff}
+  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,10,.82);z-index:50}
+  .overlay.open{display:flex}
+  .panel{width:min(92vw,420px);border:2px solid rgba(0,255,136,.75);border-radius:16px;padding:22px;background:linear-gradient(160deg,#071019,#04070c);box-shadow:0 0 0 1px rgba(255,215,94,.4),0 0 34px rgba(0,255,136,.25)}
+  .panel h2{font-family:'Orbitron',sans-serif;letter-spacing:3px;margin:0 0 6px;color:var(--acc)}
+  .panel p{font-size:12px;color:#a8c8d8;line-height:1.6}
+  .panel .mbtn{display:block;width:100%;margin-top:10px;text-align:center}
+  @media (max-width:640px){
+    .topbar h1{font-size:16px} .tag{display:none}
+    body.touch #shell{border:1px solid rgba(53,224,255,.4);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#081420,#04070c);box-shadow:0 0 34px rgba(53,224,255,.16),inset 0 0 0 1px rgba(255,255,255,.04)}
+    body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--acc)}
+    body.touch #shell .shell-brand .shell-led{color:var(--acc);text-shadow:0 0 8px var(--acc)}
+    body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+    body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#081420;border:1px solid rgba(53,224,255,.4);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+    body.touch #shellDeck button:active{background:var(--acc);color:#04121a}
+    .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:4px}
+    .dpad button{font-size:16px;border-radius:10px}
+    .dpad .c{visibility:hidden}
+    .abtns{display:flex;gap:10px;align-items:center;padding-top:34px}
+    .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:700}
+    .abtns button.b{width:48px;height:48px;font-size:15px}
+    .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+    .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#081420}
+  }
+</style>
+</head>
+<body>
+<div class="topbar"><h1>NIGHT<span>FALL</span></h1><span class="tag">Objective FPS · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI HANDHELD</span><span class="shell-led">● LIVE</span></div>
+    <canvas id="cv" width="960" height="560"></canvas>
+    <div id="shellDeck">
+      <div class="dpad">
+        <span class="c"></span><button id="padUp">▲</button><span class="c"></span>
+        <button id="padLeft">◀</button><span class="c"></span><button id="padRight">▶</button>
+        <span class="c"></span><button id="padDown">▼</button><span class="c"></span>
+      </div>
+      <div class="abtns"><button class="b" id="btnB">B</button><button id="btnA">A</button></div>
+      <div class="shell-pills"><button id="startBtn">START</button><button id="selectBtn">SNEAK</button></div>
+    </div>
+  </div>
+  <div class="hud">
+    <div class="box"><b>OBJECTIVES</b><br><span id="objA">○ PLANT TAP — server rack</span><br><span id="objB">○ RECOVER CIPHER CORE — vault</span><br><span id="objC">○ EXFIL — reach the portal</span><br><span id="objD">◇ FREE THE ENGINEER (bonus)</span></div>
+    <div class="box"><b>OPERATIVE</b><br>HP <span id="hp">100</span> · AMMO <span id="ammo">24</span><br>SCORE <span id="score">0</span> · TIME <span id="clock">0:00</span><br>ALARMS <span id="alarms">0</span> · TAKEDOWNS <span id="takedowns">0</span></div>
+    <div class="box"><b>ALERT</b><br><span id="alertState" class="alert-calm">UNSEEN</span><br><span id="alertBar">▁▁▁▁▁▁▁▁▁▁</span><br><span id="watchName"></span></div>
+  </div>
+  <div class="btnrow">
+    <button class="mbtn active" id="btnSolo">Solo Run<small>VESPER KANE clears the Annex</small></button>
+    <button class="mbtn" id="btnWatch">Watch<small>A council bot runs it · Fallible Engine</small></button>
+    <button class="mbtn" id="btnMap">Automap<small>V · overhead map</small></button>
+    <button class="mbtn" id="btnPause">Pause<small>P / ESC · save &amp; load inside</small></button>
+    <button class="mbtn" id="btnMute">Sound: On<small>M to mute</small></button>
+    <button class="mbtn vr" id="btnVR">Enter VR (SIM)<small>WebXR via the shared XR engine · needs a headset</small></button>
+  </div>
+  <div id="msg">Press PLAY — or WATCH a council bot run the Annex.</div>
+  <div id="feed"></div>
+  <div class="help">
+    🕵️ <b>Briefing:</b> <b>VESPER KANE</b> infiltrates the <b>MERIDIAN ANNEX</b> after dark. Three objectives, one run: <b>plant the tap</b> on the server rack in the east wing, <b>recover the CIPHER CORE</b> from the vault (the vault door only opens once the tap is live), then <b>exfil</b> through the portal in the south-west yard. A detained engineer is held in the north cell — freeing them is optional, and worth 500.<br/>
+    👁️ <b>Guards</b> patrol in the Ghostline spirit: vision cones are real and walls block sight. Yellow <b>?</b> = suspicious — the guard pauses, then comes to look. Red <b>!</b> = spotted — it chases and shoots; break line of sight and it searches your last-seen spot, then stands down. Alarms spread guard to guard, but only to nearby units. Guards <b>hear</b> gunfire; a takedown up close is silent. Sneak (<span class="k">Shift</span> / SELECT) to move quietly.<br/>
+    🎮 <b>Controls:</b> <span class="k">W A S D</span> move · mouse / <span class="k">←</span><span class="k">→</span> turn · <span class="k">Click</span> / <span class="k">Space</span> fire · <span class="k">E</span> interact / takedown · <span class="k">Shift</span> sneak · <span class="k">V</span> automap · <span class="k">P</span> pause.<br/>
+    📱 <b>Handheld shell:</b> D-pad walks and turns (▲▼ walk, ◀▶ turn), <span class="k">A</span> fires, <span class="k">B</span> interacts / takedown, <span class="k">SELECT</span> toggles sneak, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit).<br/>
+    🤖 <b>Watch:</b> a council agent runs the Annex on its own — BFS pathfinding to each objective, scored options through the Fallible Engine, and it blunders on purpose. Never frame-perfect.<br/>
+    🧪 <b>Clean-room:</b> objective-FPS formula (multi-objective missions, guard AI patrol/alert/search, hitscan fire — the documented behaviour of the classic objective shooters, SPEC lane: read as design reference, never run or copied); our own code, map, textures, guards, names and story. VR runs through the shared XR engine and is labelled SIM until a headset verifies it in-world.
+  </div>
+</div>
+<div class="overlay" id="pauseOverlay">
+  <div class="panel">
+    <h2 id="pauseTitle">PAUSED</h2>
+    <p id="pauseSub">The Annex waits. Your run is held exactly where you left it.</p>
+    <button class="mbtn" id="resumeBtn">Resume</button>
+    <button class="mbtn" id="saveBtn">Save state</button>
+    <button class="mbtn" id="loadBtn">Load state</button>
+    <button class="mbtn" id="restartBtn">Restart run</button>
+    <button class="mbtn" id="quitArcadeBtn">Quit to Arcade</button>
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script src="xr-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   NIGHTFALL — original one-level objective FPS for the Shaddai Arcade.
+   Clean-room SPEC lane: the objective-FPS formula (multi-objective missions,
+   guard patrol/alert/search AI, hitscan fire, DDA raycast renderer) written
+   from documented behaviour of the classic objective shooters — read as
+   design reference only, never run or copied. Our own map (16x16), textures
+   (procedural canvas art), guards (WARDEN / SENTINEL / OVERSEER), hero
+   (VESPER KANE), objectives, names and story. Modes: 1P, WATCH council bot
+   on the Fallible Engine (BFS pathfinding + scored options + traces).
+   First-person is the verified core; automap (V) is the overhead map;
+   VR via the shared XR engine is SIM-labelled. Handheld shell on mobile
+   (D-pad, A fire, B interact/takedown).
+   ========================================================================== */
+var CW=960, CH=560, FOV=1.152, RAYS=240, SLICE=CW/RAYS, HORIZON=CH*0.46;
+/* Map legend: 0 floor · 1 stone wall · 2 metal wall · 3 vault door (opens
+   after the TAP is live) · 4 server rack (interact: PLANT TAP) · 5 core
+   pedestal (interact: RECOVER CORE) · 6 cell door (interact: FREE ENGINEER)
+   · 7 exit portal (walk on after A+B to exfil) · 8 ammo crate · 9 medkit. */
+var MAP=[
+"1111111111111111",
+"1000000200007001",
+"1060000200040001",
+"1000000200000001",
+"1000011100011101",
+"1000010000000101",
+"1000010111100101",
+"1000000100000001",
+"1011100101111111",
+"1000000110005011",
+"1000000130000111",
+"1110100101111111",
+"1000000000000001",
+"1020000100000011",
+"1000000100000081",
+"1111111111111111"];
+var MW=16, MH=16;
+var GUARD_DEFS={
+  warden:  {hp:60,  speed:1.45, score:100, color:'#35e0ff', rim:'#b8f4ff', r:0.32, dmg:6,  range:6.0, name:'WARDEN'},
+  sentinel:{hp:150, speed:1.05, score:250, color:'#ffb347', rim:'#ffe1a1', r:0.42, dmg:10, range:6.5, name:'SENTINEL'},
+  overseer:{hp:90,  speed:1.70, score:200, color:'#b78cff', rim:'#e2ccff', r:0.34, dmg:8,  range:7.0, name:'OVERSEER'}
+};
+var GUARD_SPAWNS=[
+  {type:'warden',   x:5.5, y:1.5, wps:[[5.5,1.5],[5.5,3.5],[2.5,3.5],[2.5,1.5]]},
+  {type:'warden',   x:2.5, y:5.5, wps:[[2.5,5.5],[2.5,7.5],[4.5,7.5],[4.5,5.5]]},
+  {type:'warden',   x:14.5,y:6.5, wps:[[14.5,6.5],[14.5,7.5],[11.5,7.5],[11.5,6.5]]},
+  {type:'warden',   x:4.5, y:12.5,wps:[[4.5,12.5],[13.5,12.5],[13.5,13.5],[4.5,13.5]]},
+  {type:'overseer', x:6.5, y:5.5, wps:[[6.5,5.5],[6.5,7.5],[11.5,7.5],[11.5,5.5]]},
+  {type:'sentinel', x:10.5,y:9.5, wps:[[10.5,9.5],[13.5,9.5],[13.5,10.5],[10.5,10.5]]},
+  {type:'warden',   x:6.5, y:13.5,wps:[[6.5,13.5],[6.5,10.5],[3.5,10.5],[3.5,13.5]]}
+];
+var PLAYER_START={x:1.5, y:13.5, a:-Math.PI/2};
+var SAVE_KEY='nightfall.save.v1';
+var WATCH_IDX_KEY='nightfall.watchIdx';
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var watchIdxPersisted=0;
+try{ var _wi=parseInt(localStorage.getItem(WATCH_IDX_KEY)||'0',10); if(!isNaN(_wi)&&_wi>=0) watchIdxPersisted=_wi; }catch(e){}
+var watchTraces=[];
+function saveWatchIdx(){ try{ localStorage.setItem(WATCH_IDX_KEY, String(watchIdxPersisted)); }catch(e){} }
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var XE=(typeof window!=='undefined' && window.XREngine) || null;
+
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function angDiff(a,b){ var d=a-b; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; return d; }
+function tileAt(x,y){ var cx=Math.floor(x), cy=Math.floor(y); if(cx<0||cy<0||cx>=MW||cy>=MH) return 1; return MAP[cy].charCodeAt(cx)-48; }
+function isSolid(x,y,doorOpen){ var t=tileAt(x,y); if(t===0||t===7) return false; if(t===3) return !doorOpen; return true; }
+function canStand(x,y,doorOpen){ var r=0.22; return !isSolid(x-r,y-r,doorOpen)&&!isSolid(x+r,y-r,doorOpen)&&!isSolid(x-r,y+r,doorOpen)&&!isSolid(x+r,y+r,doorOpen); }
+/* DDA line of sight: true when no solid tile blocks the segment. */
+function los(x0,y0,x1,y1,doorOpen){
+  var dx=x1-x0, dy=y1-y0, dist=Math.hypot(dx,dy), steps=Math.ceil(dist*8);
+  for(var i=1;i<steps;i++){ var t=i/steps; if(isSolid(x0+dx*t, y0+dy*t, doorOpen)) return false; }
+  return true;
+}
+/* BFS pathfinding on the grid (4-dir). Returns array of {x,y} cell centres. */
+function bfsPath(sx,sy,tx,ty,doorOpen){
+  sx|=0; sy|=0; tx|=0; ty|=0;
+  if(sx===tx&&sy===ty) return [{x:tx+0.5,y:ty+0.5}];
+  var key=function(x,y){ return x+','+y; };
+  var prev={}, q=[[sx,sy]], seen={}; seen[key(sx,sy)]=true;
+  while(q.length){
+    var c=q.shift();
+    var dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    for(var i=0;i<4;i++){
+      var nx=c[0]+dirs[i][0], ny=c[1]+dirs[i][1];
+      if(nx<0||ny<0||nx>=MW||ny>=MH||seen[key(nx,ny)]) continue;
+      if(isSolid(nx+0.5,ny+0.5,doorOpen)) continue;
+      seen[key(nx,ny)]=true; prev[key(nx,ny)]=c; q.push([nx,ny]);
+      if(nx===tx&&ny===ty){
+        var path=[], cur=[tx,ty];
+        while(cur){ path.unshift({x:cur[0]+0.5,y:cur[1]+0.5}); cur=prev[key(cur[0],cur[1])]; }
+        return path;
+      }
+    }
+  }
+  return null;
+}
+
+/* ---------- procedural textures (own art, drawn once) ---------- */
+function makeTex(fn){ var c=document.createElement('canvas'); c.width=64; c.height=64; var g=c.getContext('2d'); fn(g); return c; }
+function texStone(g){
+  g.fillStyle='#1d2430'; g.fillRect(0,0,64,64);
+  g.fillStyle='#2c3648'; g.fillRect(2,2,28,28); g.fillRect(34,2,28,28); g.fillRect(2,34,28,28); g.fillRect(34,34,28,28);
+  g.fillStyle='#161c26'; g.fillRect(2,32,60,2); g.fillRect(32,2,2,60);
+  g.fillStyle='#3a4a66'; g.fillRect(4,4,24,3); g.fillRect(36,4,24,3);
+  g.fillStyle='#10141d'; for(var i=0;i<40;i++){ g.fillRect((i*13)%64,(i*7)%64,2,2); }
+  g.fillStyle='rgba(53,224,255,.28)'; g.fillRect(6,14,3,3); g.fillRect(52,44,3,3);
+}
+function texMetal(g){
+  g.fillStyle='#14161c'; g.fillRect(0,0,64,64);
+  g.fillStyle='#232833'; g.fillRect(3,3,58,26); g.fillRect(3,35,58,26);
+  g.fillStyle='#323a4a'; g.fillRect(3,3,58,3); g.fillRect(3,35,58,3);
+  g.fillStyle='#0e1016'; g.fillRect(3,31,58,2);
+  g.fillStyle='#6a7490'; g.fillRect(6,6,3,3); g.fillRect(55,6,3,3); g.fillRect(6,55,3,3); g.fillRect(55,55,3,3);
+  g.fillStyle='rgba(53,224,255,.55)'; g.fillRect(3,15,58,2); g.fillRect(3,47,58,2);
+}
+function texVault(g){
+  g.fillStyle='#171208'; g.fillRect(0,0,64,64);
+  g.fillStyle='#2c2210'; g.fillRect(4,4,56,56);
+  g.fillStyle='#ffd75e'; g.fillRect(30,6,4,52); g.fillRect(6,30,52,4);
+  g.fillStyle='#fff3c4'; g.fillRect(28,4,8,8); g.fillRect(28,52,8,8); g.fillRect(4,28,8,8); g.fillRect(52,28,8,8);
+  g.fillStyle='#ff3860'; g.fillRect(14,14,6,6); g.fillRect(44,14,6,6); g.fillRect(14,44,6,6); g.fillRect(44,44,6,6);
+}
+function texRack(g){
+  g.fillStyle='#0a1410'; g.fillRect(0,0,64,64);
+  g.fillStyle='#12261c'; g.fillRect(4,4,56,56);
+  g.fillStyle='#00ff88'; for(var r=0;r<5;r++){ g.fillRect(8,10+r*10,40,4); }
+  g.fillStyle='#ffd75e'; g.fillRect(50,10,6,6); g.fillRect(50,24,6,6);
+  g.fillStyle='#ff3860'; g.fillRect(50,38,6,6);
+  g.fillStyle='rgba(0,255,136,.5)'; g.fillRect(8,52,48,3);
+}
+function texCell(g){
+  g.fillStyle='#14100c'; g.fillRect(0,0,64,64);
+  g.fillStyle='#3a3a3a'; for(var i=0;i<5;i++){ g.fillRect(8+i*12,4,4,56); }
+  g.fillStyle='#ffd75e'; g.fillRect(6,28,52,4);
+}
+var TEX={};
+function buildTextures(){ TEX[1]=makeTex(texStone); TEX[2]=makeTex(texMetal); TEX[3]=makeTex(texVault); TEX[4]=makeTex(texRack); TEX[5]=makeTex(texMetal); TEX[6]=makeTex(texCell); TEX[8]=makeTex(texMetal); TEX[9]=makeTex(texStone); }
+
+/* ---------- sprite stacking: guards read as solid 3D figures ---------- */
+function nfFigure(g, kind, dy, P){
+  var F=function(c,x,y,w,h){ g.fillStyle=c; g.fillRect(x,y+dy,w,h); };
+  if(kind==='warden'){
+    F(P.d,14,26,6,26); F(P.d,44,26,6,26);                       /* arms */
+    F(P.m,18,20,28,32);                                        /* armoured torso */
+    F(P.l,18,20,28,4); F(P.d,18,44,28,8);                      /* top light / belly shade */
+    F(P.m,21,4,22,17);                                         /* helm */
+    F(P.l,21,4,22,3); F(P.rim,21,4,3,17);                      /* helm light + rim */
+    if(P.det){
+      F(P.glow,24,10,16,4);                                    /* visor slit */
+      F('#fff2d8',26,11,3,2);
+      F(P.d,20,24,4,10); F(P.d,40,24,4,10);                    /* chest vents */
+      F('#c8b08a',28,30,3,3); F('#c8b08a',36,38,3,3);          /* rivets */
+      F(P.rim,18,20,2,32); F(P.rim,44,20,2,32);                /* shoulder rim */
+    }
+  } else if(kind==='sentinel'){
+    F(P.d,10,24,8,28); F(P.d,46,24,8,28);                       /* heavy arms */
+    F(P.m,14,18,36,36);                                        /* broad plate torso */
+    F(P.l,14,18,36,5); F(P.d,14,46,36,8);
+    F(P.m,18,2,28,18);                                         /* wide helm */
+    F(P.l,18,2,28,3); F(P.rim,18,2,3,18);
+    if(P.det){
+      F(P.glow,22,9,20,5);                                     /* amber visor */
+      F('#fff2d8',24,10,4,3);
+      F(P.d,18,26,6,12); F(P.d,40,26,6,12);                    /* plate seams */
+      F(P.rim,14,18,3,36); F(P.rim,47,18,3,36);                /* plate rim */
+      F('#ffd75e',28,40,8,4);                                  /* core light */
+    }
+  } else { /* overseer */
+    F(P.d,16,28,5,24); F(P.d,43,28,5,24);                       /* slim arms */
+    F(P.m,19,22,26,30);                                        /* long coat */
+    F(P.l,19,22,26,4); F(P.d,19,44,26,8);
+    F(P.m,22,5,20,16);                                         /* peaked cap head */
+    F(P.l,22,5,20,3); F(P.rim,22,5,3,16);
+    if(P.det){
+      F(P.glow,25,11,14,4);                                    /* violet visor */
+      F('#fff2d8',27,12,3,2);
+      F(P.d,24,26,4,8); F(P.d,36,26,4,8);                      /* coat buttons */
+      F(P.rim,19,22,2,30); F(P.rim,43,22,2,30);
+    }
+  }
+}
+function drawStackedGuard(g, kind, sx, sy, sw, sh, P){
+  var slices=7;
+  for(var i=slices;i>=1;i--){
+    var dy=i*2, dark=i>slices-2;
+    var PP={d:dark?'#05070a':P.d, m:dark?'#0a0d12':P.m, l:dark?'#0d1118':P.l, rim:dark?'#0d1118':P.rim, glow:P.glow, det:false};
+    nfFigure(g, kind, dy, PP);
+  }
+  nfFigure(g, kind, 0, P);
+}
+function guardPalette(def){
+  return {d:shade(def.color,-70), m:def.color, l:shade(def.color,60), rim:def.rim, glow:def.color, det:true};
+}
+function shade(hex,amt){
+  var n=parseInt(hex.slice(1),16), r=clamp((n>>16)+amt,0,255), gg=clamp(((n>>8)&255)+amt,0,255), b=clamp((n&255)+amt,0,255);
+  return '#'+((r<<16)|(gg<<8)|b).toString(16).padStart(6,'0');
+}
+
+/* ---------- state ---------- */
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var state=null;
+function newState(mode, seed){
+  var guards=GUARD_SPAWNS.map(function(s,i){
+    return {id:i, type:s.type, def:GUARD_DEFS[s.type], x:s.x, y:s.y, a:0, hp:GUARD_DEFS[s.type].hp,
+      wps:s.wps, wp:0, st:'patrol', see:0, lastSeen:null, searchT:0, pauseT:0, shootT:0, down:false, alerted:false};
+  });
+  return {
+    mode:mode||'solo', seed:seed||1, phase:'title', /* title|play|won|dead */
+    px:PLAYER_START.x, py:PLAYER_START.y, pa:PLAYER_START.a,
+    hp:100, ammo:24, score:0, time:0, alarms:0, takedowns:0,
+    objA:false, objB:false, objC:false, objD:false,
+    doorOpen:false, alert:'calm', alertT:0,
+    guards:guards, items:[
+      {kind:'ammo', x:14.5, y:14.5, taken:false},
+      {kind:'ammo', x:2.5,  y:1.5,  taken:false},
+      {kind:'med',  x:13.5, y:1.5,  taken:false},
+      {kind:'med',  x:1.5,  y:12.5, taken:false}
+    ],
+    keys:{}, sneak:false, muted:false, showMap:false, fireT:0, muzzle:0,
+    feed:[], watchBot:null, watchStep:0, watchDone:false,
+    rng:seededRng(seed||1), shake:0
+  };
+}
+function seededRng(seed){ var s=seed>>>0||1; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+function feed(msg){ if(!state) return; state.feed.unshift(msg); if(state.feed.length>4) state.feed.pop(); var f=document.getElementById('feed'); if(f) f.innerHTML=state.feed.map(function(m){return '› '+m;}).join('<br>'); }
+function setMsg(m){ var e=document.getElementById('msg'); if(e) e.textContent=m; }
+function nearInteractable(){
+  if(!state) return null;
+  var px=state.px, py=state.py;
+  var checks=[[4,'rack'],[5,'core'],[6,'cell']];
+  for(var i=0;i<checks.length;i++){
+    var t=checks[i][0], kind=checks[i][1];
+    for(var y=0;y<MH;y++) for(var x=0;x<MW;x++){
+      if(MAP[y][x]==String(t)){
+        var dx=x+0.5-px, dy=y+0.5-py;
+        if(Math.hypot(dx,dy)<1.3) return {kind:kind, x:x, y:y};
+      }
+    }
+  }
+  return null;
+}
+
+/* ---------- raycast renderer ---------- */
+var zbuf=new Array(RAYS);
+function render(){
+  var g=ctx;
+  /* ceiling + floor */
+  var ceil=g.createLinearGradient(0,0,0,HORIZON);
+  ceil.addColorStop(0,'#05080e'); ceil.addColorStop(1,'#0a1420');
+  g.fillStyle=ceil; g.fillRect(0,0,CW,HORIZON);
+  var fl=g.createLinearGradient(0,HORIZON,0,CH);
+  fl.addColorStop(0,'#0d1218'); fl.addColorStop(1,'#05070a');
+  g.fillStyle=fl; g.fillRect(0,HORIZON,CW,CH-HORIZON);
+  /* walls: DDA per column */
+  for(var col=0; col<RAYS; col++){
+    var camX=2*col/RAYS-1;
+    var rayA=state.pa + Math.atan(camX*Math.tan(FOV/2));
+    var dx=Math.cos(rayA), dy=Math.sin(rayA);
+    var mapX=Math.floor(state.px), mapY=Math.floor(state.py);
+    var dDX=Math.abs(1/(dx||1e-9)), dDY=Math.abs(1/(dy||1e-9));
+    var stepX, stepY, sDX, sDY;
+    if(dx<0){ stepX=-1; sDX=(state.px-mapX)*dDX; } else { stepX=1; sDX=(mapX+1-state.px)*dDX; }
+    if(dy<0){ stepY=-1; sDY=(state.py-mapY)*dDY; } else { stepY=1; sDY=(mapY+1-state.py)*dDY; }
+    var side=0, tile=0, guard=0;
+    while(guard++<64){
+      if(sDX<sDY){ sDX+=dDX; mapX+=stepX; side=0; } else { sDY+=dDY; mapY+=stepY; side=1; }
+      tile=tileAt(mapX,mapY);
+      if(tile!==0&&tile!==7) break;
+    }
+    var perp=(side===0)?(sDX-dDX):(sDY-dDY);
+    perp=Math.max(0.05, perp*Math.cos(angDiff(rayA,state.pa)));
+    zbuf[col]=perp;
+    var lineH=Math.min(CH*3, (CH/perp));
+    var y0=HORIZON-lineH/2, y1=HORIZON+lineH/2;
+    var tex=TEX[tile]||TEX[1];
+    var wallX=(side===0)?(state.py+perp*dy):(state.px+perp*dx);
+    wallX-=Math.floor(wallX);
+    var tx=Math.floor(wallX*64);
+    if((side===0&&dx>0)||(side===1&&dy<0)) tx=63-tx;
+    var shadeF=clamp(1-perp/11,0.12,1)*(side===1?0.72:1);
+    g.drawImage(tex, tx,0,1,64, col*SLICE, y0, SLICE+1, lineH);
+    g.fillStyle='rgba(2,6,10,'+(1-shadeF).toFixed(3)+')';
+    g.fillRect(col*SLICE, y0, SLICE+1, lineH);
+    if(tile===3){ /* vault door gold seam */
+      g.fillStyle='rgba(255,215,94,'+(0.5*shadeF).toFixed(2)+')';
+      g.fillRect(col*SLICE+SLICE/2-1, y0, 2, lineH);
+    }
+    if(tile===7){ /* exit portal glow at floor */
+      g.fillStyle='rgba(0,255,136,'+(0.35*shadeF).toFixed(2)+')';
+      g.fillRect(col*SLICE, y1-4, SLICE+1, 4);
+    }
+  }
+  /* sprites: guards + items + portal, painter's algorithm */
+  var sprites=[];
+  state.guards.forEach(function(gr){
+    if(gr.down) return;
+    var dx=gr.x-state.px, dy=gr.y-state.py, d=Math.hypot(dx,dy);
+    sprites.push({kind:'guard', gr:gr, d:d, x:gr.x, y:gr.y});
+  });
+  state.items.forEach(function(it){
+    if(it.taken) return;
+    var dx=it.x-state.px, dy=it.y-state.py, d=Math.hypot(dx,dy);
+    sprites.push({kind:it.kind, d:d, x:it.x, y:it.y});
+  });
+  sprites.sort(function(a,b){ return b.d-a.d; });
+  sprites.forEach(function(sp){
+    if(sp.d<0.25) return;
+    var rel=angDiff(Math.atan2(sp.y-state.py, sp.x-state.px), state.pa);
+    if(Math.abs(rel)>FOV/2+0.35) return;
+    var screenX=(0.5+rel/FOV)*CW;
+    var size=CH/sp.d;
+    var col=Math.floor(((screenX/CW)*RAYS));
+    if(col<0||col>=RAYS||zbuf[col]<sp.d) return;
+    var sy=HORIZON-size/2, sx=screenX-size*0.32;
+    if(sp.kind==='guard'){
+      var gr=sp.gr, P=guardPalette(gr.def);
+      /* ground shadow */
+      g.fillStyle='rgba(0,0,0,0.5)';
+      g.beginPath(); g.ellipse(screenX, HORIZON+size*0.42, size*0.26, size*0.05, 0, 0, Math.PI*2); g.fill();
+      var tmp=document.createElement('canvas'); tmp.width=64; tmp.height=64;
+      var tg=tmp.getContext('2d');
+      drawStackedGuard(tg, gr.type, 0, 0, 64, 64, P);
+      g.drawImage(tmp, sx, sy, size*0.64, size*0.84);
+      /* state marker */
+      if(gr.st==='alert'){ g.fillStyle='#ff3860'; g.font='bold 20px Orbitron, sans-serif'; g.fillText('!', screenX-5, sy-8); }
+      else if(gr.st==='suspicious'){ g.fillStyle='#ffd75e'; g.font='bold 20px Orbitron, sans-serif'; g.fillText('?', screenX-5, sy-8); }
+      /* hp bar */
+      var hw=size*0.5;
+      g.fillStyle='#101820'; g.fillRect(screenX-hw/2, sy-4, hw, 4);
+      g.fillStyle=gr.hp>gr.def.hp*0.5?'#00ff88':'#ff3860';
+      g.fillRect(screenX-hw/2, sy-4, hw*clamp(gr.hp/gr.def.hp,0,1), 4);
+    } else {
+      var col2=sp.kind==='ammo'?'#35e0ff':'#00ff88';
+      g.fillStyle='rgba(0,0,0,0.5)';
+      g.beginPath(); g.ellipse(screenX, HORIZON+size*0.30, size*0.12, size*0.03, 0, 0, Math.PI*2); g.fill();
+      g.fillStyle=col2; g.font='bold '+Math.max(14,size*0.28)+'px Orbitron, sans-serif';
+      g.fillText(sp.kind==='ammo'?'+AMMO':'+MED', screenX-size*0.22, sy+size*0.1);
+    }
+  });
+  /* weapon view-model: suppressed pistol */
+  var wx=CW/2-26, wy=CH-118;
+  g.save();
+  if(state.muzzle>0){ g.fillStyle='rgba(255,220,120,'+(state.muzzle*6).toFixed(2)+')'; g.beginPath(); g.arc(CW/2, wy-30, 26*state.muzzle*6, 0, Math.PI*2); g.fill(); }
+  g.fillStyle='#1a2028'; g.fillRect(wx, wy, 52, 96);
+  g.fillStyle='#2c3648'; g.fillRect(wx+6, wy, 40, 70);
+  g.fillStyle='#0e1218'; g.fillRect(wx+20, wy-34, 12, 40); /* suppressor */
+  g.fillStyle='#35e0ff'; g.fillRect(wx+22, wy+8, 8, 3);
+  g.fillStyle='rgba(53,224,255,.35)'; g.fillRect(wx, wy+96, 52, 3);
+  g.restore();
+  /* crosshair */
+  g.strokeStyle='rgba(232,246,255,.9)'; g.lineWidth=1.5;
+  g.beginPath(); g.moveTo(CW/2-9,CH/2); g.lineTo(CW/2+9,CH/2); g.moveTo(CW/2,CH/2-9); g.lineTo(CW/2,CH/2+9); g.stroke();
+  /* vignette + alert tint */
+  var vg=g.createRadialGradient(CW/2,CH/2,CH*0.35,CW/2,CH/2,CH*0.75);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.55)');
+  g.fillStyle=vg; g.fillRect(0,0,CW,CH);
+  if(state.alert==='alert'){ g.fillStyle='rgba(255,56,96,0.07)'; g.fillRect(0,0,CW,CH); }
+  if(state.hp<30){ g.fillStyle='rgba(255,56,96,'+(0.10+0.05*Math.sin(state.time*6)).toFixed(3)+')'; g.fillRect(0,0,CW,CH); }
+  /* interact prompt */
+  var ni=nearInteractable();
+  if(ni&&state.phase==='play'){
+    var label=ni.kind==='rack'?(state.objA?'TAP LIVE':'[E] PLANT TAP'):ni.kind==='core'?(state.objB?'CORE SECURED':'[E] RECOVER CIPHER CORE'):(state.objD?'ENGINEER FREE':'[E] FREE THE ENGINEER');
+    g.font='bold 16px Orbitron, sans-serif'; g.fillStyle='#ffd75e';
+    var tw=g.measureText(label).width;
+    g.fillStyle='rgba(4,10,14,.8)'; g.fillRect(CW/2-tw/2-12, CH-170, tw+24, 30);
+    g.fillStyle='#ffd75e'; g.fillText(label, CW/2-tw/2, CH-150);
+  }
+  if(state.showMap) drawMap(g);
+  if(state.phase==='title') drawTitle(g);
+  if(state.phase==='won') drawEnd(g,true);
+  if(state.phase==='dead') drawEnd(g,false);
+}
+function drawMap(g){
+  var s=22, ox=CW/2-MW*s/2, oy=CH/2-MH*s/2;
+  g.fillStyle='rgba(3,8,12,.88)'; g.fillRect(ox-14,oy-14,MW*s+28,MH*s+28);
+  g.strokeStyle='rgba(53,224,255,.6)'; g.strokeRect(ox-14,oy-14,MW*s+28,MH*s+28);
+  for(var y=0;y<MH;y++) for(var x=0;x<MW;x++){
+    var t=MAP[y].charCodeAt(x)-48, c='#0a1820';
+    if(t===1) c='#2c3648'; else if(t===2) c='#3a4a66'; else if(t===3) c=state.doorOpen?'#123524':'#ffd75e';
+    else if(t===4) c='#00ff88'; else if(t===5) c='#ffd75e'; else if(t===6) c='#b78cff'; else if(t===7) c='#00ff88';
+    g.fillStyle=c; g.fillRect(ox+x*s+1,oy+y*s+1,s-2,s-2);
+  }
+  state.guards.forEach(function(gr){ if(gr.down) return; g.fillStyle=gr.st==='alert'?'#ff3860':gr.st==='suspicious'?'#ffd75e':gr.def.color; g.beginPath(); g.arc(ox+gr.x*s,oy+gr.y*s,4,0,Math.PI*2); g.fill(); });
+  g.fillStyle='#fff'; g.beginPath(); g.arc(ox+state.px*s,oy+state.py*s,5,0,Math.PI*2); g.fill();
+  g.strokeStyle='#fff'; g.beginPath(); g.moveTo(ox+state.px*s,oy+state.py*s); g.lineTo(ox+(state.px+Math.cos(state.pa)*1.2)*s, oy+(state.py+Math.sin(state.pa)*1.2)*s); g.stroke();
+  g.fillStyle='#e8f6ff'; g.font='bold 15px Orbitron, sans-serif'; g.fillText('MERIDIAN ANNEX — AUTOMAP', ox, oy-22);
+}
+function drawTitle(g){
+  g.fillStyle='rgba(3,7,11,.72)'; g.fillRect(0,0,CW,CH);
+  g.fillStyle='#35e0ff'; g.font='900 64px Orbitron, sans-serif';
+  var t='NIGHTFALL'; g.fillText(t, CW/2-g.measureText(t).width/2, CH/2-40);
+  g.fillStyle='#ffd75e'; g.font='700 17px Orbitron, sans-serif';
+  var s2='OBJECTIVE FPS · THE MERIDIAN ANNEX'; g.fillText(s2, CW/2-g.measureText(s2).width/2, CH/2-8);
+  g.fillStyle='#cfeeff'; g.font='15px "Share Tech Mono", monospace';
+  var lines=['VESPER KANE goes in after dark. Three objectives, one run:','plant the TAP on the server rack · recover the CIPHER CORE from the vault','(the vault only opens once the tap is live) · exfil through the portal.','Press SOLO RUN — or WATCH a council bot run it.'];
+  lines.forEach(function(l,i){ g.fillText(l, CW/2-g.measureText(l).width/2, CH/2+28+i*22); });
+}
+function drawEnd(g,won){
+  g.fillStyle='rgba(3,7,11,.78)'; g.fillRect(0,0,CW,CH);
+  g.fillStyle=won?'#00ff88':'#ff3860'; g.font='900 52px Orbitron, sans-serif';
+  var t=won?'MISSION COMPLETE':'KANE IS DOWN';
+  g.fillText(t, CW/2-g.measureText(t).width/2, CH/2-20);
+  g.fillStyle='#e8f6ff'; g.font='16px "Share Tech Mono", monospace';
+  var s='SCORE '+state.score+' · TIME '+fmtTime(state.time)+' · ALARMS '+state.alarms+' · TAKEDOWNS '+state.takedowns;
+  g.fillText(s, CW/2-g.measureText(s).width/2, CH/2+16);
+  var s2=won?'Objectives '+(state.objA?1:0)+(state.objB?1:0)+(state.objC?1:0)+'/3'+(state.objD?' + engineer freed':''):'The Annex keeps its secrets. Run it again.';
+  g.fillText(s2, CW/2-g.measureText(s2).width/2, CH/2+44);
+}
+function fmtTime(t){ var m=Math.floor(t/60), s=Math.floor(t%60); return m+':'+(s<10?'0':'')+s; }
+
+/* ---------- HUD ---------- */
+function updateHUD(){
+  var $=function(id){ return document.getElementById(id); };
+  if(!$('hp')) return;
+  $('hp').textContent=Math.max(0,Math.round(state.hp));
+  $('ammo').textContent=state.ammo;
+  $('score').textContent=state.score;
+  $('clock').textContent=fmtTime(state.time);
+  $('alarms').textContent=state.alarms;
+  $('takedowns').textContent=state.takedowns;
+  $('objA').textContent=(state.objA?'✓':'○')+' PLANT TAP — server rack';
+  $('objB').textContent=(state.objB?'✓':'○')+' RECOVER CIPHER CORE — vault';
+  $('objC').textContent=(state.objC?'✓':'○')+' EXFIL — reach the portal';
+  $('objD').textContent=(state.objD?'✓':'◇')+' FREE THE ENGINEER (bonus)';
+  ['objA','objB','objC','objD'].forEach(function(id,i){ $(id).className=(i<3?state[['objA','objB','objC'][i]]:state.objD)?'obj-done':''; });
+  var a=$('alertState');
+  var word=state.alert==='alert'?'ALERT':state.alert==='suspicious'?'SUSPICIOUS':state.alert==='evasion'?'EVASION':'UNSEEN';
+  a.textContent=word;
+  a.className=state.alert==='alert'?'alert-hot':(state.alert==='calm'?'alert-calm':'alert-susp');
+  var peak=0; state.guards.forEach(function(gr){ if(gr.see>peak) peak=gr.see; });
+  var n=Math.round(peak*10);
+  $('alertBar').textContent='▰'.repeat(n)+'▁'.repeat(10-n);
+}
+
+/* ---------- guard AI (Ghostline spirit: patrol / suspicious / alert / search) ---------- */
+function guardCanSee(gr){
+  var dx=state.px-gr.x, dy=state.py-gr.y, d=Math.hypot(dx,dy);
+  if(d>7.5) return 0;
+  var ang=Math.atan2(dy,dx);
+  var facing=gr.st==='patrol'?Math.atan2(gr.wps[gr.wp][1]-gr.y, gr.wps[gr.wp][0]-gr.x):gr.a;
+  if(Math.abs(angDiff(ang,facing))>0.65) return 0;
+  if(!los(gr.x,gr.y,state.px,state.py,state.doorOpen)) return 0;
+  var vis=1-d/9;                       /* closer = seen faster */
+  if(!state.sneak) vis*=1.35;          /* running is loud and visible */
+  if(state.muzzle>0) vis*=1.5;
+  return vis;
+}
+function raiseAlarm(src, x, y){
+  state.guards.forEach(function(gr){
+    if(gr.down||gr===src) return;
+    var d=Math.hypot(gr.x-x, gr.y-y);
+    if(d<5){ gr.st='alert'; gr.lastSeen={x:x,y:y}; gr.see=1; }
+  });
+}
+function updateGuards(dt){
+  var anyAlert=false;
+  state.guards.forEach(function(gr){
+    if(gr.down) return;
+    var vis=guardCanSee(gr);
+    if(vis>0){
+      gr.see=clamp(gr.see+vis*dt*0.9, 0, 1);
+      if(gr.see>=0.45&&gr.st==='patrol'){ gr.st='suspicious'; gr.pauseT=1.2; gr.a=Math.atan2(state.py-gr.y, state.px-gr.x); }
+      if(gr.see>=1&&gr.st!=='alert'){
+        gr.st='alert'; gr.lastSeen={x:state.px,y:state.py};
+        state.alarms++; state.alert='alert'; state.alertT=6;
+        feed(gr.def.name+' raised the alarm!');
+        raiseAlarm(gr, state.px, state.py);
+      }
+    } else {
+      gr.see=clamp(gr.see-dt*0.35, 0, 1);
+      if(gr.st==='suspicious'&&gr.see<0.15){ gr.st='patrol'; }
+    }
+    if(gr.st==='patrol'){
+      var wp=gr.wps[gr.wp], dx=wp[0]-gr.x, dy=wp[1]-gr.y, d=Math.hypot(dx,dy);
+      if(d<0.15){ gr.wp=(gr.wp+1)%gr.wps.length; }
+      else { var sp=gr.def.speed*dt; gr.a=Math.atan2(dy,dx); moveGuard(gr, Math.cos(gr.a)*sp, Math.sin(gr.a)*sp); }
+    } else if(gr.st==='suspicious'){
+      gr.pauseT-=dt;
+      if(gr.pauseT<=0){ gr.st='search'; gr.lastSeen={x:state.px,y:state.py}; gr.searchT=3; }
+    } else if(gr.st==='alert'){
+      anyAlert=true;
+      var dx=state.px-gr.x, dy=state.py-gr.y, d=Math.hypot(dx,dy);
+      gr.a=Math.atan2(dy,dx);
+      if(d>1.0){ var sp=gr.def.speed*1.35*dt; moveGuard(gr, Math.cos(gr.a)*sp, Math.sin(gr.a)*sp); }
+      if(d<gr.def.range&&los(gr.x,gr.y,state.px,state.py,state.doorOpen)){
+        gr.shootT-=dt;
+        if(gr.shootT<=0){
+          gr.shootT=0.9;
+          var hit=state.rng()<0.55;   /* fallible: guards miss */
+          if(hit){ state.hp-=gr.def.dmg; feed(gr.def.name+' hit you for '+gr.def.dmg+'.'); if(state.hp<=0){ state.hp=0; die(); } }
+        }
+      }
+      if(!los(gr.x,gr.y,state.px,state.py,state.doorOpen)){
+        gr.st='search'; gr.searchT=4; gr.lastSeen={x:state.px,y:state.py};
+      }
+    } else if(gr.st==='search'){
+      gr.searchT-=dt;
+      var t=gr.lastSeen||{x:gr.x,y:gr.y};
+      var dx2=t.x-gr.x, dy2=t.y-gr.y, d2=Math.hypot(dx2,dy2);
+      if(d2>0.2){ var sp=gr.def.speed*dt; gr.a=Math.atan2(dy2,dx2); moveGuard(gr, Math.cos(gr.a)*sp, Math.sin(gr.a)*sp); }
+      else { gr.a+=dt*1.5; }
+      if(gr.searchT<=0){ gr.st='patrol'; gr.see=0; }
+    }
+  });
+  if(!anyAlert&&state.alert==='alert'){
+    state.alertT-=dt;
+    if(state.alertT<=0){ state.alert='evasion'; state.alertT=4; }
+  } else if(state.alert==='evasion'){
+    state.alertT-=dt;
+    if(state.alertT<=0){ state.alert='calm'; }
+  } else if(state.alert==='suspicious'){
+    state.alertT-=dt; if(state.alertT<=0) state.alert='calm';
+  }
+  var peak=0; state.guards.forEach(function(gr){ if(!gr.down&&gr.see>peak) peak=gr.see; });
+  if(state.alert==='calm'&&peak>=0.45){ state.alert='suspicious'; state.alertT=3; }
+}
+function moveGuard(gr, dx, dy){
+  var nx=gr.x+dx, ny=gr.y+dy;
+  if(canStand(nx,gr.y,state.doorOpen)) gr.x=nx;
+  if(canStand(gr.x,ny,state.doorOpen)) gr.y=ny;
+}
+
+/* ---------- combat + objectives ---------- */
+function fire(){
+  if(!state||state.phase!=='play') return;
+  if(state.fireT>0||state.ammo<=0) { if(state.ammo<=0) setMsg('Out of ammo — find a crate.'); return; }
+  state.fireT=0.28; state.ammo--; state.muzzle=0.09;
+  /* noise: gunfire is heard within 6 tiles */
+  state.guards.forEach(function(gr){
+    if(gr.down) return;
+    if(Math.hypot(gr.x-state.px,gr.y-state.py)<6&&gr.st==='patrol'){ gr.st='suspicious'; gr.pauseT=0.6; gr.a=Math.atan2(state.py-gr.y,state.px-gr.x); }
+  });
+  /* hitscan: nearest guard inside a narrow cone and LOS */
+  var best=null, bestD=1e9;
+  state.guards.forEach(function(gr){
+    if(gr.down) return;
+    var dx=gr.x-state.px, dy=gr.y-state.py, d=Math.hypot(dx,dy);
+    if(d>9) return;
+    var rel=Math.abs(angDiff(Math.atan2(dy,dx), state.pa));
+    if(rel>0.09) return;
+    if(!los(state.px,state.py,gr.x,gr.y,state.doorOpen)) return;
+    if(d<bestD){ bestD=d; best=gr; }
+  });
+  if(best){
+    var spread=state.rng()<0.82;      /* fallible aim, even for the player */
+    if(spread){
+      best.hp-=30;
+      if(best.hp<=0){ best.down=true; best.st='down'; state.score+=best.def.score; feed(best.def.name+' down. +'+best.def.score); }
+      else feed('Hit '+best.def.name+' — '+Math.max(0,best.hp)+' HP left.');
+    }
+  }
+}
+function takedown(){
+  if(!state||state.phase!=='play') return;
+  var best=null, bestD=1e9;
+  state.guards.forEach(function(gr){
+    if(gr.down) return;
+    var d=Math.hypot(gr.x-state.px,gr.y-state.py);
+    if(d<1.1&&d<bestD){ bestD=d; best=gr; }
+  });
+  if(best){ best.down=true; best.st='down'; state.takedowns++; state.score+=best.def.score+50; feed('Silent takedown — '+best.def.name+' down. +'+(best.def.score+50)); setMsg('Silent takedown. The Annex never heard it.'); }
+  else interact();
+}
+function interact(){
+  if(!state||state.phase!=='play') return;
+  var ni=nearInteractable();
+  if(!ni) return;
+  if(ni.kind==='rack'&&!state.objA){
+    state.objA=true; state.doorOpen=true; state.score+=400;
+    feed('TAP planted on the server rack. +400 — the vault door is open.');
+    setMsg('TAP LIVE — the vault door is open. Recover the CIPHER CORE.');
+  } else if(ni.kind==='core'&&state.objA&&!state.objB){
+    state.objB=true; state.score+=600;
+    feed('CIPHER CORE recovered. +600 — exfil through the portal.');
+    setMsg('CORE SECURED — exfil through the portal, south-west yard.');
+  } else if(ni.kind==='core'&&!state.objA){
+    setMsg('Vault sealed. The door only opens once the TAP is live.');
+  } else if(ni.kind==='cell'&&!state.objD){
+    state.objD=true; state.score+=500;
+    feed('Engineer freed — they slipped out the service duct. +500');
+    setMsg('Engineer free. +500 — now finish the mission.');
+  }
+}
+function die(){
+  state.phase='dead';
+  setMsg('KANE IS DOWN — the Annex keeps its secrets. Restart to run it again.');
+  if(state.mode==='watch') finishWatch(false);
+}
+function win(){
+  state.phase='won'; state.objC=true;
+  state.score+=Math.max(0, 600-Math.floor(state.time)*2);
+  setMsg('MISSION COMPLETE — VESPER KANE is out. Score '+state.score+'.');
+  if(state.mode==='watch') finishWatch(true);
+}
+
+/* ---------- WATCH bot (Fallible Engine) ---------- */
+function watchTarget(){
+  if(!state.objA) return {x:11.5, y:3.5};          /* server rack (stand south of it) */
+  if(!state.objB) return {x:12.5, y:10.5};         /* core pedestal (stand south of it) */
+  return {x:12.5, y:1.5};                          /* exit portal */
+}
+function watchStep(dt){
+  var bot=state.watchBot;
+  if(!bot||state.phase!=='play') return;
+  bot.thinkT-=dt;
+  var tgt=watchTarget();
+  /* re-path when the target changed or the path ran out */
+  if(!bot.path||bot.pathIdx>=bot.path.length||bot.tx!==tgt.x||bot.ty!==tgt.y){
+    bot.path=bfsPath(Math.floor(state.px),Math.floor(state.py),Math.floor(tgt.x),Math.floor(tgt.y),state.doorOpen);
+    bot.pathIdx=0; bot.tx=tgt.x; bot.ty=tgt.y;
+    if(!bot.path){ setMsg('WATCH: no path to the objective — the bot waits.'); return; }
+  }
+  /* nearest live guard in view? */
+  var threat=null, threatD=1e9;
+  state.guards.forEach(function(gr){
+    if(gr.down) return;
+    var d=Math.hypot(gr.x-state.px,gr.y-state.py);
+    if(d<threatD&&d<5&&los(state.px,state.py,gr.x,gr.y,state.doorOpen)){ threatD=d; threat=gr; }
+  });
+  if(bot.thinkT<=0){
+    bot.thinkT=0.5;
+    var opts=[
+      {key:'advance', score: threat? 30: 80},
+      {key:'engage',  score: threat? 75: 5},
+      {key:'sneak',   score: state.alert!=='calm'? 60: 20}
+    ];
+    var pick='advance';
+    if(FE){
+      try{
+        var agent=FE.loadAgent(bot.agentId);
+        var res=FE.decide(agent,'nightfall',opts,{alert:state.alert, hp:state.hp, threat:threat?threat.type:null});
+        pick=(res&&res.pick&&res.pick.key)?res.pick.key:'advance';
+        watchTraces.push({agent:bot.agentId, pick:pick, t:+state.time.toFixed(1), trace:res&&res.trace?res.trace:null});
+      }catch(e){ pick=threat?'engage':'advance'; }
+    } else pick=threat?'engage':'advance';
+    bot.plan=pick;
+  }
+  if(bot.plan==='engage'&&threat){
+    state.pa=Math.atan2(threat.y-state.py, threat.x-state.px);
+    state.sneak=false;
+    if(state.fireT<=0) fire();
+    return;
+  }
+  state.sneak=(bot.plan==='sneak');
+  var node=bot.path[Math.min(bot.pathIdx, bot.path.length-1)];
+  var dx=node.x-state.px, dy=node.y-state.py, d=Math.hypot(dx,dy);
+  if(d<0.4){ bot.pathIdx++; return; }
+  var want=Math.atan2(dy,dx);
+  var err=angDiff(want,state.pa);
+  var turn=clamp(err, -2.4*dt, 2.4*dt);
+  state.pa+=turn;
+  /* turn in place until roughly facing the node — otherwise the bot
+     orbits the waypoint at full speed and never arrives. */
+  if(Math.abs(err)>0.5) return;
+  var sp=(state.sneak?1.1:2.6)*dt;
+  var nx=state.px+Math.cos(state.pa)*sp, ny=state.py+Math.sin(state.pa)*sp;
+  if(canStand(nx,state.py,state.doorOpen)) state.px=nx;
+  if(canStand(state.px,ny,state.doorOpen)) state.py=ny;
+  /* arrive at the objective: interact */
+  if(Math.hypot(tgt.x-state.px,tgt.y-state.py)<1.4) interact();
+  /* walk onto the portal to exfil */
+  if(state.objA&&state.objB&&tileAt(state.px,state.py)===7) win();
+}
+function finishWatch(won){
+  state.watchDone=true;
+  var bot=state.watchBot;
+  if(FE&&bot){
+    try{
+      FE.recordResult(bot.agentId,'nightfall',null,won?'win':'loss',{traces:watchTraces, score:state.score, time:+state.time.toFixed(1), alarms:state.alarms});
+    }catch(e){}
+  }
+  watchTraces=[];
+  var wn=document.getElementById('watchName');
+  if(wn) wn.textContent='WATCH: '+bot.agentId+' — '+(won?'MISSION COMPLETE':'MISSION FAILED')+' · score '+state.score;
+}
+function startWatch(seed){
+  var id=COUNCIL_IDS[watchIdxPersisted%COUNCIL_IDS.length];
+  watchIdxPersisted=(watchIdxPersisted+1)%COUNCIL_IDS.length; saveWatchIdx();
+  state=newState('watch', seed||((Date.now()%100000)+1));
+  state.phase='play';
+  state.watchBot={agentId:id, plan:'advance', thinkT:0, path:null, pathIdx:0, tx:0, ty:0};
+  watchTraces=[];
+  setMsg('WATCH — '+id+' is running the Annex on the Fallible Engine.');
+  feed(id+' entered the Annex.');
+  var wn=document.getElementById('watchName');
+  if(wn) wn.textContent='WATCH: '+id+' · Fallible Engine';
+  updateHUD();
+}
+
+/* ---------- save / load ---------- */
+function saveGame(){
+  if(!state) return false;
+  try{
+    var s={px:state.px,py:state.py,pa:state.pa,hp:state.hp,ammo:state.ammo,score:state.score,time:state.time,
+      alarms:state.alarms,takedowns:state.takedowns,objA:state.objA,objB:state.objB,objC:state.objC,objD:state.objD,
+      doorOpen:state.doorOpen,alert:state.alert,mode:state.mode,phase:state.phase,
+      guards:state.guards.map(function(g){ return {x:g.x,y:g.y,a:g.a,hp:g.hp,wp:g.wp,st:g.st,see:g.see,down:g.down}; }),
+      items:state.items.map(function(i){ return {taken:i.taken}; })};
+    localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+    setMsg('State saved — pick it up exactly where you left it.');
+    return true;
+  }catch(e){ setMsg('Save failed: '+e.message); return false; }
+}
+function loadGame(){
+  try{
+    var raw=localStorage.getItem(SAVE_KEY);
+    if(!raw){ setMsg('No saved run on this device yet.'); return false; }
+    var s=JSON.parse(raw);
+    var keepMode=state?state.mode:'solo';
+    state=newState(keepMode, state?state.seed:1);
+    state.px=s.px; state.py=s.py; state.pa=s.pa; state.hp=s.hp; state.ammo=s.ammo;
+    state.score=s.score; state.time=s.time; state.alarms=s.alarms; state.takedowns=s.takedowns;
+    state.objA=s.objA; state.objB=s.objB; state.objC=s.objC; state.objD=s.objD;
+    state.doorOpen=s.doorOpen; state.alert=s.alert; state.phase=(s.phase==='play')?'play':s.phase;
+    s.guards.forEach(function(g,i){ var gr=state.guards[i]; if(!gr) return; gr.x=g.x; gr.y=g.y; gr.a=g.a; gr.hp=g.hp; gr.wp=g.wp; gr.st=g.st; gr.see=g.see; gr.down=g.down; });
+    s.items.forEach(function(it,i){ if(state.items[i]) state.items[i].taken=it.taken; });
+    if(state.mode==='watch'&&state.phase==='play'){
+      state.watchBot={agentId:COUNCIL_IDS[watchIdxPersisted%COUNCIL_IDS.length], plan:'advance', thinkT:0, path:null, pathIdx:0, tx:0, ty:0};
+    }
+    setMsg('State loaded — right where you left off.');
+    updateHUD();
+    return true;
+  }catch(e){ setMsg('Load failed: '+e.message); return false; }
+}
+
+/* ---------- main loop ---------- */
+var lastT=0;
+function step(dt){
+  if(!state||state.phase!=='play') return;
+  state.time+=dt;
+  state.fireT=Math.max(0,state.fireT-dt);
+  state.muzzle=Math.max(0,state.muzzle-dt);
+  var k=state.keys;
+  if(state.mode==='watch'){ watchStep(dt); }
+  else {
+    var turn=0;
+    if(k['arrowleft']) turn-=1; if(k['arrowright']) turn+=1;
+    state.pa+=turn*2.6*dt;
+    var mv=0, st=0;
+    if(k['w']||k['arrowup']) mv+=1; if(k['s']||k['arrowdown']) mv-=1;
+    if(k['a']) st-=1; if(k['d']) st+=1;
+    var sp=(state.sneak?1.2:2.8)*dt;
+    var fx=Math.cos(state.pa), fy=Math.sin(state.pa);
+    var nx=state.px+(fx*mv-fy*st)*sp, ny=state.py+(fy*mv+fx*st)*sp;
+    if(canStand(nx,state.py,state.doorOpen)) state.px=nx;
+    if(canStand(state.px,ny,state.doorOpen)) state.py=ny;
+    if(k[' ']){ fire(); k[' ']=false; }
+  }
+  updateGuards(dt);
+  /* item pickups */
+  state.items.forEach(function(it){
+    if(it.taken) return;
+    if(Math.hypot(it.x-state.px,it.y-state.py)<0.7){
+      it.taken=true;
+      if(it.kind==='ammo'){ state.ammo+=18; feed('Ammo crate — +18 rounds.'); }
+      else { state.hp=Math.min(100,state.hp+40); feed('Medkit — +40 HP.'); }
+    }
+  });
+  /* exfil */
+  if(state.objA&&state.objB&&tileAt(state.px,state.py)===7) win();
+}
+function frame(t){
+  requestAnimationFrame(frame);
+  var dt=Math.min(0.05,(t-lastT)/1000||0.016); lastT=t;
+  step(dt);
+  render();
+  updateHUD();
+}
+function enterVR(){
+  if(XE&&XE.enter){ try{ XE.enter('nightfall'); setMsg('VR (SIM) — the shared XR engine is handling the session.'); return; }catch(e){} }
+  setMsg('VR is SIM-labelled: the shared XR engine needs a headset session to go live.');
+}
+function setMode(mode){
+  document.getElementById('btnSolo').classList.toggle('active', mode==='solo');
+  document.getElementById('btnWatch').classList.toggle('active', mode==='watch');
+  if(mode==='watch'){ startWatch(); }
+  else {
+    state=newState('solo', (Date.now()%100000)+1);
+    state.phase='play';
+    setMsg('SOLO RUN — VESPER KANE is in. Plant the TAP, take the CORE, exfil.');
+    feed('VESPER KANE entered the Annex.');
+    var wn=document.getElementById('watchName'); if(wn) wn.textContent='';
+    updateHUD();
+  }
+  hidePause();
+}
+function togglePause(){
+  if(!state) return;
+  var ov=document.getElementById('pauseOverlay');
+  var open=ov.classList.contains('open');
+  if(open){ hidePause(); }
+  else {
+    if(state.phase!=='play'){ setMsg('Nothing to pause — start a run first.'); return; }
+    document.getElementById('pauseTitle').textContent='PAUSED';
+    document.getElementById('pauseSub').textContent='The Annex waits. Your run is held exactly where you left it.';
+    ov.classList.add('open');
+  }
+}
+function hidePause(){ document.getElementById('pauseOverlay').classList.remove('open'); }
+
+/* ---------- input ---------- */
+function bindBtn(id, down, up){
+  var el=document.getElementById(id); if(!el) return;
+  el.addEventListener('mousedown', function(e){ e.preventDefault(); down(); });
+  el.addEventListener('mouseup', function(){ if(up) up(); });
+  el.addEventListener('mouseleave', function(){ if(up) up(); });
+  el.addEventListener('touchstart', function(e){ e.preventDefault(); down(); }, {passive:false});
+  el.addEventListener('touchend', function(e){ e.preventDefault(); if(up) up(); }, {passive:false});
+}
+function holdBtn(id, down, up){ bindBtn(id, down, up); }
+document.addEventListener('keydown', function(e){
+  if(!state) return;
+  var k=e.key.toLowerCase();
+  if(k==='p'||k==='escape'){ togglePause(); return; }
+  if(k==='m'){ state.muted=!state.muted; document.getElementById('btnMute').innerHTML=state.muted?'Sound: Off<small>M to mute</small>':'Sound: On<small>M to mute</small>'; return; }
+  if(k==='v'){ state.showMap=!state.showMap; return; }
+  if(k==='e'){ takedown(); return; }
+  if(k==='shift'){ state.sneak=!state.sneak; return; }
+  if(k===' '){ e.preventDefault(); }
+  state.keys[k]=true;
+});
+document.addEventListener('keyup', function(e){ if(state) state.keys[e.key.toLowerCase()]=false; });
+cv.addEventListener('mousedown', function(){ fire(); });
+bindBtn('btnSolo', function(){ setMode('solo'); });
+bindBtn('btnWatch', function(){ setMode('watch'); });
+bindBtn('btnMap', function(){ if(state) state.showMap=!state.showMap; });
+bindBtn('btnPause', togglePause);
+bindBtn('btnMute', function(){ if(!state) return; state.muted=!state.muted; document.getElementById('btnMute').innerHTML=state.muted?'Sound: Off<small>M to mute</small>':'Sound: On<small>M to mute</small>'; });
+bindBtn('btnVR', enterVR);
+bindBtn('resumeBtn', hidePause);
+bindBtn('saveBtn', saveGame);
+bindBtn('loadBtn', function(){ loadGame(); hidePause(); });
+bindBtn('restartBtn', function(){ setMode(state?state.mode:'solo'); });
+bindBtn('quitArcadeBtn', function(){ window.location.href='../arcade.html'; });
+bindBtn('btnA', function(){ fire(); });
+bindBtn('btnB', function(){ takedown(); });
+bindBtn('startBtn', togglePause);
+bindBtn('selectBtn', function(){ if(state){ state.sneak=!state.sneak; setMsg(state.sneak?'SNEAK on — quiet steps.':'SNEAK off.'); } });
+holdBtn('padUp', function(){ if(state) state.keys['w']=true; }, function(){ if(state) state.keys['w']=false; });
+holdBtn('padDown', function(){ if(state) state.keys['s']=true; }, function(){ if(state) state.keys['s']=false; });
+holdBtn('padLeft', function(){ if(state) state.keys['arrowleft']=true; }, function(){ if(state) state.keys['arrowleft']=false; });
+holdBtn('padRight', function(){ if(state) state.keys['arrowright']=true; }, function(){ if(state) state.keys['arrowright']=false; });
+if(('ontouchstart' in window)||(typeof navigator!=='undefined'&&navigator.maxTouchPoints>0)) document.body.classList.add('touch');
+
+/* ---------- boot + harness API ---------- */
+buildTextures();
+state=newState('solo', 1);
+render(); updateHUD();
+requestAnimationFrame(function(t){ lastT=t; requestAnimationFrame(frame); });
+window.__nightfall={
+  state:function(){ return state; },
+  hasFE:function(){ return !!FE; },
+  startGame:function(mode,seed){ if(mode==='watch'){ startWatch(seed); } else { state=newState('solo',seed||1); state.phase='play'; } return state; },
+  step:function(dt){ step(dt||0.016); },
+  fire:fire, takedown:takedown, interact:interact,
+  teleport:function(x,y,a){ state.px=x; state.py=y; if(a!==undefined) state.pa=a; },
+  setKeys:function(k){ state.keys=k; },
+  guards:function(){ return state.guards; },
+  objectives:function(){ return {A:state.objA,B:state.objB,C:state.objC,D:state.objD,doorOpen:state.doorOpen}; },
+  bfsPath:bfsPath, los:los, tileAt:tileAt, canStand:canStand,
+  saveGame:saveGame, loadGame:loadGame,
+  watchTraces:function(){ return watchTraces; }
+};
+</script>
+</body>
+</html>

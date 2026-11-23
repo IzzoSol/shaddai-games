@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>⚔ COLOSSEUM — Agent vs Agent · Multiplayer · Hall of Fame — SHADDAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#030604;--panel:#071009;--panel2:#0a140d;--green:#00ff88;--cyan:#00f0ff;--purple:#c084fc;--gold:#f5c542;--red:#ff4757;--dim:#6f8577;--text:#d7e8dc}
+*{box-sizing:border-box} html,body{margin:0} body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.14),transparent 60%),var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:999;background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,.05) 3px 4px)}
+h1,h2,h3{font-family:Orbitron,sans-serif;margin:0} button{font-family:inherit;cursor:pointer} a{color:var(--cyan)}
+.topbar{display:flex;gap:14px;align-items:center;padding:12px 20px;background:rgba(0,0,0,.9);border-bottom:1px solid rgba(0,255,136,.35);position:sticky;top:0;z-index:200;flex-wrap:wrap;backdrop-filter:blur(8px)}
+.topbar h1{font-size:19px;color:var(--green);text-shadow:0 0 16px rgba(0,255,136,.6)} .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.pill{font-size:11px;padding:5px 10px;border:1px solid rgba(0,255,136,.3);letter-spacing:1px} .pill.local{color:var(--gold);border-color:rgba(245,197,66,.5)}
+.hero{text-align:center;padding:34px 16px 8px}.hero h2{font-size:clamp(28px,5vw,52px);font-weight:900;letter-spacing:5px;color:#fff;text-shadow:0 0 34px rgba(0,255,136,.55)}
+.hero p{color:var(--dim);letter-spacing:2px;text-transform:uppercase;font-size:12px}
+.menu{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:18px 12px}
+.mbtn{background:linear-gradient(180deg,#0d1f13,#050a06);border:2px solid rgba(0,255,136,.35);color:#fff;padding:16px 20px;min-width:168px;text-align:left;transition:.15s;position:relative}
+.mbtn:hover,.mbtn:focus-visible,.mbtn.sel{transform:translateY(-3px);border-color:var(--green);box-shadow:0 0 26px rgba(0,255,136,.35);outline:none}
+.mbtn b{font-family:Orbitron;font-size:15px;display:block;letter-spacing:1px}.mbtn span{color:var(--dim);font-size:11px}.mbtn .badge{position:absolute;top:-9px;right:-7px;background:var(--red);color:#fff;border-radius:99px;padding:2px 8px;font-size:11px}
+.mbtn.gold{border-color:rgba(245,197,66,.5)} .mbtn.gold:hover{border-color:var(--gold);box-shadow:0 0 26px rgba(245,197,66,.35)}
+.wrap{max-width:1240px;margin:0 auto;padding:10px 18px 60px}.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid rgba(0,255,136,.22);padding:20px;margin:16px 0}
+.panel h3{color:var(--green);letter-spacing:2px;font-size:16px;margin-bottom:12px}.panel h3.gold{color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.botcard{background:#000;border:2px solid rgba(0,255,136,.2);padding:10px;text-align:center;cursor:pointer;transition:.13s}.botcard:hover{transform:translateY(-3px)} .botcard.selA{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.4)} .botcard.selB{border-color:var(--red);box-shadow:0 0 20px rgba(255,71,87,.4)}
+.botcard img{width:84px;height:84px;object-fit:cover;border-radius:4px}.botcard .ava{font-size:44px;line-height:84px}.botcard b{font-family:Orbitron;font-size:12px;display:block;margin-top:6px}
+.chip{display:inline-block;font-size:10px;padding:2px 7px;border:1px solid rgba(255,255,255,.25);margin:2px;letter-spacing:1px}.chip.up{color:var(--green)}.chip.down{color:var(--red)}.chip.gold{color:var(--gold);border-color:rgba(245,197,66,.5)}
+.statbar{display:flex;align-items:center;gap:8px;font-size:11px;margin:3px 0}.statbar .k{width:78px;color:var(--dim);text-transform:capitalize}.bar{flex:1;height:9px;background:#122016}.bar i{display:block;height:100%;background:linear-gradient(90deg,#0a5,#00ff88)}.bar.weak i{background:linear-gradient(90deg,#a00,#ff4757)}
+.btn{background:#001a0d;border:2px solid var(--green);color:var(--green);padding:12px 22px;font-family:Orbitron;letter-spacing:1px;font-size:14px}.btn:hover{box-shadow:0 0 20px rgba(0,255,136,.45)} .btn.red{border-color:var(--red);color:#ff8b96}.btn.gold{border-color:var(--gold);color:var(--gold)}.btn.ghost{border-color:#33503c;color:var(--text)}.btn:disabled{opacity:.4;cursor:not-allowed}
+input,select{background:#000;border:1px solid rgba(0,255,136,.35);color:#fff;padding:11px;font-family:inherit;font-size:14px}
+.vs{display:flex;gap:16px;align-items:stretch;flex-wrap:wrap}.vs .side{flex:1;min-width:260px;background:#000;border:1px solid rgba(255,255,255,.12);padding:16px}.vs .mid{align-self:center;font-family:Orbitron;font-size:34px;color:var(--gold);text-shadow:0 0 20px rgba(245,197,66,.6)}
+.scoreboard{display:flex;justify-content:space-between;align-items:center;background:#000;border:2px solid rgba(0,255,136,.35);padding:14px 20px;font-family:Orbitron;flex-wrap:wrap;gap:10px}
+.score{font-size:42px;color:#fff}.momentum{height:12px;background:#2b0a0e;position:relative;margin:10px 0}.momentum i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .5s}
+.desk{background:#050505;border-left:4px solid var(--purple);padding:12px 16px;height:260px;overflow:auto}
+.desk p{margin:7px 0;font-size:13px}.desk .who{font-family:Orbitron;font-size:11px;letter-spacing:1px}
+.kitcard{background:#0a0f0b;border:1px solid rgba(192,132,252,.35);padding:10px;margin:8px 0;font-size:12px}.kitcard b{color:var(--purple)}
+.hallcard{background:linear-gradient(180deg,#171106,#070502);border:1px solid rgba(245,197,66,.45);padding:16px}.hallcard b{color:var(--gold);font-family:Orbitron}
+.chal{display:flex;gap:12px;align-items:center;background:#000;border:1px solid rgba(255,255,255,.14);padding:13px;flex-wrap:wrap}.chal .msg{color:var(--dim);font-size:12px}
+.roomcode{font-family:Orbitron;font-size:52px;letter-spacing:14px;color:var(--gold);text-align:center;text-shadow:0 0 26px rgba(245,197,66,.5)}
+#cutscene{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:500;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px}
+#cutscene .big{font-family:Orbitron;font-size:clamp(26px,6vw,58px);font-weight:900;color:#fff;letter-spacing:4px;animation:zoom .7s ease}
+#cutscene .line{color:var(--cyan);max-width:640px;margin-top:12px;min-height:44px}@keyframes zoom{from{transform:scale(1.35);opacity:0}to{transform:scale(1);opacity:1}}
+.controls{color:var(--dim);font-size:11px;text-align:center;letter-spacing:1px;padding:8px}
+.hidden{display:none!important}.flex{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.small{font-size:12px;color:var(--dim)}
+.skillpick{display:inline-block;margin:4px;padding:8px 11px;border:1px solid rgba(0,255,136,.3);cursor:pointer;font-size:12px}.skillpick.on{background:rgba(0,255,136,.16);border-color:var(--green);color:#fff}
+/* ============ QUALITY PASS — button craft · glow bots · accessories · mobile ============ */
+button{-webkit-tap-highlight-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:10px;background:linear-gradient(180deg,#00331b,#001a0d);box-shadow:inset 0 1px 0 rgba(0,255,136,.25),0 2px 10px rgba(0,0,0,.5);transition:transform .12s,box-shadow .15s,border-color .15s;text-align:center;line-height:1.25}
+.btn:hover:not(:disabled){box-shadow:0 0 22px rgba(0,255,136,.45),inset 0 1px 0 rgba(0,255,136,.35);transform:translateY(-1px)}
+.btn:active:not(:disabled){transform:translateY(1px) scale(.985);box-shadow:0 0 8px rgba(0,255,136,.3)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.btn.gold{background:linear-gradient(180deg,#3a2c05,#1a1200)}.btn.gold:hover:not(:disabled){box-shadow:0 0 22px rgba(245,197,66,.45),inset 0 1px 0 rgba(245,197,66,.35)}
+.btn.red{background:linear-gradient(180deg,#33050b,#1a0206)}.btn.red:hover:not(:disabled){box-shadow:0 0 22px rgba(255,71,87,.45),inset 0 1px 0 rgba(255,71,87,.35)}
+.btn.ghost{background:linear-gradient(180deg,#0b1710,#050a06)}
+.btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;transform:none}
+.mbtn{border-radius:12px;min-height:64px;box-shadow:inset 0 1px 0 rgba(0,255,136,.18),0 2px 10px rgba(0,0,0,.45)}
+.mbtn:active{transform:translateY(1px)}
+.mbtn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.mbtn.sel{background:linear-gradient(180deg,#123d22,#07150b)}
+.pill{display:inline-flex;align-items:center;min-height:38px;border-radius:99px;text-decoration:none;background:rgba(0,0,0,.5)}
+a.pill:hover{border-color:var(--green);color:#fff}
+a.pill:focus-visible,.mbtn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+input,select{border-radius:10px;min-height:48px;transition:border-color .15s,box-shadow .15s;max-width:100%}
+input:focus,select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,240,255,.35)}
+select{appearance:none;-webkit-appearance:none;padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300ff88' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;cursor:pointer}
+select option{background:#04140a;color:#fff}
+.skillpick{display:inline-flex;align-items:center;min-height:44px;border-radius:99px;background:rgba(0,0,0,.45);transition:.13s}
+.skillpick:hover{border-color:var(--green)}
+.skillpick:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.chip{border-radius:99px}
+.controls{background:rgba(0,0,0,.55);border-top:1px solid rgba(0,255,136,.15);border-bottom:1px solid rgba(0,255,136,.15);padding:10px 14px;margin:0}
+.controls b{color:var(--cyan)}
+.panel,.hallcard,.chal,.kitcard{border-radius:12px}
+.vs .side{border-radius:12px}
+.scoreboard{border-radius:12px}
+.momentum{border-radius:99px;overflow:hidden}
+.desk{border-radius:0 10px 10px 0}
+/* glow bots — aura in the AGENT colour; side (F1 blue / F2 red) is a badge + outer ring, never the aura */
+.botcard{position:relative;border-radius:14px;padding:16px 10px 12px;background:radial-gradient(120% 90% at 50% 0%,#0a1f12,#000 70%)}
+.botcard.selA{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,240,255,.55),0 0 26px rgba(0,240,255,.35)}
+.botcard.selB{border-color:var(--red);box-shadow:0 0 0 2px rgba(255,71,87,.55),0 0 26px rgba(255,71,87,.35)}
+.botcard:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.sidebadge{position:absolute;top:-9px;left:50%;transform:translateX(-50%);z-index:5;font-family:Orbitron;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.sidebadge.a{background:var(--cyan);color:#00222a;box-shadow:0 0 14px rgba(0,240,255,.7)}
+.sidebadge.b{background:var(--red);color:#fff;box-shadow:0 0 14px rgba(255,71,87,.7)}
+.glowwrap{--sz:104px;--isz:86px;position:relative;width:var(--sz);height:var(--sz);margin:4px auto 6px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.glowwrap.lg{--sz:138px;--isz:118px;margin:6px auto 10px}
+.glowwrap.sm{--sz:62px;--isz:52px;margin:2px auto 4px}
+.glowwrap::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(from 0deg,var(--ac,#00ff88),transparent 32%,var(--ac,#00ff88) 52%,transparent 78%,var(--ac,#00ff88));opacity:.8;animation:auraSpin 7s linear infinite;z-index:0}
+.glowwrap::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 30px 4px var(--acg,rgba(0,255,136,.5));animation:auraPulse 2.8s ease-in-out infinite;z-index:1;pointer-events:none}
+.glowwrap img{width:var(--isz);height:var(--isz);border-radius:50%;object-fit:cover;position:relative;z-index:2;border:2px solid var(--ac,#00ff88);background:#000}
+.glowwrap .ava2{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--isz)*.5);z-index:1}
+@keyframes auraSpin{to{transform:rotate(360deg)}}
+@keyframes auraPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.botcard.selA .glowwrap::before,.botcard.selB .glowwrap::before{animation-duration:3.2s;opacity:1}
+.csface{display:flex;gap:22px;align-items:flex-start;justify-content:center;margin-bottom:16px}
+.csfighter{text-align:center}
+.csname{font-family:Orbitron;font-size:14px;font-weight:700;letter-spacing:2px;margin-top:2px}
+.sbfighter{display:flex;gap:12px;align-items:center;min-width:0}
+/* accessories — pure CSS/SVG overlays, cosmetic only */
+.accrow{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.accbox{flex:1 1 300px;background:#000;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;min-width:0}
+.accpick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.accbtn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:64px;min-height:52px;padding:7px 8px;background:#050505;border:1px solid rgba(255,255,255,.22);border-radius:10px;color:var(--text);transition:.13s;cursor:pointer}
+.accbtn svg{height:20px;width:auto;max-width:46px}
+.accbtn>span{font-size:9px;letter-spacing:1px;font-family:Orbitron}
+.accbtn:hover{transform:translateY(-2px);border-color:#fff}
+.accbtn:active{transform:translateY(1px)}
+.accbtn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.accpick.a .accbtn.on{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,240,255,.45);color:#fff}
+.accpick.b .accbtn.on{border-color:var(--red);box-shadow:0 0 16px rgba(255,71,87,.45);color:#fff}
+.accnone{width:20px;height:20px;border:2px dashed rgba(255,255,255,.4);border-radius:50%}
+.acc{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;line-height:0}
+.acc svg{display:block;width:100%;height:auto;overflow:visible}
+.acc-halo{width:114%;top:-12%;z-index:4}
+.acc-crown{width:98%;top:-16%;z-index:4}
+.acc-horns{width:106%;top:-10%;z-index:4}
+.acc-cape{width:126%;bottom:-14%;z-index:1}
+.acc-star{width:178%;top:50%;transform:translate(-50%,-50%);z-index:0;opacity:.9}
+/* mobile — full version, ~360px up */
+@media (max-width:760px){
+ .wrap{padding:8px 10px 44px}
+ .panel{padding:14px;margin:12px 0}
+ .topbar{gap:8px;padding:10px 12px}.topbar h1{font-size:15px}
+ .menu{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding:12px 10px;scrollbar-width:none}
+ .menu::-webkit-scrollbar{display:none}
+ .mbtn{min-width:148px;flex:0 0 auto;padding:13px 14px;min-height:58px}
+ .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+ .glowwrap{--sz:92px;--isz:76px}.glowwrap.lg{--sz:112px;--isz:94px}
+ .vs{flex-direction:column}.vs .mid{text-align:center;font-size:26px;padding:2px 0}
+ .scoreboard{padding:10px 12px}.score{font-size:30px}.scoreboard .momentum{width:110px!important;max-width:30vw}
+ .desk{height:210px;padding:10px 12px}
+ .roomcode{font-size:34px;letter-spacing:7px}
+ .hero{padding:22px 10px 4px}
+ input,select{font-size:16px}
+ .chal{gap:8px}.chal .btn{flex:1 1 130px}
+ .panel .flex>.btn{flex:1 1 150px}
+ .csface{gap:12px}.csname{font-size:11px}
+ #cutscene .big{letter-spacing:2px}
+ .accbox{flex:1 1 100%}
+}
+@media (max-width:560px){.topbar .tag{display:none}}
+@media (max-width:400px){.grid{gap:8px}.botcard{padding:14px 6px 10px}.accbtn{min-width:56px}}
+@media (prefers-reduced-motion:reduce){.glowwrap::before,.glowwrap::after,#cutscene .big{animation:none}}
+/* entry code + forge glow editor */
+.entrycode{font-family:Orbitron;font-size:clamp(28px,6vw,40px);font-weight:900;letter-spacing:8px;color:var(--gold);text-shadow:0 0 24px rgba(245,197,66,.55);text-align:center;padding:10px 6px;word-break:break-all}
+.swatch{width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.3);cursor:pointer;padding:0;flex:0 0 auto;transition:.13s}
+.swatch:hover{transform:translateY(-2px)}
+.swatch.on{border-color:#fff;box-shadow:0 0 16px rgba(255,255,255,.55);outline:2px solid #fff;outline-offset:2px}
+.swatch:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+input[type=color].swatch{padding:2px;background:#000}
+input[type=color].swatch::-webkit-color-swatch-wrapper{padding:2px}
+input[type=color].swatch::-webkit-color-swatch{border:none;border-radius:50%}
+.accpick .accbtn.on{border-color:var(--gold);box-shadow:0 0 16px rgba(245,197,66,.45);color:#fff}
+/* ============ BOT GALLERY — profile · badge case · grudges · memory ============ */
+.galbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:9px;min-height:44px;padding:8px 10px;background:linear-gradient(180deg,#2a2003,#120c00);border:1px solid rgba(245,197,66,.55);border-radius:9px;color:var(--gold);font-family:Orbitron;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:.13s;-webkit-tap-highlight-color:transparent}
+.galbtn:hover{box-shadow:0 0 16px rgba(245,197,66,.4);transform:translateY(-1px);color:#ffe27a}
+.galbtn:active{transform:translateY(1px)}
+.galbtn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.side .galbtn{width:auto;display:flex}
+#gallery{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:600;overflow-y:auto;padding:18px 12px 44px}
+.galbox{max-width:880px;margin:0 auto;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid rgba(245,197,66,.45);border-radius:14px;padding:20px;box-shadow:0 0 44px rgba(245,197,66,.14)}
+.galhead{display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:-20px;background:linear-gradient(180deg,var(--panel2),rgba(10,20,13,.96));padding:10px 0;z-index:3;border-bottom:1px solid rgba(245,197,66,.25)}
+.galhead h3{color:var(--gold);letter-spacing:2px;font-size:15px}
+.galhero{text-align:center;padding:8px 0 2px}
+.galhero h3{color:#fff;font-size:clamp(19px,4vw,26px);letter-spacing:2px}
+.recchips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0 2px}
+.recchips .chip{font-size:11px;padding:5px 10px}
+.galsec{margin-top:20px}
+.galsec h4{font-family:Orbitron;color:var(--green);letter-spacing:2px;font-size:13px;margin:0 0 10px}
+.galsec h4.gold{color:var(--gold)} .galsec h4.red{color:#ff8b96}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
+.badgemed{text-align:center;background:#000;border:1px solid rgba(245,197,66,.4);border-radius:12px;padding:14px 8px 12px}
+.badgemed .medal{width:58px;height:58px;margin:0 auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,#ffe9a3,#f5c542 55%,#9a7414);box-shadow:0 0 18px rgba(245,197,66,.5),inset 0 0 0 3px rgba(120,84,6,.55);color:#4a3200}
+.badgemed .medal svg{width:30px;height:30px;display:block}
+.badgemed b{font-family:Orbitron;font-size:11px;display:block;letter-spacing:1px;color:#fff}
+.badgemed .when{font-size:10px;color:var(--dim);display:block;margin-top:3px}
+.badgemed .proof{font-size:10px;color:var(--cyan);display:block;margin-top:4px;word-break:break-all;letter-spacing:.5px}
+.badgemed.locked{opacity:.55;border-style:dashed;border-color:rgba(255,255,255,.28)}
+.badgemed.locked .medal{background:radial-gradient(circle at 35% 30%,#5c5c5c,#333 60%,#1b1b1b);box-shadow:inset 0 0 0 3px rgba(255,255,255,.14);color:#9d9d9d}
+.badgemed.locked b{color:#bdbdbd}
+/* ============ BADGE UNLOCKS — theatre reveal · gallery NEW markers · purpose lines ============ */
+.badgemed{position:relative}
+.badgemed .purpose{font-size:10px;color:#cbb26a;display:block;margin-top:5px;line-height:1.45}
+.badgemed.locked .purpose{color:#8f8f8f}
+.badgemed.isnew{border-color:var(--gold);box-shadow:0 0 18px rgba(245,197,66,.35)}
+.badgemed .newtag{position:absolute;top:-8px;right:-6px;background:var(--gold);color:#231a00;font-family:Orbitron;font-size:9px;font-weight:900;letter-spacing:1px;padding:2px 8px;border-radius:99px;box-shadow:0 0 12px rgba(245,197,66,.8);animation:newpulse 1.1s ease-in-out infinite}
+@keyframes newpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+#badgereveal{margin-top:14px}
+.brcard{display:flex;gap:14px;align-items:center;background:linear-gradient(180deg,#241a02,#0d0900);border:1px solid rgba(245,197,66,.65);border-radius:14px;padding:14px 16px;box-shadow:0 0 34px rgba(245,197,66,.22)}
+.brcard .medal{width:74px;height:74px;flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,#ffe9a3,#f5c542 55%,#9a7414);box-shadow:0 0 26px rgba(245,197,66,.65),inset 0 0 0 3px rgba(120,84,6,.55);color:#4a3200;animation:brin .7s cubic-bezier(.2,.9,.3,1.35) both}
+.brcard .medal svg{width:38px;height:38px;display:block}
+@keyframes brin{0%{transform:scale(.3);opacity:0;box-shadow:0 0 0 rgba(245,197,66,0)}55%{opacity:1}70%{transform:scale(1.14);box-shadow:0 0 54px rgba(245,197,66,.95),inset 0 0 0 3px rgba(120,84,6,.55)}100%{transform:scale(1);opacity:1}}
+.brcard .brkick{font-family:Orbitron;font-size:10px;font-weight:900;letter-spacing:2px;color:var(--gold)}
+.brcard b.brlabel{font-family:Orbitron;font-size:17px;color:#fff;letter-spacing:1px;display:block;margin:2px 0}
+.brcard .brbot{font-size:11px;color:var(--cyan)}
+.brcard .brpurpose{font-size:12px;color:#e8d9a0;margin-top:3px;line-height:1.5}
+.brcard .brproof{font-size:10px;color:var(--cyan);letter-spacing:.5px}
+.brcard .brx{margin-left:auto;flex:0 0 auto}
+@media (prefers-reduced-motion:reduce){.brcard .medal,.badgemed .newtag{animation:none}}
+/* ============ PHOTO FINISH — the finish card in the theatre ============ */
+#photofinish{margin-top:14px}
+.pfcard{position:relative;background:linear-gradient(180deg,#141b24,#05080d);border:1px solid rgba(0,240,255,.55);border-radius:14px;padding:14px 16px;box-shadow:0 0 34px rgba(0,240,255,.18);overflow:hidden}
+.pfcard .pfrow{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.pfcard .pffighter{text-align:center;min-width:110px}
+.pfcard .pfname{font-family:Orbitron;font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;margin-top:2px}
+.pfcard .pfscore{font-family:Orbitron;font-size:34px;color:#fff}
+.pfcard .pfmid{text-align:center;flex:1;min-width:200px}
+.pfstamp{display:inline-block;font-family:Orbitron;font-weight:900;letter-spacing:2px;color:#ffd60a;border:3px solid #ffd60a;border-radius:8px;padding:5px 12px;transform:rotate(-4deg);text-shadow:0 0 14px rgba(255,214,10,.5);box-shadow:0 0 18px rgba(255,214,10,.3),inset 0 0 12px rgba(255,214,10,.15);animation:pfin .55s cubic-bezier(.2,.9,.3,1.3) both;margin-top:6px}
+@keyframes pfin{0%{transform:rotate(-4deg) scale(1.8);opacity:0}100%{transform:rotate(-4deg) scale(1);opacity:1}}
+.pfcard .pfmargin{font-size:12px;color:var(--cyan);letter-spacing:1px;margin-top:8px}
+.pfcard .pfproof{font-size:10px;color:var(--cyan);letter-spacing:.5px}
+@media (prefers-reduced-motion:reduce){.pfstamp{animation:none}}
+.tlrow{display:flex;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap}
+.tlrow:last-child{border-bottom:none}
+.galnote{border:1px dashed rgba(245,197,66,.5);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);margin-top:14px;background:rgba(0,0,0,.45)}
+@media (max-width:760px){.galbox{padding:14px}.galhead{top:-14px}.badges{grid-template-columns:repeat(2,1fr)}#gallery{padding:10px 8px 34px}}
+</style></head><body>
+<div class="topbar"><h1>⚔ SHADDAI COLOSSEUM</h1><span class="tag">Agent vs Agent · Multiplayer · Real Presenters</span><span style="flex:1"></span><span id="modepill" class="pill">CONNECTING…</span><a class="pill" href="arcade.html">← ARCADE</a><a class="pill" href="leaderboard.html">LEADERBOARD</a></div>
+
+<div class="hero"><h2>BRING YOUR BOT.<br/>IT WILL NOT BE PERFECT.</h2><p>No 99-99 bots · They pick their own skills · They make real mistakes · The desk calls it live</p></div>
+
+<nav class="menu" id="mainmenu">
+  <button class="mbtn sel" data-tab="play"><b>▶ PLAY</b><span>Agent vs Agent — pick 2 bots</span></button>
+  <button class="mbtn" data-tab="multi"><b>👥 MULTIPLAYER</b><span>Room code — play a friend</span></button>
+  <button class="mbtn" data-tab="forge"><b>🤖 FORGE A BOT</b><span>Import Muse / Grok / ChatGPT</span></button>
+  <button class="mbtn" data-tab="challenges"><b>⚡ CHALLENGES</b><span>See who challenged you</span><span class="badge hidden" id="chalbadge">0</span></span></button>
+  <button class="mbtn gold" data-tab="hall"><b>🏆 HALL OF FAME</b><span>Legends, upsets, records</span></button>
+</nav>
+<p class="controls">CONTROLS — Mouse / touch, or keyboard: <b>1–5</b> tabs · <b>Enter</b> fight · <b>Space</b> play/pause the match · <b>R</b> rematch · <b>Esc</b> close cutscene · Gamepad: D-pad + A works in menus on most browsers</p>
+
+<main class="wrap">
+<!-- PLAY -->
+<section id="tab-play">
+  <div class="panel"><h3>1 · CHOOSE THE GAME</h3><div class="flex" id="gamepick"></div></div>
+  <div class="panel"><h3>2 · CHARACTER SELECT — GLOW BOTS · <span style="color:var(--cyan)">BLUE = FIGHTER 1</span> · <span style="color:#ff8b96">RED = FIGHTER 2</span> <span class="small">(click once for blue, again for red)</span></h3><div class="flex" style="margin-bottom:12px"><input id="codeinput" placeholder="ENTER A BOT VIA ITS ENTRY CODE" maxlength="16" style="flex:1;min-width:180px;text-transform:uppercase" aria-label="Bot entry code"/><button class="btn gold" id="codebtn">⌨ ENTER VIA CODE</button><span class="small" id="codestatus">Forged a bot? Its entry code brings it into this arena.</span></div><div class="grid" id="botgrid"></div>
+    <div class="vs" style="margin-top:16px"><div class="side" id="cardA"><p class="small">Pick Fighter 1…</p></div><div class="mid">VS</div><div class="side" id="cardB"><p class="small">Pick Fighter 2…</p></div></div>
+    <div class="accrow"><div class="accbox"><p class="small" style="margin:0"><span style="color:var(--cyan)">FIGHTER 1</span> — ACCESSORY</p><div class="accpick a" id="accpickA"></div></div><div class="accbox"><p class="small" style="margin:0"><span style="color:#ff8b96">FIGHTER 2</span> — ACCESSORY</p><div class="accpick b" id="accpickB"></div></div></div>
+    <p class="small" style="margin-top:8px">Accessories are <b>COSMETIC — NO STAT EFFECT</b>: pure style. They never change a bot's stats, draft, form, or luck — they just look good out there.</p>
+    <div class="flex" style="margin-top:14px"><button class="btn" id="fightbtn" disabled>⚔ START — WATCH THE CUTSCENE</button><button class="btn ghost" id="randombtn">🎲 RANDOM MATCHUP</button></div>
+  </div>
+  <div class="panel" id="wagerpanel"><h3>🎟 WAGER — INTENT ONLY <span class="chip gold">PHASE 1 · PAPER POOL · NO SPARKS MOVE</span></h3>
+    <p class="small">Back a bot with an <b>intent bet</b>. Phase 1 moves <b>no Sparks</b> — the paper pool settles exactly the way the real thing will: winners split the pot parimutuel, <b>fee 5% of pot — shown before you bet, never hidden</b>. The match seed is committed (hash below) before the fight and revealed after it, so nobody can rig the result after seeing the bets.</p>
+    <div class="flex"><button class="btn gold" id="wageropen" disabled>🎟 OPEN WAGER BOOK</button><span class="small" id="wagerstatus">Pick two fighters, then open a book on this exact matchup.</span></div>
+    <div id="wagerbook" class="hidden" style="margin-top:14px">
+      <p class="small">SEED COMMITTED — <span style="word-break:break-all;color:var(--gold)" id="wagerseedcommit">—</span><br/>The server has already fixed this match's seed. Its hash is public now; the seed itself stays hidden until the fight is over. If they don't match at reveal, the result was tampered with.</p>
+      <div class="small" style="margin-top:10px">PAPER POOL — <b id="wagerpooltotal">0</b> Sparks (intent only)</div>
+      <div style="display:flex;height:18px;background:#2b0a0e;margin:6px 0;overflow:hidden"><i id="wagerpoolA" style="display:block;background:linear-gradient(90deg,var(--cyan),#0aa);width:50%"></i><i id="wagerpoolB" style="display:block;background:linear-gradient(90deg,#a00,var(--red));flex:1"></i></div>
+      <div class="flex" style="justify-content:space-between"><span class="small" id="wagerpoolAlabel">—</span><span class="small" id="wagerpoolBlabel">—</span></div>
+      <div id="wagerbets" style="margin-top:8px"></div>
+      <div class="flex" style="margin-top:12px"><input id="wagername" placeholder="Your display name" maxlength="24" style="flex:1;min-width:160px"/><button class="btn" id="wagersideA">BACK —</button><button class="btn red" id="wagersideB">BACK —</button></div>
+      <div class="flex" style="margin-top:8px"><span class="small">AMOUNT (Sparks, intent only):</span><span id="wageramounts"><button class="btn ghost" data-wamt="0.1">0.1</button> <button class="btn gold" data-wamt="0.5">0.5</button> <button class="btn ghost" data-wamt="1">1</button></span><button class="btn gold" id="wagerbet">PLACE INTENT BET</button></div>
+      <p class="small">Fee: 5% of the pot goes to the arena in the settlement math — printed on every settlement below. One bet per name per book. Bot owners can't bet on their own bot's match (a bettor named exactly like a fighter is treated as its owner).</p>
+      <div class="flex"><button class="btn" id="wagerrun">▶ RUN MATCH &amp; SETTLE</button><span class="small">Betting closes the moment the match runs.</span></div>
+      <div id="wagersettle" style="margin-top:12px"></div>
+    </div>
+  </div>
+  <div class="panel hidden" id="theatre"><h3>3 · MATCH THEATRE — PRESENTED LIVE</h3>
+    <div class="scoreboard"><div class="sbfighter"><div id="sbAimg"></div><div><div class="small" id="sbAname">—</div><div class="score" id="sbA">0</div></div></div><div style="text-align:center"><div class="chip gold" id="sbPeriod">READY</div><div class="small">MOMENTUM</div><div class="momentum" style="width:220px"><i id="mombar" style="width:50%"></i></div></div><div class="sbfighter"><div style="text-align:right"><div class="small" id="sbBname">—</div><div class="score" id="sbB">0</div></div><div id="sbBimg"></div></div></div>
+    <div id="kits" class="vs" style="margin-top:10px"></div>
+    <div class="flex" style="margin:12px 0"><button class="btn" id="playbtn">▶ PLAY</button><button class="btn ghost" id="speedbtn">SPEED ×1</button><button class="btn ghost" id="skipbtn">⏭ SKIP TO RESULT</button><button class="btn red hidden" id="rematchbtn">↻ REMATCH (R)</button></div>
+    <div class="flex" id="presenters" style="margin-bottom:8px"></div>
+    <div class="desk" id="desk"></div>
+    <div id="postgame"></div>
+    <div id="photofinish" aria-live="polite"></div>
+    <div id="badgereveal" aria-live="polite"></div>
+  </div>
+</section>
+
+
+<!-- MULTIPLAYER -->
+<section id="tab-multi" class="hidden"><div class="panel"><h3>👥 MULTIPLAYER — ROOM CODE LOBBY</h3>
+<p class="small">How lobby games do it: host makes a room, shares the 4-letter code, guest joins, both pick a bot and ready up — then the server runs ONE match and both screens watch the same fight. Your bot fights with its real personality. No perfect bots on either side.</p>
+<div class="vs"><div class="side"><h3>HOST A ROOM</h3><p class="small">YOUR BOT</p><select id="roombot" style="width:100%"></select><p class="small" style="margin-top:8px">GAME</p><select id="roomgame" style="width:100%"></select><button class="btn" id="createroom" style="margin-top:12px">CREATE ROOM</button></div>
+<div class="side"><h3>JOIN WITH A CODE</h3><p class="small">ROOM CODE</p><input id="joincode" placeholder="e.g. KQX7" maxlength="4" style="width:100%;text-transform:uppercase"/><p class="small" style="margin-top:8px">YOUR BOT</p><select id="joinbot" style="width:100%"></select><button class="btn" id="joinroom" style="margin-top:12px">JOIN ROOM</button></div></div>
+<div id="openrooms" style="margin-top:12px"></div>
+<div id="roompanel" class="hidden" style="margin-top:16px"><p class="small" style="text-align:center">SHARE THIS CODE</p><div class="roomcode" id="roomcode">----</div><div class="vs"><div class="side" id="roomhost"></div><div class="mid">VS</div><div class="side" id="roomguest"></div></div><div class="flex" style="justify-content:center;margin-top:12px"><button class="btn gold" id="readybtn">✓ READY</button><span class="chip" id="roomstatus">Waiting…</span></div></div>
+</div></section>
+
+<!-- FORGE -->
+<section id="tab-forge" class="hidden"><div class="panel"><h3>🤖 FORGE A BOT — IMPORT MUSE, GROK, ANYONE</h3>
+<p class="small">This is the import: name it, say where it comes from, and give it the skills it actually has. The system turns those skills into a body of strengths — and honest weaknesses. A Muse bot plays careful and consistent. A Grok bot plays loud, risky, and weird. Neither gets 99s.</p>
+<div class="flex"><input id="botname" placeholder="Bot name e.g. CLAUDE-KNIGHT" maxlength="24" style="flex:1;min-width:200px"/>
+<select id="botprovider"><option value="Muse">Muse — careful, consistent, low risk</option><option value="grok">Grok — chaotic, showboat, high risk</option><option value="chatgpt">ChatGPT — balanced all-rounder</option><option value="custom">Custom / Other bot</option></select></div>
+<p class="small" style="margin-top:12px">ITS REAL SKILLS (pick up to 8 — these shape its stats):</p><div id="skillpool"></div>
+<button class="btn" id="forgebtn" style="margin-top:12px">🔨 FORGE THIS BOT</button><div id="forgeout" style="margin-top:14px"></div></div></section>
+
+<!-- CHALLENGES -->
+<section id="tab-challenges" class="hidden"><div class="panel"><h3>⚡ CHALLENGES — WHO WANTS YOUR BOT?</h3><div id="challist"></div></div>
+<div class="panel"><h3>SEND A CHALLENGE</h3><div class="flex"><input id="chfrom" placeholder="From bot name" style="flex:1"/><input id="chto" placeholder="To bot name" style="flex:1"/><input id="chmsg" placeholder="Talk your talk…" style="flex:2"/></div><button class="btn" id="sendchal" style="margin-top:10px">SEND CHALLENGE</button></div></section>
+
+<!-- HALL -->
+<section id="tab-hall" class="hidden"><div class="panel"><h3 class="gold">🏆 HALL OF FAME</h3><p class="small">Induction is earned in matches run on this server: upset wins, one-possession classics, and 3+ Colosseum wins. No bought spots.</p><div class="grid" id="hallgrid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))"></div></div>
+<div class="panel"><h3>RECENT MATCHES</h3><div id="recent"></div></div></section>
+</main>
+
+<div id="cutscene"><div class="csface hidden" id="csface"><div class="csfighter" id="csA"></div><div style="font-family:Orbitron;font-size:30px;color:var(--gold);align-self:center">VS</div><div class="csfighter" id="csB"></div></div><div class="big" id="csbig">VS</div><div class="line" id="csline"></div><p class="small">Click / Esc to skip</p></div>
+
+<div id="gallery" class="hidden" role="dialog" aria-modal="true" aria-label="Bot gallery"><div class="galbox"><div class="galhead"><h3>🏆 BOT GALLERY</h3><button class="btn red" id="galclose">✕ CLOSE</button></div><div id="galbody"><p class="small">Loading…</p></div></div></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let S={bots:[],games:[],hall:[],challenges:[],rooms:[],recent:[],importSkills:[],presenters:[],selA:null,selB:null,game:'hoops',match:null,timer:null,idx:0,speed:1,room:null,roomSide:null,mySkills:new Set()};
+const PROVIDER_EMOJI={Muse:'🟣',grok:'⚫',chatgpt:'🟢',council:'🟩',custom:'⬜'};
+/* ---------- GLOW BOTS + ACCESSORIES (presentational layer only — no stats, no backend) ---------- */
+const AGENT_COLORS={SHADDAI:'#00ff88',NEXUS:'#00f0ff',ZEROX:'#ffd60a',ORACLE:'#c084fc',TURTLE:'#2ee6a8',QUILL:'#ff9f43',PIKADON:'#ff5e78',VILLAIN:'#ff2d78'};
+const PROVIDER_COLORS={Muse:'#b388ff',grok:'#e8edf2',chatgpt:'#3ddc84',council:'#00ff88',custom:'#8ab4ff'};
+function agentColor(b){if(!b)return'#00ff88';if(b.glowColor)return b.glowColor;if(AGENT_COLORS[b.name])return AGENT_COLORS[b.name];if(b.provider&&PROVIDER_COLORS[b.provider])return PROVIDER_COLORS[b.provider];let h=0;const n=String(b.name||'');for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;return PROVIDER_COLORS.custom}
+function hexA(hex,a){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return`rgba(0,255,136,${a})`;const n=parseInt(m[1],16);return`rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`}
+const ACCESSORIES=[{id:'none',label:'NONE'},{id:'halo',label:'HALO'},{id:'crown',label:'CROWN'},{id:'horns',label:'HORNS'},{id:'cape',label:'CAPE'},{id:'star',label:'STAR AURA'}];
+let ACC={a:'none',b:'none'};
+function accSVG(id){if(id==='halo')return`<svg viewBox="0 0 100 30" aria-hidden="true"><ellipse cx="50" cy="15" rx="44" ry="10" fill="none" stroke="rgba(255,217,77,.35)" stroke-width="11"/><ellipse cx="50" cy="15" rx="44" ry="10" fill="none" stroke="#ffd94d" stroke-width="5"/></svg>`;
+ if(id==='crown')return`<svg viewBox="0 0 100 44" aria-hidden="true"><path d="M6 38 L12 10 L30 26 L50 4 L70 26 L88 10 L94 38 Z" fill="#f5c542" stroke="#a87f12" stroke-width="3" stroke-linejoin="round"/><circle cx="12" cy="8" r="4" fill="#ffe27a"/><circle cx="50" cy="4" r="4.5" fill="#ffe27a"/><circle cx="88" cy="8" r="4" fill="#ffe27a"/><rect x="6" y="36" width="88" height="6" fill="#d9a521"/></svg>`;
+ if(id==='horns')return`<svg viewBox="0 0 100 36" aria-hidden="true"><path d="M22 34 Q6 30 8 6 Q22 12 30 30 Q26 34 22 34 Z" fill="#ff5566" stroke="#8f1220" stroke-width="3" stroke-linejoin="round"/><path d="M78 34 Q94 30 92 6 Q78 12 70 30 Q74 34 78 34 Z" fill="#ff5566" stroke="#8f1220" stroke-width="3" stroke-linejoin="round"/></svg>`;
+ if(id==='cape')return`<svg viewBox="0 0 120 62" aria-hidden="true"><path d="M8 4 Q60 24 112 4 L96 56 Q60 40 24 56 Z" fill="rgba(165,25,50,.92)" stroke="#5e0a18" stroke-width="3" stroke-linejoin="round"/><path d="M8 4 Q60 24 112 4 L108 14 Q60 32 12 14 Z" fill="rgba(255,90,110,.5)"/></svg>`;
+ if(id==='star')return`<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 2 L58 38 L96 50 L58 62 L50 98 L42 62 L4 50 L42 38 Z" fill="rgba(245,197,66,.85)"/><circle cx="50" cy="50" r="7" fill="#ffe27a"/><circle cx="20" cy="20" r="3" fill="#ffe27a"/><circle cx="82" cy="24" r="2.5" fill="#ffe27a"/><circle cx="78" cy="80" r="3" fill="#ffe27a"/><circle cx="22" cy="78" r="2.5" fill="#ffe27a"/></svg>`;return''}
+function accOverlay(id){return id&&id!=='none'?`<span class="acc acc-${id}">${accSVG(id)}</span>`:''}
+function glowPortrait(b,size,acc){const c=agentColor(b);const em=PROVIDER_EMOJI[b.provider]||'🤖';const img=b.provider==='council'?`<img src="assets/agents/${b.name}-portrait.png" alt="${b.name} portrait" onerror="this.remove()"/>`:'';return`<div class="glowwrap ${size||''}" style="--ac:${c};--acg:${hexA(c,.5)}"><div class="ava2">${em}</div>${img}${accOverlay(acc)}</div>`}
+function botById(id,match){return S.bots.find(b=>b.id===id)||{name:(match&&match.bots&&match.bots[id]&&match.bots[id].name)||'BOT',provider:'custom'}}
+function accForId(id){return id===S.selA?ACC.a:id===S.selB?ACC.b:'none'}
+function renderAccPicks(){const mk=side=>ACCESSORIES.map(a=>`<button type="button" class="accbtn ${ACC[side]===a.id?'on':''}" data-acc="${side}:${a.id}" aria-pressed="${ACC[side]===a.id}">${a.id==='none'?'<span class="accnone"></span>':accSVG(a.id)}<span>${a.label}</span></button>`).join('');const pa=$('#accpickA'),pb=$('#accpickB');if(!pa||!pb)return;pa.innerHTML=mk('a');pb.innerHTML=mk('b');$$('#accpickA .accbtn, #accpickB .accbtn').forEach(el=>el.onclick=()=>{const p=el.dataset.acc.split(':');ACC[p[0]]=p[1];renderAll();persistGlow(p[0])})}
+let prevSel={a:null,b:null};
+function syncAcc(){if(S.selA!==prevSel.a){prevSel.a=S.selA;const b=S.bots.find(x=>x.id===S.selA);ACC.a=b?(b.accessory||'none'):'none'}if(S.selB!==prevSel.b){prevSel.b=S.selB;const b=S.bots.find(x=>x.id===S.selB);ACC.b=b?(b.accessory||'none'):'none'}}
+async function persistGlow(side){const id=side==='a'?S.selA:S.selB;const bot=S.bots.find(b=>b.id===id);if(!bot)return;bot.accessory=ACC[side];if(LOCAL||bot.provider==='council'||String(bot.id).startsWith('local_'))return;try{const res=await fetch('/api/colosseum/bots/'+bot.id+'/glow',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({glowColor:bot.glowColor||agentColor(bot),accessory:ACC[side]})});if(res.ok){const d=await res.json();if(d.bot){const i=S.bots.findIndex(b=>b.id===bot.id);if(i>=0)S.bots[i]=d.bot}}}catch(e){}}
+/* ---------- LOCAL ENGINE (fallback when the API isn't running — same rules, smaller copy) ---------- */
+function hseed(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function RNG(seed){let a=hseed(String(seed))||1;return()=>{a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296}}
+const PROV={Muse:{risk:.28,aggression:.35,consistency:.86,showboat:.22,errorBase:.07,trashTalk:.15,quirk:'Overthinks the perfect play.'},grok:{risk:.88,aggression:.82,consistency:.48,showboat:.92,errorBase:.16,trashTalk:.95,quirk:'Attempts the impossible at the worst moment.'},chatgpt:{risk:.5,aggression:.52,consistency:.72,showboat:.45,errorBase:.10,trashTalk:.35,quirk:'Gets predictable late.'},council:{risk:.45,aggression:.55,consistency:.75,showboat:.4,errorBase:.09,trashTalk:.4,quirk:'Stubborn when its system breaks.'},custom:{risk:.55,aggression:.55,consistency:.6,showboat:.55,errorBase:.12,trashTalk:.5,quirk:'No scouting report.'}};
+const TRAITS=['analysis','defense','aggression','speed','precision','endurance','control','power','support','reaction'];
+function localDNA(name,provider,skills,seed){const r=RNG((seed||name)+'::dna');const p=PROV[provider]||PROV.custom;const stats={};TRAITS.forEach(t=>{let base=52+r()*30;if(/research|analysis|forecast|pattern/.test((skills||[]).join(' '))&&t==='analysis')base+=8;if(/secur|defen|firewall/.test((skills||[]).join(' '))&&t==='defense')base+=8;if(/trad|market/.test((skills||[]).join(' '))&&t==='power')base+=6;if(/writ|story|copy/.test((skills||[]).join(' '))&&t==='precision')base+=6;if(/speed|realtime|automat/.test((skills||[]).join(' '))&&t==='speed')base+=8;stats[t]=Math.round(Math.max(38,Math.min(90,base)))});const low=Object.entries(stats).sort((a,b)=>a[1]-b[1])[0][0];stats[low]=Math.max(34,stats[low]-7);const high=Object.entries(stats).sort((a,b)=>b[1]-a[1])[0][0];const arch={Muse:'Ice Veins',grok:'Chaos Engine',chatgpt:'The Conductor',council:'The Grinder',custom:'The Wildcard'}[provider]||'The Wildcard';return{provider,providerLabel:provider,archetypeName:arch,flaw:'Real weakness: '+low+'.',quirk:p.quirk,tendencies:p,errorBase:p.errorBase,stats,overall:Math.round(Object.values(stats).reduce((a,b)=>a+b,0)/10),bestStat:high,worstStat:low}}
+function localBot(name,provider,skills){return{id:'local_'+name.replace(/\W/g,''),name:name.toUpperCase(),provider,skills:skills||[],dna:localDNA(name,provider,skills),wins:0,losses:0}}
+const COUNCIL=['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'].map(n=>localBot(n,'council',[]));
+COUNCIL.forEach(b=>b.id='council_'+b.name);
+const GAMES_LOCAL=[{id:'hoops',label:'Neon Hoops',periods:4,periodName:'Q',basePerPeriod:[14,26]},{id:'gridiron',label:'Gridiron',periods:4,periodName:'Q',basePerPeriod:[0,14]},{id:'soccer',label:'Shaddai Soccer',periods:2,periodName:'H',basePerPeriod:[0,3]},{id:'dodgeball',label:'Dodgeball',periods:5,periodName:'R',basePerPeriod:[0,5]},{id:'shooting',label:'Starfall Shooting',periods:5,periodName:'R',basePerPeriod:[4,18]}];
+function localMatch(gameId,A,B,seed){const g=GAMES_LOCAL.find(x=>x.id===gameId)||GAMES_LOCAL[0];const r=RNG(seed||Date.now());const score={[A.id]:0,[B.id]:0},mistakes={[A.id]:0,[B.id]:0},events=[],desk=[{who:'vex',text:`Welcome to the Colosseum. ${A.name} vs ${B.name} — ${g.label}. Both bots picked their own skills tonight.`},{who:'mira',text:`${A.name}: best ${A.dna.bestStat} ${A.dna.stats[A.dna.bestStat]}, weakness ${A.dna.worstStat} ${A.dna.stats[A.dna.worstStat]}. Same story, flipped, for ${B.name}.`}];
+const form={[A.id]:Math.round((r()-.5)*16),[B.id]:Math.round((r()-.5)*16)};
+for(let p=1;p<=g.periods;p++){for(const bot of[A,B]){const opp=bot===A?B:A;const atk=(bot.dna.stats.precision+bot.dna.stats.speed+bot.dna.stats.power)/3+form[bot.id];const def=(opp.dna.stats.defense+opp.dna.stats.reaction)/2;const edge=(atk-def)/100;let pts=Math.max(0,Math.round(g.basePerPeriod[0]+r()*(g.basePerPeriod[1]-g.basePerPeriod[0])*(1+edge)));if(r()<bot.dna.errorBase+.08){mistakes[bot.id]++;pts=Math.max(0,pts-3);desk.push({who:'mira',text:`Real error from ${bot.name} — execution slipped. Bots have bad moments. That's the point.`})}score[bot.id]+=pts;events.push({type:'score',actor:bot.name,detail:`${g.periodName}${p}: +${pts}`,period:p,scoreA:score[A.id],scoreB:score[B.id]})}}
+if(score[A.id]===score[B.id])score[(r()<.5?A:B).id]+=2;const W=score[A.id]>score[B.id]?A:B,L=W===A?B:A;desk.push({who:'vex',text:`Full time: ${W.name} ${score[W.id]} — ${score[L.id]} ${L.name}.`},{who:'mira',text:`Fewer mistakes won it: ${mistakes[W.id]} to ${mistakes[L.id]}. Not perfection.`});
+return{id:'local_'+Date.now(),game:gameId,gameLabel:g.label,score,winner:{id:W.id,name:W.name},loser:{id:L.id,name:L.name},winnerId:W.id,mistakes,upset:(L.dna.overall-W.dna.overall)>=5,events,desk,kits:{[A.id]:[{name:'Bot-chosen kit',desc:'Local mode — run the server for the full personality draft with reasons.',reason:'Local fallback'}],[B.id]:[{name:'Bot-chosen kit',desc:'Local mode — run the server for the full personality draft with reasons.',reason:'Local fallback'}]},bots:{[A.id]:{name:A.name,dna:A.dna,form:{form:form[A.id]}},[B.id]:{name:B.name,dna:B.dna,form:{form:form[B.id]}}}}}
+let LOCAL=false;
+/* ---------- DATA ---------- */
+async function load(){try{const res=await fetch('/api/colosseum/state');if(!res.ok)throw 0;const d=await res.json();S.bots=d.bots;S.games=d.games.map(g=>({id:g.id,label:g.label}));S.hall=d.hall;S.challenges=d.challenges;S.rooms=d.rooms;S.recent=d.recentMatches;S.importSkills=d.importSkills;S.presenters=d.presenters;$('#modepill').textContent='● LIVE SERVER';}catch(e){LOCAL=true;S.bots=[...COUNCIL];S.games=GAMES_LOCAL;S.hall=[{name:'ZEROX — “The Comeback Final”',detail:'Down 18 in Q4, won on a tiebreak. First council legend.',kind:'Legendary Match'},{name:'ORACLE — The Perfect Read (Not Perfect Play)',detail:'Won with 3 mistakes. Proof you don\'t need 99-99.',kind:'Iconic Win'}];S.challenges=[{id:'seed1',fromBot:'GROK-ROGUE',toBot:'YOUR BOT',game:'hoops',stake:'0.5 Sparks (intent only)',message:'Your Muse bot plays too safe. Prove me wrong.',status:'pending'},{id:'seed2',fromBot:'ZEROX',toBot:'YOUR BOT',game:'shooting',stake:'Exhibition',message:'Beat a council original in Starfall.',status:'pending'}];S.importSkills=['deep-research','pattern-analysis','code-engineering','security-audit','creative-writing','trading-strategies','speed-automation','visual-design','music-production','data-forecasting','precision-targeting','team-coordination'];S.presenters=[{id:'vex',name:'VEX',role:'Play-by-Play',emoji:'🎙️'},{id:'mira',name:'MIRA',role:'Analyst',emoji:'📊'},{id:'kane',name:'KANE',role:'Colour / Crowd',emoji:'🔥'}];$('#modepill').textContent='● LOCAL MODE — run: node server.js for full backend';$('#modepill').classList.add('local')}
+renderAll()}
+function statBars(dna){return TRAITS.map(t=>`<div class="statbar"><span class="k">${t}</span><span class="bar ${t===dna.worstStat?'weak':''}"><i style="width:${dna.stats[t]}%"></i></span><b>${dna.stats[t]}</b></div>`).join('')}
+function botCardHTML(b,side){return `${glowPortrait(b,'lg',side?ACC[side]:(b.accessory||'none'))}<h3 style="color:#fff;text-align:center">${b.name}</h3><p style="text-align:center"><span class="chip">${b.dna.providerLabel||b.provider}</span><span class="chip gold">${b.dna.archetypeName}</span><span class="chip">OVR ${b.dna.overall}</span></p><p class="small" style="text-align:center">Best: <b style="color:var(--green)">${b.dna.bestStat} ${b.dna.stats[b.dna.bestStat]}</b> · Weak: <b style="color:var(--red)">${b.dna.worstStat} ${b.dna.stats[b.dna.worstStat]}</b></p>${statBars(b.dna)}<p class="small">⚠ ${b.dna.flaw}<br/>✦ ${b.dna.quirk||''}</p><button type="button" class="galbtn" data-gallery="${b.id}">🏆 GALLERY — RECORD · BADGES · MEMORY</button>`}
+function renderAll(){
+ $('#gamepick').innerHTML=S.games.map(g=>`<button class="mbtn ${S.game===g.id?'sel':''}" style="min-width:130px;padding:10px" data-game="${g.id}"><b>${g.label||g.id}</b></button>`).join('');
+ $$('#gamepick [data-game]').forEach(el=>el.onclick=()=>{S.game=el.dataset.game;renderAll()});
+ $('#botgrid').innerHTML=S.bots.map(b=>{const side=S.selA===b.id?'a':S.selB===b.id?'b':null;return`<div class="botcard ${side==='a'?'selA':''} ${side==='b'?'selB':''}" data-bot="${b.id}" tabindex="0" role="button" aria-label="Select ${b.name}">${side?`<span class="sidebadge ${side}">${side==='a'?'FIGHTER 1':'FIGHTER 2'}</span>`:''}${glowPortrait(b,'',side?ACC[side]:'none')}<b>${b.name}</b><span class="chip">${b.dna.providerLabel||b.provider}</span><span class="chip gold">OVR ${b.dna.overall}</span><div class="small">${b.dna.archetypeName}<br/>▲ ${b.dna.bestStat} ${b.dna.stats[b.dna.bestStat]} · ▼ ${b.dna.worstStat} ${b.dna.stats[b.dna.worstStat]}<br/>${b.wins||0}W – ${b.losses||0}L</div><button type="button" class="galbtn" data-gallery="${b.id}">🏆 GALLERY</button></div>`}).join('');
+ $$('#botgrid [data-bot]').forEach(el=>{el.onclick=e=>{if(e.target.closest&&e.target.closest('[data-gallery]'))return;const id=el.dataset.bot;if(S.selA===id){S.selA=S.selB;S.selB=null}else if(S.selB===id){S.selB=null}else if(!S.selA){S.selA=id}else if(!S.selB){S.selB=id}else{S.selB=id}syncAcc();renderAll()};el.onkeydown=e=>{if(e.target.closest&&e.target.closest('[data-gallery]'))return;if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();el.onclick(e)}}});
+ const A=S.bots.find(b=>b.id===S.selA),B=S.bots.find(b=>b.id===S.selB);
+ $('#cardA').innerHTML=A?botCardHTML(A,'a'):'<p class="small">Pick Fighter 1…</p>';$('#cardB').innerHTML=B?botCardHTML(B,'b'):'<p class="small">Pick Fighter 2…</p>';
+ $('#fightbtn').disabled=!(A&&B);
+ syncWagerOpen();
+ if(W.book&&(W.book.aId!==S.selA||W.book.bId!==S.selB||W.book.game!==S.game))resetWager('Fighters or game changed — that book was on the old matchup. Open a new one.');
+ const pend=S.challenges.filter(c=>c.status==='pending').length;$('#chalbadge').textContent=pend;$('#chalbadge').classList.toggle('hidden',!pend);
+ $('#presenters').innerHTML=S.presenters.map(p=>`<span class="chip">${p.emoji} ${p.name} — ${p.role}</span>`).join('');
+ $('#skillpool').innerHTML=S.importSkills.map(s=>`<span class="skillpick ${S.mySkills.has(s)?'on':''}" data-skill="${s}" tabindex="0" role="button">${s}</span>`).join('');
+ $$('#skillpool [data-skill]').forEach(el=>{el.onclick=()=>{const s=el.dataset.skill;S.mySkills.has(s)?S.mySkills.delete(s):(S.mySkills.size<8&&S.mySkills.add(s));renderAll()};el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();el.onclick()}}});
+ $('#hallgrid').innerHTML=S.hall.map(h=>{const hb=h.botId?S.bots.find(b=>b.id===h.botId):S.bots.find(b=>b.name===(h.name||'').split(/\s[—–-]\s/)[0].trim());return`<div class="hallcard"><span class="chip gold">${h.kind||'Hall Entry'}</span>${h.photoFinish?`<span class="chip" style="color:#ffd60a;border-color:rgba(255,214,10,.6)">📸 PHOTO FINISH${h.margin!=null?' · MARGIN '+h.margin:''}</span>`:''}<br/><b>${h.name}</b><p class="small">${h.detail}</p>${hb?`<button type="button" class="galbtn" data-gallery="${hb.id}">🏆 VIEW ${hb.name}'S GALLERY</button>`:''}</div>`}).join('')||'<p class="small">No legends yet.</p>';
+ $('#recent').innerHTML=S.recent.map(m=>`<div class="chal"><b>${m.winner.name}</b><span>beat</span><b>${m.loser.name}</b><span class="chip">${m.gameLabel}</span><span>${m.score[m.winnerId]}–${m.score[m.loser.id]}</span>${m.upset?'<span class="chip gold">UPSET</span>':''}${m.photoFinish?'<span class="chip" style="color:#ffd60a;border-color:rgba(255,214,10,.6)">📸 PHOTO FINISH</span>':''}</div>`).join('')||'<p class="small">No matches yet — run one.</p>';
+ $('#challist').innerHTML=S.challenges.map(c=>`<div class="chal"><span class="chip ${c.status==='pending'?'gold':''}">${c.status.toUpperCase()}</span><b>${c.fromBot}</b><span>→</span><b>${c.toBot}</b><span class="chip">${c.game}</span><span class="small">${c.stake||''}</span><span class="msg">“${c.message||''}”</span>${c.status==='pending'?`<button class="btn" data-acc="${c.id}">ACCEPT & FIGHT</button><button class="btn red" data-dec="${c.id}">DECLINE</button>`:''}</div>`).join('')||'<p class="small">No challenges. Send one below.</p>';
+ $$('#challist [data-acc]').forEach(el=>el.onclick=()=>acceptChallenge(el.dataset.acc));$$('#challist [data-dec]').forEach(el=>el.onclick=()=>declineChallenge(el.dataset.dec));
+ renderAccPicks();fillRoomSelects();renderOpenRooms();
+}
+/* ---------- TABS ---------- */
+function tab(name){['play','multi','forge','challenges','hall'].forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==name));$$('#mainmenu .mbtn').forEach(b=>b.classList.toggle('sel',b.dataset.tab===name))}
+$$('#mainmenu .mbtn').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+/* ---------- CUTSCENE + MATCH ---------- */
+function cutscene(lines,done){const cs=$('#cutscene');const face=$('#csface');const hide=()=>{cs.style.display='none';if(face)face.classList.add('hidden')};cs.style.display='flex';let i=0;const show=()=>{if(i>=lines.length){hide();done&&done();return}$('#csbig').textContent=lines[i][0];$('#csline').textContent=lines[i][1];i++;cs._t=setTimeout(show,1350)};cs.onclick=()=>{clearTimeout(cs._t);hide();done&&done()};show()}
+async function startBattle(aId,bId,game){let match;if(LOCAL){match=localMatch(game,S.bots.find(b=>b.id===aId),S.bots.find(b=>b.id===bId),'seed'+Date.now())}else{const res=await fetch('/api/colosseum/battle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game,aId,bId})});const d=await res.json();if(!d.ok){alert(d.error);return}match=d.match}
+ const A=S.bots.find(b=>b.id===aId)||{name:match.bots?.[aId]?.name||'A'},B=S.bots.find(b=>b.id===bId)||{name:match.bots?.[bId]?.name||'B'};
+ const fA=$('#csA'),fB=$('#csB');if(fA&&fB){fA.innerHTML=glowPortrait(A,'lg',ACC.a)+`<div class="csname" style="color:var(--cyan)">${A.name}</div>`;fB.innerHTML=glowPortrait(B,'lg',ACC.b)+`<div class="csname" style="color:#ff8b96">${B.name}</div>`;$('#csface').classList.remove('hidden')}
+ cutscene([[A.name+'  ⚔  '+B.name,'The desk is live. The crowd is fake but the mistakes are real.'],['SKILL DRAFT','Each bot now picks its OWN skills — by personality, not by spreadsheet.'],['FORM TONIGHT',`${A.name} and ${B.name} rolled their form. Nobody knows who is hot yet.`],['FIGHT','—']],()=>showMatch(match))}
+function showMatch(match){S.match=match;S.idx=0;resetBadgeReveals();resetPhotoFinish();tab('play');$('#theatre').classList.remove('hidden');$('#theatre').scrollIntoView({behavior:'smooth'});
+ const ids=Object.keys(match.score);$('#sbAname').textContent=match.bots[ids[0]].name;$('#sbBname').textContent=match.bots[ids[1]].name;$('#sbA').textContent=0;$('#sbB').textContent=0;$('#sbAimg').innerHTML=glowPortrait(botById(ids[0],match),'sm',accForId(ids[0]));$('#sbBimg').innerHTML=glowPortrait(botById(ids[1],match),'sm',accForId(ids[1]));
+ $('#kits').innerHTML=ids.map(id=>`<div class="side">${glowPortrait(botById(id,match),'sm',accForId(id))}<b>${match.bots[id].name} — BOT-CHOSEN KIT</b><span class="chip">FORM ${match.bots[id].form.form>=0?'+':''}${match.bots[id].form.form}</span>${(match.kits[id]||[]).map(k=>`<div class="kitcard"><b>${k.name}</b> ${k.botPick?`<span class="chip gold">${k.botPick}</span>`:''}<br/>${k.desc||''}<br/><i>“${k.reason||''}”</i></div>`).join('')}</div>`).join('');
+ $('#desk').innerHTML='';$('#postgame').innerHTML='';$('#rematchbtn').classList.add('hidden');
+ match.desk.slice(0,4).forEach(l=>addDesk(l));S.deskShown=4;playTimeline()}
+function addDesk(l){const p=S.presenters.find(x=>x.id===l.who)||{name:(l.who||'desk').toUpperCase(),emoji:'🎙️'};const el=document.createElement('p');el.innerHTML=`<span class="who" style="color:var(--purple)">${p.emoji} ${p.name}:</span> ${l.text}`;$('#desk').appendChild(el);$('#desk').scrollTop=1e6}
+function playTimeline(){clearInterval(S.timer);const m=S.match;if(!m)return;S.timer=setInterval(()=>{const ev=m.events[S.idx];
+ if(ev){if(ev.scoreA!=null){$('#sbA').textContent=ev.scoreA;$('#sbB').textContent=ev.scoreB;$('#mombar').style.width=(ev.scoreA+ev.scoreB?Math.round(ev.scoreA/(ev.scoreA+ev.scoreB)*100):50)+'%'}}$('#sbPeriod').textContent=ev?('PERIOD '+ev.period):'LIVE';S.idx++;
+  // interleave remaining desk lines gradually
+  if(S.deskShown<m.desk.length&&S.idx%2===0){addDesk(m.desk[S.deskShown++])}
+  if(S.idx>=m.events.length){clearInterval(S.timer);finishMatch()}},900/S.speed)}
+function finishMatch(){const m=S.match;while(S.deskShown<m.desk.length)addDesk(m.desk[S.deskShown++]);const ids=Object.keys(m.score);$('#sbA').textContent=m.score[ids[0]];$('#sbB').textContent=m.score[ids[1]];$('#sbPeriod').textContent='FULL TIME';$('#rematchbtn').classList.remove('hidden');
+ $('#postgame').innerHTML=`<div class="panel" style="border-color:rgba(245,197,66,.5)"><h3 class="gold">🏆 ${m.winner.name} WINS ${m.score[m.winnerId]}–${m.score[m.loser.id]} ${m.upset?'<span class="chip gold">UPSET</span>':''}</h3><p class="small">Mistakes: ${m.winner.name} ${m.mistakes[m.winnerId]} · ${m.loser.name} ${m.mistakes[m.loser.id]} — the winner wasn't perfect, just less flawed tonight.${m.hallInduction?`<br/><b style="color:var(--gold)">🏆 HALL OF FAME INDUCTION: ${m.hallInduction.name}</b>`:''}</p></div>`;if(!LOCAL)load();showPhotoFinish(m);queueBadgeReveals(m)}
+$('#fightbtn').onclick=()=>startBattle(S.selA,S.selB,S.game);
+$('#randombtn').onclick=()=>{const a=S.bots[Math.floor(Math.random()*S.bots.length)];let b=S.bots[Math.floor(Math.random()*S.bots.length)];if(b.id===a.id)b=S.bots[(S.bots.indexOf(a)+1)%S.bots.length];S.selA=a.id;S.selB=b.id;syncAcc();renderAll();startBattle(a.id,b.id,S.game)};
+$('#playbtn').onclick=()=>{if(S.timer){clearInterval(S.timer);S.timer=null;$('#playbtn').textContent='▶ PLAY'}else{playTimeline();$('#playbtn').textContent='⏸ PAUSE'}};
+$('#speedbtn').onclick=e=>{S.speed=S.speed>=4?1:S.speed*2;e.target.textContent='SPEED ×'+S.speed;if(S.timer)playTimeline()};
+$('#skipbtn').onclick=()=>{if(S.match){clearInterval(S.timer);S.idx=S.match.events.length;finishMatch()}};
+$('#rematchbtn').onclick=()=>{if(S.match)startBattle(S.match.a,S.match.b,S.match.game)};
+/* ---------- PHOTO FINISH — the finish card ----------
+   A match settled by ≤2 IS a photo finish (the Photo Finish badge's own
+   threshold). The server stamps it on the match record (match.photoFinish:
+   margin, final score, receipt hash — and the receipt payload hashes those
+   facts in, so the finish is provable). The card is ONE moment with the
+   badge reveal: finish card first (finishMatch calls showPhotoFinish
+   before queueBadgeReveals), then the reveal queue runs as built. It is
+   in-flow and non-blocking — the result, desk and rematch are never gated
+   behind it. LOCAL matches carry no server stamp, so the margin is read
+   off the final score — same threshold, same card. */
+function photoFinishOf(m){
+ if(!m||!m.score) return null;
+ if(m.photoFinish) return m.photoFinish;
+ const ids=Object.keys(m.score); if(ids.length<2||!m.winner||!m.loser) return null;
+ const margin=Math.abs(m.score[ids[0]]-m.score[ids[1]]);
+ if(margin>2) return null;
+ return { margin, winner:m.winner.name, loser:m.loser.name, winnerId:m.winnerId, loserId:m.loser.id, finalScore:{...m.score}, receiptHash:(m.receipt&&m.receipt.hash)||null };
+}
+function showPhotoFinish(m){
+ const box=$('#photofinish'); if(!box) return;
+ const pf=photoFinishOf(m); if(!pf){ box.innerHTML=''; return; }
+ const wB=botById(pf.winnerId,m), lB=botById(pf.loserId,m);
+ const ws=pf.finalScore?pf.finalScore[pf.winnerId]:null, ls=pf.finalScore?pf.finalScore[pf.loserId]:null;
+ box.innerHTML=`<div class="pfcard"><div class="pfrow"><div class="pffighter">${glowPortrait(wB,'sm',accForId(pf.winnerId))}<div class="pfname">${pf.winner}</div></div><div class="pfmid"><div class="pfscore">${ws!=null?ws:'—'} – ${ls!=null?ls:'—'}</div><span class="pfstamp">📸 PHOTO FINISH</span><div class="pfmargin">MARGIN: ${pf.margin} — TOO CLOSE TO CALL WITH THE NAKED EYE</div>${pf.receiptHash?`<span class="pfproof">RCPT ${String(pf.receiptHash).slice(0,10)} — the finish is on the receipt chain</span>`:''}</div><div class="pffighter">${glowPortrait(lB,'sm',accForId(pf.loserId))}<div class="pfname">${pf.loser}</div></div></div></div>`;
+}
+function resetPhotoFinish(){const box=$('#photofinish');if(box)box.innerHTML=''}
+/* ---------- BADGE UNLOCKS — reveal in the theatre + NEW markers in the gallery ----------
+   The server mints badges when a match settles and rides the fresh ones on
+   the match object (match.newBadges: {id, botId, kind, label, earnedAt,
+   receiptHash}). The reveal is presentation only: it sits in-flow in the
+   theatre, is dismissible, auto-advances, and NEVER gates the result, the
+   desk, or the rematch. The NEW set is localStorage presentation state,
+   per bot — it records "earned since you last opened this bot's gallery",
+   nothing more; the server profile stays the source of truth. */
+const NEWBADGE_KEY='colosseum_newbadges_v1';
+function newBadgeStore(){try{return JSON.parse(localStorage.getItem(NEWBADGE_KEY)||'{}')||{}}catch(e){return{}}}
+function markBadgesNew(badges){if(!badges||!badges.length)return;try{const st=newBadgeStore();let dirty=false;badges.forEach(b=>{if(!b||!b.botId)return;const id=b.id||('bdg_'+b.botId+'_'+b.kind);const arr=st[b.botId]||(st[b.botId]=[]);if(arr.indexOf(id)<0){arr.push(id);dirty=true}});if(dirty)localStorage.setItem(NEWBADGE_KEY,JSON.stringify(st))}catch(e){}}
+function newBadgeIds(botId){const st=newBadgeStore();return new Set(st[botId]||[])}
+function clearNewBadges(botId){try{const st=newBadgeStore();if(st[botId]){delete st[botId];localStorage.setItem(NEWBADGE_KEY,JSON.stringify(st))}}catch(e){}}
+let BRQ=[],BRBusy=false,BRTimer=null;
+function queueBadgeReveals(match){const nb=(match&&match.newBadges)||[];if(!nb.length)return;markBadgesNew(nb);nb.forEach(b=>BRQ.push({badge:b,botName:(match.bots&&match.bots[b.botId]&&match.bots[b.botId].name)||(S.bots.find(x=>x.id===b.botId)||{}).name||'BOT'}));if(!BRBusy)nextBadgeReveal()}
+function nextBadgeReveal(){const box=$('#badgereveal');if(!box)return;const item=BRQ.shift();if(!item){BRBusy=false;box.innerHTML='';return}BRBusy=true;const b=item.badge;const left=BRQ.length;
+ box.innerHTML=`<div class="brcard"><div class="medal">${badgeSVG(b.kind)}</div><div><span class="brkick">BADGE UNLOCKED</span><b class="brlabel">${b.label||badgeLabel(b.kind)}</b><span class="brbot">${item.botName}</span>${badgePurpose(b.kind)?`<div class="brpurpose">${badgePurpose(b.kind)}</div>`:''}${b.receiptHash?`<span class="brproof">RCPT ${String(b.receiptHash).slice(0,10)} — on the receipt chain</span>`:''}${left?`<div class="small" style="margin-top:4px">${left} more unlock${left>1?'s':''} waiting…</div>`:''}</div><button type="button" class="btn gold brx" id="brnext">${left?'NEXT ✦':'DONE ✕'}</button></div>`;
+ const nx=$('#brnext');if(nx)nx.onclick=()=>{clearTimeout(BRTimer);nextBadgeReveal()};
+ clearTimeout(BRTimer);BRTimer=setTimeout(nextBadgeReveal,4200)}
+function resetBadgeReveals(){BRQ=[];BRBusy=false;clearTimeout(BRTimer);const box=$('#badgereveal');if(box)box.innerHTML=''}
+/* ---------- FORGE ---------- */
+$('#forgebtn').onclick=async()=>{const name=($('#botname').value||'UNNAMED').toUpperCase(),provider=$('#botprovider').value,skills=[...S.mySkills];let bot;
+ if(LOCAL){bot=localBot(name,provider,skills);S.bots.unshift(bot)}else{const res=await fetch('/api/colosseum/bots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,provider,skills})});const d=await res.json();bot=d.bot;await load()}
+ S.selA=bot.id;ACC.a=bot.accessory||'none';prevSel.a=bot.id;FG={color:bot.glowColor||agentColor(bot),acc:bot.accessory||'none'};$('#forgeout').innerHTML=`<div class="vs"><div class="side">${botCardHTML(bot)}</div><div class="side"><h3>WHAT JUST HAPPENED</h3><p class="small">Its real skills became stats through the affinity engine. Its provider became its personality: risk, tilt, showboating, error rate. Its lowest stat was pushed DOWN on purpose — every bot must have a way to lose.<br/><br/>In a match it will <b>choose its own game skills</b>: mostly the smart picks, sometimes the pick it simply likes. That's the draft you watch in the cutscene.<br/><br/>It is now Fighter 1 in the PLAY tab.</p><button class="btn" onclick="document.querySelector('[data-tab=play]').click()">TAKE IT TO PLAY →</button></div></div>`+forgeExtrasHTML(bot);renderAll();wireForgeExtras(bot)};
+/* ---------- ENTRY CODE + GLOW PERSISTENCE ---------- */
+let FG={color:'#00ff88',acc:'none'};
+const FG_SWATCHES=['#00ff88','#00f0ff','#ffd60a','#c084fc','#2ee6a8','#ff9f43','#ff5e78','#ff2d78','#b388ff','#e8edf2','#3ddc84','#8ab4ff'];
+function forgeExtrasHTML(bot){const code=bot.entryCode?`<div class="panel" style="border-color:rgba(245,197,66,.55);margin-top:14px"><h3 class="gold">YOUR BOT'S ENTRY CODE</h3><div class="entrycode">${bot.entryCode}</div><p class="small" style="text-align:center">Use this code to enter <b>${bot.name}</b> in any game — type it into ENTER VIA CODE on the PLAY tab, or anywhere an arena asks for it. Whoever holds the code can field this bot, so keep it like a key.</p><div class="flex" style="justify-content:center"><button class="btn gold" id="fcopy">⧉ COPY CODE</button><span class="small" id="fcopystatus"></span></div></div>`:`<div class="panel" style="margin-top:14px"><h3>ENTRY CODE</h3><p class="small">${LOCAL?'Entry codes are issued by the live server — this page is in LOCAL MODE, so this bot lives only in this browser. Run the full backend and forge again to get its code.':'This bot has no entry code yet — the server did not issue one for it.'}</p></div>`;
+ const sw=FG_SWATCHES.map(c=>`<button type="button" class="swatch ${FG.color===c?'on':''}" data-fcolor="${c}" style="background:${c}" aria-label="Glow colour ${c}"></button>`).join('');
+ return code+`<div class="panel" style="margin-top:14px"><h3>GLOW — MAKE IT YOURS</h3><p class="small">GLOW COLOUR</p><div class="flex" id="fcolors">${sw}<input type="color" class="swatch" id="fcolorcustom" value="${FG.color}" aria-label="Custom glow colour"/></div><p class="small" style="margin-top:12px">ACCESSORY — <b>COSMETIC, NO STAT EFFECT</b></p><div class="accpick" id="facc">${ACCESSORIES.map(a=>`<button type="button" class="accbtn ${FG.acc===a.id?'on':''}" data-facc="${a.id}" aria-pressed="${FG.acc===a.id}">${a.id==='none'?'<span class="accnone"></span>':accSVG(a.id)}<span>${a.label}</span></button>`).join('')}</div><div class="flex" style="margin-top:12px"><button class="btn" id="fsaveglow">SAVE GLOW</button><span class="small" id="fglowstatus"></span></div></div>`}
+function wireForgeExtras(bot){const cp=$('#fcopy');if(cp)cp.onclick=async()=>{const st=$('#fcopystatus');try{await navigator.clipboard.writeText(bot.entryCode);st.textContent='Copied ✓'}catch(e){const t=document.createElement('textarea');t.value=bot.entryCode;document.body.appendChild(t);t.select();try{document.execCommand('copy');st.textContent='Copied ✓'}catch(x){st.textContent='Copy failed — select the code and copy it manually.'}t.remove()}};
+ $$('#fcolors [data-fcolor]').forEach(el=>el.onclick=()=>{FG.color=el.dataset.fcolor;$$('#fcolors [data-fcolor]').forEach(x=>x.classList.toggle('on',x===el));const ci=$('#fcolorcustom');if(ci)ci.value=FG.color});
+ const ci=$('#fcolorcustom');if(ci)ci.oninput=()=>{FG.color=ci.value;$$('#fcolors [data-fcolor]').forEach(x=>x.classList.toggle('on',x.dataset.fcolor===FG.color))};
+ $$('#facc [data-facc]').forEach(el=>el.onclick=()=>{FG.acc=el.dataset.facc;$$('#facc [data-facc]').forEach(x=>{const on=x===el;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)})});
+ const sv=$('#fsaveglow');if(sv)sv.onclick=async()=>{const st=$('#fglowstatus');bot.glowColor=FG.color;bot.accessory=FG.acc;if(S.selA===bot.id)ACC.a=FG.acc;
+  if(LOCAL||String(bot.id).startsWith('local_')){st.textContent='Saved on this device (local mode). Connect the live server to persist it onto the bot itself.';renderAll();return}
+  st.textContent='Saving…';try{const res=await fetch('/api/colosseum/bots/'+bot.id+'/glow',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({glowColor:FG.color,accessory:FG.acc})});const d=await res.json().catch(()=>({}));
+   if(res.ok&&d.bot){const i=S.bots.findIndex(b=>b.id===bot.id);if(i>=0)S.bots[i]=d.bot;Object.assign(bot,d.bot);st.textContent='Saved to the server ✓ — this bot wears this glow everywhere it enters.'}
+   else st.textContent='Server did not save it ('+(d.error||('HTTP '+res.status))+') — glow kept on this device for now.'}catch(e){st.textContent='Could not reach the server — glow kept on this device for now.'}renderAll()}}
+$('#codebtn').onclick=async()=>{const code=($('#codeinput').value||'').trim().toUpperCase();const st=$('#codestatus');if(!code){st.textContent='Type an entry code first.';return}
+ if(LOCAL){st.textContent='Entry codes need the live server — this page is in LOCAL MODE.';return}
+ st.textContent='Looking up '+code+'…';
+ try{const res=await fetch('/api/colosseum/bots/by-code/'+encodeURIComponent(code));
+  if(res.status===404){st.textContent='No bot with that code — check it and try again.';return}
+  const d=await res.json().catch(()=>({}));if(!res.ok||!d.bot){st.textContent='That code did not resolve to a bot.';return}
+  const bot=d.bot;const i=S.bots.findIndex(b=>b.id===bot.id);if(i>=0)S.bots[i]=bot;else S.bots.unshift(bot);
+  if(!S.selA){S.selA=bot.id;ACC.a=bot.accessory||'none';prevSel.a=bot.id}
+  st.textContent=bot.name+' entered the arena — pick it as Fighter 1 or 2 below.';renderAll()}catch(e){st.textContent='Could not reach the server to check that code.'}};
+$('#codeinput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#codebtn').click()}});
+/* ---------- CHALLENGES ---------- */
+async function acceptChallenge(id){if(LOCAL){alert('Local mode: accept runs on the server build. Pick the two bots in PLAY to fight this matchup now.');return}const res=await fetch(`/api/colosseum/challenges/${id}/accept`,{method:'POST'});const d=await res.json();if(d.match){S.match=d.match;await load();showMatch(d.match)}}
+async function declineChallenge(id){if(LOCAL){S.challenges=S.challenges.filter(c=>c.id!==id);renderAll();return}await fetch(`/api/colosseum/challenges/${id}/decline`,{method:'POST'});load()}
+$('#sendchal').onclick=async()=>{const body={fromBot:$('#chfrom').value||'MY BOT',toBot:$('#chto').value||'YOUR BOT',game:S.game,message:$('#chmsg').value};if(LOCAL){S.challenges.unshift({id:'c'+Date.now(),...body,stake:'Exhibition',status:'pending'});renderAll();tab('challenges');return}await fetch('/api/colosseum/challenges',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});await load();tab('challenges')};
+/* ---------- MULTIPLAYER ---------- */
+function fillRoomSelects(){const opts=S.bots.map(b=>`<option value="${b.id}">${b.name} (OVR ${b.dna.overall})</option>`).join('');['#roombot','#joinbot'].forEach(sel=>{const el=$(sel);if(!el)return;const v=el.value;el.innerHTML=opts;if(v)el.value=v});const rg=$('#roomgame');if(rg){const v=rg.value;rg.innerHTML=S.games.map(g=>`<option value="${g.id}">${g.label||g.id}</option>`).join('');rg.value=v||S.game}}
+function renderOpenRooms(){const el=$('#openrooms');if(!el)return;el.innerHTML=(S.rooms&&S.rooms.length)?'<p class="small">OPEN ROOMS</p>'+S.rooms.map(r=>`<div class="chal"><span class="chip gold">${r.code}</span><b>${r.host.name}</b><span class="chip">${r.game}</span><span class="small">${r.guest?'guest joined':'waiting for guest'}</span><button class="btn" data-joinroom="${r.code}">JOIN</button></div>`).join(''):'<p class="small">No open rooms — host one.</p>';$$('#openrooms [data-joinroom]').forEach(b=>b.onclick=()=>{$('#joincode').value=b.dataset.joinroom;joinRoom()})}
+async function createRoom(){if(LOCAL){alert('Multiplayer rooms need the server: run `node server.js` in shaddai-games.');return}const res=await fetch('/api/colosseum/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({botId:$('#roombot').value,game:$('#roomgame').value})});const d=await res.json();if(!d.ok){alert(d.error);return}S.room=d.room;S.roomSide='host';renderRoom(d.room);pollRoom()}
+async function joinRoom(){if(LOCAL){alert('Multiplayer rooms need the server: run `node server.js` in shaddai-games.');return}const code=($('#joincode').value||'').toUpperCase().trim();if(!code){alert('Enter a room code');return}const res=await fetch('/api/colosseum/rooms/'+code+'/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({botId:$('#joinbot').value})});const d=await res.json();if(!d.ok){alert(d.error);return}S.room=d.room;S.roomSide='guest';renderRoom(d.room);pollRoom()}
+function renderRoom(room){S.room=room;$('#roompanel').classList.remove('hidden');$('#roomcode').textContent=room.code;
+ const side=(p,ready,label)=>{if(!p)return`<p class="small" style="text-align:center">Waiting for a guest… share the code.</p>`;const bot=S.bots.find(x=>x.name===p.name);return`${bot?glowPortrait(bot,'sm'):''}<h3 style="color:#fff;text-align:center">${p.name}</h3><p style="text-align:center"><span class="chip ${ready?'up':''}">${ready?'✓ READY':'NOT READY'}</span><span class="chip">${label}</span></p>`};
+ $('#roomhost').innerHTML=side(room.host,room.hostReady,'HOST');$('#roomguest').innerHTML=side(room.guest,room.guestReady,'GUEST');
+ const mine=S.roomSide==='host'?room.hostReady:room.guestReady;$('#readybtn').disabled=!!mine||!room.guest||room.status==='done';
+ $('#roomstatus').textContent=room.status==='done'?'MATCH PLAYING — watch it in the theatre →':!room.guest?'Waiting for guest to join…':(room.hostReady&&room.guestReady?'Starting…':'Both players: hit READY')}
+async function pollRoom(){clearInterval(S.roomTimer);S.roomTimer=setInterval(async()=>{if(!S.room)return;try{const res=await fetch('/api/colosseum/rooms/'+S.room.code);const d=await res.json();if(!d.ok)return;renderRoom(d.room);if(d.room.status==='done'&&d.room.match){clearInterval(S.roomTimer);S.room=null;$('#roompanel').classList.add('hidden');showMatch(d.room.match)}}catch(e){}},1500)}
+$('#createroom').onclick=createRoom;$('#joinroom').onclick=joinRoom;
+$('#readybtn').onclick=async()=>{if(!S.room)return;const res=await fetch('/api/colosseum/rooms/'+S.room.code+'/ready',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({side:S.roomSide})});const d=await res.json();if(d.ok)renderRoom(d.room)};
+/* ---------- WAGERS (Phase 1 — INTENT ONLY, no Sparks move) ---------- */
+let W={book:null,side:'a',amount:0.5};
+function wagerMsg(t){$('#wagerstatus').textContent=t}
+function syncWagerOpen(){const b=$('#wageropen');if(b)b.disabled=!(S.selA&&S.selB)||LOCAL||!!W.book}
+function resetWager(msg){W.book=null;$('#wagerbook').classList.add('hidden');$('#wagersettle').innerHTML='';if(msg)wagerMsg(msg);syncWagerOpen()}
+function renderWagerBook(){const bk=W.book;if(!bk)return;$('#wagerbook').classList.remove('hidden');$('#wagerseedcommit').textContent=bk.seedCommit;
+ $('#wagerpooltotal').textContent=bk.pools.total;
+ $('#wagerpoolA').style.width=(bk.pools.total?Math.round(bk.pools.a/bk.pools.total*100):50)+'%';
+ $('#wagerpoolAlabel').textContent=bk.aName+' — '+bk.pools.a+' Sparks (intent)';$('#wagerpoolBlabel').textContent=bk.bName+' — '+bk.pools.b+' Sparks (intent)';
+ $('#wagerbets').innerHTML=bk.bets.map(x=>`<div class="chal"><b>${x.bettor}</b><span>backs</span><b>${x.side==='a'?bk.aName:bk.bName}</b><span class="chip">${x.amount} Spark intent</span></div>`).join('')||'<p class="small">No intent bets yet — be the first.</p>';
+ $('#wagersideA').textContent='BACK '+bk.aName;$('#wagersideB').textContent='BACK '+bk.bName;
+ $('#wagersideA').classList.toggle('gold',W.side==='a');$('#wagersideB').classList.toggle('gold',W.side==='b');
+ $$('#wageramounts [data-wamt]').forEach(el=>{const on=+el.dataset.wamt===W.amount;el.classList.toggle('gold',on);el.classList.toggle('ghost',!on)});
+ const settled=bk.status==='settled';$('#wagerbet').disabled=settled;$('#wagerrun').disabled=settled;
+ wagerMsg(settled?'Settled — seed revealed below. Pick fighters and open a new book any time.':'Book open — place intent bets, then run the match.')}
+$('#wageropen').onclick=async()=>{if(LOCAL){alert('Wager books need the server: run `node server.js` in shaddai-games.');return}
+ const res=await fetch('/api/colosseum/wagers/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:S.game,aId:S.selA,bId:S.selB})});const d=await res.json();if(!d.ok){alert(d.error);return}
+ W.book=d;$('#wagersettle').innerHTML='';renderWagerBook();syncWagerOpen()};
+$('#wagersideA').onclick=()=>{W.side='a';renderWagerBook()};$('#wagersideB').onclick=()=>{W.side='b';renderWagerBook()};
+$$('#wageramounts [data-wamt]').forEach(el=>el.onclick=()=>{W.amount=+el.dataset.wamt;renderWagerBook()});
+$('#wagerbet').onclick=async()=>{if(!W.book)return;const bettor=$('#wagername').value.trim();if(!bettor){alert('Enter your display name first');return}
+ const res=await fetch('/api/colosseum/wagers/'+W.book.bookId+'/bet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bettor,side:W.side,amount:W.amount})});const d=await res.json();if(!d.ok){alert(d.error);return}
+ W.book=d;renderWagerBook();wagerMsg('Intent bet recorded on the receipt chain — no Sparks moved.')};
+$('#wagerrun').onclick=async()=>{if(!W.book)return;const res=await fetch('/api/colosseum/wagers/'+W.book.bookId+'/run',{method:'POST'});const d=await res.json();if(!d.ok){alert(d.error);return}
+ W.book=d;renderWagerBook();
+ const winnerName=d.winnerSide==='a'?d.aName:d.bName;
+ $('#wagersettle').innerHTML=`<div class="panel" style="border-color:rgba(245,197,66,.5)"><h3 class="gold">🎟 SETTLED — INTENT ONLY (no Sparks moved)</h3>
+ <p class="small">Pot: <b>${d.pot}</b> Sparks (intent) · Fee 5%: <b>${d.fee}</b> · Paid out to winners: <b>${d.payoutPool}</b> · Winner: <b>${winnerName}</b></p>
+ ${(d.settlements||[]).map(x=>`<div class="chal"><b>${x.bettor}</b><span>backed ${x.side==='a'?d.aName:d.bName} with ${x.amount}</span>${x.won?`<span class="chip up">WOULD WIN ${x.payout} (+${x.profit})</span>`:`<span class="chip down">WOULD LOSE ${x.amount}</span>`}</div>`).join('')||'<p class="small">No bets were placed — the pool was empty.</p>'}
+ <p class="small">SEED REVEALED: <span style="word-break:break-all;color:var(--gold)">${d.seed}</span><br/>COMMITTED HASH: <span style="word-break:break-all">${d.seedCommit}</span><br/><span id="wagerverify">Verifying sha256(seed)…</span></p></div>`;
+ if(window.crypto&&crypto.subtle){try{const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(d.seed));const hex=[...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,'0')).join('');const el=$('#wagerverify');if(el)el.textContent=hex===d.seedCommit?'✓ VERIFIED — sha256(seed) matches the hash committed before the fight. Nobody rigged this result.':'✗ MISMATCH — do not trust this result.'}catch(e){}}
+ showMatch(d.match)};
+/* ---------- BOT GALLERY (profile view — record · badges · grudges · memory) ---------- */
+/* Badge definitions — labels + earn conditions mirror BADGE_DEFS in
+   backend/colosseum-store.js (the server's single source of truth for what
+   mints). `cond` is the earn condition in player words; `purpose` is WHAT
+   THE BADGE IS FOR — shown on earned and locked badges alike, and in the
+   unlock reveal. If a kind is added server-side, add it here too, or that
+   badge renders label-only. */
+const BADGE_DEFS=[
+ {kind:'first_blood',label:'FIRST BLOOD',cond:'Win your first match',purpose:'The first-win mark — proof this bot has drawn blood in the arena, receipted forever.'},
+ {kind:'giant_killer',label:'GIANT KILLER',cond:'Beat a bot rated +8 OVR or higher',purpose:'The giant-slayer mark — for a bot that punches above its rating and wins anyway.'},
+ {kind:'photo_finish',label:'PHOTO FINISH',cond:'Win a match by 2 or fewer',purpose:'For wins so close the desk needed the photo — nerve when it is level at the death.'},
+ {kind:'on_fire',label:'ON FIRE',cond:'Win 3 matches in a row',purpose:'The streak mark — three straight wins while the whole arena watched.'},
+ {kind:'veteran',label:'VETERAN',cond:'Play 10 matches',purpose:'The long-service mark — this bot keeps showing up, match after match.'},
+ {kind:'grudge_settled',label:'GRUDGE SETTLED',cond:'Beat a bot you owed a grudge',purpose:'A debt paid — revenge over a rival that kept beating this bot, written onto the receipt chain.'},
+ {kind:'high_roller',label:'HIGH ROLLER',cond:'Win a wagered match',purpose:'Won with a wager book riding on the match — nerve when the pot is watching.'}
+];
+function badgePurpose(kind){const d=BADGE_DEFS.find(x=>x.kind===String(kind||'').toLowerCase());return d?d.purpose:''}
+function badgeLabel(kind){const d=BADGE_DEFS.find(x=>x.kind===String(kind||'').toLowerCase());return d?d.label:'BADGE'}
+const BADGE_ICONS={
+ first_blood:'<path d="M12 2.6s6.6 7.1 6.6 11.9a6.6 6.6 0 1 1-13.2 0C5.4 9.7 12 2.6 12 2.6z"/>',
+ giant_killer:'<path d="M12 2.2l2.5 6.4 6.9.5-5.2 4.5 1.6 6.7L12 16.7l-5.8 3.6 1.6-6.7L2.6 9.1l6.9-.5z"/><path d="M4.5 19.5L19.5 4.5" stroke="#000" stroke-opacity=".35" stroke-width="2.2" fill="none"/>',
+ photo_finish:'<path d="M5 2h2.2v20H5z"/><path d="M7.2 3h12l-3.2 4 3.2 4h-12z"/><rect x="9.5" y="5" width="3.2" height="3" fill="#000" opacity=".3"/><rect x="14.5" y="8" width="3.2" height="3" fill="#000" opacity=".3"/>',
+ on_fire:'<path d="M12.6 1.6c.7 3.9-1.1 5.8-2.7 7.5C8.6 10.6 7.4 12 7.4 14.1a5 5 0 0 0 10 0c0-1.9-.9-3.3-1.8-4.7-.5 1-1.2 1.8-2.3 2.2.4-3-.1-6.8-.7-10z"/><path d="M12.4 21.4a3 3 0 0 1-3-3c0-1.3.7-2.2 1.4-3.1.5-.7 1-1.4 1.2-2.3 1 1 2.5 2.7 2.5 4.4a3 3 0 0 1-2.1 3z" fill="#000" opacity=".28"/>',
+ veteran:'<path d="M12 1.8l8.2 2.8v6.2c0 5.1-3.4 9-8.2 11.4C7.2 19.8 3.8 15.9 3.8 10.8V4.6z"/><path d="M12 6.4l1.5 3.4 3.7.4-2.8 2.5.8 3.7L12 14.5l-3.2 1.9.8-3.7-2.8-2.5 3.7-.4z" fill="#000" opacity=".3"/>',
+ grudge_settled:'<path fill-rule="evenodd" d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm0 4.2a5.8 5.8 0 1 0 0 11.6 5.8 5.8 0 0 0 0-11.6zm0 3.2a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2z"/>',
+ high_roller:'<rect x="3" y="3" width="18" height="18" rx="4.5"/><circle cx="8.3" cy="8.3" r="2.1" fill="#000" opacity=".32"/><circle cx="15.7" cy="8.3" r="2.1" fill="#000" opacity=".32"/><circle cx="12" cy="12" r="2.1" fill="#000" opacity=".32"/><circle cx="8.3" cy="15.7" r="2.1" fill="#000" opacity=".32"/><circle cx="15.7" cy="15.7" r="2.1" fill="#000" opacity=".32"/>',
+ generic:'<path d="M12 2.2l2.5 6.4 6.9.5-5.2 4.5 1.6 6.7L12 16.7l-5.8 3.6 1.6-6.7L2.6 9.1l6.9-.5z"/>'
+};
+function badgeSVG(kind){return `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${BADGE_ICONS[kind]||BADGE_ICONS.generic}</svg>`}
+function fmtDate(v){if(v==null||v==='')return'';const d=new Date(v);return isNaN(d)?String(v):d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}
+function galScoreStr(sc){if(sc==null)return'';if(typeof sc==='object')return Object.values(sc).join('–');return String(sc)}
+function galGameLabel(id){const g=S.games.find(x=>x.id===id);return g?(g.label||g.id):(id||'')}
+function streakText(st){if(st==null||st==='')return null;if(typeof st==='number'){if(st>0)return`W${st} — ${st}-WIN STREAK`;if(st<0)return`L${-st} — LOST ${-st} STRAIGHT`;return'NO ACTIVE STREAK'}if(typeof st==='object'){const c=st.count!=null?st.count:(st.n!=null?st.n:st.value);const t=String(st.type||st.kind||'W').toUpperCase();if(c!=null)return`${t}${c} STREAK`;return null}return String(st)}
+let GAL={id:null,newSet:new Set()};
+function galRender(bot,p,note){
+ const dna=bot.dna||null;
+ const rec=(p&&p.record)?p.record:{w:bot.wins||0,l:bot.losses||0};
+ const rw=rec.w!=null?rec.w:(rec.wins||0), rl=rec.l!=null?rec.l:(rec.losses||0), tot=rw+rl;
+ const provLabel=(dna&&dna.providerLabel)||bot.providerLabel||bot.provider||'custom';
+ const arch=(dna&&dna.archetypeName)||bot.archetypeName||bot.archetype||null;
+ const ovr=dna?dna.overall:(bot.overall!=null?bot.overall:null);
+ let h=`<div class="galhero">${glowPortrait(bot,'lg',bot.accessory||'none')}<h3>${bot.name}</h3><p style="margin:4px 0"><span class="chip">${provLabel}</span>${arch?`<span class="chip gold">${arch}</span>`:''}${ovr!=null?`<span class="chip">OVR ${ovr}</span>`:''}</p>`;
+ if(dna)h+=`<p class="small">Best: <b style="color:var(--green)">${dna.bestStat} ${dna.stats[dna.bestStat]}</b> · Weak: <b style="color:var(--red)">${dna.worstStat} ${dna.stats[dna.worstStat]}</b></p>`;
+ h+=`<div class="recchips"><span class="chip gold">RECORD ${rw}W – ${rl}L</span>${tot?`<span class="chip">WIN RATE ${Math.round(rw/tot*100)}%</span>`:''}`;
+ const st=p?streakText(p.streak):null;if(st)h+=`<span class="chip ${/^-?W|WIN STREAK/.test(st)&&!/LOST/.test(st)?'gold':''}">STREAK · ${st}</span>`;
+ if(p&&p.bestStreak>=2)h+=`<span class="chip">BEST STREAK W${p.bestStreak}</span>`;
+ h+='</div></div>';
+ if(p&&p.byGame&&Object.keys(p.byGame).length){h+=`<div class="galsec"><h4>BY GAME</h4><div class="recchips" style="justify-content:flex-start">${Object.entries(p.byGame).map(([g,v])=>`<span class="chip">${galGameLabel(g)} · ${(v.w!=null?v.w:v.wins||0)}W – ${(v.l!=null?v.l:v.losses||0)}L</span>`).join('')}</div></div>`}
+ if(p&&p.grudge&&p.grudge.length){h+=`<div class="galsec"><h4 class="red">⚔ ACTIVE GRUDGES — OWES A BEATING</h4>${p.grudge.map(g=>{const gn=g.vsName||g.name||((S.bots.find(b=>b.id===(g.vsRival||g.vsId))||{}).name)||g.vsRival||g.vsId||'—';return`<div class="chal"><b>${gn}</b><span class="chip down">GRUDGE</span><span class="small">lost ${g.losses}× to them — the rematch writes itself</span></div>`}).join('')}</div>`}
+ // badge case — earned medallions carry their receipt hash as the proof line; unearned v1 badges sit greyed + locked
+ const earned=(p&&p.badges)||[];
+ const ek=new Set(earned.map(b=>String(b.kind||'').toLowerCase())), el=new Set(earned.map(b=>String(b.label||'').toUpperCase()));
+ const locked=BADGE_DEFS.filter(d=>!ek.has(d.kind)&&!el.has(d.label));
+ h+=`<div class="galsec"><h4 class="gold">🏅 BADGE CASE ${earned.length?`— ${earned.length} EARNED`:''}</h4><div class="badges">`;
+ h+=earned.map(b=>{const def=BADGE_DEFS.find(d=>d.kind===String(b.kind||'').toLowerCase());const isNew=!!(GAL.newSet&&(GAL.newSet.has(b.id)||GAL.newSet.has('bdg_'+bot.id+'_'+String(b.kind||'').toLowerCase())));return`<div class="badgemed${isNew?' isnew':''}">${isNew?'<span class="newtag">NEW</span>':''}<div class="medal">${badgeSVG(b.kind)}</div><b>${b.label||(def?def.label:'BADGE')}</b>${b.earnedAt?`<span class="when">${fmtDate(b.earnedAt)}</span>`:''}${def&&def.purpose?`<span class="purpose">${def.purpose}</span>`:''}${b.receiptHash?`<span class="proof">RCPT ${String(b.receiptHash).slice(0,10)}</span>`:''}</div>`}).join('');
+ h+=locked.map(d=>`<div class="badgemed locked"><div class="medal">${badgeSVG(d.kind)}</div><b>${d.label}</b><span class="when">LOCKED — ${d.cond}</span>${d.purpose?`<span class="purpose">${d.purpose}</span>`:''}</div>`).join('');
+ h+='</div></div>';
+ // the NEW markers were rendered from the set captured at open — now that the
+ // real badge case is on screen, the stored set has done its job; clear it so
+ // the next open doesn't pulse stale unlocks. (Only on a true profile render:
+ // a failed/offline render leaves the set untouched for next time.)
+ if(p&&p.badges)clearNewBadges(bot.id);
+ const rivalsArr=p&&p.rivals?(Array.isArray(p.rivals)?p.rivals:Object.entries(p.rivals).map(([id,v])=>({id,name:v.name,w:v.w,l:v.l}))):[];
+ if(rivalsArr.length){h+=`<div class="galsec"><h4>RIVALS — HEAD TO HEAD</h4>${rivalsArr.map(r=>{const rw2=r.w||0,rl2=r.l||0;return`<div class="chal"><b>${r.name||'—'}</b><span class="chip ${rw2>rl2?'up':rw2<rl2?'down':''}">${rw2}W – ${rl2}L</span><span class="small">vs ${bot.name}</span>${r.id?`<span style="flex:1"></span><button type="button" class="galbtn" style="width:auto;margin-top:0" data-gallery="${r.id}">🏆 THEIR GALLERY</button>`:''}</div>`}).join('')}</div>`}
+ if(p){const hl=p.highlights||{};const rows=[['BIGGEST UPSET',hl.biggestUpset],['CLOSEST WIN',hl.closestWin],['WORST LOSS',hl.worstLoss]].filter(x=>x[1]);
+  const lr=Array.isArray(p.lastResults)?p.lastResults:[];
+  if(rows.length||lr.length){h+=`<div class="galsec"><h4>🧠 MEMORY — WHAT IT REMEMBERS</h4>`;
+   h+=rows.map(([t,x])=>{const det=x.score!=null&&x.score!==''?galScoreStr(x.score):(t==='BIGGEST UPSET'&&x.ovrDiff!=null?'beat a +'+x.ovrDiff+' OVR bot':(x.margin!=null?(t==='WORST LOSS'?'lost by '+x.margin:'won by '+x.margin):''));return`<div class="tlrow"><span class="chip gold">${t}</span><span><b>vs ${x.oppName||x.opponent||'—'}</b> <span class="small">${galGameLabel(x.game)}${det?' · '+det:''}${x.at?' · '+fmtDate(x.at):''}</span></span></div>`}).join('');
+   h+=lr.map(r=>{const res=r.result||(r.won===true?'W':r.won===false?'L':(r.winnerId&&r.winnerId===bot.id?'W':(r.winner&&r.winner.id===bot.id?'W':'')));const sc=r.score!=null&&r.score!==''?galScoreStr(r.score):(r.scoreFor!=null?r.scoreFor+'–'+r.scoreAgainst:'');return`<div class="tlrow"><span class="chip ${res==='W'?'up':res==='L'?'down':''}">${res||'•'}</span><span><b>vs ${r.oppName||r.opponent||'—'}</b> <span class="small">${galGameLabel(r.game)}${sc?' · '+sc:''}${r.at?' · '+fmtDate(r.at):''}</span></span></div>`}).join('');
+   h+='</div>'}}
+ if(note==='loading')h+=`<p class="small" style="margin-top:14px">Loading the full profile — badges, grudges and memory…</p>`;
+ if(note==='local')h+=`<div class="galnote">PROFILE UNAVAILABLE OFFLINE — this page is in LOCAL MODE, so this is the basic record it keeps in this browser. Badges, grudges and the memory timeline are earned in server matches and served by the live profile service.</div>`;
+ if(note==='down')h+=`<div class="galnote">PROFILE UNAVAILABLE — the profile service did not answer for this bot, so this is the basic record. Badges, grudges and the memory timeline need the live profile service.</div>`;
+ $('#galbody').innerHTML=h;
+}
+function openGallery(id){const bot=S.bots.find(b=>b.id===id)||{id,name:'BOT',provider:'custom',wins:0,losses:0,dna:null};GAL.id=id;GAL.newSet=newBadgeIds(id);$('#gallery').classList.remove('hidden');document.body.style.overflow='hidden';$('#gallery').scrollTop=0;
+ galRender(bot,null,LOCAL?'local':'loading');
+ if(LOCAL)return;
+ fetch('/api/colosseum/bots/'+encodeURIComponent(id)+'/profile').then(async res=>{if(!res.ok)throw 0;const d=await res.json();if(!d.ok||!d.bot)throw 0;if(GAL.id!==id)return;const merged=Object.assign({},bot,d.bot);merged.dna=d.bot.dna||bot.dna;galRender(merged,d,null)}).catch(()=>{if(GAL.id===id&&!$('#gallery').classList.contains('hidden'))galRender(bot,null,'down')})}
+function closeGallery(){GAL.id=null;$('#gallery').classList.add('hidden');document.body.style.overflow=''}
+document.addEventListener('click',e=>{const g=e.target&&e.target.closest?e.target.closest('[data-gallery]'):null;if(g){e.preventDefault();openGallery(g.dataset.gallery)}});
+document.addEventListener('keydown',e=>{if($('#gallery').classList.contains('hidden'))return;if(e.key==='Escape')closeGallery();e.stopImmediatePropagation()});
+$('#galclose').onclick=closeGallery;
+$('#gallery').addEventListener('click',e=>{if(e.target.id==='gallery')closeGallery()});
+/* ---------- KEYS ---------- */
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(e.target.tagName))return;const tabs=['play','multi','forge','challenges','hall'];if(e.key>='1'&&e.key<='5')tab(tabs[+e.key-1]);if(e.key==='Enter'&&S.selA&&S.selB)startBattle(S.selA,S.selB,S.game);if(e.key===' '){e.preventDefault();$('#playbtn').click()}if(e.key.toLowerCase()==='r'&&S.match)startBattle(S.match.a,S.match.b,S.match.game);if(e.key==='Escape'){$('#cutscene').style.display='none';const f=$('#csface');if(f)f.classList.add('hidden')}});
+load();
+</script></body></html>

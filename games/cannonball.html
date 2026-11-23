@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CANNONBALL — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#050a08;--panel:#0a120d;--border:rgba(0,255,136,.22);--green:#00ff88;--gold:#ffd75e;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--amber:#ffb347;--text:#d8ffe9;--dim:#7d8aa0}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.08),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;gap:14px;align-items:center;padding:12px 20px;background:rgba(5,10,8,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a140e,#050804);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--green)}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#0a140e;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:var(--green);color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#14100a;border-color:rgba(255,179,71,.5);font-size:13px}
+  .abtns button.nitro{background:#1a1405;border-color:rgba(255,215,94,.7);font-size:11px}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#0a140e}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(5,10,8,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:var(--panel);border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:700px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .mbtn{min-width:120px;font-size:11px}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:255,179,71}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>CANNON<span>BALL</span></h1><span class="tag">Pseudo-3D checkpoint racer · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="544"></canvas>
+      <div id="pauseOverlay"><div class="card"><h2>PAUSED</h2><p id="pauseText">The coast waits.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart stage</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="msg">JUNO takes the VERDIGRIS coupe down the Emerald Coast. Beat the clock, beat the traffic.</div>
+    <div class="row">
+      <button class="mbtn" id="btnSolo">🏎️ Race<small>1P — 5 stages, beat every checkpoint</small></button>
+      <button class="mbtn" id="btnWatch">🤖 Watch race<small>Bot driver races the coast — imperfect on purpose</small></button>
+      <button class="mbtn" id="btnDuel">⚔️ Duel<small>Alternate runs — high score wins</small></button>
+      <button class="mbtn" id="btnCam">🎥 Cockpit<small>V — hood view, no chase car</small></button>
+      <button class="mbtn" id="btnPause">⏸ Pause<small>P — save / load in menu</small></button>
+    </div>
+    <div class="help">
+      <b>Controls:</b> <span class="k">← → / A D</span> steer, <span class="k">↑ / W</span> accelerate, <span class="k">↓ / S</span> brake, <span class="k">X</span> nitro (3 charges), <span class="k">V</span> cockpit cam, <span class="k">P</span> pause, <span class="k">M</span> mute, <span class="k">R</span> restart stage.<br/>
+      📱 <b>Handheld shell:</b> on phones the game sits in its own console: D-pad steers, <span class="k">A</span> accelerates, <span class="k">B</span> brakes, <span class="k">N</span> fires nitro, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles cockpit cam.<br/>
+      <b>Rules:</b> five stages down the Emerald Coast — <span class="k">Emerald Coast → Sunset Dunes → Neon City → Pine Pass → Ember Finish</span>. Each stage ends at a checkpoint gantry: cross it before the clock hits zero and the timer tops up <span class="k">+30s</span> with <span class="k">+1000</span> score. Miss the clock and the run is over. Traffic is live — clip a car and you spin down; thread past one close for a <span class="k">NEAR MISS +50</span>. Off the road the coupe bogs down. Finish stage 5 to win the Grand Tour.<br/>
+      <b>Clean-room note:</b> pseudo-3D road rendering follows the classic documented segment-projection technique (SPEC lane — read as a technique only, rewritten here in our own code; no code, art, names or tracks copied). The coast, JUNO, the VERDIGRIS coupe and every line of art are original.
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c" tabindex="-1"></button><button id="dUp" title="Up — accelerate">▲</button><button class="c" tabindex="-1"></button>
+        <button id="dLeft" title="Left — steer">◀</button><button class="c" tabindex="-1"></button><button id="dRight" title="Right — steer">▶</button>
+        <button class="c" tabindex="-1"></button><button id="dDown" title="Down — brake">▼</button><button class="c" tabindex="-1"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="START — pause menu">START</button>
+        <button id="selectBtn" title="SELECT — cockpit cam">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — brake">B</button>
+        <button class="nitro" id="btnN" title="N — nitro">N</button>
+        <button id="btnA" title="A — accelerate">A</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* CANNONBALL — original IP pseudo-3D checkpoint racer for the Shaddai Arcade.
+   The segment-projection road technique follows the classic documented
+   approach (SPEC LANE: read as a technique only, rewritten here in our own
+   JS — no code, art, names or tracks copied). Coast, cars, art and story
+   are all original. */
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var W=960, H=544;
+var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+var muted=false;
+function $(id){ return document.getElementById(id); }
+var msgEl=$('msg');
+function setMsg(t){ if(msgEl) msgEl.textContent=t; }
+
+/* ---------- seeded RNG (mulberry32) ---------- */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ---------- constants ---------- */
+var SEG_LEN=200, RUMBLE=3, LANES=3, ROAD_W=2200, CAM_H=1050,
+    CAM_DEPTH=1/Math.tan((100/2)*Math.PI/180), DRAW_DIST=160, CENTRIFUGAL=0.31,
+    DT=1/60, MAX_SPEED=7200, ACCEL=3600, BRAKE=9000, DECEL=1800,
+    OFFROAD_DECEL=6000, OFFROAD_LIMIT=1800,
+    STAGE_SEGS=600, STAGE_LEN=STAGE_SEGS*SEG_LEN, TRACK_LEN=5*STAGE_LEN,
+    START_TIME=4500, CP_BONUS=1800, CP_SCORE=1000;
+var STAGES=[
+  {name:'EMERALD COAST', skyTop:'#0b1030', skyBot:'#123a5e', sun:'#ffd75e', hills:'#1d3a5e', mtn:'#16304e',
+   grassA:'#0e5c2e', grassB:'#0a4a24', roadA:'#3a3f4a', roadB:'#343945', fog:'#0b1030', sprite:'palm', sunX:0.72},
+  {name:'SUNSET DUNES', skyTop:'#2a1030', skyBot:'#7a2a1a', sun:'#ff9a3d', hills:'#5e2a1a', mtn:'#4a2016',
+   grassA:'#8a5a22', grassB:'#7a4a1c', roadA:'#3a3a44', roadB:'#33333d', fog:'#2a1030', sprite:'cactus', sunX:0.3},
+  {name:'NEON CITY', skyTop:'#12082a', skyBot:'#3a0a4a', sun:'#ff5db1', hills:'#241040', mtn:'#1a0a30',
+   grassA:'#1a1a2e', grassB:'#141428', roadA:'#2e2e3e', roadB:'#282834', fog:'#12082a', sprite:'billboard', sunX:0.5},
+  {name:'PINE PASS', skyTop:'#081a24', skyBot:'#0f3a2a', sun:'#e8f0ff', hills:'#0f2a1e', mtn:'#0a2016',
+   grassA:'#0e4a26', grassB:'#0a3a1e', roadA:'#36363e', roadB:'#303038', fog:'#081a24', sprite:'pine', sunX:0.68},
+  {name:'EMBER FINISH', skyTop:'#1a0810', skyBot:'#4a0a0a', sun:'#ff7840', hills:'#3a0e0e', mtn:'#2a0a0a',
+   grassA:'#3a1a10', grassB:'#2e140c', roadA:'#32282e', roadB:'#2a2226', fog:'#1a0810', sprite:'torch', sunX:0.4}
+];
+var CAR_COLORS=['#ff3860','#35e0ff','#ffd75e','#b78cff','#ff7840','#00ff88','#ff5db1','#e8e8f0'];
+
+/* ---------- track generation ----------
+   Classic segment road: each stage is 600 segments built from enter/hold/
+   leave sections (straight, curve, hill, curve+hill). Seeded, so the same
+   seed always grows the same coast. */
+function easeIn(a,b,p){ return a+(b-a)*p*p; }
+function easeInOut(a,b,p){ return a+(b-a)*((-Math.cos(p*Math.PI)/2)+0.5); }
+function buildTrack(seed){
+  var rnd=mulberry32(seed);
+  var segments=[], lastY=0;
+  function addSegment(curve, y){
+    var n=segments.length;
+    segments.push({
+      index:n, curve:curve,
+      p1:{world:{x:0,y:lastY,z:n*SEG_LEN}, camera:{}, screen:{}},
+      p2:{world:{x:0,y:y,z:(n+1)*SEG_LEN}, camera:{}, screen:{}},
+      sprites:[], cars:[], clip:0, fog:0,
+      color:Math.floor(n/RUMBLE)%2?'dark':'light'
+    });
+    lastY=y;
+  }
+  function addRoad(enter, hold, leave, curve, y){
+    var startY=lastY, endY=startY+(y||0)*SEG_LEN, total=enter+hold+leave, n;
+    for(n=0;n<enter;n++) addSegment(easeIn(0,curve,n/enter), easeInOut(startY,endY,n/total));
+    for(n=0;n<hold;n++) addSegment(curve, easeInOut(startY,endY,(enter+n)/total));
+    for(n=0;n<leave;n++) addSegment(easeInOut(curve,0,n/leave), easeInOut(startY,endY,(enter+hold+n)/total));
+  }
+  var stage;
+  for(stage=0;stage<5;stage++){
+    var built=0, first=true;
+    while(built<STAGE_SEGS){
+      var remain=STAGE_SEGS-built;
+      var pick=rnd();
+      var len, curve=0, hill=0;
+      if(first){ len=50; curve=0; hill=0; first=false; }
+      else if(pick<0.30){ len=40+Math.floor(rnd()*60); curve=0; hill=0; }
+      else if(pick<0.55){ len=50+Math.floor(rnd()*70); curve=(rnd()<0.5?-1:1)*(2+Math.floor(rnd()*4)); hill=0; }
+      else if(pick<0.75){ len=50+Math.floor(rnd()*70); curve=0; hill=(rnd()<0.5?-1:1)*(8+Math.floor(rnd()*14)); }
+      else { len=60+Math.floor(rnd()*70); curve=(rnd()<0.5?-1:1)*(2+Math.floor(rnd()*3)); hill=(rnd()<0.5?-1:1)*(6+Math.floor(rnd()*8)); }
+      len=Math.min(len, remain);
+      var enter=Math.max(1,Math.floor(len*0.25)), leave=Math.max(1,Math.floor(len*0.25)), hold=len-enter-leave;
+      if(hold<1){ hold=1; enter=Math.max(1,Math.floor((len-1)/2)); leave=len-enter-hold; }
+      addRoad(enter, hold, leave, curve, hill);
+      built+=enter+hold+leave;
+    }
+    // checkpoint gantry on the last segment of the stage
+    segments[(stage+1)*STAGE_SEGS-1].sprites.push({type:'gantry', offset:0});
+  }
+  // roadside sprites, seeded per segment
+  var sprRnd=mulberry32(seed^0x9e3779b9);
+  for(var i=0;i<segments.length;i++){
+    var st=STAGES[Math.floor(i/STAGE_SEGS)];
+    if(i%STAGE_SEGS<50) continue; // keep the start line clear
+    if(sprRnd()<0.28){
+      var off=(sprRnd()<0.5?-1:1)*(1.4+sprRnd()*2.2);
+      segments[i].sprites.push({type:st.sprite, offset:off});
+    }
+    if(sprRnd()<0.06){
+      var off2=(sprRnd()<0.5?-1:1)*(1.3+sprRnd()*1.2);
+      segments[i].sprites.push({type:'sign', offset:off2});
+    }
+  }
+  // traffic: 22 cars per stage, seeded
+  var cars=[], carRnd=mulberry32(seed^0x51f15e);
+  for(var s=0;s<5;s++){
+    for(var c=0;c<22;c++){
+      cars.push({
+        z:s*STAGE_LEN+8000+carRnd()*(STAGE_LEN-16000),
+        offset:(carRnd()*1.6-0.8),
+        speed:2400+carRnd()*2400,
+        color:CAR_COLORS[Math.floor(carRnd()*CAR_COLORS.length)],
+        counted:false, wobble:carRnd()*6.28
+      });
+    }
+  }
+  return {segments:segments, cars:cars};
+}
+function segmentAt(track, z){
+  var idx=Math.floor(z/SEG_LEN)%track.segments.length;
+  if(idx<0) idx+=track.segments.length;
+  return track.segments[idx];
+}
+
+/* ---------- state ---------- */
+var SEED=20261122;
+var state=null;
+function startGame(mode, stageIdx, restoreAgentId){
+  var track=buildTrack(SEED);
+  state={phase:'play',mode:mode||'solo',paused:false,cam:false,frame:0,
+    track:track, segments:track.segments, cars:track.cars,
+    stage:(typeof stageIdx==='number')?stageIdx:0,
+    position:0, speed:0, playerX:0, steer:0, offroad:false,
+    timeLeft:START_TIME, score:0, nitro:3, nitroT:0, crashT:0,
+    passed:0, nearMiss:0, checkpoints:0, sparks:[],
+    over:false, result:'', win:false,
+    feAgentId:null, feAgent:null, feTraces:[], feRecorded:false,
+    keys:{}, pressed:{}, released:{},
+    duel:null, best:0, flash:'', flashT:0};
+  if(mode==='watch'){
+    var agentId=restoreAgentId||pickBot();
+    state.feAgentId=agentId;
+    if(FE){ try{ state.feAgent=FE.loadAgent(agentId); }catch(e){ state.feAgent=null; } } // E57: hydrate, never fresh
+  }
+  if(mode==='duel'){ state.duel={turn:0, scores:[0,0], done:false, winner:null}; }
+  try{ var sv=localStorage.getItem('cannonball.hi'); if(sv){ state.best=JSON.parse(sv).best||0; } }catch(e){}
+  setMsg(mode==='watch'?'WATCH: a council bot races the coast. Imperfect on purpose.':
+    mode==='duel'?'DUEL: Player 1 races first — high score takes the match.':
+    'Stage 1 of 5 — '+STAGES[0].name+'. Reach the gantry before the clock dies.');
+}
+/* E57: watch-bot rotation — the full 8-bot council, one step per watch start,
+   persisted as cannonball.feWatchIdx. Engine absent: legacy random pick from
+   the old 4-subset, no cursor consumed (fallback stays deterministic-free).
+   A restored agent id (loadState) never consumes the cursor. */
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+function feWatchIdx(){
+  try{ var v=localStorage.getItem('cannonball.feWatchIdx'); var n=parseInt(v,10);
+    return isNaN(n)?0:((n%8)+8)%8; }catch(e){ return 0; }
+}
+function pickBot(){
+  if(!FE){
+    var ids=['ZEROX','TURTLE','NEXUS','ORACLE'];
+    return ids[Math.floor(Math.random()*ids.length)];
+  }
+  // monotonic counter: the stored value counts starts (9 after 9 starts);
+  // the mod-8 read in feWatchIdx() picks the next council member.
+  var raw=0;
+  try{ var v=localStorage.getItem('cannonball.feWatchIdx'); var n=parseInt(v,10); raw=isNaN(n)?0:n; }catch(e){ raw=0; }
+  var idx=((raw%8)+8)%8;
+  var id=COUNCIL_IDS[idx];
+  try{ localStorage.setItem('cannonball.feWatchIdx', String(raw+1)); }catch(e){}
+  return id;
+}
+function endRun(win){
+  if(state.over) return;
+  state.over=true; state.win=win; state.phase='over';
+  state.result=win?'WIN':'LOSS';
+  if(win) state.score+=5000;
+  if(state.score>state.best){ state.best=state.score; try{ localStorage.setItem('cannonball.hi', JSON.stringify({best:state.best})); }catch(e){} }
+  if(state.mode==='duel' && state.duel){
+    state.duel.scores[state.duel.turn]=state.score;
+    if(state.duel.turn===0){
+      var p1=state.score;
+      setMsg('Player 1 scored '+p1+'. Player 2 — your turn on the same coast.');
+      setTimeout(function(){
+        startGame('duel',0);
+        state.duel.turn=1; state.duel.scores[0]=p1;
+        setMsg('Player 2 — race! Beat '+p1+'.');
+      }, 1200);
+      return;
+    }
+    state.duel.done=true;
+    var s0=state.duel.scores[0];
+    state.duel.winner=s0>=state.score?'P1':'P2';
+    state.duel.scores=[s0,state.score];
+    setMsg('DUEL OVER — P1 '+s0+' vs P2 '+state.score+'. '+state.duel.winner+' wins!');
+    return;
+  }
+  if(state.mode==='watch' && state.feAgent && !state.feRecorded){
+    state.feRecorded=true;
+    try{ FE.recordResult(state.feAgent, 'cannonball', null, win?'win':'loss', state.feTraces); }catch(e){}
+  }
+  setMsg(win?('🏆 GRAND TOUR COMPLETE — score '+state.score+' (best '+state.best+').'):
+    ('Run over — score '+state.score+' (best '+state.best+').'));
+}
+function checkpoint(crossed){
+  state.checkpoints++;
+  state.score+=CP_SCORE;
+  state.timeLeft+=CP_BONUS;
+  state.flash='CHECKPOINT +30s'; state.flashT=90;
+  if(crossed>=5){ endRun(true); return; }
+  state.stage=crossed;
+  setMsg('Stage '+(state.stage+1)+' of 5 — '+STAGES[state.stage].name+'. Clock topped up +30s.');
+}
+function crash(car){
+  if(state.crashT>0) return;
+  state.crashT=45;
+  state.speed*=0.25;
+  state.score=Math.max(0, state.score-25);
+  for(var i=0;i<16;i++) state.sparks.push({x:state.playerX, y:0, vx:(Math.random()-0.5)*3, vy:-Math.random()*3-1, life:24, col:'#ffd75e'});
+  setMsg('CRASH! Clipped traffic — speed lost.');
+}
+
+/* ---------- bot AI (Fallible Engine) ---------- */
+function botDecide(){
+  var seg=segmentAt(state.track, state.position);
+  var curveAhead=0;
+  for(var i=0;i<20;i++){ curveAhead+=state.segments[(seg.index+i)%state.segments.length].curve; }
+  curveAhead/=20;
+  // nearest traffic ahead within 6 segments, in our lane band
+  var carAhead=null, carGap=1e9;
+  state.cars.forEach(function(c){
+    var dz=c.z-state.position;
+    if(dz>0 && dz<6*SEG_LEN && dz<carGap){ carGap=dz; carAhead=c; }
+  });
+  var aid=state.feAgentId||'NEXUS';
+  var risky=(aid==='ZEROX')?1:0, safe=(aid==='TURTLE')?1:0;
+  var opts=[];
+  function add(key,score,tag){ opts.push({key:key,score:score,tag:tag||key}); }
+  var wantX=-curveAhead*0.22; // lean into the curve
+  if(carAhead) wantX=carAhead.offset>0?-0.7:0.7; // dodge to the clear side
+  var dxT=wantX-state.playerX;
+  add('left', dxT<-0.15?0.85:0.10, 'steer');
+  add('right', dxT>0.15?0.85:0.10, 'steer');
+  add('straight', Math.abs(dxT)<=0.15?0.8:0.15, 'steer');
+  var blocked=carAhead && carGap<2.2*SEG_LEN && Math.abs(carAhead.offset-state.playerX)<0.35;
+  add('accel', blocked?0.15:(0.85+safe*0.05), 'speed');
+  add('brake', blocked?0.9:(safe?0.12:0.03), 'speed');
+  add('nitro', (!blocked && Math.abs(curveAhead)<0.8 && state.nitro>0)?(0.5+risky*0.4):0, 'nitro');
+  add('coast', 0.05, 'speed');
+  var res=null;
+  if(FE && state.feAgent){
+    try{
+      res=FE.decide(state.feAgent, 'cannonball', opts, {timePressure:state.timeLeft<900?0.8:0.2});
+      state.feTraces.push(res.trace); // E57: keep the FULL per-run list — no shift cap
+    }catch(e){ res=null; }
+  }
+  if(!res){
+    var best=opts[0];
+    for(var i=1;i<opts.length;i++) if(opts[i].score>best.score) best=opts[i];
+    return best.key;
+  }
+  return res.pick?res.pick.key:'accel';
+}
+function botApply(act){
+  var k=state.keys;
+  k.left=false; k.right=false; k.up=false; k.down=false; k.nitro=false;
+  if(act==='left') k.left=true;
+  if(act==='right') k.right=true;
+  if(act==='straight'){ /* hold line */ }
+  if(act==='accel') k.up=true;
+  if(act==='brake') k.down=true;
+  if(act==='nitro'){ k.nitro=true; state.pressed.nitro=true; }
+  if(act==='coast'){ /* nothing */ }
+}
+
+/* ---------- main step ---------- */
+function step(){
+  if(!state||state.paused||state.over) return;
+  state.frame++;
+  if(state.mode==='watch' && state.frame%6===0) botApply(botDecide());
+  var k=state.keys;
+  var seg=segmentAt(state.track, state.position);
+  var speedPercent=state.speed/MAX_SPEED;
+  var steer=0;
+  if(k.left) steer-=1;
+  if(k.right) steer+=1;
+  state.steer=steer;
+  // steering + centrifugal push
+  state.playerX+=steer*2.0*speedPercent*DT;
+  state.playerX-=DT*2*speedPercent*seg.curve*CENTRIFUGAL;
+  // speed
+  if(state.nitroT>0){
+    state.nitroT--;
+    state.speed+=ACCEL*1.6*DT;
+    if(state.speed>MAX_SPEED*1.45) state.speed=MAX_SPEED*1.45;
+  } else if(k.up){
+    state.speed+=ACCEL*DT;
+    if(state.speed>MAX_SPEED) state.speed=MAX_SPEED;
+  } else if(k.down){
+    state.speed-=BRAKE*DT;
+    if(state.speed<0) state.speed=0;
+  } else {
+    state.speed-=DECEL*DT;
+    if(state.speed<0) state.speed=0;
+  }
+  if(state.pressed.nitro && state.nitro>0 && state.nitroT<=0 && state.speed>MAX_SPEED*0.4){
+    state.nitro--; state.nitroT=90;
+    setMsg('NITRO! '+state.nitro+' charge'+(state.nitro===1?'':'s')+' left.');
+  }
+  // offroad
+  state.offroad=Math.abs(state.playerX)>1.05;
+  if(state.offroad){
+    if(state.speed>OFFROAD_LIMIT){
+      state.speed-=OFFROAD_DECEL*DT;
+      if(state.speed<OFFROAD_LIMIT) state.speed=OFFROAD_LIMIT;
+    }
+  }
+  if(state.crashT>0) state.crashT--;
+  // advance
+  var prevPos=state.position;
+  state.position+=state.speed*DT;
+  state.score+=Math.floor(state.speed*DT*0.01);
+  // traffic moves + collision / near-miss
+  state.cars.forEach(function(c){
+    c.z+=c.speed*DT;
+    if(c.z<state.position-SEG_LEN && !c.counted){
+      c.counted=true;
+      state.passed++;
+      var gap=Math.abs(c.offset-state.playerX);
+      if(gap<0.6 && gap>=0.30){ state.nearMiss++; state.score+=50; state.flash='NEAR MISS +50'; state.flashT=45; }
+    }
+    var dz=c.z-state.position;
+    if(Math.abs(dz)<SEG_LEN*0.8 && Math.abs(c.offset-state.playerX)<0.30) crash(c);
+  });
+  // checkpoints: crossed a stage boundary?
+  var prevStage=Math.floor(prevPos/STAGE_LEN), newStage=Math.floor(state.position/STAGE_LEN);
+  if(newStage>prevStage && newStage<=5){
+    checkpoint(newStage);
+  }
+  // clock
+  state.timeLeft--;
+  if(state.timeLeft<=0){ state.timeLeft=0; endRun(false); }
+  if(state.flashT>0) state.flashT--;
+  // sparks
+  for(var i=state.sparks.length-1;i>=0;i--){
+    var s=state.sparks[i]; s.life--; s.x+=s.vx*DT*60; s.y+=s.vy*DT*60;
+    if(s.life<=0) state.sparks.splice(i,1);
+  }
+  state.pressed={};
+  state.released={};
+}
+
+/* ---------- rendering ---------- */
+function project(p, cameraX, cameraY, cameraZ){
+  p.camera.x=(p.world.x||0)-cameraX;
+  p.camera.y=(p.world.y||0)-cameraY;
+  p.camera.z=(p.world.z||0)-cameraZ;
+  p.screen.scale=CAM_DEPTH/p.camera.z;
+  p.screen.x=Math.round(W/2+(p.screen.scale*p.camera.x*W/2));
+  p.screen.y=Math.round(H/2-(p.screen.scale*p.camera.y*H/2));
+  p.screen.w=Math.round(p.screen.scale*ROAD_W*W/2);
+}
+function polygon(x1,y1,x2,y2,x3,y3,x4,y4,color){
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.lineTo(x4,y4);
+  ctx.closePath(); ctx.fill();
+}
+function hexA(hex, a){
+  var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';
+}
+function drawSprite(type, sx, sy, scale, stage, t){
+  var s=scale*(W/2)*0.9;
+  if(s<2) return;
+  ctx.save();
+  ctx.translate(sx, sy);
+  if(type==='palm'){
+    ctx.strokeStyle='#5a3a22'; ctx.lineWidth=Math.max(2,s*0.06);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(s*0.1,-s*0.5,s*0.05,-s*0.8); ctx.stroke();
+    ctx.fillStyle='#1e8a4a';
+    for(var f=0;f<5;f++){
+      var a=-0.4-f*0.5;
+      ctx.beginPath(); ctx.moveTo(0,-s*0.8);
+      ctx.quadraticCurveTo(Math.cos(a)*s*0.5,-s*0.8+Math.sin(a)*s*0.3,Math.cos(a)*s*0.7,-s*0.7+Math.sin(a)*s*0.45);
+      ctx.quadraticCurveTo(Math.cos(a)*s*0.3,-s*0.8+Math.sin(a)*s*0.2,0,-s*0.8);
+      ctx.fill();
+    }
+    ctx.fillStyle='#5a3a22'; ctx.beginPath(); ctx.arc(s*0.05,-s*0.75,s*0.09,0,7); ctx.fill();
+  } else if(type==='cactus'){
+    ctx.fillStyle='#2e8a3a';
+    ctx.fillRect(-s*0.08,-s*0.7,s*0.16,s*0.7);
+    ctx.fillRect(-s*0.3,-s*0.5,s*0.12,s*0.16); ctx.fillRect(-s*0.3,-s*0.5,s*0.12,s*0.3);
+    ctx.fillRect(s*0.18,-s*0.42,s*0.12,s*0.14); ctx.fillRect(s*0.18,-s*0.42,s*0.12,s*0.28);
+    ctx.fillStyle='#57d98d'; ctx.fillRect(-s*0.08,-s*0.7,s*0.04,s*0.7);
+    ctx.fillStyle='#ff5db1'; ctx.beginPath(); ctx.arc(0,-s*0.72,s*0.07,0,7); ctx.fill();
+  } else if(type==='pine'){
+    ctx.fillStyle='#5a3a22'; ctx.fillRect(-s*0.06,-s*0.25,s*0.12,s*0.25);
+    ctx.fillStyle='#0e5c2e';
+    ctx.beginPath(); ctx.moveTo(0,-s); ctx.lineTo(-s*0.35,-s*0.4); ctx.lineTo(s*0.35,-s*0.4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#14532e';
+    ctx.beginPath(); ctx.moveTo(0,-s*0.75); ctx.lineTo(-s*0.28,-s*0.2); ctx.lineTo(s*0.28,-s*0.2); ctx.closePath(); ctx.fill();
+  } else if(type==='billboard'){
+    ctx.fillStyle='#1a1a2e'; ctx.fillRect(-s*0.06,-s*0.5,s*0.12,s*0.5);
+    ctx.fillStyle='#12082a'; ctx.fillRect(-s*0.7,-s*1.05,s*1.4,s*0.55);
+    ctx.strokeStyle='#ff5db1'; ctx.lineWidth=Math.max(1,s*0.02); ctx.strokeRect(-s*0.7,-s*1.05,s*1.4,s*0.55);
+    ctx.fillStyle='#35e0ff'; ctx.font='bold '+Math.max(6,Math.round(s*0.22))+'px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('SHADDAI', 0, -s*0.72);
+    ctx.fillStyle='#ffd75e'; ctx.font=Math.max(5,Math.round(s*0.12))+'px Share Tech Mono, monospace';
+    ctx.fillText('EMERALD COAST', 0, -s*0.58);
+  } else if(type==='torch'){
+    ctx.fillStyle='#3a2412'; ctx.fillRect(-s*0.05,-s*0.5,s*0.1,s*0.5);
+    var fl=0.8+0.2*Math.sin(t*0.3);
+    ctx.fillStyle='rgba(255,120,64,0.35)'; ctx.beginPath(); ctx.arc(0,-s*0.6,s*0.35*fl,0,7); ctx.fill();
+    ctx.fillStyle='#ff9a3d'; ctx.beginPath(); ctx.arc(0,-s*0.58,s*0.16*fl,0,7); ctx.fill();
+    ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(0,-s*0.6,s*0.08,0,7); ctx.fill();
+  } else if(type==='sign'){
+    ctx.fillStyle='#2a2a2a'; ctx.fillRect(-s*0.04,-s*0.5,s*0.08,s*0.5);
+    ctx.fillStyle='#0a5c2e'; ctx.fillRect(-s*0.5,-s*0.95,s*1.0,s*0.45);
+    ctx.strokeStyle='#e8f0ff'; ctx.lineWidth=Math.max(1,s*0.02); ctx.strokeRect(-s*0.5,-s*0.95,s*1.0,s*0.45);
+    ctx.fillStyle='#e8f0ff'; ctx.font='bold '+Math.max(5,Math.round(s*0.2))+'px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('COAST →', 0, -s*0.62);
+  } else if(type==='gantry'){
+    ctx.strokeStyle='#e8e8f0'; ctx.lineWidth=Math.max(2,s*0.05);
+    ctx.beginPath(); ctx.moveTo(-s*1.1,0); ctx.lineTo(-s*1.1,-s*1.0); ctx.lineTo(s*1.1,-s*1.0); ctx.lineTo(s*1.1,0); ctx.stroke();
+    var cols=8, cw=(s*2.2)/cols;
+    for(var i=0;i<cols;i++){
+      ctx.fillStyle=(i%2===0)?'#111':'#f0f0f0';
+      ctx.fillRect(-s*1.1+i*cw,-s*1.0,cw,s*0.22);
+    }
+    ctx.fillStyle='#00ff88'; ctx.font='bold '+Math.max(6,Math.round(s*0.18))+'px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('CHECKPOINT', 0, -s*1.08);
+  }
+  ctx.restore();
+}
+function drawCar(x, y, w, color, brake){
+  var h=w*0.42;
+  ctx.fillStyle='rgba(0,0,0,0.45)';
+  ctx.beginPath(); ctx.ellipse(x, y+2, w*0.55, h*0.12, 0, 0, 7); ctx.fill();
+  /* SPRITE STACK (finishing pass 2026-11-22): body slices stepping down
+     in dark shades — coupes carry stacked bodywork over the road, not
+     one flat rear plate. */
+  for(var k=3;k>=1;k--){
+    ctx.fillStyle='rgba(5,5,10,'+(0.3+k*0.15)+')';
+    ctx.beginPath();
+    ctx.moveTo(x-w*0.5, y+k*h*0.07); ctx.lineTo(x-w*0.46, y-h*0.55+k*h*0.07); ctx.lineTo(x-w*0.3, y-h*0.62+k*h*0.07);
+    ctx.lineTo(x+w*0.3, y-h*0.62+k*h*0.07); ctx.lineTo(x+w*0.46, y-h*0.55+k*h*0.07); ctx.lineTo(x+w*0.5, y+k*h*0.07);
+    ctx.closePath(); ctx.fill();
+  }
+  // body — shaded coupe, rim light in its colour
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  ctx.moveTo(x-w*0.5, y); ctx.lineTo(x-w*0.46, y-h*0.55); ctx.lineTo(x-w*0.3, y-h*0.62);
+  ctx.lineTo(x+w*0.3, y-h*0.62); ctx.lineTo(x+w*0.46, y-h*0.55); ctx.lineTo(x+w*0.5, y);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.fillRect(x-w*0.46, y-h*0.55, w*0.92, h*0.08);
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.fillRect(x-w*0.5, y-h*0.12, w, h*0.12);
+  // roof + rear window
+  ctx.fillStyle='#101018';
+  ctx.beginPath();
+  ctx.moveTo(x-w*0.32, y-h*0.62); ctx.lineTo(x-w*0.2, y-h*0.95); ctx.lineTo(x+w*0.2, y-h*0.95); ctx.lineTo(x+w*0.32, y-h*0.62);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(53,224,255,0.5)';
+  ctx.fillRect(x-w*0.18, y-h*0.92, w*0.36, h*0.22);
+  // spoiler
+  ctx.fillStyle='#0a0a12';
+  ctx.fillRect(x-w*0.52, y-h*0.78, w*1.04, h*0.07);
+  ctx.fillRect(x-w*0.5, y-h*0.78, w*0.05, h*0.22);
+  ctx.fillRect(x+w*0.45, y-h*0.78, w*0.05, h*0.22);
+  // taillights
+  ctx.fillStyle=brake?'#ff2020':'#ff3860';
+  ctx.fillRect(x-w*0.44, y-h*0.42, w*0.2, h*0.1);
+  ctx.fillRect(x+w*0.24, y-h*0.42, w*0.2, h*0.1);
+  ctx.fillStyle='rgba(255,56,96,0.4)';
+  ctx.fillRect(x-w*0.48, y-h*0.46, w*0.28, h*0.18);
+  ctx.fillRect(x+w*0.2, y-h*0.46, w*0.28, h*0.18);
+  // wheels
+  ctx.fillStyle='#0a0a0a';
+  ctx.fillRect(x-w*0.5, y-h*0.08, w*0.12, h*0.14);
+  ctx.fillRect(x+w*0.38, y-h*0.08, w*0.12, h*0.14);
+}
+function drawPlayerCar(){
+  var w=150, h=w*0.42;
+  var x=W/2, y=H-8;
+  var lean=state.steer*10, bounce=Math.sin(state.frame*0.6)*(state.speed/MAX_SPEED)*2;
+  var brake=state.keys.down;
+  ctx.save();
+  ctx.translate(x+lean, y+bounce);
+  // nitro flame
+  if(state.nitroT>0){
+    var fl=0.7+0.3*Math.sin(state.frame*0.9);
+    ctx.fillStyle='rgba(0,255,136,0.5)'; ctx.beginPath(); ctx.ellipse(-w*0.25, 6, 14*fl, 26*fl, 0, 0, 7); ctx.fill();
+    ctx.fillStyle='rgba(0,255,136,0.5)'; ctx.beginPath(); ctx.ellipse(w*0.25, 6, 14*fl, 26*fl, 0, 0, 7); ctx.fill();
+    ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.ellipse(-w*0.25, 4, 7*fl, 16*fl, 0, 0, 7); ctx.fill();
+    ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.ellipse(w*0.25, 4, 7*fl, 16*fl, 0, 0, 7); ctx.fill();
+  }
+  drawCar(0, 0, w, '#00ff88', brake);
+  // VERDIGRIS badge + driver helmet
+  ctx.fillStyle='#04120a'; ctx.font='bold 13px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('VERDIGRIS', 0, -h*0.5);
+  ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(0, -h*0.78, 9, 0, 7); ctx.fill();
+  ctx.fillStyle='#111'; ctx.fillRect(-5, -h*0.78-2, 10, 4);
+  ctx.restore();
+  // crash sparks
+  state.sparks.forEach(function(s){
+    ctx.fillStyle=s.col;
+    ctx.fillRect(W/2+s.x*120-2, H-40+s.y*8, 4, 4);
+  });
+}
+function drawCockpit(){
+  // hood
+  ctx.fillStyle='#0a1a10';
+  ctx.beginPath(); ctx.moveTo(0,H); ctx.lineTo(W*0.18,H-70); ctx.lineTo(W*0.82,H-70); ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(0,255,136,0.25)';
+  ctx.fillRect(W*0.18, H-72, W*0.64, 3);
+  // steering wheel
+  ctx.strokeStyle='#1a2a20'; ctx.lineWidth=14;
+  ctx.beginPath(); ctx.arc(W/2, H+30, 95, Math.PI, 0); ctx.stroke();
+  ctx.strokeStyle='#00ff88'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(W/2, H+30, 95, Math.PI, 0); ctx.stroke();
+  ctx.fillStyle='#04120a'; ctx.beginPath(); ctx.arc(W/2, H+30, 22, 0, 7); ctx.fill();
+  ctx.strokeStyle='#ffd75e'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(W/2, H+30, 22, 0, 7); ctx.stroke();
+  // nitro flame on the hood
+  if(state.nitroT>0){
+    ctx.fillStyle='rgba(0,255,136,0.4)';
+    ctx.beginPath(); ctx.ellipse(W/2, H-80, 30, 10+6*Math.sin(state.frame*0.9), 0, 0, 7); ctx.fill();
+  }
+  // speed lines at the edges
+  if(state.speed>MAX_SPEED*0.6){
+    ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=2;
+    for(var i=0;i<6;i++){
+      var yy=((state.frame*9+i*90)%H);
+      ctx.beginPath(); ctx.moveTo(6, yy); ctx.lineTo(26, yy+14); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W-6, yy); ctx.lineTo(W-26, yy+14); ctx.stroke();
+    }
+  }
+}
+var renderCache={};
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  if(!state){ drawTitle(); return; }
+  var st=STAGES[state.stage];
+  var t=state.frame;
+  // sky
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,st.skyTop); g.addColorStop(0.55,st.skyBot); g.addColorStop(1,st.fog);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // sun / moon
+  var sunX=W*st.sunX, sunY=86;
+  ctx.fillStyle=hexA(st.sun,0.25); ctx.beginPath(); ctx.arc(sunX,sunY,64,0,7); ctx.fill();
+  ctx.fillStyle=st.sun; ctx.beginPath(); ctx.arc(sunX,sunY,34,0,7); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.beginPath(); ctx.arc(sunX-8,sunY-8,8,0,7); ctx.fill();
+  // clouds drifting
+  ctx.fillStyle='rgba(255,255,255,0.10)';
+  for(var ci=0;ci<5;ci++){
+    var cx=((ci*260+t*0.2)%(W+240))-120, cy=40+ci*22;
+    ctx.beginPath(); ctx.ellipse(cx,cy,70,12,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+40,cy+6,50,10,0,0,7); ctx.fill();
+  }
+  // far mountains (parallax by road curve)
+  var baseSeg=Math.floor(state.position/SEG_LEN)%state.segments.length;
+  var curveSum=0;
+  for(var mi=0;mi<10;mi++) curveSum+=state.segments[(baseSeg+mi)%state.segments.length].curve;
+  var mtnOff=-curveSum*8;
+  ctx.fillStyle=st.mtn;
+  for(var mx=-40;mx<=W+40;mx+=70){
+    var mh=90+((Math.sin(mx*0.021+mtnOff*0.01)+1)/2)*80;
+    ctx.beginPath(); ctx.ellipse(mx+35, 310, 90, mh, 0, Math.PI, 0); ctx.fill();
+  }
+  ctx.fillStyle=st.hills;
+  for(var hx=-40;hx<=W+40;hx+=55){
+    var hh=60+((Math.sin(hx*0.03+mtnOff*0.02)+1)/2)*50;
+    ctx.beginPath(); ctx.ellipse(hx+28, 330, 70, hh, 0, Math.PI, 0); ctx.fill();
+  }
+  // ---- pseudo-3D road ----
+  var baseSegment=Math.floor(state.position/SEG_LEN)%state.segments.length;
+  var basePercent=(state.position%SEG_LEN)/SEG_LEN;
+  var playerSegment=segmentAt(state.track, state.position);
+  var playerPercent=basePercent;
+  var playerY=playerSegment.p1.world.y+(playerSegment.p2.world.y-playerSegment.p1.world.y)*playerPercent;
+  var maxY=H;
+  var x=0, dx=-(state.segments[baseSegment].curve*basePercent);
+  var camX=state.playerX*ROAD_W;
+  var camY=playerY+CAM_H;
+  renderCache={};
+  for(var n=0;n<DRAW_DIST;n++){
+    var seg=state.segments[(baseSegment+n)%state.segments.length];
+    seg.looped=seg.index<baseSegment;
+    seg.fog=n/DRAW_DIST;
+    seg.clip=maxY;
+    project(seg.p1, camX-x, camY, state.position-(seg.looped?TRACK_LEN:0));
+    project(seg.p2, camX-x-dx, camY, state.position-(seg.looped?TRACK_LEN:0));
+    x+=dx; dx+=seg.curve;
+    if(seg.p1.camera.z<=CAM_DEPTH || seg.p2.screen.y>=seg.p1.screen.y || seg.p2.screen.y>=maxY) continue;
+    renderSegment(seg, n);
+    maxY=seg.p1.screen.y;
+    renderCache[seg.index]=seg;
+  }
+  // sprites + traffic, back to front
+  for(var n2=DRAW_DIST-1;n2>0;n2--){
+    var seg2=state.segments[(baseSegment+n2)%state.segments.length];
+    if(!renderCache[seg2.index]) continue;
+    var sc=seg2.p1.screen;
+    seg2.sprites.forEach(function(sp){
+      var sx=sc.x+sc.scale*sp.offset*ROAD_W*W/2;
+      var sy=sc.y;
+      if(sy>seg2.clip) return;
+      drawSprite(sp.type, sx, sy, sc.scale, STAGES[Math.floor(seg2.index/STAGE_SEGS)], t);
+    });
+  }
+  state.cars.forEach(function(car){
+    var ci=Math.floor(car.z/SEG_LEN)%state.segments.length;
+    if(ci<0) ci+=state.segments.length;
+    var cseg=renderCache[ci];
+    if(!cseg) return;
+    var csc=cseg.p1.screen;
+    var cx=csc.x+csc.scale*car.offset*ROAD_W*W/2;
+    var cy=csc.y;
+    if(cy>cseg.clip) return;
+    var cw=Math.max(4, csc.scale*ROAD_W*W/2*0.32);
+    drawCar(cx, cy, cw, car.color, false);
+  });
+  // player view
+  if(state.cam) drawCockpit(); else drawPlayerCar();
+  drawHUD(st);
+  if(state.over) drawOver();
+  if(state.phase==='title') drawTitle();
+}
+function renderSegment(seg, n){
+  var p1=seg.p1.screen, p2=seg.p2.screen;
+  var st=STAGES[Math.floor(seg.index/STAGE_SEGS)];
+  var grass=seg.color==='light'?st.grassA:st.grassB;
+  var rumble=seg.color==='light'?'#e8e8f0':'#ff3860';
+  var road=seg.color==='light'?st.roadA:st.roadB;
+  // grass
+  ctx.fillStyle=grass; ctx.fillRect(0, p2.y, W, p1.y-p2.y);
+  // road
+  polygon(p1.x-p1.w, p1.y, p1.x+p1.w, p1.y, p2.x+p2.w, p2.y, p2.x-p2.w, p2.y, road);
+  // rumble strips
+  var r1=p1.w/Math.max(6,LANES), r2=p2.w/Math.max(6,LANES);
+  polygon(p1.x-p1.w-r1, p1.y, p1.x-p1.w, p1.y, p2.x-p2.w, p2.y, p2.x-p2.w-r2, p2.y, rumble);
+  polygon(p1.x+p1.w+r1, p1.y, p1.x+p1.w, p1.y, p2.x+p2.w, p2.y, p2.x+p2.w+r2, p2.y, rumble);
+  // lane markers
+  if(seg.color==='light'){
+    var lw1=p1.w*2/LANES, lw2=p2.w*2/LANES;
+    var l1x1=p1.x-p1.w+lw1, l1x2=p1.x-p1.w+lw1*2;
+    var l2x1=p2.x-p2.w+lw2, l2x2=p2.x-p2.w+lw2*2;
+    ctx.fillStyle=st.lane;
+    ctx.beginPath();
+    ctx.moveTo(l1x1-p1.w*0.01, p1.y); ctx.lineTo(l1x1+p1.w*0.01, p1.y);
+    ctx.lineTo(l2x1+p2.w*0.01, p2.y); ctx.lineTo(l2x1-p2.w*0.01, p2.y);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(l1x2-p1.w*0.01, p1.y); ctx.lineTo(l1x2+p1.w*0.01, p1.y);
+    ctx.lineTo(l2x2+p2.w*0.01, p2.y); ctx.lineTo(l2x2-p2.w*0.01, p2.y);
+    ctx.closePath(); ctx.fill();
+  }
+  // fog wash
+  if(seg.fog>0.25){
+    ctx.fillStyle=hexA(st.fog, (seg.fog-0.25)*0.9);
+    ctx.fillRect(0, p2.y, W, p1.y-p2.y);
+  }
+}
+function fmtTime(frames){
+  var s=Math.max(0, frames)/60;
+  var m=Math.floor(s/60), sec=(s%60);
+  return m+':'+(sec<10?'0':'')+sec.toFixed(1);
+}
+function drawHUD(st){
+  ctx.fillStyle='rgba(5,10,8,0.72)'; ctx.fillRect(0,0,W,40);
+  ctx.textAlign='left';
+  ctx.fillStyle='#ffd75e'; ctx.font='bold 22px Share Tech Mono, monospace';
+  ctx.fillText('⏱ '+fmtTime(state.timeLeft), 14, 29);
+  ctx.fillStyle=state.timeLeft<600?'#ff3860':'#d8ffe9';
+  ctx.font='bold 15px Share Tech Mono, monospace';
+  ctx.fillText('SCORE '+state.score, 150, 27);
+  ctx.fillStyle='#00ff88';
+  ctx.fillText('STAGE '+(state.stage+1)+'/5 · '+st.name, 300, 27);
+  ctx.fillStyle='#35e0ff';
+  ctx.fillText('PASSED '+state.passed+' · NEAR '+state.nearMiss, 620, 27);
+  ctx.fillStyle='#ffd75e';
+  ctx.fillText('NITRO '+'◆'.repeat(state.nitro)+'◇'.repeat(3-state.nitro), 820, 27);
+  // speedometer, bottom right
+  var kmh=Math.round(state.speed/MAX_SPEED*240);
+  ctx.fillStyle='rgba(5,10,8,0.72)'; ctx.fillRect(W-190, H-58, 176, 44);
+  ctx.fillStyle=state.nitroT>0?'#00ff88':'#fff';
+  ctx.font='900 26px Orbitron, sans-serif'; ctx.textAlign='right';
+  ctx.fillText(kmh+' km/h', W-24, H-24);
+  ctx.fillStyle='#7d8aa0'; ctx.font='11px Share Tech Mono, monospace';
+  ctx.fillText(state.mode==='watch'?('BOT '+(state.feAgentId||'')+' · '+state.feTraces.length+' traces'):'JUNO · VERDIGRIS', W-24, H-66);
+  // checkpoint flash
+  if(state.flashT>0){
+    ctx.fillStyle='#00ff88'; ctx.font='900 30px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.globalAlpha=Math.min(1, state.flashT/30);
+    ctx.fillText(state.flash, W/2, 96);
+    ctx.globalAlpha=1;
+  }
+  if(state.crashT>0){
+    ctx.fillStyle='#ff3860'; ctx.font='900 22px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('CRASH!', W/2, 130);
+  }
+}
+function drawOver(){
+  ctx.fillStyle='rgba(5,10,8,0.82)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=state.win?'#00ff88':'#ff3860';
+  ctx.font='900 44px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText(state.win?'GRAND TOUR COMPLETE':'TIME UP', W/2, H/2-20);
+  ctx.fillStyle='#d8ffe9'; ctx.font='18px Rajdhani, sans-serif';
+  ctx.fillText('Score '+state.score+' · Best '+state.best+' · Stages cleared '+state.checkpoints+'/5 — press R to race again', W/2, H/2+24);
+  if(state.mode==='watch' && state.feAgentId) ctx.fillText('Bot '+state.feAgentId+' · '+state.feTraces.length+' traces recorded', W/2, H/2+52);
+  if(state.duel && state.duel.done) ctx.fillText('DUEL: P1 '+state.duel.scores[0]+' vs P2 '+state.duel.scores[1]+' — '+state.duel.winner+' wins!', W/2, H/2+52);
+}
+function drawTitle(){
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0b1030'); g.addColorStop(1,'#123a5e');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(W*0.72,90,40,0,7); ctx.fill();
+  ctx.fillStyle='#00ff88'; ctx.font='900 64px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('CANNONBALL', W/2, 200);
+  ctx.fillStyle='#d8ffe9'; ctx.font='20px Rajdhani, sans-serif';
+  ctx.fillText('Five stages down the Emerald Coast. Beat the clock, beat the traffic.', W/2, 250);
+  ctx.fillStyle='#7d8aa0'; ctx.font='15px Share Tech Mono, monospace';
+  ctx.fillText('1P · WATCH bot race · 2P duel — press a mode button to begin', W/2, 290);
+}
+
+/* ---------- input / menus ---------- */
+var KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'up',KeyW:'up',
+  ArrowDown:'down',KeyS:'down',KeyX:'nitro'};
+function togglePause(){
+  if(!state||state.phase==='title') return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+}
+function toggleCam(){ if(state) state.cam=!state.cam; }
+function toggleMute(){ muted=!muted; setMsg(muted?'Muted.':'Sound on.'); }
+function saveState(){
+  if(!state) return false;
+  try{
+    if(FE){ try{ FE.flush(); }catch(e){} } // E57: land unflushed engine traces
+    localStorage.setItem('cannonball.save', JSON.stringify({
+      stage:state.stage, score:state.score, timeLeft:state.timeLeft,
+      position:state.position, playerX:state.playerX, speed:state.speed,
+      nitro:state.nitro, checkpoints:state.checkpoints, passed:state.passed, nearMiss:state.nearMiss,
+      mode:state.mode, feAgentId:state.feAgentId, feTraces:state.feTraces,
+      feRecorded:!!state.feRecorded, over:state.over, win:state.win,
+      result:state.result, frame:state.frame}));
+    setMsg('State saved — stage '+(state.stage+1)+', score '+state.score+'.');
+    return true;
+  }catch(e){ setMsg('Save failed.'); return false; }
+}
+function loadState(){
+  // E57: the SAVED mode is the mode — a watch save restores as WATCH in
+  // place (same agent, hydrated via loadAgent, full trace list, guard kept),
+  // and an over-save restores as over. Works from the title screen too:
+  // no game needs to be running first.
+  try{
+    var raw=localStorage.getItem('cannonball.save');
+    if(!raw){ setMsg('No saved state yet.'); return false; }
+    var o=JSON.parse(raw);
+    var mode=o.mode||'solo';
+    startGame(mode, o.stage, o.feAgentId||null);
+    state.score=o.score; state.timeLeft=o.timeLeft; state.position=o.position;
+    state.playerX=o.playerX; state.speed=o.speed; state.nitro=o.nitro;
+    state.checkpoints=o.checkpoints; state.passed=o.passed; state.nearMiss=o.nearMiss;
+    state.feTraces=(o.feTraces||[]).slice();
+    state.feRecorded=!!o.feRecorded;
+    if(typeof o.frame==='number') state.frame=o.frame;
+    if(o.over){
+      state.over=true; state.phase='over'; state.win=!!o.win;
+      state.result=o.result||(o.win?'WIN':'LOSS');
+    }
+    setMsg('State loaded — stage '+(o.stage+1)+', score '+o.score+'.');
+    return true;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+function bindBtn(id, fn){
+  var el=$(id); if(!el) return;
+  el.addEventListener('click', fn);
+  el.addEventListener('touchstart', function(e){ e.preventDefault(); fn(); }, {passive:false});
+}
+bindBtn('btnSolo', function(){ startGame('solo',0); });
+bindBtn('btnWatch', function(){ startGame('watch',0); });
+bindBtn('btnDuel', function(){ startGame('duel',0); });
+bindBtn('btnCam', toggleCam);
+bindBtn('btnPause', togglePause);
+bindBtn('resumeBtn', togglePause);
+bindBtn('saveBtn', saveState);
+bindBtn('loadBtn', loadState);
+bindBtn('restartBtn', function(){ if(state){ if(state.paused) togglePause(); startGame(state.mode, state.stage); } });
+bindBtn('quitArcadeBtn', function(){ location.href='../arcade.html'; });
+function bindHold(id, key, pressKey){
+  var el=$(id); if(!el) return;
+  var on=function(e){ e.preventDefault(); if(state){ state.keys[key]=true; if(pressKey) state.pressed[pressKey]=true; } };
+  var off=function(e){ e.preventDefault(); if(state){ state.keys[key]=false; if(pressKey) state.released[pressKey]=true; } };
+  el.addEventListener('pointerdown', on);
+  el.addEventListener('pointerup', off);
+  el.addEventListener('pointerleave', off);
+  el.addEventListener('touchstart', on, {passive:false});
+  el.addEventListener('touchend', off, {passive:false});
+}
+bindHold('dLeft','left'); bindHold('dRight','right'); bindHold('dUp','up'); bindHold('dDown','down');
+bindHold('btnA','up'); bindHold('btnB','down'); bindHold('btnN','nitro','nitro');
+bindBtn('startBtn', togglePause);
+bindBtn('selectBtn', toggleCam);
+if(typeof document!=='undefined'){
+  document.addEventListener('keydown', function(e){
+    if(!state) return;
+    if(e.code==='KeyP'){ togglePause(); return; }
+    if(e.code==='KeyV'){ toggleCam(); return; }
+    if(e.code==='KeyM'){ toggleMute(); return; }
+    if(e.code==='KeyR'){ if(state.phase!=='title') startGame(state.mode, state.stage); return; }
+    var k=KEYMAP[e.code];
+    if(k){
+      if(!state.keys[k]) state.pressed[k]=true;
+      state.keys[k]=true;
+      e.preventDefault();
+    }
+  });
+  document.addEventListener('keyup', function(e){
+    var k=KEYMAP[e.code];
+    if(k && state){ state.keys[k]=false; state.released[k]=true; }
+  });
+  if(('ontouchstart' in window)||(typeof navigator!=='undefined'&&navigator.maxTouchPoints>0)){
+    document.body.classList.add('touch');
+  }
+}
+
+/* ---------- loop ---------- */
+function loop(){
+  if(state && state.phase==='play') step();
+  draw();
+  if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+}
+state=null;
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+
+/* ---------- debug / test surface ---------- */
+window.__cannonball={
+  get state(){ if(!state) return {phase:'title'};
+    return {phase:state.phase,mode:state.mode,paused:state.paused,cam:state.cam,frame:state.frame,
+    stage:state.stage,position:state.position,speed:state.speed,playerX:state.playerX,
+    timeLeft:state.timeLeft,score:state.score,nitro:state.nitro,nitroT:state.nitroT,
+    crashT:state.crashT,passed:state.passed,nearMiss:state.nearMiss,checkpoints:state.checkpoints,
+    over:state.over,result:state.result,win:state.win,muted:muted,best:state.best,
+    offroad:state.offroad,segCount:state.segments.length,carCount:state.cars.length,
+    duel:state.duel,feAgent:state.feAgentId,feTraces:state.feTraces.length,
+    feRecorded:state.feRecorded}; },
+  buildTrack:buildTrack,
+  startGame:startGame,
+  debugKey:function(k,down){ if(!state) return; state.keys[k]=down; if(down) state.pressed[k]=true; else state.released[k]=true; },
+  debugPlace:function(pos,x){ if(!state) return; state.position=pos; if(typeof x==='number') state.playerX=x; },
+  debugSetTime:function(f){ if(state) state.timeLeft=f; },
+  debugSetSpeed:function(v){ if(state) state.speed=v; },
+  debugSpawnCar:function(z,offset,speed){ if(!state) return null;
+    var c={z:z,offset:(typeof offset==='number'?offset:0),speed:(typeof speed==='number'?speed:3000),color:'#ff3860',counted:false,wobble:0};
+    state.cars.push(c); return c; },
+  debugGiveNitro:function(){ if(state) state.nitro=3; },
+  debugWatchTick:function(){ if(state && state.mode==='watch' && !state.over) botApply(botDecide()); }, // E57: over-guard (D6)
+  feWatchCursor:function(){ return feWatchIdx(); },
+  debugSave:saveState, debugLoad:loadState,
+  debugToggleCam:toggleCam, debugTogglePause:togglePause, debugToggleMute:toggleMute,
+  debugSeg:function(i){ if(!state) return null; var s=state.segments[i]; return s?{curve:s.curve,y:s.p1.world.y,sprites:s.sprites.map(function(sp){ return sp.type; })}:null; },
+  debugCar:function(i){ if(!state||!state.cars[i]) return null; var c=state.cars[i]; return {z:c.z,offset:c.offset,speed:c.speed}; }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DEEPDIG — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#120a04;--panel:#1d1206;--border:rgba(255,179,71,.22);--gold:#ffb347;--green:#00ff88;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#f5e6cf;--dim:#a08a6a}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(255,179,71,.10),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(18,10,4,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--gold)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--gold);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:820px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(255,179,71,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:140px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--gold);box-shadow:0 0 16px rgba(255,179,71,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(18,10,4,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#1d1206;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .abtns button{width:52px;height:52px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>DEEP<span>DIG</span></h1><span class="tag">Dig · Pump · Drop · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="720" height="680"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The dirt waits for no one.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c"></button><button data-k="up">▲</button><button class="c"></button>
+        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
+        <button class="c"></button><button data-k="down2">▼</button><button class="c"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — toggle miner-cam">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — miner-cam">B</button>
+        <button id="btnA" title="A — pump">A</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">The garden grid is quiet. Dig in.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ Play<small>1P — dig, pump, drop rocks</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>Bot miner works the grid</small></button>
+    <button class="mbtn" id="btnDuel">⚔ 2P duel<small>Alternate levels, high score wins</small></button>
+    <button class="mbtn" id="btnFP">🎥 Miner-cam<small>V — ride with MOLO</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+  </div>
+  <div class="help">
+    <b>DEEPDIG</b> — <b>MOLO</b> the mole-bot tunnels the garden grid under Cindral Reach. Dig through the dirt (<b>+10 a tile</b>), pump your hose into a pest and inflate it till it <b>POPS</b> (deeper pops pay more: <b>200 / 400 / 600 / 1,000</b>), and undermine the boulders — a falling rock crushes everything under it (<b>1,000 / 2,000 / 4,000 / 6,000</b>). Drop two rocks and a <b>GLOWMELON</b> ripens in the start tunnel — grab it before it fades. The <b>SPROUTS</b> chase you through the tunnels and ghost through the dirt when they lose you; the <b>EMBERWYRMS</b> breathe fire down a clear tunnel. Clear every pest to take the next level.<br/>
+    <b>Controls:</b> <span class="k">arrows / WASD</span> dig + steer · hold <span class="k">SPACE</span> to pump (4 pumps pops) · <span class="k">V</span> miner-cam · <span class="k">P</span> pause · <span class="k">M</span> mute · <span class="k">R</span> restart.<br/>
+    <b>WATCH</b> is a council bot miner on the Fallible Engine — a different agent works the grid each game, judging when to dig, pump and drop rocks, and learning from every squish. They misjudge on purpose — never frame-perfect. If the engine fails to load, the old ROOK / SPARK / DRIFT stand-ins dig instead.<br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: <span class="k">D-pad</span> steers MOLO, <span class="k">A</span> pumps, <span class="k">B</span> toggles miner-cam, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles miner-cam.<br/>
+    <b>Clean-room:</b> the dig-and-pump formula re-implemented from documented behaviour in our own code (SPEC lane — the Atari 7800 original source for the 1982 arcade digger is read-as-spec only; see scan3.md §9). All names, levels, characters and art are original — no copied code, assets or names.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   DEEPDIG — original dig-and-pump arcade game for the Shaddai Arcade.
+   Clean-room: the FORMULA (grid digging, pump-to-inflate, rock drops, enemies
+   that ghost through dirt, bonus fruit) re-implemented from documented
+   behaviour in our own code. All names, levels, characters, art and tuning
+   are original. No reference code or assets were copied, run or moved in.
+   SPEC lane: the 1982 arcade digger's Atari 7800 original source (scan3 §9)
+   was treated as read-as-text spec only.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var COLS=15, ROWS=13, TILE=48, FIELD_Y=56;
+var W=720, H=680;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function rnd(a,b){ return a+Math.random()*(b-a); }
+function tileCX(tx){ return tx*TILE+TILE/2; }
+function tileCY(ty){ return ty*TILE+TILE/2; }
+function seedRand(r,c){ var s=(r*31+c*17)%100; return s/100; }
+
+/* ---- audio: tiny blips, guarded so headless runs never break ---- */
+var AC=null, muted=false;
+try{ if(typeof localStorage!=='undefined'){ muted=localStorage.getItem('deepdig.mute')==='1'; } }catch(e){}
+function beep(f,d,type,g){
+  if(muted) return;
+  try{
+    if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return; AC=new C(); }
+    var o=AC.createOscillator(), gn=AC.createGain();
+    o.type=type||'square'; o.frequency.value=f;
+    gn.gain.setValueAtTime(g||0.05, AC.currentTime);
+    gn.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+(d||0.08));
+    o.connect(gn); gn.connect(AC.destination); o.start(); o.stop(AC.currentTime+(d||0.08));
+  }catch(e){}
+}
+
+/* ---- levels: handcrafted, original layouts ---- */
+/* hTunnels: rows fully dug. vTunnels: vertical dug shafts. Rocks sit in dirt
+   (never inside a tunnel) and fall when the dirt beneath them is dug away. */
+var LEVELS=[
+  {name:'GARDEN ROWS',
+   enemies:[['sprout',2,5],['sprout',12,5],['sprout',7,10],['sprout',7,11]],
+   rocks:[[3,3],[11,3],[4,7],[10,7],[5,10]],
+   hTunnels:[1,5,9],
+   vTunnels:[{c:2,r0:4,r1:11},{c:7,r0:1,r1:11},{c:12,r0:4,r1:11}]},
+  {name:'ROOT CELLAR',
+   enemies:[['sprout',2,5],['sprout',12,5],['sprout',7,10],['sprout',4,9],['wyrm',7,11],['wyrm',12,9]],
+   rocks:[[3,2],[11,2],[5,6],[9,6],[5,10],[9,10]],
+   hTunnels:[1,5,9],
+   vTunnels:[{c:2,r0:4,r1:11},{c:7,r0:1,r1:11},{c:12,r0:4,r1:11},{c:4,r0:8,r1:10},{c:10,r0:8,r1:10}]},
+  {name:'EMBER DEEP',
+   enemies:[['sprout',2,5],['sprout',12,5],['sprout',7,10],['sprout',4,9],['sprout',10,9],['wyrm',7,11],['wyrm',2,11],['wyrm',12,11]],
+   rocks:[[3,3],[11,3],[5,7],[9,7],[6,10],[13,6]],
+   hTunnels:[1,5,9],
+   vTunnels:[{c:2,r0:4,r1:11},{c:7,r0:1,r1:11},{c:12,r0:4,r1:11},{c:4,r0:8,r1:10},{c:10,r0:8,r1:10}]}
+];
+var POP_VALUE=[200,400,600,1000];       // by depth band of the popped enemy
+var CRUSH_VALUE=[1000,2000,4000,6000];  // per rock fall, by crush count
+var FRUIT_VALUE=[400,600,1000,2000];    // by level (capped)
+var PLAYER_SPEED=2.4;
+
+var state;
+function freshState(){
+  return {
+    phase:'title', mode:'solo', paused:false, fp:false, frame:0,
+    score:0, hi:0, level:1, lives:3,
+    dirt:[], player:null, enemies:[], rocks:[],
+    fruit:null, fruitSpawned:false, rocksDropped:0,
+    pump:{active:false, held:false, len:0, dir:{x:0,y:1}, target:null, pulseT:0, decayT:0},
+    flame:null, flameFired:0,
+    particles:[], floaters:[],
+    p1score:0, p2score:0, p2turn:false,
+    watchBot:'ZEROX', watchDigs:0, watchPumps:0, watchPops:0, watchKills:0,
+    banner:'', bannerUntil:0, over:false, winner:null,
+    levelClearT:0, respawnT:0, tilesDug:0, speedScale:1
+  };
+}
+state=freshState();
+try{ var s=localStorage.getItem('deepdig.hi'); if(s) state.hi=parseInt(s,10)||0; }catch(e){}
+var feAgentId=null, feAgent=null, feTraces=[], feRecorded=false;
+var WATCH_AGENTS=['ZEROX','TURTLE','NEXUS'];
+/* E43 REPAIR (defect 2, frozen rotation): the watch rotation cursor persists
+   in localStorage ('deepdig.watchIdx'), seeded on load so a fresh load
+   continues the rotation instead of restarting at ZEROX every time. The
+   cursor only advances on an engine-loaded watch bout (see startGame);
+   fallback play never consumes it. */
+var watchIdx=0;
+try{ var _wi=JSON.parse(localStorage.getItem('deepdig.watchIdx')||'0')||0; if(isFinite(_wi)&&_wi>=0) watchIdx=_wi; }catch(e){}
+function saveWatchIdx(){ try{ localStorage.setItem('deepdig.watchIdx', JSON.stringify(watchIdx)); }catch(e){} }
+
+function setMsg(t){ if(msgEl) msgEl.textContent=t; }
+function setBanner(t,frames){ state.banner=t; state.bannerUntil=state.frame+(frames||150); }
+function addScore(n,why,x,y){
+  state.score+=n;
+  if(state.score>state.hi){
+    state.hi=state.score;
+    try{ localStorage.setItem('deepdig.hi',String(state.hi)); }catch(e){}
+  }
+  if(why) setMsg(why+'  +'+n);
+  if(typeof x==='number') state.floaters.push({x:x,y:y,text:'+'+n,life:50});
+}
+function spawnParticles(x,y,col,n,spread){
+  for(var i=0;i<(n||8);i++) state.particles.push({x:x,y:y,vx:rnd(-spread||-2,spread||2),vy:rnd(-3,0.5),life:rnd(20,50),max:50,col:col});
+}
+function inBounds(tx,ty){ return tx>=0 && tx<COLS && ty>=0 && ty<ROWS; }
+function dirtAt(tx,ty){ if(!inBounds(tx,ty)) return false; return state.dirt[ty][tx]; }
+function rockAt(tx,ty){
+  for(var i=0;i<state.rocks.length;i++){
+    var r=state.rocks[i];
+    if(r.state!=='gone' && r.tx===tx && r.ty===ty) return r;
+  }
+  return null;
+}
+function enemyAt(tx,ty){
+  for(var i=0;i<state.enemies.length;i++){
+    var e=state.enemies[i];
+    if(e.alive && e.tx===tx && e.ty===ty) return e;
+  }
+  return null;
+}
+function enterable(tx,ty){ return inBounds(tx,ty) && !rockAt(tx,ty); }
+
+/* ---- level build ---- */
+function buildLevel(n){
+  var def=LEVELS[(n-1)%LEVELS.length];
+  state.level=n;
+  state.speedScale=1+0.1*(n-1);
+  state.dirt=[];
+  for(var r=0;r<ROWS;r++){
+    var row=[];
+    for(var c=0;c<COLS;c++) row.push(r!==0);   // row 0 is the grassy surface
+    state.dirt.push(row);
+  }
+  def.hTunnels.forEach(function(rr){ for(var c=0;c<COLS;c++) state.dirt[rr][c]=false; });
+  def.vTunnels.forEach(function(v){ for(var rr=v.r0;rr<=v.r1;rr++) state.dirt[rr][v.c]=false; });
+  state.enemies=[];
+  def.enemies.forEach(function(sp,i){
+    state.enemies.push(makeEnemy(sp[0],sp[1],sp[2],i));
+  });
+  if(n>3){ // looped levels: one extra sprout joins the garden
+    state.enemies.push(makeEnemy('sprout',7,5,state.enemies.length));
+  }
+  state.rocks=[];
+  def.rocks.forEach(function(rc){
+    state.rocks.push({tx:rc[0],ty:rc[1],state:'idle',wobbleT:0,py:rc[1]*TILE,vy:0,crushed:0,seed:seedRand(rc[1],rc[0])});
+  });
+  state.fruit=null; state.fruitSpawned=false; state.rocksDropped=0;
+  state.flame=null;
+  state.pump={active:false,held:false,len:0,dir:{x:0,y:1},target:null,pulseT:0,decayT:0};
+  state.levelClearT=0;
+  state.player={tx:7,ty:1,x:tileCX(7),y:tileCY(1),dir:{x:0,y:1},want:{x:0,y:1},invuln:0,digging:0};
+}
+function makeEnemy(type,tx,ty,i){
+  return {type:type,tx:tx,ty:ty,x:tileCX(tx),y:tileCY(ty),dir:{x:1,y:0},
+    speed:type==='wyrm'?1.15:1.5, alive:true, ghost:false, ghostT:0, ghostCd:400+((i*173)%400),
+    inflate:0, stuckT:0, flameCd:0, seed:i, lastTx:tx, lastTy:ty, pinned:false};
+}
+
+/* ---- game flow ---- */
+function startGame(mode){
+  var keepHi=state.hi;
+  state=freshState();
+  state.hi=keepHi;
+  state.mode=mode||'solo';
+  state.phase='play';
+  feRecorded=false;
+  state.p1score=0; state.p2score=0; state.p2turn=false;
+  buildLevel(1);
+  if(mode==='watch'){
+    state.watchBot=WATCH_AGENTS[watchIdx%WATCH_AGENTS.length];
+    var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+    if(FE){ watchIdx++; saveWatchIdx(); }
+    feAgent=null; feAgentId=state.watchBot; feTraces=[];
+  }
+  setBanner(mode==='watch'?('WATCH — '+state.watchBot+' WORKS THE GRID'):'LEVEL 1 — GARDEN ROWS');
+  setMsg(mode==='watch'?('Watching '+state.watchBot+' dig the garden.'):(
+    mode==='duel'?'2P duel — Player 1 digs first. Highest score wins.':'Dig with arrows / WASD — hold SPACE to pump a pest.'));
+  syncButtons();
+}
+/* E43 REPAIR (defect 1, no record): a watch game ends only on lives-out, so
+   every recorded bout is a LOSS by construction — solo-vs-field recordResult
+   like maze-chase; there is NO win path (founder decision, same class as
+   E39 defect 1). The guard is marked BEFORE the no-engine early return so
+   a fallback game can never record later. */
+function recordWatchResult(){
+  if(state.mode!=='watch' || feRecorded) return;
+  feRecorded=true;
+  try{
+    var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+    if(FE){
+      if(!feAgent) feAgent=FE.loadAgent(state.watchBot);
+      if(feAgent) FE.recordResult(feAgent,'deepdig',null,'loss',feTraces);
+    }
+  }catch(e){}
+}
+function endGame(){
+  state.phase='over'; state.over=true;
+  var winner=null;
+  if(state.mode==='duel'){
+    state.p2score=state.score;
+    winner = state.p1score>=state.p2score ? 'PLAYER 1' : 'PLAYER 2';
+    state.winner=winner;
+    setBanner(winner+' WINS — '+Math.max(state.p1score,state.p2score));
+    setMsg('Duel over — P1 '+state.p1score+' · P2 '+state.p2score+'. Press R to play again.');
+  } else if(state.mode==='watch'){
+    recordWatchResult();
+    setBanner('WATCH OVER — '+state.watchBot+' SCORED '+state.score);
+    setMsg(state.watchBot+' finished with '+state.score+' (hi '+state.hi+'). Press R to watch again.');
+  } else {
+    setBanner('GAME OVER — '+state.score);
+    setMsg('Game over — '+state.score+' points (hi '+state.hi+'). Press R to play again.');
+  }
+  try{ localStorage.setItem('deepdig.hi',String(state.hi)); }catch(e){}
+}
+function switchTurn(){
+  if(state.mode!=='duel') return;
+  if(!state.p2turn){
+    state.p1score=state.score;
+    state.p2turn=true;
+    state.score=0; state.lives=3;
+    buildLevel(1);
+    setBanner('PLAYER 2 — YOUR GRID');
+    setMsg('Player 2 — beat '+state.p1score+'.');
+  }
+}
+function die(cause){
+  var p=state.player;
+  if(!p || state.phase!=='play' || p.invuln>0 || state.respawnT>0) return;
+  state.lives--;
+  spawnParticles(p.x,p.y,'#ff3860',16,3);
+  beep(140,0.3,'sawtooth',0.07);
+  setBanner(cause==='rock'?'CRUSHED BY A BOULDER!':(cause==='flame'?'CAUGHT IN THE FLAME!':'CAUGHT BY A PEST!'));
+  setMsg('MOLO is down — '+state.lives+' '+(state.lives===1?'life':'lives')+' left.');
+  if(state.lives<=0){
+    if(state.mode==='duel' && !state.p2turn){ switchTurn(); return; }
+    endGame();
+    return;
+  }
+  state.respawnT=70;
+  state.pump={active:false,held:false,len:0,dir:{x:0,y:1},target:null,pulseT:0,decayT:0};
+  state.flame=null;
+}
+function respawn(){
+  var def=LEVELS[(state.level-1)%LEVELS.length];
+  state.player={tx:7,ty:1,x:tileCX(7),y:tileCY(1),dir:{x:0,y:1},want:{x:0,y:1},invuln:90,digging:0};
+  state.enemies=[];
+  def.enemies.forEach(function(sp,i){ state.enemies.push(makeEnemy(sp[0],sp[1],sp[2],i)); });
+  if(state.level>3) state.enemies.push(makeEnemy('sprout',7,5,state.enemies.length));
+  state.respawnT=0;
+  setMsg('MOLO is back in the tunnel — dig on.');
+}
+function popValueFor(row){
+  if(row<=3) return POP_VALUE[0];
+  if(row<=6) return POP_VALUE[1];
+  if(row<=9) return POP_VALUE[2];
+  return POP_VALUE[3];
+}
+function popEnemy(e){
+  e.alive=false;
+  var v=popValueFor(e.ty);
+  addScore(v,'POP! Depth pays',e.x,e.y);
+  spawnParticles(e.x,e.y,e.type==='wyrm'?'#ff8c42':'#8be04a',18,3);
+  beep(1200,0.15,'square',0.06);
+  if(state.mode==='watch') state.watchPops++;
+  state.pump.target=null;
+}
+
+/* ---- digging ---- */
+function digTile(tx,ty){
+  if(!inBounds(tx,ty) || ty===0 || !state.dirt[ty][tx]) return false;
+  state.dirt[ty][tx]=false;
+  state.tilesDug++;
+  if(state.mode==='watch') state.watchDigs++;
+  addScore(10,null);
+  spawnParticles(tileCX(tx),tileCY(ty),'#a97a4a',5,1.5);
+  beep(220,0.03,'triangle',0.02);
+  return true;
+}
+function movePlayer(){
+  var p=state.player;
+  if(!p || state.respawnT>0) return;
+  if(state.pump.active) return;   // the hose roots MOLO in place while pumping
+  var cx=tileCX(p.tx), cy=tileCY(p.ty);
+  // snap window is FIXED (1.2px): it must be smaller than any step size, or
+  // the mover snaps back to the centre it just left and never progresses.
+  // (A window equal to the step size traps -x/-y moves by float rounding.)
+  var atCenter=Math.abs(p.x-cx)<=1.2 && Math.abs(p.y-cy)<=1.2;
+  if(atCenter){
+    p.x=cx; p.y=cy;
+    var w=p.want;
+    if((w.x!==0||w.y!==0) && enterable(p.tx+w.x,p.ty+w.y)) p.dir={x:w.x,y:w.y};
+    if(!enterable(p.tx+p.dir.x,p.ty+p.dir.y)) p.dir={x:0,y:0};
+  }
+  if(p.dir.x===0 && p.dir.y===0) return;
+  var oldTx=p.tx, oldTy=p.ty;
+  p.x+=p.dir.x*PLAYER_SPEED;
+  p.y+=p.dir.y*PLAYER_SPEED;
+  p.tx=Math.floor(p.x/TILE); p.ty=Math.floor(p.y/TILE);
+  p.tx=clamp(p.tx,0,COLS-1); p.ty=clamp(p.ty,0,ROWS-1);
+  if(p.tx!==oldTx || p.ty!==oldTy){
+    p.digging=6;
+    digTile(p.tx,p.ty);
+  }
+  if(p.digging>0) p.digging--;
+}
+
+/* ---- pump ---- */
+function pumpPress(){
+  if(state.phase!=='play'||state.paused||state.respawnT>0) return;
+  var p=state.player;
+  if(!p) return;
+  if(state.pump.active) return;
+  if(p.dir.x===0 && p.dir.y===0) p.dir={x:0,y:1};
+  state.pump.active=true;
+  state.pump.held=true;
+  state.pump.len=0;
+  state.pump.dir={x:p.dir.x,y:p.dir.y};
+  state.pump.target=null;
+  state.pump.pulseT=0;
+  if(state.mode==='watch') state.watchPumps++;
+  beep(500,0.05,'square',0.03);
+}
+function pumpRelease(){
+  state.pump.held=false;
+}
+function updatePump(){
+  var pm=state.pump, p=state.player;
+  if(!pm.active) return;
+  if(!p){ pm.active=false; return; }
+  if(pm.target && !pm.target.alive){ pm.target=null; }
+  if(pm.held){
+    // extend the hose through dug tiles, one quarter-tile a frame
+    if(!pm.target && pm.len<3*TILE){
+      var tipLen=pm.len+12;
+      var tipX=p.x+pm.dir.x*tipLen, tipY=p.y+pm.dir.y*tipLen;
+      var tipTx=Math.floor(tipX/TILE), tipTy=Math.floor(tipY/TILE);
+      if(!inBounds(tipTx,tipTy) || dirtAt(tipTx,tipTy) || rockAt(tipTx,tipTy)){
+        // blocked by dirt, a boulder, or the edge — hose stops here
+      } else {
+        pm.len=tipLen;
+        var e=enemyAt(tipTx,tipTy);
+        if(e && !e.ghost){
+          pm.target=e;
+          e.inflate=Math.min(4,e.inflate+1);
+          pm.pulseT=0;
+          beep(700+e.inflate*120,0.06,'square',0.04);
+          if(e.inflate>=4) popEnemy(e);
+        }
+      }
+    } else if(pm.target){
+      pm.pulseT++;
+      if(pm.pulseT>=18){
+        pm.pulseT=0;
+        pm.target.inflate=Math.min(4,pm.target.inflate+1);
+        beep(700+pm.target.inflate*120,0.06,'square',0.04);
+        if(pm.target.inflate>=4) popEnemy(pm.target);
+      }
+    }
+  } else {
+    // released: the hose retracts and an attached pest slowly deflates
+    pm.len=Math.max(0,pm.len-24);
+    if(pm.len===0) pm.active=false;
+    if(pm.target){
+      pm.decayT++;
+      if(pm.decayT>=45){
+        pm.decayT=0;
+        pm.target.inflate--;
+        if(pm.target.inflate<=0){ pm.target.inflate=0; pm.target=null; }
+      }
+    }
+  }
+}
+
+/* ---- enemies ---- */
+function enemySpeed(e){ return e.speed*state.speedScale; }
+function ghostToward(e){
+  var p=state.player;
+  var dx=p.x-e.x, dy=p.y-e.y;
+  var sp=0.7;
+  if(Math.abs(dx)>=Math.abs(dy)) e.x+=Math.sign(dx)*sp;
+  else e.y+=Math.sign(dy)*sp;
+  e.tx=clamp(Math.floor(e.x/TILE),0,COLS-1);
+  e.ty=clamp(Math.floor(e.y/TILE),0,ROWS-1);
+  if(!dirtAt(e.tx,e.ty)){
+    // reached a dug tunnel: solid again, snapped to the tile centre
+    e.ghost=false;
+    e.x=tileCX(e.tx); e.y=tileCY(e.ty);
+    e.dir={x:0,y:0};
+    e.ghostCd=400+((e.seed*173+state.frame)%400);
+  }
+}
+function chooseEnemyDir(e){
+  var p=state.player;
+  var dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+  var opts=[];
+  dirs.forEach(function(d){
+    if(d.x===-e.dir.x && d.y===-e.dir.y) return;   // no instant reverse
+    var nx=e.tx+d.x, ny=e.ty+d.y;
+    if(!enterable(nx,ny) || dirtAt(nx,ny)) return;
+    var dist=Math.abs(nx-p.tx)+Math.abs(ny-p.ty);
+    var score=-dist;
+    if(e.type==='wyrm' && ny===p.ty) score+=3;    // wyrms hunt the same row to breathe
+    if(e.type==='sprout' && nx===p.tx) score+=1;
+    opts.push({d:d,score:score});
+  });
+  if(!opts.length){
+    // dead end: reverse into the tunnel we came from — but only if it is dug
+    var rev={x:-e.dir.x,y:-e.dir.y};
+    if(enterable(e.tx+rev.x,e.ty+rev.y) && !dirtAt(e.tx+rev.x,e.ty+rev.y)) return rev;
+    return {x:0,y:0};
+  }
+  opts.sort(function(a,b){ return b.score-a.score; });
+  // imperfect: usually the best step, sometimes a wander
+  if(Math.random()<0.78) return opts[0].d;
+  return opts[Math.floor(Math.random()*opts.length)].d;
+}
+function moveEnemy(e){
+  if(!e.alive) return;
+  if(e.pinned) return;   // debug pin: holds the pest in place for harness tests
+  if(e.inflate>0) return;   // inflated pests are stuck
+  if(e.ghost){ ghostToward(e); return; }
+  var p=state.player;
+  var cx=tileCX(e.tx), cy=tileCY(e.ty);
+  var sp=enemySpeed(e);
+  // fixed snap window (see movePlayer): smaller than any step size.
+  var atCenter=Math.abs(e.x-cx)<=1.2 && Math.abs(e.y-cy)<=1.2;
+  if(atCenter){
+    e.x=cx; e.y=cy;
+    if(e.dir.x===0 && e.dir.y===0) e.dir={x:1,y:0};
+    var nd=chooseEnemyDir(e);
+    e.dir=nd;
+    // wyrm breathes fire down a clear horizontal tunnel at the player
+    if(e.type==='wyrm' && e.flameCd<=0 && e.ty===p.ty){
+      var d=Math.sign(p.tx-e.tx);
+      var dist=Math.abs(p.tx-e.tx);
+      if(d!==0 && dist>=2 && dist<=5){
+        var clear=true;
+        for(var i=1;i<=3;i++){
+          var fx=e.tx+d*i;
+          if(!inBounds(fx,e.ty) || dirtAt(fx,e.ty) || rockAt(fx,e.ty)){ clear=false; break; }
+        }
+        if(clear){
+          state.flame={row:e.ty,c0:e.tx+d,c1:e.tx+d*3,dir:d,t:40};
+          state.flameFired++;
+          e.flameCd=300;
+          beep(180,0.2,'sawtooth',0.06);
+        }
+      }
+    }
+    if(!enterable(e.tx+e.dir.x,e.ty+e.dir.y)) e.dir={x:0,y:0};
+  }
+  if(e.dir.x===0 && e.dir.y===0) return;
+  e.x+=e.dir.x*sp;
+  e.y+=e.dir.y*sp;
+  var ntx=clamp(Math.floor(e.x/TILE),0,COLS-1), nty=clamp(Math.floor(e.y/TILE),0,ROWS-1);
+  if(ntx!==e.tx || nty!==e.ty){ e.tx=ntx; e.ty=nty; e.stuckT=0; }
+  else e.stuckT++;
+  if(e.flameCd>0) e.flameCd--;
+  // lost in the dirt with nowhere to go: start ghosting toward the player
+  e.ghostCd--;
+  if(e.ghostCd<=0 || e.stuckT>150){
+    e.ghost=true; e.ghostT=240; e.ghostCd=600;
+    e.stuckT=0;
+  }
+}
+
+/* ---- rocks ---- */
+function updateRocks(){
+  state.rocks.forEach(function(r){
+    if(r.state==='gone') return;
+    if(r.state==='idle'){
+      var belowTy=r.ty+1;
+      if(belowTy<ROWS && !dirtAt(r.tx,belowTy) && !rockAt(r.tx,belowTy)){
+        r.state='wobble'; r.wobbleT=30;
+      }
+      return;
+    }
+    if(r.state==='wobble'){
+      r.wobbleT--;
+      if(r.wobbleT<=0){ r.state='fall'; r.py=r.ty*TILE; r.vy=0; r.crushed=0; }
+      return;
+    }
+    // falling
+    r.vy=Math.min(r.vy+0.5,12);
+    r.py+=r.vy;
+    var row=Math.floor((r.py+TILE/2)/TILE);
+    row=clamp(row,0,ROWS-1);
+    // crush anything in the rock's column at this row
+    state.enemies.forEach(function(e){
+      if(e.alive && !e.ghost && e.tx===r.tx && e.ty===row){
+        e.alive=false;
+        r.crushed++;
+        var v=CRUSH_VALUE[Math.min(r.crushed,4)-1];
+        addScore(v,'SQUASH! x'+r.crushed,e.x,e.y);
+        spawnParticles(e.x,e.y,'#ffb347',14,3);
+        beep(300,0.12,'square',0.06);
+        if(state.mode==='watch') state.watchKills++;
+      }
+    });
+    var p=state.player;
+    if(p && state.respawnT<=0 && p.invuln<=0 && p.tx===r.tx && p.ty===row){
+      die('rock');
+    }
+    var belowRow=row+1;
+    if(belowRow>=ROWS || dirtAt(r.tx,belowRow) || rockAt(r.tx,belowRow)){
+      // lands and shatters
+      r.state='gone';
+      state.rocksDropped++;
+      spawnParticles(tileCX(r.tx),tileCY(row),'#8a7f74',14,3);
+      beep(120,0.15,'sawtooth',0.06);
+    }
+  });
+}
+
+/* ---- fruit / flame / contact ---- */
+function updateFruit(){
+  if(!state.fruit && !state.fruitSpawned && state.rocksDropped>=2){
+    state.fruit={tx:7,ty:1,value:FRUIT_VALUE[Math.min(state.level,4)-1],t:600};
+    state.fruitSpawned=true;
+    setBanner('A GLOWMELON RIPENS!');
+    setMsg('A GLOWMELON ripened in the start tunnel — grab it!');
+    beep(990,0.15,'sine',0.05);
+  }
+  if(state.fruit){
+    state.fruit.t--;
+    var p=state.player;
+    if(p && p.tx===state.fruit.tx && p.ty===state.fruit.ty){
+      addScore(state.fruit.value,'GLOWMELON!',state.fruit.tx*TILE+24,state.fruit.ty*TILE+24);
+      spawnParticles(tileCX(state.fruit.tx),tileCY(state.fruit.ty),'#ff5a8a',16,3);
+      beep(1320,0.2,'sine',0.06);
+      state.fruit=null;
+    } else if(state.fruit.t<=0){
+      state.fruit=null;
+    }
+  }
+}
+function updateFlame(){
+  var f=state.flame;
+  if(!f) return;
+  f.t--;
+  var p=state.player;
+  if(p && state.respawnT<=0 && p.invuln<=0 && p.ty===f.row){
+    var lo=Math.min(f.c0,f.c1), hi=Math.max(f.c0,f.c1);
+    if(p.tx>=lo && p.tx<=hi) die('flame');   // die() clears state.flame — keep using f
+  }
+  if(f.t<=0) state.flame=null;
+}
+function checkContact(){
+  var p=state.player;
+  if(!p || state.respawnT>0 || p.invuln>0) return;
+  state.enemies.forEach(function(e){
+    if(!e.alive || e.ghost || e.inflate>0) return;
+    if(Math.abs(e.x-p.x)<26 && Math.abs(e.y-p.y)<26) die('enemy');
+  });
+}
+
+/* ---- WATCH bot: Fallible Engine decides, imperfect on purpose ---- */
+function nearestEnemy(){
+  var p=state.player, best=null, bd=1e9;
+  state.enemies.forEach(function(e){
+    if(!e.alive) return;
+    var d=Math.abs(e.tx-p.tx)+Math.abs(e.ty-p.ty);
+    if(d<bd){ bd=d; best=e; }
+  });
+  return best;
+}
+function botThink(){
+  if(state.mode!=='watch'||state.phase!=='play'||state.paused||state.respawnT>0) return;
+  if(state.frame%10!==0) return;
+  var p=state.player;
+  var e=nearestEnemy();
+  var options=[];
+  var dirs=[{k:'up',x:0,y:-1},{k:'down',x:0,y:1},{k:'left',x:-1,y:0},{k:'right',x:1,y:0}];
+  dirs.forEach(function(d){
+    var nx=p.tx+d.x, ny=p.ty+d.y;
+    if(!enterable(nx,ny)){ options.push({key:d.k,score:0.05,tag:'move'}); return; }
+    var isDirt=dirtAt(nx,ny);
+    var score=0.5;
+    if(isDirt) score+=1.8;   // digging urge: the bot likes cutting new ground
+    if(e){
+      var before=Math.abs(e.tx-p.tx)+Math.abs(e.ty-p.ty);
+      var after=Math.abs(e.tx-nx)+Math.abs(e.ty-ny);
+      if(after<before){ score+=2; if(isDirt) score+=1.0; } // dig toward the prey
+      if(after<=1) score-=1.5;                         // but don't walk into it
+      if(e.type==='wyrm' && p.ty===e.ty && Math.abs(e.tx-p.tx)<=4) score-=2; // not down a flame lane
+    }
+    var rockBelow=null;
+    state.rocks.forEach(function(r){
+      if(r.state==='idle' && r.tx===nx && r.ty===ny+1) rockBelow=r;
+    });
+    if(rockBelow) score+=1.5;                          // undermine a boulder
+    options.push({key:d.k,score:score,tag:'move'});
+  });
+  // pump when a pest sits in the hose line
+  var pumpScore=0.3;
+  if(e && !e.ghost && e.inflate<4){
+    var d={x:Math.sign(e.tx-p.tx),y:Math.sign(e.ty-p.ty)};
+    var aligned=(e.tx===p.tx && d.y!==0)||(e.ty===p.ty && d.x!==0);
+    if(aligned){
+      var dist=Math.abs(e.tx-p.tx)+Math.abs(e.ty-p.ty);
+      var clear=true;
+      for(var i=1;i<dist;i++){
+        var hx=p.tx+d.x*i, hy=p.ty+d.y*i;
+        if(dirtAt(hx,hy) || rockAt(hx,hy)){ clear=false; break; }
+      }
+      if(clear && dist<=3) pumpScore=4.5;
+    }
+  }
+  options.push({key:'pump',score:pumpScore,tag:'pump'});
+  var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+  var choice=null;
+  if(FE){
+    try{
+      if(!feAgent) feAgent=FE.loadAgent(state.watchBot);
+      var res=FE.decide(feAgent,'deepdig',options,{timePressure:0});
+      choice={id:res.pick.key};
+      feTraces.push(res.trace);
+      if(!feAgentId) feAgentId=state.watchBot;
+    }catch(err){ choice=null; }
+  }
+  if(!choice){
+    var r=Math.random(), best=options[0];
+    options.forEach(function(o){ if(o.score+r*0.6>best.score) best=o; });
+    choice={id:best.key};
+    feTraces.push({agent:state.watchBot,choice:choice.id,frame:state.frame,standin:true});
+  }
+  var dirMap={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}};
+  if(choice.id==='pump'){
+    if(!state.pump.active) pumpPress();
+    else state.pump.held=true;
+  } else if(dirMap[choice.id]){
+    p.want=dirMap[choice.id];
+    pumpRelease();
+  }
+}
+
+/* ---- per-frame update ---- */
+function update(){
+  state.frame++;
+  if(state.paused||state.phase==='title') return;
+  if(state.phase==='over') return;
+  if(state.frame>state.bannerUntil) state.banner='';
+  if(state.respawnT>0){
+    state.respawnT--;
+    if(state.respawnT===0) respawn();
+    return;
+  }
+  if(state.levelClearT>0){
+    state.levelClearT--;
+    if(state.levelClearT===0){
+      addScore(500,'LEVEL CLEAR');
+      buildLevel(state.level+1);
+      setBanner('LEVEL '+state.level+' — '+LEVELS[(state.level-1)%LEVELS.length].name);
+      setMsg('Level '+state.level+' — the pests are back, faster.');
+    }
+    return;
+  }
+  movePlayer();
+  if(state.player && state.player.invuln>0) state.player.invuln--;
+  updatePump();
+  state.enemies.forEach(moveEnemy);
+  updateRocks();
+  updateFruit();
+  updateFlame();
+  checkContact();
+  state.particles.forEach(function(pt){ pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=0.08; pt.life--; });
+  state.particles=state.particles.filter(function(pt){ return pt.life>0; });
+  state.floaters.forEach(function(f){ f.y-=1; f.life--; });
+  state.floaters=state.floaters.filter(function(f){ return f.life>0; });
+  if(state.mode==='watch') botThink();
+  // level clear: every pest popped or squashed
+  if(state.enemies.length && state.enemies.every(function(e){ return !e.alive; }) && state.levelClearT===0){
+    state.levelClearT=90;
+    setBanner('LEVEL CLEAR!');
+  }
+}
+
+/* ---- render: layered garden grid, rich characters, glow ---- */
+function drawBackground(){
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#1a1206'); g.addColorStop(0.5,'#120a04'); g.addColorStop(1,'#0a0502');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+}
+function drawDirt(){
+  ctx.save();
+  ctx.translate(0,FIELD_Y);
+  for(var r=0;r<ROWS;r++){
+    for(var c=0;c<COLS;c++){
+      var x=c*TILE, y=r*TILE, s=seedRand(r,c);
+      if(r===0){
+        // surface: sky sliver + grass + flowers
+        var sg=ctx.createLinearGradient(0,y,0,y+16);
+        sg.addColorStop(0,'#7ec8e8'); sg.addColorStop(1,'#3f8f5a');
+        ctx.fillStyle=sg; ctx.fillRect(x,y,TILE,16);
+        ctx.fillStyle='#2f7a3e'; ctx.fillRect(x,y+14,TILE,4);
+        ctx.fillStyle='#57a85a';
+        ctx.fillRect(x+6+s*20,y+2,3,12); ctx.fillRect(x+30+s*8,y+4,3,10);
+        if(s>0.6){ ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(x+12+s*24,y+8,3,0,Math.PI*2); ctx.fill(); }
+        if(s<0.25){ ctx.fillStyle='#ff8fb0'; ctx.beginPath(); ctx.arc(x+20+s*16,y+6,2.5,0,Math.PI*2); ctx.fill(); }
+        ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(x,y+16,TILE,3);
+        continue;
+      }
+      if(state.dirt[r][c]){
+        // dirt tile: depth-banded strata + speckles + roots + gems + lava veins
+        var base;
+        if(r<=3) base=[107,74,47];
+        else if(r<=7) base=[84,55,31];
+        else if(r<=10) base=[74,44,24];
+        else base=[56,34,15];
+        var v=(s-0.5)*16;
+        ctx.fillStyle='rgb('+(base[0]+v|0)+','+(base[1]+v|0)+','+(base[2]+v|0)+')';
+        ctx.fillRect(x,y,TILE,TILE);
+        ctx.fillStyle='rgba(0,0,0,0.18)';
+        ctx.fillRect(x+((r*13+c*7)%30),y+((r*7+c*11)%30),3,3);
+        ctx.fillRect(x+((r*5+c*19)%36),y+((r*11+c*3)%36),2,2);
+        ctx.fillStyle='rgba(255,220,160,0.12)';
+        ctx.fillRect(x+((r*17+c*5)%40),y+((r*3+c*23)%40),2,2);
+        if(r<=3 && s>0.4){ // roots in the topsoil
+          ctx.strokeStyle='rgba(60,35,15,0.8)'; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.moveTo(x+10+s*24,y); ctx.lineTo(x+8+s*24,y+20); ctx.stroke();
+        }
+        if(r>=8 && (r*13+c*7)%9===0){ // embedded emerald sparkle
+          ctx.save();
+          ctx.shadowColor='#00ff88'; ctx.shadowBlur=8;
+          ctx.fillStyle='#00ff88';
+          ctx.fillRect(x+20,y+20,4,4);
+          ctx.restore();
+        }
+        if(r>=11 && (r*5+c*3)%7===0){ // lava vein, pulsing
+          ctx.save();
+          ctx.globalAlpha=0.5+0.3*Math.sin(state.frame/18+c);
+          ctx.shadowColor='#ff6a00'; ctx.shadowBlur=10;
+          ctx.strokeStyle='#ff7a1a'; ctx.lineWidth=3;
+          ctx.beginPath(); ctx.moveTo(x+6,y+24); ctx.lineTo(x+24,y+20); ctx.lineTo(x+42,y+26); ctx.stroke();
+          ctx.restore();
+        }
+      } else {
+        // dug tunnel: dark floor, glow at the centre, shadowed dirt edges
+        ctx.fillStyle='#140d07'; ctx.fillRect(x,y,TILE,TILE);
+        var cg=ctx.createRadialGradient(x+24,y+24,4,x+24,y+24,26);
+        cg.addColorStop(0,'rgba(255,179,71,0.07)'); cg.addColorStop(1,'rgba(255,179,71,0)');
+        ctx.fillStyle=cg; ctx.fillRect(x,y,TILE,TILE);
+        ctx.fillStyle='rgba(0,0,0,0.45)';
+        if(r>0 && state.dirt[r-1][c]) ctx.fillRect(x,y,TILE,4);
+        if(r<ROWS-1 && state.dirt[r+1][c]) ctx.fillRect(x,y+TILE-4,TILE,4);
+        if(c>0 && state.dirt[r][c-1]) ctx.fillRect(x,y,4,TILE);
+        if(c<COLS-1 && state.dirt[r][c+1]) ctx.fillRect(x+TILE-4,y,4,TILE);
+      }
+    }
+  }
+  ctx.restore();
+}
+function drawRocks(){
+  ctx.save();
+  ctx.translate(0,FIELD_Y);
+  state.rocks.forEach(function(r){
+    if(r.state==='gone') return;
+    var cx=tileCX(r.tx), cy=(r.state==='fall')?(r.py+TILE/2):tileCY(r.ty);
+    var wob=r.state==='wobble'?Math.sin(state.frame*0.9)*2:0;
+    ctx.save();
+    ctx.translate(cx+wob,cy);
+    ctx.shadowColor='rgba(0,0,0,0.6)'; ctx.shadowBlur=8;
+    ctx.fillStyle='#8a7f74';
+    ctx.beginPath();
+    ctx.moveTo(-20,-14); ctx.lineTo(-6,-20); ctx.lineTo(12,-18); ctx.lineTo(20,-8);
+    ctx.lineTo(18,10); ctx.lineTo(6,18); ctx.lineTo(-12,16); ctx.lineTo(-20,4);
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#a89a88';
+    ctx.beginPath(); ctx.moveTo(-20,-14); ctx.lineTo(-6,-20); ctx.lineTo(12,-18); ctx.lineTo(4,-8); ctx.lineTo(-12,-8); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(40,30,20,0.7)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(-8,-6); ctx.lineTo(2,4); ctx.lineTo(-2,14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(8,-12); ctx.lineTo(12,0); ctx.stroke();
+    if(r.seed>0.5){ ctx.fillStyle='rgba(60,140,70,0.8)'; ctx.beginPath(); ctx.arc(-10,12,5,0,Math.PI*2); ctx.fill(); }
+    ctx.strokeStyle='rgba(255,179,71,0.5)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(-20,-14); ctx.lineTo(-6,-20); ctx.lineTo(12,-18); ctx.stroke();
+    ctx.restore();
+  });
+  ctx.restore();
+}
+function drawFruit(){
+  if(!state.fruit) return;
+  var f=state.fruit;
+  if(f.t<120 && Math.floor(f.t/10)%2===0) return; // blinking out
+  ctx.save();
+  ctx.translate(0,FIELD_Y);
+  var x=tileCX(f.tx), y=tileCY(f.ty);
+  ctx.save();
+  ctx.shadowColor='#ff5a8a'; ctx.shadowBlur=16;
+  ctx.fillStyle='#ff5a8a';
+  ctx.beginPath(); ctx.ellipse(x,y,15,12,0,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='#c22e5e'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(x,y,15,12,0,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x-6,y-8); ctx.quadraticCurveTo(x,y+2,x-6,y+8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+6,y-8); ctx.quadraticCurveTo(x,y+2,x+6,y+8); ctx.stroke();
+  ctx.fillStyle='#7ddc4a'; ctx.fillRect(x-2,y-16,4,6);
+  ctx.fillStyle='#fff'; ctx.font='bold 9px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText(f.value,x,y+26);
+  ctx.restore();
+  ctx.restore();
+}
+function drawPump(){
+  var pm=state.pump, p=state.player;
+  if(!pm.active || pm.len<=0 || !p) return;
+  ctx.save();
+  ctx.translate(0,FIELD_Y);
+  var steps=Math.floor(pm.len/12);
+  for(var i=1;i<=steps;i++){
+    var d=i*12;
+    var x=p.x+pm.dir.x*d, y=p.y+pm.dir.y*d;
+    ctx.fillStyle=i%2?'#c8ccd4':'#9aa2ae';
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(40,45,55,0.6)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.stroke();
+  }
+  var tx=p.x+pm.dir.x*pm.len, ty=p.y+pm.dir.y*pm.len;
+  ctx.fillStyle='#ffb347';
+  ctx.beginPath(); ctx.arc(tx,ty,7,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#7a5b00'; ctx.beginPath(); ctx.arc(tx,ty,3,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+function drawFlame(){
+  if(!state.flame) return;
+  var f=state.flame;
+  ctx.save();
+  ctx.translate(0,FIELD_Y);
+  var lo=Math.min(f.c0,f.c1), hi=Math.max(f.c0,f.c1);
+  for(var c=lo;c<=hi;c++){
+    var x=tileCX(c), y=tileCY(f.row);
+    var flick=Math.sin(state.frame/3+c)*3;
+    var g=ctx.createLinearGradient(x-20,y,x+20*f.dir,y);
+    g.addColorStop(0,'rgba(255,220,80,0.95)'); g.addColorStop(0.6,'rgba(255,120,20,0.85)'); g.addColorStop(1,'rgba(255,60,10,0.1)');
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.moveTo(x-22*f.dir,y-10+flick);
+    ctx.lineTo(x+22*f.dir,y+flick);
+    ctx.lineTo(x-22*f.dir,y+10+flick);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+/* ---- CHAR-SWEEP 2026-11-22: true sprite stacks ----
+   Every figure is painted once into an offscreen canvas as a stack of
+   silhouette slices (dark extruded base -> 3-tone shaded body -> lit top
+   face with detail + rim light in the figure's colour), then blitted per
+   frame with a contact shadow, idle sway/breathing and movement lean.
+   Painters are palette-driven: slice passes get det:false + shade-scaled
+   tones, so the extrusion is the figure's own silhouette, never a blob. */
+function ddShade(hex,f){
+  var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r=Math.max(0,Math.min(255,Math.round(r*f))); g=Math.max(0,Math.min(255,Math.round(g*f))); b=Math.max(0,Math.min(255,Math.round(b*f)));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function ddStack(size,painter,pal){
+  var c=document.createElement('canvas'); c.width=size; c.height=size;
+  var g=c.getContext('2d'); if(!g) return c;
+  g.translate(size/2,size/2);
+  for(var i=6;i>=1;i--){
+    var f=0.30+(6-i)*0.075;
+    var sil={m:ddShade(pal.m,f), d:ddShade(pal.m,f*0.72), l:ddShade(pal.m,Math.min(1,f*1.2)), glow:ddShade(pal.m,f), rim:ddShade(pal.m,f), det:false};
+    g.save(); g.translate(0,i*1.3); painter(g,sil); g.restore();
+  }
+  painter(g,{m:pal.m, d:pal.d, l:pal.l, glow:pal.glow, rim:pal.rim, det:true});
+  return c;
+}
+function ddMolo(g,P){
+  /* MOLO — armoured miner-bot: backpack, drill arm, plated hull, helm lamp */
+  g.fillStyle=P.d; g.fillRect(-31,-12,12,26);                    /* backpack */
+  g.beginPath();                                               /* drill arm */
+  g.moveTo(13,9); g.lineTo(35,15); g.lineTo(13,21); g.closePath(); g.fillStyle=P.d; g.fill();
+  g.beginPath();                                               /* hull */
+  g.moveTo(-24,20); g.lineTo(-28,2); g.lineTo(-20,-14); g.lineTo(-8,-22); g.lineTo(10,-23); g.lineTo(22,-14); g.lineTo(28,-2); g.lineTo(24,18); g.lineTo(12,23); g.lineTo(-12,23);
+  g.closePath(); g.fillStyle=P.m; g.fill();
+  g.beginPath();                                               /* shaded left half */
+  g.moveTo(-24,20); g.lineTo(-28,2); g.lineTo(-20,-14); g.lineTo(-8,-22); g.lineTo(0,-23); g.lineTo(0,23); g.lineTo(-12,23);
+  g.closePath(); g.fillStyle=P.d; g.fill();
+  g.beginPath();                                               /* lit top plate */
+  g.moveTo(-14,-17); g.lineTo(0,-23); g.lineTo(16,-17); g.lineTo(19,-6); g.lineTo(0,-11); g.lineTo(-19,-8);
+  g.closePath(); g.fillStyle=P.l; g.fill();
+  g.fillStyle=P.d; g.fillRect(-18,21,13,5); g.fillRect(5,21,13,5); /* treads */
+  g.beginPath(); g.arc(0,-19,14,Math.PI,0); g.fillStyle=P.l; g.fill(); /* helm dome */
+  g.fillStyle=P.d; g.fillRect(-15,-19,30,5);                     /* helm band */
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=2.5;                      /* emerald rim light */
+    g.beginPath(); g.moveTo(22,-14); g.lineTo(28,-2); g.lineTo(24,18); g.stroke();
+    g.beginPath(); g.arc(0,-19,14,-0.9,0.15); g.stroke();
+    g.strokeStyle='rgba(0,0,0,0.45)'; g.lineWidth=1.6;         /* plate seams */
+    g.beginPath(); g.moveTo(-19,-8); g.lineTo(-21,14); g.stroke();
+    g.beginPath(); g.moveTo(19,-8); g.lineTo(21,14); g.stroke();
+    g.beginPath(); g.moveTo(-31,-4); g.lineTo(-19,-4); g.stroke();
+    g.beginPath();                                               /* visor void */
+    g.moveTo(-13,-11); g.lineTo(13,-11); g.lineTo(10,-2); g.lineTo(-10,-2); g.closePath();
+    g.fillStyle='#05080b'; g.fill();
+    g.fillStyle=P.glow;                                          /* cyan eye-slits */
+    g.beginPath(); g.moveTo(-10,-8.5); g.lineTo(-3,-7.5); g.lineTo(-10,-5.5); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(10,-8.5); g.lineTo(3,-7.5); g.lineTo(10,-5.5); g.closePath(); g.fill();
+    g.fillStyle='#e8fbff'; g.beginPath(); g.arc(0,-7,1.3,0,7); g.fill();
+    g.fillStyle=P.glow;                                          /* chest core */
+    g.beginPath(); g.moveTo(3,3); g.lineTo(7,8); g.lineTo(3,13); g.lineTo(-1,8); g.closePath(); g.fill();
+    g.fillStyle='#e8fbff'; g.beginPath(); g.arc(3,8,1.4,0,7); g.fill();
+    g.strokeStyle='rgba(255,255,255,0.5)'; g.lineWidth=1.6;      /* drill edge */
+    g.beginPath(); g.moveTo(13,9); g.lineTo(35,15); g.stroke();
+    g.save();                                                    /* helm lamp */
+    g.shadowColor='#ffd75e'; g.shadowBlur=10;
+    g.fillStyle='#ffd75e'; g.beginPath(); g.arc(0,-25,4.6,0,7); g.fill();
+    g.fillStyle='#fff3d0'; g.beginPath(); g.arc(0,-25,2.2,0,7); g.fill();
+    g.restore();
+  }
+}
+function ddSprout(g,P,R){
+  /* SPROUT — spiked burrower: faceted shell, dorsal spikes, fanged jaw.
+     R grows with inflate stage, so the stack swells ring by ring. */
+  g.fillStyle=P.d;                                               /* dorsal spikes */
+  [-2.6,-2.0,-1.35,-0.7,-0.1,0.5].forEach(function(a){
+    var bx=Math.cos(a)*R*0.8, by=Math.sin(a)*R*0.8+2, tx=Math.cos(a)*R*1.3, ty=Math.sin(a)*R*1.3+2;
+    g.beginPath(); g.moveTo(bx-4,by); g.lineTo(tx,ty); g.lineTo(bx+4,by); g.closePath(); g.fill();
+  });
+  g.beginPath();                                               /* root claws */
+  g.moveTo(-R*0.7,R*0.72); g.lineTo(-R*0.98,R*1.04); g.lineTo(-R*0.32,R*0.94); g.closePath(); g.fill();
+  g.beginPath();
+  g.moveTo(R*0.7,R*0.72); g.lineTo(R*0.98,R*1.04); g.lineTo(R*0.32,R*0.94); g.closePath(); g.fill();
+  g.beginPath();                                               /* faceted shell */
+  for(var s=0;s<10;s++){
+    var aa=s/10*Math.PI*2, rr=(s%2? R*0.93 : R);
+    var px=Math.cos(aa)*rr, py=Math.sin(aa)*rr+2;
+    if(s===0) g.moveTo(px,py); else g.lineTo(px,py);
+  }
+  g.closePath(); g.fillStyle=P.m; g.fill();
+  g.fillStyle=P.l;                                               /* lit crown */
+  g.beginPath(); g.ellipse(-R*0.25,-R*0.35,R*0.55,R*0.4,-0.4,0,7); g.fill();
+  g.fillStyle=P.d;                                               /* belly shade */
+  g.beginPath(); g.ellipse(0,R*0.55,R*0.8,R*0.45,0,0,Math.PI); g.fill();
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=2.5;                      /* rim light */
+    g.beginPath(); g.arc(0,2,R,-2.5,-0.7); g.stroke();
+    g.strokeStyle=P.d; g.lineWidth=1.6;                        /* shell seams + crack */
+    g.beginPath(); g.arc(0,2,R*0.68,0.4,1.5); g.stroke();
+    g.beginPath(); g.moveTo(-R*0.1,-R*0.9); g.lineTo(-R*0.02,-R*0.5); g.lineTo(-R*0.14,-R*0.2); g.stroke();
+    g.fillStyle=P.glow;                                        /* angry ember eye-slits */
+    g.beginPath(); g.moveTo(-R*0.55,-R*0.2); g.lineTo(-R*0.12,-R*0.04); g.lineTo(-R*0.52,R*0.1); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(R*0.55,-R*0.2); g.lineTo(R*0.12,-R*0.04); g.lineTo(R*0.52,R*0.1); g.closePath(); g.fill();
+    g.fillStyle='#fff3d0';
+    g.beginPath(); g.arc(-R*0.34,-R*0.06,1.6,0,7); g.arc(R*0.34,-R*0.06,1.6,0,7); g.fill();
+    g.beginPath();                                               /* jaw void + fangs */
+    g.moveTo(-R*0.32,R*0.4); g.lineTo(R*0.32,R*0.4); g.lineTo(R*0.18,R*0.64); g.lineTo(-R*0.18,R*0.64); g.closePath();
+    g.fillStyle='#0d1406'; g.fill();
+    g.fillStyle='#e8f0d8';
+    [-0.2,0,0.2].forEach(function(fx){
+      g.beginPath(); g.moveTo(R*fx-2.4,R*0.43); g.lineTo(R*fx+2.4,R*0.43); g.lineTo(R*fx,R*0.43+5.5); g.closePath(); g.fill();
+    });
+    g.fillStyle=P.glow;                                          /* centre spike ember tip */
+    g.beginPath(); g.arc(Math.cos(-1.35)*R*1.3,Math.sin(-1.35)*R*1.3+2,2.2,0,7); g.fill();
+  }
+}
+function ddWyrm(g,P){
+  /* EMBERWYRM — sleek horned lurker: barbed tail, dorsal spikes, ember cracks */
+  g.fillStyle=P.d;                                               /* barbed tail */
+  g.beginPath();
+  g.moveTo(-24,4); g.lineTo(-44,13); g.lineTo(-49,1); g.lineTo(-35,-5); g.lineTo(-22,-4);
+  g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(-44,13); g.lineTo(-52,16); g.lineTo(-47,6); g.closePath(); g.fill();
+  g.fillStyle=P.d;                                               /* legs */
+  g.beginPath(); g.moveTo(-16,11); g.lineTo(-10,22); g.lineTo(-3,11); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(11,11); g.lineTo(17,22); g.lineTo(24,11); g.closePath(); g.fill();
+  g.beginPath();                                               /* body */
+  g.moveTo(-26,8); g.lineTo(-20,-8); g.lineTo(-4,-15); g.lineTo(14,-13); g.lineTo(28,-6); g.lineTo(34,2); g.lineTo(28,10); g.lineTo(10,15); g.lineTo(-12,15); g.lineTo(-24,13);
+  g.closePath(); g.fillStyle=P.m; g.fill();
+  g.fillStyle=P.d;                                               /* belly shade */
+  g.beginPath(); g.ellipse(2,9,22,6,0,0,Math.PI); g.fill();
+  g.beginPath();                                               /* lit spine band */
+  g.moveTo(-20,-8); g.lineTo(-4,-15); g.lineTo(14,-13); g.lineTo(28,-6); g.lineTo(14,-8); g.lineTo(-4,-10);
+  g.closePath(); g.fillStyle=P.l; g.fill();
+  g.fillStyle=P.d;                                               /* dorsal spikes */
+  g.beginPath(); g.moveTo(-14,-11); g.lineTo(-10,-22); g.lineTo(-4,-13); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(2,-14); g.lineTo(7,-25); g.lineTo(12,-13); g.closePath(); g.fill();
+  g.beginPath();                                               /* head wedge */
+  g.moveTo(24,-11); g.lineTo(42,-6); g.lineTo(46,1); g.lineTo(36,8); g.lineTo(24,4);
+  g.closePath(); g.fillStyle=P.m; g.fill();
+  g.beginPath();
+  g.moveTo(24,-11); g.lineTo(42,-6); g.lineTo(46,1); g.lineTo(34,-2); g.lineTo(24,-4);
+  g.closePath(); g.fillStyle=P.l; g.fill();
+  g.fillStyle=P.d;                                               /* swept horns */
+  g.beginPath(); g.moveTo(29,-10); g.lineTo(37,-24); g.lineTo(39,-9); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(19,-12); g.lineTo(23,-26); g.lineTo(29,-11); g.closePath(); g.fill();
+  if(P.det){
+    g.strokeStyle=P.rim; g.lineWidth=2.5;                      /* amber rim along the spine */
+    g.beginPath(); g.moveTo(-20,-8); g.lineTo(-4,-15); g.lineTo(14,-13); g.lineTo(28,-6); g.lineTo(42,-6); g.stroke();
+    g.fillStyle='#e8dcc8';                                       /* bone horns, lit pass */
+    g.beginPath(); g.moveTo(29,-10); g.lineTo(37,-24); g.lineTo(39,-9); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(19,-12); g.lineTo(23,-26); g.lineTo(29,-11); g.closePath(); g.fill();
+    g.fillStyle=P.glow;                                          /* burning eye-slit */
+    g.beginPath(); g.moveTo(29,-4.5); g.lineTo(38,-3); g.lineTo(29,-1.2); g.closePath(); g.fill();
+    g.fillStyle='#fff3d0'; g.beginPath(); g.arc(33,-2.8,1.3,0,7); g.fill();
+    g.beginPath(); g.arc(43,-1,1.7,0,7); g.fillStyle=P.glow; g.fill(); /* nostril ember */
+    g.strokeStyle='#2a0e02'; g.lineWidth=2;                      /* jaw line + fangs */
+    g.beginPath(); g.moveTo(33,4); g.lineTo(45,1); g.stroke();
+    g.fillStyle='#f4ead2';
+    g.beginPath(); g.moveTo(35,4.6); g.lineTo(38,4.2); g.lineTo(36.5,9.5); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(41,3); g.lineTo(44,2.4); g.lineTo(42.5,7.5); g.closePath(); g.fill();
+    g.strokeStyle=P.glow; g.lineWidth=1.5;                       /* ember belly cracks */
+    g.globalAlpha=0.85;
+    g.beginPath(); g.moveTo(-10,7); g.lineTo(-5,11); g.lineTo(0,7); g.lineTo(5,11); g.lineTo(10,7); g.stroke();
+    g.globalAlpha=1;
+    g.strokeStyle='rgba(255,255,255,0.4)'; g.lineWidth=1.4;       /* claw ticks */
+    g.beginPath(); g.moveTo(-10,22); g.lineTo(-12,25); g.moveTo(17,22); g.lineTo(15,25); g.stroke();
+  }
+}
+var DD_SPR=null;
+function ddSprites(){
+  if(DD_SPR) return DD_SPR;
+  var sproutPal={m:'#4d7a24', d:'#1e3310', l:'#7fae3f', glow:'#ffb347', rim:'#b8ff7a'};
+  var sproutHot={m:'#a8541e', d:'#4a2008', l:'#e07f35', glow:'#ffd75e', rim:'#ffb347'};
+  var sprouts=[];
+  for(var inf=0;inf<=4;inf++){
+    (function(inf){
+      var R=22*(1+0.14*inf);
+      sprouts.push(ddStack(96,function(g,P){ ddSprout(g,P,R); }, inf>=3?sproutHot:sproutPal));
+    })(inf);
+  }
+  DD_SPR={
+    molo: ddStack(112, ddMolo, {m:'#6d8296', d:'#26333f', l:'#a8bfd2', glow:'#35e0ff', rim:'#00ff88'}),
+    sprout: sprouts,
+    wyrm: ddStack(112, ddWyrm, {m:'#a3541c', d:'#471f08', l:'#e08a3e', glow:'#ff5a2e', rim:'#ffb347'})
+  };
+  return DD_SPR;
+}
+function drawPlayer(){
+  var p=state.player;
+  if(!p || state.respawnT>0) return;
+  ctx.save();
+  ctx.translate(0,FIELD_Y);
+  var moving=(p.dir.x!==0||p.dir.y!==0);
+  var bob=moving?Math.abs(Math.sin(state.frame/7))*1.6:Math.sin(state.frame/22)*1.1; /* walk bounce / idle breathe */
+  var lean=p.dir.x*0.055 + (p.digging>0?Math.sin(state.frame*1.7)*0.02:0);          /* movement lean + drill shudder */
+  var x=p.x, y=p.y-bob+2;
+  ctx.fillStyle='rgba(0,0,0,0.45)';
+  ctx.beginPath(); ctx.ellipse(x,p.y+19,17,5,0,0,Math.PI*2); ctx.fill();
+  ctx.save();                                                            /* lamp glow pool, soft-edged */
+  var lg=ctx.createRadialGradient(x,y-8,2,x,y-8,30);
+  lg.addColorStop(0,'rgba(255,215,94,'+(0.20+0.04*Math.sin(state.frame/9)).toFixed(3)+')');
+  lg.addColorStop(1,'rgba(255,215,94,0)');
+  ctx.fillStyle=lg;
+  ctx.beginPath(); ctx.arc(x,y-8,30,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  if(p.invuln>0 && Math.floor(state.frame/6)%2===0) ctx.globalAlpha=0.4;
+  ctx.translate(x,y); ctx.rotate(lean);
+  ctx.drawImage(ddSprites().molo,-33,-33,66,66);
+  ctx.restore();
+  /* drill nose in the facing direction, spinning while digging (live, over the stack) */
+  ctx.save();
+  ctx.translate(0,FIELD_Y);
+  var dx=p.dir.x, dy=p.dir.y;
+  if(dx!==0||dy!==0){
+    var spin=p.digging>0?state.frame*0.9:state.frame*0.15;
+    ctx.translate(p.x+dx*19,p.y+dy*19-bob+2);
+    ctx.rotate(Math.atan2(dy,dx)+spin*0.2);
+    ctx.fillStyle='#c8ccd4';
+    ctx.beginPath(); ctx.moveTo(0,-5); ctx.lineTo(12,0); ctx.lineTo(0,5); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#7a828e'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(0,-5); ctx.lineTo(12,0); ctx.lineTo(0,5); ctx.closePath(); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.restore();
+}
+function drawEnemy(e){
+  if(!e.alive) return;
+  ctx.save();
+  ctx.translate(0,FIELD_Y);
+  var x=e.x, y=e.y;
+  ctx.globalAlpha=e.ghost?0.45+0.15*Math.sin(state.frame/8):1;
+  ctx.fillStyle='rgba(0,0,0,0.45)';
+  ctx.beginPath(); ctx.ellipse(x,y+17,15,4.5,0,0,Math.PI*2); ctx.fill();
+  var SPR=ddSprites();
+  if(e.type==='sprout'){
+    var infl=Math.max(0,Math.min(4,e.inflate|0));
+    var sway=Math.sin(state.frame/9+e.seed*1.7)*0.05 + e.dir.x*0.05;   /* idle sway + movement lean */
+    var hop=Math.abs(Math.sin(state.frame/8+e.seed))*1.4;
+    ctx.save();
+    if(e.ghost){ ctx.shadowColor='#b8ff7a'; ctx.shadowBlur=10; }
+    ctx.translate(x,y-hop+2); ctx.rotate(sway);
+    ctx.drawImage(SPR.sprout[infl],-34,-34,68,68);
+    ctx.restore();
+  } else {
+    var d=e.dir.x!==0?Math.sign(e.dir.x):1;
+    var slither=Math.sin(state.frame/7+e.seed*2.1)*0.045 + e.dir.x*0.03;
+    var undulate=Math.sin(state.frame/6+e.seed)*1.2;
+    ctx.save();
+    if(e.ghost){ ctx.shadowColor='#ff8c42'; ctx.shadowBlur=10; }
+    ctx.translate(x,y+undulate+2); ctx.rotate(slither); ctx.scale(d,1);
+    ctx.drawImage(SPR.wyrm,-33,-33,66,66);
+    ctx.restore();
+    if(state.flame){ ctx.save(); ctx.shadowColor='#ff6a00'; ctx.shadowBlur=14; ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(x+18*d,y+2,4,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+  }
+  ctx.restore();
+}
+function drawParticles(){
+  ctx.save();
+  ctx.translate(0,FIELD_Y);
+  state.particles.forEach(function(pt){
+    ctx.globalAlpha=Math.max(0,pt.life/pt.max);
+    ctx.fillStyle=pt.col;
+    ctx.fillRect(pt.x,pt.y,3,3);
+  });
+  ctx.globalAlpha=1;
+  state.floaters.forEach(function(f){
+    ctx.globalAlpha=Math.max(0,f.life/50);
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 13px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(f.text,f.x,f.y);
+  });
+  ctx.globalAlpha=1;
+  // ambient dust motes drifting in the tunnels
+  ctx.fillStyle='rgba(255,220,160,0.25)';
+  for(var i=0;i<14;i++){
+    var mx=((i*97+state.frame*0.3)%W), my=((i*53+state.frame*0.12)%(ROWS*TILE));
+    ctx.fillRect(mx,my,2,2);
+  }
+  ctx.restore();
+}
+function drawHUD(){
+  ctx.save();
+  ctx.fillStyle='rgba(10,6,2,0.9)'; ctx.fillRect(0,0,W,FIELD_Y);
+  ctx.fillStyle='rgba(255,179,71,0.25)'; ctx.fillRect(0,FIELD_Y-2,W,2);
+  ctx.textAlign='left';
+  ctx.fillStyle='#fff'; ctx.font='800 22px Orbitron, sans-serif';
+  ctx.fillText('SCORE '+state.score,16,26);
+  ctx.fillStyle='#ffd75e'; ctx.font='12px Share Tech Mono, monospace';
+  ctx.fillText('HI '+state.hi,16,46);
+  ctx.textAlign='center';
+  ctx.fillStyle='#ffb347'; ctx.font='800 15px Orbitron, sans-serif';
+  ctx.fillText('LEVEL '+state.level+' · '+LEVELS[(state.level-1)%LEVELS.length].name,360,24);
+  ctx.fillStyle='#a08a6a'; ctx.font='11px Share Tech Mono, monospace';
+  var modeTxt=state.mode==='watch'?('WATCH · '+state.watchBot):(state.mode==='duel'?('DUEL · '+(state.p2turn?'P2':'P1')):'1P · MOLO');
+  ctx.fillText(modeTxt,360,44);
+  ctx.textAlign='right';
+  ctx.fillStyle='#00ff88'; ctx.font='800 16px Orbitron, sans-serif';
+  ctx.fillText('LIVES '+state.lives,704,26);
+  ctx.fillStyle='#a08a6a'; ctx.font='11px Share Tech Mono, monospace';
+  var p=state.player;
+  ctx.fillText(p?('DEPTH '+(p.ty+1)+' / '+ROWS):'',704,46);
+  if(state.banner && state.frame<state.bannerUntil){
+    ctx.fillStyle='#ffd75e'; ctx.font='800 24px Orbitron, sans-serif'; ctx.textAlign='center';
+    // in miner-cam the player sits at the screen centre — keep the banner clear of them
+    ctx.fillText(state.banner,360,state.fp?120:340);
+  }
+  if(state.phase==='title'){
+    ctx.fillStyle='rgba(10,6,2,0.82)'; ctx.fillRect(0,180,W,300);
+    ctx.fillStyle='#fff'; ctx.font='900 52px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('DEEPDIG',360,260);
+    ctx.fillStyle='#ffb347'; ctx.font='15px Share Tech Mono, monospace';
+    ctx.fillText('MOLO THE MOLE-BOT · DIG · PUMP · DROP',360,292);
+    ctx.fillStyle='#f5e6cf'; ctx.font='15px Rajdhani, sans-serif';
+    ctx.fillText('Pump a pest four times and it POPS — deeper pops pay more.',360,326);
+    ctx.fillText('Undermine boulders to squash pests. Drop two rocks: a GLOWMELON ripens.',360,350);
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 15px Orbitron, sans-serif';
+    ctx.fillText('1P — click PLAY · WATCH — bot miner · 2P — duel',360,392);
+    ctx.fillStyle='#a08a6a'; ctx.font='12px Share Tech Mono, monospace';
+    ctx.fillText('Arrows / WASD dig · SPACE pump · V miner-cam · P pause',360,424);
+    ctx.fillText('HI '+state.hi,360,452);
+  }
+  if(state.phase==='over'){
+    ctx.fillStyle='rgba(10,6,2,0.82)'; ctx.fillRect(0,280,W,140);
+    ctx.fillStyle='#fff'; ctx.font='900 32px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.winner?state.winner+' WINS':'GAME OVER',360,326);
+    ctx.fillStyle='#ffd75e'; ctx.font='17px Share Tech Mono, monospace';
+    ctx.fillText('SCORE '+state.score+' · HI '+state.hi,360,360);
+    ctx.fillStyle='#f5e6cf'; ctx.font='14px Rajdhani, sans-serif';
+    ctx.fillText('Press R to dig again',360,392);
+  }
+  ctx.restore();
+}
+function render(){
+  ctx.save();
+  ctx.clearRect(0,0,W,H);
+  if(state.fp && state.phase!=='title' && state.player){
+    // miner-cam: zoomed follow camera clamped inside the field
+    var p=state.player;
+    var s=1.8;
+    var camX=clamp(p.x,(W/s)/2,W-(W/s)/2);
+    var camY=clamp(p.y+FIELD_Y,(H/s)/2,H-(H/s)/2);
+    ctx.translate(W/2,H/2);
+    ctx.scale(s,s);
+    ctx.translate(-camX,-camY);
+    drawBackground(); drawDirt(); drawRocks(); drawFruit(); drawFlame(); drawPump();
+    state.enemies.forEach(drawEnemy);
+    drawPlayer(); drawParticles();
+    ctx.restore();
+    ctx.save();
+    drawHUD();
+    ctx.restore();
+  } else {
+    drawBackground(); drawDirt(); drawRocks(); drawFruit(); drawFlame(); drawPump();
+    state.enemies.forEach(drawEnemy);
+    drawPlayer(); drawParticles(); drawHUD();
+  }
+  ctx.restore();
+}
+function loop(){
+  update();
+  try{ render(); }catch(e){ /* headless stub contexts may lack gradients; logic still runs */ }
+  if(typeof requestAnimationFrame!=='function') return;
+  requestAnimationFrame(loop);
+}
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+
+/* ---- save / load / pause ---- */
+function dirtString(){
+  var parts=[];
+  for(var r=0;r<ROWS;r++){
+    var s='';
+    for(var c=0;c<COLS;c++) s+=state.dirt[r][c]?'1':'0';
+    parts.push(s);
+  }
+  return parts.join('/');
+}
+function saveState(){
+  try{
+    localStorage.setItem('deepdig.save', JSON.stringify({
+      score:state.score, hi:state.hi, level:state.level, lives:state.lives, mode:state.mode,
+      dirt:dirtString(),
+      player:state.player?{tx:state.player.tx,ty:state.player.ty,dir:state.player.dir}:null,
+      enemies:state.enemies.map(function(e){ return {type:e.type,tx:e.tx,ty:e.ty,alive:e.alive,inflate:e.inflate}; }),
+      rocks:state.rocks.map(function(r){ return {tx:r.tx,ty:r.ty,state:r.state}; }),
+      rocksDropped:state.rocksDropped, fruit:state.fruit,
+      p1score:state.p1score, p2score:state.p2score, p2turn:state.p2turn,
+      watchBot:state.watchBot, watchIdx:watchIdx, feAgentId:feAgentId, feRecorded:feRecorded
+    }));
+    setMsg('State saved.');
+    return true;
+  }catch(e){ setMsg('Save failed.'); return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('deepdig.save');
+    if(!raw){ setMsg('No saved state yet.'); return false; }
+    var d=JSON.parse(raw);
+    buildLevel(d.level||1);
+    state.score=d.score||0; state.hi=Math.max(state.hi,d.hi||0);
+    state.lives=d.lives==null?3:d.lives; state.mode=d.mode||'solo';
+    /* E43 REPAIR (defect 3, fresh-load misattribution): a watch save restores
+       its own agent + cursor + recorded flag, so the loaded bout plays (and
+       records) under the agent that was actually playing. A solo save keeps
+       the current load's cursor — it must not rewind the rotation. Pre-save
+       traces stay session-only: they are NOT re-recorded. */
+    if(state.mode==='watch'){
+      if(typeof d.watchBot==='string' && WATCH_AGENTS.indexOf(d.watchBot)>=0){
+        state.watchBot=d.watchBot; feAgentId=d.watchBot; feAgent=null;
+        try{ var FE=(typeof window!=='undefined')?window.FallibleEngine:null; if(FE) feAgent=FE.loadAgent(state.watchBot); }catch(e){ feAgent=null; }
+      }
+      if(typeof d.watchIdx==='number' && isFinite(d.watchIdx) && d.watchIdx>=0){
+        watchIdx=d.watchIdx; saveWatchIdx();
+      }
+      feRecorded=d.feRecorded===true;
+      feTraces=[]; /* E43b: same-load loadState must reset traces (fresh-load parity) */
+    }
+    state.p1score=d.p1score||0; state.p2score=d.p2score||0; state.p2turn=!!d.p2turn;
+    state.rocksDropped=d.rocksDropped||0; state.fruit=d.fruit||null;
+    state.fruitSpawned=!!state.fruit || state.rocksDropped>=2;
+    if(d.dirt){
+      var rows=d.dirt.split('/');
+      for(var r=0;r<ROWS && r<rows.length;r++)
+        for(var c=0;c<COLS && c<rows[r].length;c++)
+          state.dirt[r][c]=rows[r][c]==='1';
+    }
+    if(d.player){
+      state.player={tx:d.player.tx,ty:d.player.ty,x:tileCX(d.player.tx),y:tileCY(d.player.ty),
+        dir:d.player.dir||{x:0,y:1},want:d.player.dir||{x:0,y:1},invuln:0,digging:0};
+    }
+    if(d.enemies){
+      state.enemies=[];
+      d.enemies.forEach(function(se,i){
+        var e=makeEnemy(se.type,se.tx,se.ty,i);
+        e.alive=!!se.alive; e.inflate=se.inflate||0;
+        state.enemies.push(e);
+      });
+    }
+    if(d.rocks){
+      state.rocks=[];
+      d.rocks.forEach(function(sr){
+        state.rocks.push({tx:sr.tx,ty:sr.ty,state:sr.state==='gone'?'gone':'idle',wobbleT:0,py:sr.ty*TILE,vy:0,crushed:0,seed:seedRand(sr.ty,sr.tx)});
+      });
+    }
+    state.phase='play'; state.over=false; state.paused=false; state.respawnT=0; state.levelClearT=0;
+    setMsg('State loaded.');
+    syncButtons();
+    return true;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+function togglePause(){
+  if(state.phase!=='play' && state.phase!=='over') return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay');
+  if(ov) ov.style.display=state.paused?'flex':'none';
+  setMsg(state.paused?'Paused.':'Resumed.');
+}
+function toggleFP(){
+  state.fp=!state.fp;
+  setMsg(state.fp?'Miner-cam — riding with MOLO.':'Garden view.');
+  syncButtons();
+}
+function toggleMute(){
+  muted=!muted;
+  try{ localStorage.setItem('deepdig.mute',muted?'1':'0'); }catch(e){}
+  setMsg(muted?'Muted.':'Sound on.');
+}
+function syncButtons(){
+  [['btnSolo','solo'],['btnWatch','watch'],['btnDuel','duel']].forEach(function(pr){
+    var el=$(pr[0]); if(el) el.classList.toggle('active',state.mode===pr[1]&&state.phase==='play');
+  });
+  var fp=$('btnFP'); if(fp) fp.classList.toggle('active',state.fp);
+}
+
+/* ---- input ---- */
+var KEYDIRS={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},
+  w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0},W:{x:0,y:-1},S:{x:0,y:1},A:{x:-1,y:0},D:{x:1,y:0}};
+function debugKey(k){
+  if(k==='p'||k==='P'){ togglePause(); return; }
+  if(k==='m'||k==='M'){ toggleMute(); return; }
+  if(k==='r'||k==='R'){ startGame(state.mode); return; }
+  if(k==='v'||k==='V'){ toggleFP(); return; }
+  if(state.phase!=='play'||state.paused) return;
+  if(KEYDIRS[k] && state.player){ state.player.want=KEYDIRS[k]; }
+  if(k===' '){ pumpPress(); }
+}
+function debugKeyUp(k){
+  if(k===' '){ pumpRelease(); }
+}
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('keydown',function(e){
+    if(e.key===' '){ e.preventDefault(); }
+    debugKey(e.key);
+  });
+  document.addEventListener('keyup',function(e){ debugKeyUp(e.key); });
+}
+function bindBtn(id,down,up){
+  var el=$(id); if(!el) return;
+  if(el.addEventListener){
+    el.addEventListener('pointerdown',function(e){ e.preventDefault(); down(); });
+    if(up){
+      el.addEventListener('pointerup',function(){ up(); });
+      el.addEventListener('pointerleave',function(){ up(); });
+    }
+  }
+}
+bindBtn('btnSolo',function(){ startGame('solo'); });
+bindBtn('btnWatch',function(){ startGame('watch'); });
+bindBtn('btnDuel',function(){ startGame('duel'); });
+bindBtn('btnFP',function(){ toggleFP(); });
+bindBtn('btnPause',function(){ togglePause(); });
+bindBtn('resumeBtn',function(){ togglePause(); });
+bindBtn('saveBtn',function(){ saveState(); });
+bindBtn('loadBtn',function(){ loadState(); });
+bindBtn('restartBtn',function(){ state.paused=false; var ov=$('pauseOverlay'); if(ov) ov.style.display='none'; startGame(state.mode); });
+bindBtn('quitArcadeBtn',function(){ if(typeof location!=='undefined') location.href='../arcade.html'; });
+bindBtn('startBtn',function(){ togglePause(); });
+bindBtn('selectBtn',function(){ toggleFP(); });
+// shell deck: D-pad steers, A pumps, B toggles miner-cam
+if(typeof document!=='undefined' && document.querySelectorAll){
+  Array.prototype.forEach.call(document.querySelectorAll('#shellDeck [data-k]'),function(el){
+    var k=el.getAttribute('data-k');
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      if(!state.player || state.phase!=='play' || state.paused) return;
+      var map={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0},down2:{x:0,y:1}};
+      if(map[k]) state.player.want=map[k];
+    });
+  });
+}
+bindBtn('btnA',function(){ pumpPress(); },function(){ pumpRelease(); });
+bindBtn('btnB',function(){ toggleFP(); });
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+
+/* ---- auto-start from query (?auto=play / ?auto=watch / ?auto=duel) ---- */
+if(q.get('auto')==='play') startGame('solo');
+else if(q.get('auto')==='watch') startGame('watch');
+else if(q.get('auto')==='duel') startGame('duel');
+
+/* ---- test/debug surface — same shape as the other arcade games ---- */
+window.__deepdig={
+  get state(){ return {
+    phase:state.phase, mode:state.mode, paused:state.paused, fp:state.fp, frame:state.frame,
+    score:state.score, hi:state.hi, level:state.level, lives:state.lives, over:state.over, winner:state.winner,
+    muted:muted,
+    player:state.player?{tx:state.player.tx,ty:state.player.ty,x:Math.round(state.player.x),y:Math.round(state.player.y),
+      dir:{x:state.player.dir.x,y:state.player.dir.y},invuln:state.player.invuln}:null,
+    dirtCount:(function(){ var n=0; for(var r=0;r<ROWS;r++) for(var c=0;c<COLS;c++) if(state.dirt[r][c]) n++; return n; })(),
+    dirtAt:function(tx,ty){ return dirtAt(tx,ty); },
+    enemies:state.enemies.map(function(e){ return {type:e.type,tx:e.tx,ty:e.ty,alive:e.alive,inflated:e.inflate,ghost:e.ghost}; }),
+    rocks:state.rocks.map(function(r){ return {tx:r.tx,ty:r.ty,state:r.state}; }),
+    rocksDropped:state.rocksDropped,
+    fruit:state.fruit?{tx:state.fruit.tx,ty:state.fruit.ty,value:state.fruit.value,t:state.fruit.t}:null,
+    flame:state.flame?{row:state.flame.row,c0:state.flame.c0,c1:state.flame.c1,t:state.flame.t}:null,
+    flameFired:state.flameFired,
+    pump:{active:state.pump.active,held:state.pump.held,len:Math.round(state.pump.len),
+      target:state.pump.target?(state.pump.target.type+':'+state.pump.target.inflate):null},
+    tilesDug:state.tilesDug,
+    watchBot:state.watchBot, watchDigs:state.watchDigs, watchPumps:state.watchPumps,
+    watchPops:state.watchPops, watchKills:state.watchKills,
+    feAgent:feAgentId, feTraces:feTraces.length, feRecorded:feRecorded, watchIdx:watchIdx,
+    p1score:state.p1score, p2score:state.p2score, p2turn:state.p2turn,
+    banner:state.banner, respawnT:state.respawnT, levelClearT:state.levelClearT
+  }; },
+  startGame:startGame,
+  debugKey:debugKey, debugKeyUp:debugKeyUp,
+  debugSetDir:function(d){
+    var map={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0},none:{x:0,y:0}};
+    if(state.player && map[d]){ state.player.want=map[d]; state.player.dir=map[d]; }
+  },
+  debugPlacePlayer:function(tx,ty,dir){
+    var p=state.player;
+    p.tx=tx; p.ty=ty; p.x=tileCX(tx); p.y=tileCY(ty);
+    if(dir){ var map={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}}; p.dir=map[dir]||p.dir; p.want=p.dir; }
+    p.invuln=0;
+  },
+  debugPlaceEnemy:function(i,tx,ty,type){
+    var e=state.enemies[i]; if(!e) return;
+    if(type){ e.type=type; e.speed=type==='wyrm'?1.15:1.5; }
+    e.tx=tx; e.ty=ty; e.x=tileCX(tx); e.y=tileCY(ty);
+    e.alive=true; e.ghost=false; e.inflate=0; e.dir={x:1,y:0}; e.flameCd=0; e.stuckT=0;
+  },
+  debugDigTile:function(tx,ty){ if(inBounds(tx,ty)) state.dirt[ty][tx]=false; },
+  debugDigRow:function(r){ for(var c=0;c<COLS;c++) state.dirt[r][c]=false; },
+  debugSetGhost:function(i){ var e=state.enemies[i]; if(e){ e.ghost=true; e.ghostT=240; } },
+  debugPinEnemy:function(i,pin){ var e=state.enemies[i]; if(e) e.pinned=!!pin; },
+  debugUndermineRock:function(i){ var r=state.rocks[i]; if(r && r.ty+1<ROWS) state.dirt[r.ty+1][r.tx]=false; },
+  debugSetRocksDropped:function(n){ state.rocksDropped=n; },
+  debugClearEnemies:function(){ state.enemies.forEach(function(e){ e.alive=false; }); },
+  debugKillPlayer:function(){ var p=state.player; if(p) p.invuln=0; state.respawnT=0; die('debug'); },
+  debugSetLives:function(n){ state.lives=n; },
+  debugPump:function(){ pumpPress(); },
+  debugPumpRelease:function(){ pumpRelease(); },
+  debugStepWatch:function(n){ for(var i=0;i<n;i++) update(); },
+  debugSave:saveState, debugLoad:loadState, debugToggleFP:toggleFP,
+  debugTogglePause:togglePause, debugToggleMute:toggleMute
+};
+</script>
+</body>
+</html>
