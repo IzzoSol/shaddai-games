@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#ddd0b8">
+<title>SHADDAI · Tactics — FFTA-style Tactical Combat</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e8dcc8;--bg2:#ddd0b8;--bg3:#d4c4a8;
+  --panel:#f0e8d8;--panel2:#e8dcc8;
+  --line:rgba(60,80,120,.2);--line2:rgba(160,130,80,.3);
+  --ink:#1a1a2e;--muted:#6a5a4a;
+  --emerald:#30b848;--gold:#c89830;--cyan:#4080d0;--violet:#8050b0;
+  --crimson:#c84038;--red:#c84038;--blue:#4060a0;--green:#30b848;--yellow:#d8a828;
+  --hp:#30b848;--mp:#4080d0;
+  --disp:"Georgia","Times New Roman",serif;
+  --hud:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:"Courier New",Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--hud);overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* ── LAYOUT ─────────────────────────────────────────────────── */
+#app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr;
+  background:var(--bg2)}
+
+/* ── TOP BAR ─────────────────────────────────────────────────── */
+.bar{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;
+  background:linear-gradient(180deg, #4060a0, #304880);
+  border-bottom:3px solid #283868;z-index:10;
+  box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.brand{display:flex;align-items:baseline;gap:12px}
+.sigil{font-family:"Georgia",serif;font-weight:700;font-size:18px;color:#f0e8d8;letter-spacing:2px}
+.subt{font-family:var(--mono);font-size:9px;letter-spacing:3px;color:#b0c8f0;text-transform:uppercase}
+.tabs{display:flex;gap:3px}
+.tab{padding:6px 14px;border:2px solid #5878b8;color:#c0d0f0;
+  background:linear-gradient(180deg,#4868a8,#385890);font-size:11px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;transition:.12s;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.tab:hover{background:linear-gradient(180deg,#5878b8,#4868a8);color:#fff}
+.tab.on{background:linear-gradient(180deg,#f0e8d8,#e0d0b0);color:#304880;
+  border-color:#c89830;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 8px rgba(200,152,48,.2)}
+.right{display:flex;align-items:center;gap:10px}
+.btn{padding:6px 14px;border:2px solid #5878b8;background:linear-gradient(180deg,#4868a8,#385890);
+  color:#f0e8d8;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.btn:hover{background:linear-gradient(180deg,#5878b8,#4868a8)}
+.btn.ghost{border-color:#8898b8;background:linear-gradient(180deg,#d8d0c0,#c8c0b0);color:#4868a8}
+.btn.ghost:hover{background:linear-gradient(180deg,#e8e0d0,#d8d0c0)}
+.btn.danger{border-color:#b84840;background:linear-gradient(180deg,#c84038,#b03028);color:#f0e8d8}
+
+/* ── SCENES ──────────────────────────────────────────────────── */
+.scene{display:none;height:100%;overflow:hidden}
+.scene.on{display:flex;flex-direction:column}
+
+/* ── PUB SCENE ──────────────────────────────────────────────── */
+#pub{padding:20px 28px;overflow-y:auto}
+.pub-head{text-align:center;margin-bottom:20px}
+.pub-head h1{font-family:"Georgia",serif;font-size:32px;font-weight:700;
+  letter-spacing:3px;color:#304880;text-shadow:0 1px 2px rgba(0,0,0,.08)}
+.pub-head .tag{font-size:11px;color:var(--muted);margin-top:4px}
+.pub-stats{display:flex;justify-content:center;gap:12px;margin:14px 0 20px;
+  font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;
+  flex-wrap:wrap}
+.pub-stats .pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
+  border:2px solid #8898b8;background:linear-gradient(180deg,#f0e8d8,#e8dcc8);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),2px 2px 0 rgba(0,0,0,.06)}
+.pub-stats .pill b{color:#304880;font-size:11px}
+.section-title{font-family:"Georgia",serif;font-size:14px;letter-spacing:2px;color:#304880;
+  margin:18px 0 10px;padding-bottom:8px;
+  border-bottom:2px solid #c8b898;text-transform:uppercase}
+.mission-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.mission{position:relative;padding:14px;
+  border:2px solid #c8b898;
+  background:linear-gradient(160deg, #f0e8d8, #e8dcc8);
+  cursor:pointer;transition:.15s;
+  box-shadow:3px 3px 0 rgba(0,0,0,.06)}
+.mission:hover{border-color:#c89830;transform:translate(-1px,-1px);
+  box-shadow:4px 4px 0 rgba(0,0,0,.08)}
+.mission.locked{opacity:.5;cursor:not-allowed;filter:saturate(.3)}
+.mission.locked:hover{transform:none;border-color:#c8b898;box-shadow:3px 3px 0 rgba(0,0,0,.06)}
+.mission .num{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:#8898b8;text-transform:uppercase}
+.mission h3{font-size:14px;margin:4px 0 3px;font-weight:700;color:#1a1a2e}
+.mission .desc{font-size:11px;color:#6a5a4a;line-height:1.5}
+.mission .meta{display:flex;gap:6px;margin-top:10px;
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;color:#6a5a4a;text-transform:uppercase}
+.mission .meta span{padding:2px 7px;border:1px solid #d0c4b0;
+  background:rgba(200,184,152,.2)}
+.mission.story{border-left:5px solid #c89830}
+.mission.dispatch{border-left:5px solid #8050b0}
+.mission.encounter{border-left:5px solid #c84038}
+.clan-badge{display:inline-block;padding:1px 8px;font-size:9px;letter-spacing:1px;
+  font-family:var(--mono);text-transform:uppercase;vertical-align:middle;border:1px solid;font-weight:600}
+.loc-badge{font-size:10px;color:#6a5a4a;font-family:var(--mono);letter-spacing:1px}
+
+/* Clan roster */
+.clan-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.unit-card{padding:10px;border:2px solid #c8b898;
+  background:linear-gradient(180deg,#f0e8d8,#e8dcc8);cursor:pointer;
+  box-shadow:2px 2px 0 rgba(0,0,0,.06)}
+.unit-card:hover{border-color:#c89830}
+.unit-card.selected{border-color:#30b848;background:linear-gradient(180deg,#e8f8e8,#d8f0d8);
+  box-shadow:0 0 0 2px rgba(48,184,72,.15)}
+.unit-card .name{font-size:12px;font-weight:700;color:#1a1a2e}
+.unit-card .job{font-size:10px;color:#30b848;letter-spacing:1px;text-transform:uppercase;margin:2px 0}
+.unit-card .race{font-size:9px;color:#6a5a4a;letter-spacing:1px;text-transform:uppercase}
+.unit-card .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin-top:6px;font-family:var(--mono);font-size:8px;text-align:center}
+.unit-card .stat{padding:2px 0;background:rgba(200,184,152,.2);color:#6a5a4a}
+.unit-card .stat b{color:#1a1a2e;font-size:9px}
+
+/* ── JOB TREE SCENE ──────────────────────────────────────────── */
+#jobs{padding:20px;overflow-y:auto}
+.job-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.job{position:relative;padding:12px;border:2px solid #c8b898;
+  background:linear-gradient(180deg,#f0e8d8,#e8dcc8);transition:.12s;
+  box-shadow:2px 2px 0 rgba(0,0,0,.06)}
+.job:hover{border-color:#c89830}
+.job.locked{opacity:.5;filter:saturate(.3)}
+.job h4{font-size:12px;font-weight:700;color:#304880;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.job .race{font-size:9px;color:#6a5a4a;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.job .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;font-family:var(--mono);font-size:8px;text-align:center}
+.job .stat{padding:2px 0;background:rgba(200,184,152,.2);color:#6a5a4a}
+.job .stat b{color:#1a1a2e}
+
+/* ── BATTLE SCENE ────────────────────────────────────────────── */
+#battle{position:relative;display:none;background:#c0b8a8}
+#battle.on{display:flex;flex-direction:column}
+.battle-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;
+  background:linear-gradient(180deg,#4060a0,#304880);
+  border-bottom:3px solid #283868;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;
+  color:#b0c8f0;text-transform:uppercase;z-index:5}
+.battle-bar .turn{color:#e8f0ff}
+.battle-bar .turn.enemy{color:#f09088}
+.battle-bar .right{display:flex;gap:14px;align-items:center}
+.battle-bar .right b{color:#f0e8d8}
+
+.battle-main{flex:1;display:grid;grid-template-columns:1fr 280px;position:relative;min-height:0}
+@media(max-width:760px){
+  .battle-main{grid-template-columns:1fr}
+  /* Phones: the side panel used to be display:none, which left NO way to press
+     Move / Fight / Item / Wait. Dock it as a short scrollable strip instead. */
+  .battle-side{display:flex;position:absolute;left:0;right:0;bottom:0;
+    max-height:40%;border-left:none;border-top:2px solid #c8b898;z-index:6;
+    background:linear-gradient(180deg,rgba(240,232,216,.96),rgba(221,208,184,.96))}
+  .battle-side .turn-order{display:none}
+  .battle-side .unit-info{padding:8px 12px}
+  .actions-list{display:flex;flex-wrap:wrap;gap:6px;padding:8px;align-content:flex-start}
+  .actions-list h4{width:100%;margin:2px 0 0}
+  .act-btn{width:auto;min-width:104px;min-height:44px;margin-bottom:0}
+}
+
+/* Canvas viewport */
+.viewport{position:relative;background:#b8b0a0;overflow:hidden;cursor:crosshair}
+/* touch-action on the play surfaces ONLY - the rest of the page still scrolls */
+#grid{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.world-canvas-wrap canvas{touch-action:manipulation}
+
+/* Floating message bar */
+.fmsg{position:absolute;top:14px;left:50%;transform:translateX(-50%);padding:8px 18px;
+  background:#f0e8d8;border:2px solid #8898b8;font-size:11px;letter-spacing:1px;
+  color:#1a1a2e;pointer-events:none;z-index:4;opacity:0;transition:opacity .3s;
+  box-shadow:3px 3px 0 rgba(0,0,0,.08)}
+.fmsg.show{opacity:1}
+.fmsg.warn{border-color:#c84038;color:#c84038}
+
+/* Side panel */
+.battle-side{display:flex;flex-direction:column;gap:0;
+  background:linear-gradient(180deg,#e8dcc8,#ddd0b8);
+  border-left:2px solid #c8b898;overflow:hidden}
+.unit-info{padding:14px;border-bottom:2px solid #c8b898}
+.unit-info .name{font-size:14px;font-weight:700;color:#1a1a2e}
+.unit-info .job{font-size:10px;color:#30b848;letter-spacing:1px;text-transform:uppercase;margin:2px 0}
+.unit-info .race{font-size:9px;color:#6a5a4a;text-transform:uppercase;letter-spacing:1px}
+.unit-info .hp-bar{height:8px;background:#c8b898;overflow:hidden;margin-top:8px;
+  border:1px solid #888060}
+.unit-info .hp-bar .fill{height:100%;background:linear-gradient(90deg,#28a040,#40d860);
+  transition:width .3s}
+.unit-info .mp-bar{height:7px;background:#c8b898;overflow:hidden;margin-top:3px;
+  border:1px solid #888060}
+.unit-info .mp-bar .fill{height:100%;background:linear-gradient(90deg,#3070c0,#5090e0)}
+.unit-info .bars{display:flex;gap:8px;margin-top:6px;font-family:var(--mono);font-size:9px;color:#6a5a4a}
+.unit-info .bars b{color:#1a1a2e}
+
+.actions-list{padding:8px;overflow-y:auto;flex:1}
+.actions-list h4{font-size:10px;color:#6a5a4a;letter-spacing:1.5px;text-transform:uppercase;margin:8px 0 4px}
+.act-btn{width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;margin-bottom:4px;
+  border:2px solid #c8b898;background:linear-gradient(180deg,#f0e8d8,#e8dcc8);
+  text-align:left;transition:.12s;font-size:11px;color:#1a1a2e;
+  box-shadow:2px 2px 0 rgba(0,0,0,.04)}
+.act-btn:hover{border-color:#c89830;background:linear-gradient(180deg,#f8f0e0,#f0e8d8)}
+.act-btn:disabled{opacity:.4;cursor:not-allowed}
+.act-btn .ico{font-size:14px;width:18px;text-align:center}
+.act-btn .lbl{flex:1;font-weight:600}
+.act-btn .cost{font-family:var(--mono);font-size:9px;color:#6a5a4a}
+.act-btn .cost.mp{color:#4080d0}
+
+.turn-order{padding:8px 14px;border-top:2px solid #c8b898;
+  background:#ddd0b8;max-height:120px;overflow-y:auto}
+.turn-order h4{font-size:9px;color:#6a5a4a;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.trow{display:flex;align-items:center;gap:6px;padding:4px 6px;font-size:10px;margin-bottom:2px}
+.trow.now{background:rgba(48,184,72,.12);border-left:2px solid #30b848;padding-left:6px}
+.trow .ico{width:14px;text-align:center}
+.trow .nm{flex:1;color:#1a1a2e}
+.trow .sp{font-family:var(--mono);font-size:9px;color:#6a5a4a}
+
+/* ── LAWS PANEL ──────────────────────────────────────────────── */
+.laws{padding:10px 14px;background:linear-gradient(180deg,#e8dcc8,#ddd0b8);
+  border-top:2px solid #c8b898;font-size:10px;color:#6a5a4a;font-family:var(--mono);letter-spacing:1px}
+.laws b{color:#304880}
+
+/* ── SYSTEM MENU (overlay) ───────────────────────────────────── */
+.sysmenu{position:absolute;inset:0;background:rgba(200,184,152,.85);display:none;align-items:center;justify-content:center;z-index:50}
+.sysmenu.on{display:flex}
+.sysmenu .box{width:min(440px,90vw);padding:24px;
+  border:3px solid #304880;background:linear-gradient(180deg,#f0e8d8,#e8dcc8);
+  box-shadow:6px 6px 0 rgba(0,0,0,.1)}
+.sysmenu h2{font-family:"Georgia",serif;font-size:18px;color:#304880;letter-spacing:2px;margin-bottom:14px;text-align:center}
+.sysmenu .row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;
+  border:2px solid #c8b898;background:linear-gradient(180deg,#f0e8d8,#e8dcc8);
+  margin-bottom:6px;cursor:pointer;font-size:12px;transition:.12s}
+.sysmenu .row:hover{border-color:#c89830;background:linear-gradient(180deg,#f8f0e0,#f0e8d8)}
+
+/* ── MODAL (story cutscene, victory, defeat) ─────────────────── */
+.modal{position:fixed;inset:0;background:rgba(200,184,152,.85);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+.modal.on{display:flex}
+.modal .box{max-width:520px;width:100%;padding:28px;
+  border:3px solid #304880;background:linear-gradient(180deg,#f0e8d8,#e8dcc8);
+  text-align:center;box-shadow:6px 6px 0 rgba(0,0,0,.1)}
+.modal h2{font-family:"Georgia",serif;font-size:24px;color:#304880;letter-spacing:2px;margin-bottom:12px}
+.modal p{font-size:12px;color:#6a5a4a;line-height:1.6;margin-bottom:18px}
+.modal .row-buttons{display:flex;gap:10px;justify-content:center}
+.modal .row-buttons .btn{min-width:120px}
+
+/* ── STATUS AILMENT INDICATORS ───────────────────────────────── */
+.status-row{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.status-ailment{padding:2px 6px;font-family:var(--mono);font-size:8px;letter-spacing:1px;
+  border:1px solid #c84038;color:#c84038;text-transform:uppercase;
+  background:rgba(200,64,56,.08)}
+
+/* ── NOTIFICATION TOAST ──────────────────────────────────────── */
+.toast{position:fixed;top:80px;right:20px;z-index:200;padding:10px 16px;
+  background:#f0e8d8;border:2px solid #8898b8;font-size:11px;color:#1a1a2e;
+  box-shadow:4px 4px 0 rgba(0,0,0,.08);opacity:0;transform:translateX(20px);transition:.3s}
+.toast.show{opacity:1;transform:translateX(0)}
+
+/* ── MOBILE CONTROLS (D-pad) ────────────────────────────────── */
+.dpad{position:absolute;left:10px;top:10px;width:144px;height:144px;z-index:7;touch-action:none;user-select:none;display:none}
+@media(hover:none) and (pointer:coarse){.dpad{display:block}}
+.dbtn{position:absolute;width:46px;height:46px;border:2px solid rgba(60,80,120,.45);
+  background:rgba(240,232,216,.78);color:#304880;font-size:17px;touch-action:none;padding:0}
+.dbtn.ok{color:#30b848;border-color:rgba(48,184,72,.6);font-weight:700}
+.dbtn:active{background:rgba(200,152,48,.28)}
+
+/* ── NEW: FFTA-STYLE EQUIP SCREEN ──────────────────────────── */
+.equip-layout{display:grid;grid-template-columns:240px 1fr;gap:16px}
+.equip-silhouette{position:relative;background:linear-gradient(180deg,#d4c4a8,#c8b898);
+  border:3px solid #b8a888;padding:16px;text-align:center;min-height:280px}
+.equip-silhouette .char-frame{width:100px;height:120px;margin:0 auto 12px;
+  border:2px solid #8898b8;background:#e0d4c0;position:relative}
+.equip-silhouette .char-frame canvas{display:block;width:100%;height:100%}
+.equip-silhouette .char-name{font-size:13px;font-weight:700;color:#1a1a2e}
+.equip-silhouette .char-job{font-size:10px;color:#30b848;text-transform:uppercase;letter-spacing:1px;margin:2px 0}
+.equip-silhouette .char-race{font-size:9px;color:#6a5a4a;text-transform:uppercase;letter-spacing:1px}
+.equip-slots{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.equip-slot{display:flex;align-items:center;gap:8px;padding:6px 10px;cursor:pointer;
+  border:2px solid #b8a888;background:linear-gradient(180deg,#f0e8d8,#e8dcc8);
+  transition:.12s;font-size:10px;text-align:left;width:100%}
+.equip-slot:hover{border-color:#c89830}
+.equip-slot.active{border-color:#c89830;background:linear-gradient(180deg,#f8f0d8,#f0e8c8)}
+.equip-slot .slot-icon{width:24px;height:24px;border:1px solid #b8a888;
+  background:#ddd0b8;display:flex;align-items:center;justify-content:center;font-size:12px}
+.equip-slot .slot-name{flex:1;font-weight:600;color:#1a1a2e}
+.equip-slot .slot-item{font-family:var(--mono);font-size:9px;color:#6a5a4a}
+.equip-stat-block{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;
+  font-family:var(--mono);font-size:9px}
+.equip-stat-block .stat{display:flex;justify-content:space-between;padding:2px 6px;
+  background:rgba(200,184,152,.2)}
+.equip-stat-block .stat.up{color:#30b848}
+.equip-stat-block .stat.down{color:#c84038}
+.equip-item-list{max-height:400px;overflow-y:auto;padding:4px}
+.equip-item-list .item{display:flex;align-items:center;gap:8px;padding:7px 10px;margin-bottom:3px;
+  border:2px solid #c8b898;cursor:pointer;transition:.12s;font-size:10px}
+.equip-item-list .item:hover{border-color:#c89830}
+.equip-item-list .item.grey{opacity:0.4;cursor:not-allowed}
+.equip-item-list .item.equipped{border-color:#30b848;background:rgba(48,184,72,.06)}
+.equip-item-list .item .ilbl{flex:1;font-weight:600;color:#1a1a2e}
+.equip-item-list .item .istat{font-family:var(--mono);font-size:9px;color:#6a5a4a}
+.equip-item-list .item .ichange{font-family:var(--mono);font-size:9px;min-width:40px;text-align:right}
+.equip-item-list .item .ichange.up{color:#30b848}
+.equip-item-list .item .ichange.down{color:#c84038}
+.equip-item-list .item .iap{font-size:8px;color:#6a5a4a;font-family:var(--mono)}
+
+/* ── NEW: FFTA-STYLE SHOP TWO-PANEL ───────────────────────── */
+.shop-layout{display:grid;gap:0;background:#f0e8d8;border:2px solid #c8b898}
+.shop-header{display:flex;border-bottom:2px solid #c8b898}
+.shop-tab{padding:8px 20px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  font-weight:700;border-right:1px solid #c8b898;background:#ddd0b8;cursor:pointer;transition:.12s}
+.shop-tab:hover{background:#e8dcc8}
+.shop-tab.on{background:#f0e8d8;color:#304880}
+.shop-body{display:grid;grid-template-columns:1fr 240px;min-height:300px}
+.shop-list{padding:8px;border-right:2px solid #c8b898;overflow-y:auto;max-height:400px}
+.shop-list .cat-label{padding:6px 8px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:#8898b8;font-family:var(--mono);margin-top:8px;font-weight:600}
+.shop-list .item{padding:7px 10px;margin-bottom:2px;border:1px solid #d0c4b0;
+  background:rgba(255,255,255,.4);cursor:pointer;transition:.08s;font-size:10px;
+  display:flex;align-items:center;gap:8px}
+.shop-list .item:hover{border-color:#c89830;background:rgba(255,255,255,.7)}
+.shop-list .item.sel{border-color:#4060a0;background:rgba(64,96,160,.08)}
+.shop-list .item .iname{flex:1;font-weight:600;color:#1a1a2e}
+.shop-list .item .iprice{font-family:var(--mono);font-size:9px;color:#c89830}
+.shop-list .item .iqty{font-family:var(--mono);font-size:8px;color:#6a5a4a}
+.shop-detail{padding:14px;display:flex;flex-direction:column;gap:8px}
+.shop-detail .dname{font-size:14px;font-weight:700;color:#1a1a2e}
+.shop-detail .ddesc{font-size:10px;color:#6a5a4a;line-height:1.5}
+.shop-detail .dstats{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-family:var(--mono);font-size:9px}
+.shop-detail .dstats .ds{display:flex;justify-content:space-between;padding:3px 6px;background:rgba(200,184,152,.15)}
+.shop-detail .dbuy{padding:8px;border:2px solid #30b848;background:rgba(48,184,72,.08);
+  text-align:center;font-weight:700;font-size:11px;cursor:pointer;transition:.12s;
+  color:#30b848;letter-spacing:1px}
+.shop-detail .dbuy:hover{background:rgba(48,184,72,.15)}
+.shop-detail .dbuy:disabled{opacity:0.4;cursor:not-allowed}
+.shop-detail .dgil{font-family:var(--mono);font-size:10px;color:#c89830;text-align:center}
+.shop-gil-display{padding:8px 14px;background:#304880;color:#f0e8d8;
+  font-family:var(--mono);font-size:11px;display:flex;justify-content:space-between}
+
+/* ── NEW: FORMATION / ACTIVE PARTY ─────────────────────────── */
+.clan-with-formation{display:grid;grid-template-columns:1fr 200px;gap:12px}
+.clan-formation{padding:10px;border:2px solid #c8b898;background:linear-gradient(180deg,#f0e8d8,#e8dcc8)}
+.clan-formation h4{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#304880;margin-bottom:8px;
+  padding-bottom:6px;border-bottom:2px solid #c8b898}
+.clan-formation .fslot{display:flex;align-items:center;gap:6px;padding:5px 8px;margin-bottom:3px;
+  border:1px solid #d0c4b0;background:rgba(255,255,255,.4);font-size:10px;cursor:pointer;transition:.1s}
+.clan-formation .fslot:hover{border-color:#c89830}
+.clan-formation .fslot.fill{border-color:#8898b8;background:rgba(64,96,160,.06)}
+.clan-formation .fslot .fnum{font-family:var(--mono);font-size:9px;color:#8898b8;width:16px;text-align:center}
+.clan-formation .fslot .fname{flex:1;font-weight:600;color:#1a1a2e}
+.clan-formation .fslot .fjob{font-size:8px;color:#6a5a4a}
+
+/* ── NEW: LEVEL UP DISPLAY ─────────────────────────────────── */
+.levelup-wrap{background:linear-gradient(180deg,#f0e8d8,#e8dcc8);border:2px solid #c89830;
+  padding:16px;margin:10px 0}
+.levelup-wrap h3{text-align:center;font-size:16px;letter-spacing:2px;color:#c89830;margin-bottom:12px}
+.levelup-unit{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px;
+  border:1px solid #d0c4b0;margin-bottom:8px;font-family:var(--mono);font-size:10px}
+.levelup-unit .luname{grid-column:1/-1;font-weight:700;font-size:11px;color:#304880;margin-bottom:2px}
+.levelup-unit .lus{display:flex;justify-content:space-between;padding:2px 6px;
+  background:rgba(200,184,152,.15)}
+.levelup-unit .lus .up{color:#30b848}
+.levelup-unit .lus .arrow{color:#30b848;font-size:8px}
+
+/* ── WORLD MAP ──────────────────────────────────────────────── */
+.world-wrap{display:flex;flex-direction:column;height:100%;padding:12px 20px;overflow:hidden}
+.world-header{text-align:center;margin-bottom:10px}
+.world-header h2{font-family:"Georgia",serif;font-size:28px;letter-spacing:6px;color:#304880;text-shadow:0 1px 2px rgba(0,0,0,.08)}
+.world-sub{font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase}
+.world-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  border:3px solid #b8a888;background:linear-gradient(180deg,#c8d8b8,#a8b898)}
+.world-canvas-wrap canvas{max-width:100%;max-height:100%;cursor:pointer}
+.world-legend{display:flex;justify-content:center;gap:20px;padding:8px 0;font-size:9px;color:var(--muted);letter-spacing:1px}
+.wl-icon{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.world-gil-bar{display:flex;justify-content:space-between;padding:6px 10px;
+  background:#304880;color:#f0e8d8;font-family:var(--mono);font-size:10px;border-radius:2px}
+
+/* ── TOWN MENU ──────────────────────────────────────────────── */
+.town-overlay{position:fixed;inset:0;background:rgba(200,184,152,.85);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+.town-overlay.on{display:flex}
+.town-box{max-width:480px;width:100%;padding:28px;border:4px solid #304880;
+  background:linear-gradient(180deg,#f0e8d8,#e8dcc8);text-align:center;
+  box-shadow:8px 8px 0 rgba(0,0,0,.1);position:relative}
+.town-box h2{font-family:"Georgia",serif;font-size:28px;letter-spacing:3px;color:#304880;margin-bottom:4px}
+.town-desc{font-size:11px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.town-buttons{display:flex;flex-direction:column;gap:6px}
+.town-btn{display:flex;align-items:center;gap:12px;padding:12px 16px;
+  border:2px solid #b8a888;background:linear-gradient(180deg,#f0e8d8,#e8dcc8);
+  font-size:12px;font-weight:600;color:#1a1a2e;text-align:left;transition:.12s;
+  box-shadow:3px 3px 0 rgba(0,0,0,.06)}
+.town-btn:hover{border-color:#c89830;transform:translate(-1px,-1px);box-shadow:4px 4px 0 rgba(0,0,0,.08)}
+.town-btn .tbi{width:24px;text-align:center;font-size:16px}
+.town-btn.cancel{border-color:#b84840;color:#b84840}
+.town-btn.cancel:hover{border-color:#c84038;background:rgba(200,64,56,.05)}
+
+/* ── GAME MENU OVERLAYS (pub/clan/jobs/equip/shop) ─────────── */
+.game-overlay{position:fixed;inset:0;z-index:55;background:rgba(200,184,152,.92);
+  display:none;overflow-y:auto;padding:30px 16px;align-items:flex-start;justify-content:center}
+.game-overlay.on{display:flex}
+.game-overlay>.box{max-width:680px;width:100%;padding:28px;
+  border:3px solid #304880;background:linear-gradient(180deg,#f0e8d8,#e8dcc8);
+  box-shadow:6px 6px 0 rgba(0,0,0,.08);position:relative;margin:10px auto}
+.game-overlay .close-btn{position:absolute;top:10px;right:12px;font-size:18px;color:#6a5a4a;
+  cursor:pointer;background:none;border:none;padding:4px 8px;z-index:2;
+  font-family:var(--hud);line-height:1;transition:.1s}
+.game-overlay .close-btn:hover{color:#c84038}
+
+/* ── CUTSCENE MODAL ─────────────────────────────────────────── */
+.cutscene{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:70;padding:20px}
+.cutscene.on{display:flex}
+.cutscene-box{max-width:620px;width:100%;padding:0;border:3px solid #c89830;
+  background:#f8f0e0;box-shadow:0 0 30px rgba(200,152,48,.3),8px 8px 0 rgba(0,0,0,.12);
+  position:relative;overflow:hidden}
+.cutscene-bg{position:absolute;inset:0;background-size:cover;background-position:center;
+  opacity:0.15;pointer-events:none;z-index:0;transition:opacity .8s}
+.cutscene-bg.has{opacity:0.25}
+.cutscene-box>*:not(.cutscene-bg){position:relative;z-index:1}
+.cutscene-title-bar{display:flex;align-items:center;gap:8px;margin:20px 28px 12px;
+  padding-bottom:10px;border-bottom:2px solid #d0c4a8}
+.cutscene-sigil{font-size:20px;color:#c89830}
+.cutscene-chapter{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:var(--mono)}
+.cutscene-title{font-family:"Georgia",serif;font-size:22px;color:#304880;letter-spacing:2px;margin:0 28px 12px;text-align:center}
+.cutscene-layout{display:flex;gap:16px;margin:0 28px;min-height:100px}
+.cutscene-portrait{flex:0 0 96px;width:96px;height:128px;border:2px solid #b8a888;
+  background:linear-gradient(180deg,#d4c4a8,#c8b898);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.cutscene-portrait img{width:100%;height:100%;object-fit:cover}
+.cutscene-body{flex:1;padding:0;min-height:80px}
+.cutscene-body .cut-loc{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px}
+.cutscene-body .cut-body{font-size:13px;color:#1a1a2e;line-height:1.7;margin-bottom:10px}
+.cutscene-body .cut-enemy{font-size:11px;color:#c84038;padding:6px 10px;
+  border:1px solid rgba(200,64,56,.2);background:rgba(200,64,56,.05);margin-bottom:8px;letter-spacing:1px}
+.cutscene-body .cut-reward{font-size:11px;color:var(--gold);padding:6px 10px;
+  border:1px solid rgba(200,152,48,.2);background:rgba(200,152,48,.05);margin-bottom:6px;letter-spacing:1px;font-weight:600}
+.cutscene-body .cut-chapter{padding:12px;margin-top:10px;border:2px solid #c89830;
+  background:rgba(200,152,48,.08);text-align:center;font-size:13px;color:#304880;line-height:1.6}
+.cutscene-next{display:block;margin:16px auto 20px;padding:10px 32px;
+  border:2px solid #304880;background:linear-gradient(180deg,#4060a0,#304880);
+  color:#f0e8d8;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  box-shadow:3px 3px 0 rgba(0,0,0,.12);cursor:pointer;transition:.12s}
+.cutscene-next:hover{background:linear-gradient(180deg,#5070b0,#4060a0);transform:translate(-1px,-1px)}
+
+/* ── REDUCED MOTION ──────────────────────────────────────────── */
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<!-- ══════════════ TOP BAR ══════════════ -->
+<header class="bar">
+  <div class="brand">
+    <span class="sigil">◈ SHADDAI</span>
+    <span class="subt" id="subt">Pub · Clan</span>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-scene="world">🗺 WORLD</button>
+  </nav>
+  <div class="right">
+    <span id="gil" style="font-family:var(--mono);font-size:11px;color:#f0e8d8">◈ 0 GIL</span>
+  </div>
+</header>
+
+<!-- ══════════════ WORLD MAP SCENE ══════════════ -->
+<section id="world" class="scene">
+  <div class="world-wrap">
+    <div class="world-header">
+      <h2>IVALICE</h2>
+      <span class="world-sub">Explore · discover · conquer</span>
+    </div>
+    <div class="world-canvas-wrap">
+      <canvas id="worldCanvas"></canvas>
+    </div>
+    <div class="world-legend">
+      <span><span class="wl-icon" style="background:#c07030"></span> Town</span>
+      <span><span class="wl-icon" style="background:var(--gold)"></span> ⚔ Battle Available</span>
+      <span><span class="wl-icon" style="background:#30b848"></span> ⬟ Your Position</span>
+    </div>
+    <div class="world-gil-bar">
+      <span id="worldGil">◈ 0 GIL</span>
+      <span id="worldClanName" style="color:var(--muted)">—</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TOWN MENU (overlay) ══════════════ -->
+<div class="town-overlay" id="townMenu">
+  <div class="town-box">
+    <h2 id="townTitle">Cyril</h2>
+    <p id="townDesc" class="town-desc">The capital of Ivalice</p>
+    <div class="town-buttons">
+      <button class="town-btn" onclick="window.tactics.townAction('pub')"><span class="tbi">🍺</span> Pub — Find Missions</button>
+      <button class="town-btn" onclick="window.tactics.townAction('shop')"><span class="tbi">🛒</span> Shop — Buy Equipment</button>
+      <button class="town-btn" onclick="window.tactics.townAction('equip')"><span class="tbi">🎽</span> Abilities — Equip Gear</button>
+      <button class="town-btn" onclick="window.tactics.townAction('clan')"><span class="tbi">⚔</span> Formation — Manage Clan</button>
+      <button class="town-btn" onclick="window.tactics.townAction('save')"><span class="tbi">💾</span> Save Game</button>
+      <button class="town-btn cancel" onclick="window.tactics.hideTownMenu()"><span class="tbi">✕</span> Leave Town</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CUTSCENE MODAL (overlay) ══════════════ -->
+<div class="cutscene" id="cutsceneModal">
+  <div class="cutscene-box">
+    <div class="cutscene-bg" id="cutsceneBg"></div>
+    <div class="cutscene-title-bar">
+      <span class="cutscene-sigil">◈</span>
+      <span class="cutscene-chapter" id="cutsceneChapter">Mission</span>
+    </div>
+    <h2 class="cutscene-title" id="cutsceneTitle">—</h2>
+    <div class="cutscene-layout">
+      <div class="cutscene-portrait" id="cutscenePortrait">
+        <img id="cutscenePortraitImg" src="" alt="" style="display:none">
+      </div>
+      <div class="cutscene-body" id="cutsceneText"></div>
+    </div>
+    <button class="cutscene-next" id="cutsceneNext">▶ Continue</button>
+  </div>
+</div>
+
+<!-- ══════════════ PUB OVERLAY ══════════════ -->
+<div id="pub" class="game-overlay">
+  <div class="box">
+    <button class="close-btn" onclick="window.tactics.backToTown()">✕</button>
+    <div class="pub-head">
+    <h1>THE PUB</h1>
+    <div class="tag">Accept missions · dispatch clan members · track your Judge Points</div>
+    <div class="pub-stats">
+      <span class="pill">CLAN <b id="clanName">—</b></span>
+      <span class="pill">CLAN LV <b id="pubLevel">1</b></span>
+      <span class="pill">JP <b id="pubJP">0</b></span>
+      <span class="pill">AP <b id="pubAP">0</b></span>
+      <span class="pill">UNITS <b id="pubUnits">0</b></span>
+      <span class="pill">ITEMS <b id="pubItems">0</b></span>
+    </div>
+  </div>
+
+  <div class="section-title">Story Missions</div>
+  <div class="mission-grid" id="missionsStory"></div>
+
+  <div class="section-title">Dispatch (send a unit on a solo run)</div>
+  <div class="mission-grid" id="missionsDispatch"></div>
+
+  <div class="section-title">Clan Encounters (rival battles)</div>
+  <div class="mission-grid" id="missionsEncounter"></div>
+
+  <div class="section-title">Laws Card Holder · <span style="font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0">(after Mission 24)</span></div>
+  <div class="mission-grid" id="missionsLaws"></div>
+  </div>
+</div>
+
+<!-- ══════════════ CLAN OVERLAY ══════════════ -->
+<div id="clan" class="game-overlay">
+  <div class="box">
+    <button class="close-btn" onclick="window.tactics.backToTown()">✕</button>
+    <div class="section-title">Your Clan Roster</div>
+    <div class="clan-row" id="clanRoster"></div>
+    <div class="section-title" style="margin-top:20px">Race Distribution</div>
+    <div class="clan-row" id="clanRaces"></div>
+  </div>
+</div>
+
+<!-- ══════════════ JOBS OVERLAY ══════════════ -->
+<div id="jobs" class="game-overlay">
+  <div class="box">
+    <button class="close-btn" onclick="window.tactics.backToTown()">✕</button>
+    <div class="pub-head"><h1 style="font-size:24px">JOB SYSTEM</h1><div class="tag">34 jobs · 5 races · each unit masters abilities by equipping weapons & armor</div></div>
+    <div class="section-title">Available to your clan</div>
+    <div class="job-grid" id="jobsUnlocked"></div>
+    <div class="section-title" style="margin-top:18px">Locked (higher clan level required)</div>
+    <div class="job-grid" id="jobsLocked"></div>
+  </div>
+</div>
+
+<!-- ══════════════ EQUIP / ABILITIES OVERLAY ══════════════ -->
+<div id="equip" class="game-overlay">
+  <div class="box">
+    <button class="close-btn" onclick="window.tactics.backToTown()">✕</button>
+    <div class="pub-head"><h1 style="font-size:24px">ABILITIES</h1><div class="tag">Equip weapons & armor to learn abilities · AP earned after each mission · retained on job change</div></div>
+    <div id="equipPanel">Select a clan member from the CLAN tab to view their abilities.</div>
+  </div>
+</div>
+
+<!-- ══════════════ SHOP OVERLAY ══════════════ -->
+<div id="shop" class="game-overlay">
+  <div class="box">
+    <button class="close-btn" onclick="window.tactics.backToTown()">✕</button>
+    <div class="pub-head"><h1 style="font-size:24px">EQUIPMENT SHOP</h1><div class="tag">Buy weapons & armor for your clan · earn Gil from missions</div></div>
+    <div id="shopPanel">Shop loading...</div>
+  </div>
+</div>
+
+<!-- ══════════════ BATTLE SCENE ══════════════ -->
+<section id="battle" class="scene">
+  <div class="battle-bar">
+    <div><span class="turn" id="turnLabel">PLAYER TURN</span> · Round <b id="round">1</b></div>
+    <div class="right">
+      <span>Active: <b id="activeName" style="color:var(--ink)">—</b></span>
+      <span>HP <b id="activeHP" style="color:var(--emerald)">—</b></span>
+      <span>MP <b id="activeMP" style="color:var(--violet)">—</b></span>
+      <button class="btn ghost" id="sysBtn">≡ SYSTEM</button>
+    </div>
+  </div>
+  <div class="laws" id="lawsBar">⚖ No Laws in effect (free battle)</div>
+  <div class="battle-main">
+    <div class="viewport" id="viewport">
+      <canvas id="grid"></canvas>
+      <div class="fmsg" id="fmsg">Tap a unit to begin</div>
+      <div class="dpad" id="dpad">
+        <button class="dbtn" style="left:49px;top:0" data-key="w">▲</button>
+        <button class="dbtn" style="left:0;top:49px" data-key="a">◀</button>
+        <button class="dbtn ok" style="left:49px;top:49px" data-key="Enter">✓</button>
+        <button class="dbtn" style="left:98px;top:49px" data-key="d">▶</button>
+        <button class="dbtn" style="left:49px;top:98px" data-key="s">▼</button>
+      </div>
+    </div>
+    <div class="battle-side">
+      <div class="unit-info" id="unitInfo">
+        <div class="name" id="uiName">—</div>
+        <div class="job" id="uiJob">—</div>
+        <div class="race" id="uiRace">—</div>
+        <div class="bars">
+          <span>HP <b id="uiHP">—</b></span>
+          <span>MP <b id="uiMP">—</b></span>
+          <span>SPD <b id="uiSPD">—</b></span>
+        </div>
+        <div class="bars" style="font-size:8px;color:var(--muted)">
+          <span>ATK <b id="uiAtk">—</b></span>
+          <span>DEF <b id="uiDef">—</b></span>
+          <span>MAG <b id="uiMag">—</b></span>
+        </div>
+        <div class="hp-bar"><div class="fill" id="uiHPbar" style="width:100%"></div></div>
+        <div class="mp-bar"><div class="fill" id="uiMPbar" style="width:0%"></div></div>
+        <div style="display:flex;gap:8px;margin-top:6px;font-size:9px;font-family:var(--mono);color:var(--muted)">
+          <span>Terrain: <b id="terrainLabel" style="color:var(--ink)">—</b></span>
+          <span>Elev: <b id="elevLabel" style="color:var(--gold)">—</b></span>
+        </div>
+        <div class="status-row" id="uiStatuses"></div>
+      </div>
+      <div class="actions-list" id="actions">
+        <h4>Action Menu</h4>
+        <button class="act-btn" data-act="move"><span class="ico">↗</span><span class="lbl">Move</span><span class="cost">WALK</span></button>
+        <button class="act-btn" data-act="fight"><span class="ico">⚔</span><span class="lbl">Fight</span><span class="cost">EQUIP</span></button>
+        <button class="act-btn" data-act="item"><span class="ico">🧪</span><span class="lbl">Item</span><span class="cost">USE</span></button>
+        <button class="act-btn" data-act="wait"><span class="ico">⏸</span><span class="lbl">Wait</span><span class="cost">PASS</span></button>
+        <h4>Equipped Ability</h4>
+        <div id="abilityList" style="font-size:11px;color:var(--muted)">No abilities equipped</div>
+      </div>
+      <div class="turn-order">
+        <h4>Turn Order (next 6)</h4>
+        <div id="tOrder"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- ══════════════ SYSTEM MENU OVERLAY ══════════════ -->
+<div class="sysmenu" id="sysmenu">
+  <div class="box">
+    <h2>SYSTEM COMMANDS</h2>
+    <div class="row" data-sys="order"><span>⟳ Turn Order</span><span style="color:var(--cyan)">▸</span></div>
+    <div class="row" data-sys="mission"><span>📜 Mission</span><span style="color:var(--cyan)">▸</span></div>
+    <div class="row" data-sys="laws"><span>⚖ Laws</span><span style="color:var(--cyan)">▸</span></div>
+    <div class="row" data-sys="options"><span>⚙ Options</span><span style="color:var(--cyan)">▸</span></div>
+    <div class="row" data-sys="flee" style="border-color:rgba(255,90,77,.3);color:var(--crimson)"><span>🏃 Flee</span><span style="color:var(--crimson)">▸</span></div>
+    <div class="row" data-sys="close" style="margin-top:8px;justify-content:center;color:var(--muted)"><span>✕ Close</span></div>
+  </div>
+</div>
+
+<!-- ══════════════ VICTORY / DEFEAT MODAL ══════════════ -->
+<div class="modal" id="endModal">
+  <div class="box">
+    <h2 id="endTitle">VICTORY</h2>
+    <p id="endText">Mission complete.</p>
+    <div class="row-buttons">
+      <button class="btn" onclick="window.tactics.returnToPub()">🗺 Return to World Map</button>
+      <button class="btn ghost" onclick="window.tactics.returnToPub()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TOAST ══════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- Keyboard shortcut hint -->
+<div style="position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:100;font-size:8px;color:rgba(122,135,148,.4);font-family:var(--mono);letter-spacing:1px;pointer-events:none;text-align:center">
+  WASD move · Enter confirm · 1-4 abilities · E wait · F fight · Q cycle · Esc menu
+</div>
+
+<!-- ══════════════ GAME DATA + ENGINE ══════════════ -->
+<script src="tactics-engine.js"></script>
+<script src="tactics-main.js"></script>
+
+<!-- ══════════════ TOUCH CONTROLS ══════════════
+     Tactics is turn-based and already tap-driven: the battle canvas has a
+     touchstart handler that runs handlePlayerClick (tap a tile to select /
+     move / target) and every action is a real DOM button. So NO joystick here.
+     Two things were actually missing on a phone:
+       1. the .dpad markup existed but had zero JS behind it - it is wired here
+          by replaying the exact keyboard events tactics-main.js already listens
+          for, so the game logic path is identical to a physical keypress;
+       2. the action panel was display:none under 760px (fixed in CSS above).
+     Keyboard and mouse are untouched. -->
+<script>
+(function(){
+  var coarse = ('ontouchstart' in window) ||
+               (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+               (navigator.maxTouchPoints > 0);
+  if (!coarse) return;                    // desktop: leave the page exactly as it was
+  var pad = document.getElementById('dpad');
+  if (!pad) return;
+  pad.style.display = 'block';
+  // Each button owns its own touch id, so a second finger elsewhere is independent.
+  Array.prototype.forEach.call(pad.querySelectorAll('.dbtn'), function(btn){
+    var key = btn.getAttribute('data-key');
+    var held = null;
+    function fire(){
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: key, bubbles: true }));
+      window.dispatchEvent(new KeyboardEvent('keyup',   { key: key, bubbles: true }));
+      window.__TACTICS_LAST_TOUCH_KEY = key;   // probe hook
+    }
+    btn.addEventListener('touchstart', function(e){
+      e.preventDefault();
+      if (held !== null) return;
+      held = e.changedTouches[0].identifier;
+      fire();
+    }, { passive:false });
+    function end(e){
+      if (held === null) return;
+      for (var i=0;i<e.changedTouches.length;i++){
+        if (e.changedTouches[i].identifier === held){ e.preventDefault(); held = null; return; }
+      }
+    }
+    btn.addEventListener('touchend', end, { passive:false });
+    btn.addEventListener('touchcancel', end, { passive:false });
+    // click still works for mouse/AT users; touchstart already preventDefault'd
+    // the synthesised click, so there is no double fire.
+    btn.addEventListener('click', function(e){ e.preventDefault(); fire(); });
+  });
+})();
+</script>
+
+</body>
+</html>

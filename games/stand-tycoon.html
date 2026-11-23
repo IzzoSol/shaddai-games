@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STAND TYCOON — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#05010f;--panel:#0c0618;--border:rgba(0,255,136,.22);--green:#00ff88;--gold:#ffd75e;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#d8ffe9;--dim:#7d8aa0}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(255,215,94,.08),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(5,1,15,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-wrap:nowrap}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px;white-space:nowrap;flex-shrink:0}.topbar h1 span{color:var(--gold)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif;white-space:nowrap}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(255,215,94,.10)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:130px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--gold);box-shadow:0 0 16px rgba(255,215,94,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  #ceoFeed{display:none;border:1px solid var(--border);background:#07040f;padding:10px 14px;margin:10px 0;font-family:'Share Tech Mono',monospace;font-size:12px;max-height:240px;overflow-y:auto}
+  #ceoFeed h3{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin:2px 0 8px}
+  #ceoFeed .le{padding:3px 0;border-bottom:1px dashed rgba(0,255,136,.12);color:#c9f5dd}
+  #ceoFeed .le b{color:var(--gold)}
+  #onlineBar{display:none;border:1px solid var(--border);background:var(--panel);padding:10px 14px;margin:10px 0;font-family:'Share Tech Mono',monospace;font-size:13px}
+  #onlineBar input{background:#05010f;border:1px solid var(--border);color:#fff;font-family:'Share Tech Mono',monospace;font-size:15px;padding:7px 10px;width:110px;text-transform:uppercase;letter-spacing:3px}
+  #onlineBar button{background:#101a16;border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:11px;padding:8px 12px;cursor:pointer;letter-spacing:1px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(5,1,15,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#0c0618;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0;min-width:0}
+  @media (max-width:560px){
+    .topbar{gap:8px;padding:10px 12px}
+    .topbar h1{font-size:16px;letter-spacing:1px}
+    .topbar .tag{display:none}
+    .topbar .back{padding:7px 9px;font-size:10px}
+    .abtns{gap:6px;padding-top:30px}.abtns button{width:46px;height:46px;font-size:15px}
+    .dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>BUSINESS<span>TYCOON</span></h1><span class="tag">Stand Tycoon · Build an empire · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="600"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The city waits.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitBtn">Quit to setup</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c"></button><button data-k="up">▲</button><button class="c"></button>
+        <button data-k="left">◀</button><button class="c"></button><button data-k="right">▶</button>
+        <button class="c"></button><button data-k="down">▼</button><button class="c"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — city map">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — back">B</button>
+        <button id="btnA" title="A — confirm">A</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">Pick a business. Pick a region. Build an empire in one season.</div>
+  <div id="onlineBar">
+    🌐 ONLINE RIVAL —
+    <button id="hostBtn">HOST ROOM</button>
+    <input id="roomCode" maxlength="4" placeholder="CODE" />
+    <button id="joinBtn">JOIN</button>
+    <span id="onlineStatus">LAN/local is live; public internet is SIM until deployed.</span>
+  </div>
+  <div id="ceoFeed"><h3>📜 DECISION LOG</h3><div id="ceoFeedList"></div></div>
+  <div class="row">
+    <button class="mbtn" id="btnPlay">▶ 1P Season<small>Run your business, day by day</small></button>
+    <button class="mbtn" id="btnDuo">👥 2P Rival<small>Hot-seat — same city, two empires</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>Four council bots race to the top</small></button>
+    <button class="mbtn" id="btnCEO">🤖 Agent CEO<small>One bot runs it all — log in, it kept going</small></button>
+    <button class="mbtn" id="btnOnline">🌐 Online<small>Room-code rival on another device</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+  </div>
+  <div class="help">
+    <b>BUSINESS TYCOON</b> (Stand Tycoon) — start small, scale big. Every morning: read the <b>forecast</b>, buy supplies at today's prices, set your price, open the doors and watch the street. Unsold perishables spoil overnight. Fair prices and a good recipe build <b>reputation ★</b>; gouging burns it. Profits buy <b>upgrades</b> and new properties across five districts on the <b>city map</b> — and the <b>bank</b> will lend against your net worth if you're short. Season: 30 days (45 for a data center). Score = <b>net worth</b>. Cash below zero at close = bankruptcy.<br/>
+    <b>Five businesses, five economies:</b> LEMONADE STAND (weather is king, everything spoils) · FOOD TRUCK (pick your spot daily) · COFFEE SHOP (rent + regulars) · MERCH BRAND (print drops, hype sells, stock carries) · DATA CENTER (racks, power bills, uptime — slow start, huge ceiling). <b>Five regions</b> bend prices, weather and demand. Cross <b>$5,000 net worth</b> to DIVERSIFY into a second, manager-run business.<br/>
+    <span class="k">CLICK / TAP</span> panels · <span class="k">1–9</span> quick-pick · <span class="k">M</span> city map · <span class="k">P / ESC</span> pause · 📱 handheld shell: D-pad moves the gold focus, <span class="k">A</span> confirms, <span class="k">B</span> goes back, <span class="k">START</span> menu, <span class="k">SELECT</span> map.<br/>
+    <b>AGENT CEO:</b> hand the whole business to a council bot. It buys, prices, borrows and expands on the Fallible Engine, logs every call, saves continuously — and when you come back it catches up the days you missed and shows you what it built. <b>WATCH</b> is the same engine as a 4-bot race (CEO-vs-CEO exhibition). If the engine fails to load, house heuristics run the bots instead.<br/>
+    <b>Clean-room:</b> management-sim mechanics in our own code — every business, name, price and line of text is original.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   BUSINESS TYCOON (Stand Tycoon) — original management sim for the Shaddai
+   Arcade. Five businesses with genuinely different economics, five regions,
+   bank loans, a growing city map, WATCH bot races and a persistent AGENT CEO
+   on the Fallible Engine. Clean-room: tycoon/lemonade-stand mechanics are a
+   genre formula; all names, businesses, text, tuning and art are original.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var W=960,H=600;
+function $(id){ return document.getElementById(id); }
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function money(v){ var s=(v<0?'-$':'$'); v=Math.abs(v); return s+(v>=1000?(Math.round(v*10)/10).toLocaleString('en-US'):v.toFixed(2).replace(/\.?0+$/,'')); }
+function money0(v){ return (v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString('en-US'); }
+
+/* ---------------- districts & the city map ---------------- */
+var DISTRICTS={
+  suburb:  {name:'SUBURB',   traffic:26, cells:[[0,1],[0,2]],            color:'#3f7d5a'},
+  park:    {name:'PARK',     traffic:44, cells:[[1,0],[2,0]],            color:'#2e9e6b'},
+  downtown:{name:'DOWNTOWN', traffic:70, cells:[[2,1],[3,1]],            color:'#c9a227'},
+  beach:   {name:'BEACH',    traffic:56, cells:[[3,2],[4,2]],            color:'#2e7d9e'},
+  stadium: {name:'STADIUM',  traffic:40, cells:[[4,0],[4,1]],            color:'#8a5fc0'}
+};
+var WEATHERS={
+  sunny:   {name:'SUNNY',    icon:'☀', sky:['#2a4d8f','#7db3e8'], glow:'#ffd75e'},
+  cloudy:  {name:'CLOUDY',   icon:'☁', sky:['#3a4666','#7d8aa0'], glow:'#aebdd0'},
+  rainy:   {name:'RAINY',    icon:'🌧', sky:['#232c44','#54627f'], glow:'#7d8aa0'},
+  heatwave:{name:'HEATWAVE', icon:'🔥', sky:['#7d3a1e','#e8975a'], glow:'#ff9d5c'},
+  storm:   {name:'STORM',    icon:'⛈', sky:['#141a30','#3a4666'], glow:'#b78cff'}
+};
+var REGIONS={
+  florida:  {name:'COASTAL FLORIDA', desc:'Sun + tourists · storm days · mid costs', demand:1.0, cost:1.0, power:1.0, supply:1.0, dataDemand:1.0,
+             weather:{sunny:.42,cloudy:.20,rainy:.20,storm:.10,heatwave:.08}, tourist:true},
+  desert:   {name:'DESERT SOUTHWEST', desc:'Heat waves · cheap power · thirsty crowds', demand:0.95, cost:0.9, power:0.55, supply:1.0, dataDemand:0.9,
+             weather:{sunny:.50,cloudy:.10,rainy:.05,storm:0,heatwave:.35}, thirst:1.25},
+  bigcity:  {name:'BIG CITY', desc:'Huge demand · huge rent & prices', demand:1.5, cost:1.6, power:1.3, supply:1.2, dataDemand:1.2,
+             weather:{sunny:.35,cloudy:.30,rainy:.22,storm:.05,heatwave:.08}},
+  smalltown:{name:'SMALL TOWN', desc:'Cheap everything · quiet streets', demand:0.6, cost:0.7, power:0.8, supply:0.85, dataDemand:0.7,
+             weather:{sunny:.45,cloudy:.25,rainy:.18,storm:.04,heatwave:.08}},
+  techhub:  {name:'TECH HUB', desc:'Compute-hungry · pricey · mild weather', demand:1.1, cost:1.3, power:1.15, supply:1.1, dataDemand:1.8,
+             weather:{sunny:.40,cloudy:.28,rainy:.20,storm:.04,heatwave:.08}}
+};
+var REGION_KEYS=['florida','desert','bigcity','smalltown','techhub'];
+
+/* ---------------- the five businesses ---------------- */
+/* supplies: {name, base $/unit, perish: overnight spoil fraction (0 = keeps)}
+   recipe: units consumed per sale. fixed: daily $ costs (scaled by region cost).
+   weather: demand multiplier per weather. cap: sales/day of the first unit. */
+var BUSINESSES={
+  lemonade:{name:'LEMONADE STAND', short:'LEMONADE', color:'#ffd75e', icon:'🍋', startCash:20, season:30, entry:60,
+    tag:'Weather is king. Everything fresh spoils by morning.',
+    product:'cup of lemonade', unit:'cup', fair:1.50, cap:42,
+    supplies:{lemons:{name:'Lemons',base:.30,perish:.45}, sugar:{name:'Sugar',base:.10,perish:0}, cups:{name:'Cups',base:.05,perish:0}, ice:{name:'Ice',base:.08,perish:1}},
+    recipe:{lemons:1,sugar:1,cups:1,ice:1}, fixed:{},
+    weather:{sunny:1.30,heatwave:1.65,cloudy:1.0,rainy:.45,storm:.15},
+    upgrades:[
+      {id:'signage', name:'Neon Signage', cost:25, desc:'Traffic +15%', fx:{traffic:1.15}},
+      {id:'umbrella', name:'Big Umbrella', cost:40, desc:'Rain & storm hurt far less', fx:{rainShield:true}},
+      {id:'juicer', name:'Pro Juicer', cost:60, desc:'Capacity +50%', fx:{cap:1.5}},
+      {id:'icemachine', name:'Ice Machine', cost:90, desc:'Ice never melts · +25 free ice daily', fx:{iceMachine:true}},
+      {id:'berrymenu', name:'Berry Squeeze Recipe', cost:55, desc:'MENU: +$0.35 a cup, demand +8%', fx:{revBonus:.35,traffic:1.08}}],
+    properties:[
+      {district:'park', name:'Park Stand', cost:120, cap:46},
+      {district:'beach', name:'Beach Stand', cost:180, cap:52},
+      {district:'downtown', name:'Corner Cart', cost:320, cap:58},
+      {district:'stadium', name:'Stadium Stand', cost:420, cap:50},
+      {district:'downtown', name:'Storefront', cost:850, cap:90}]},
+  truck:{name:'FOOD TRUCK', short:'FOOD TRUCK', color:'#ff9d5c', icon:'🚚', startCash:150, season:30, entry:500,
+    tag:'Pick your spot every morning. Events are gold.',
+    product:'street meal', unit:'meal', fair:6.50, cap:55,
+    supplies:{buns:{name:'Buns',base:.20,perish:.35}, patties:{name:'Patties',base:.85,perish:.35}, produce:{name:'Produce',base:.30,perish:.40}, sauce:{name:'Sauce',base:.15,perish:0}},
+    recipe:{buns:1,patties:1,produce:1,sauce:1}, fixed:{fuel:6},
+    weather:{sunny:1.10,heatwave:1.15,cloudy:1.0,rainy:.70,storm:.35},
+    spots:{suburb:{name:'Suburb Route',traffic:26}, park:{name:'Park Gate',traffic:48}, downtown:{name:'Downtown Lunch',traffic:72}, beach:{name:'Beach Boardwalk',traffic:58}, stadium:{name:'Stadium Gate',traffic:45}},
+    upgrades:[
+      {id:'grill', name:'Bigger Grill', cost:120, desc:'Capacity +40%', fx:{cap:1.4}},
+      {id:'neon', name:'Neon Wrap', cost:80, desc:'Traffic +12%', fx:{traffic:1.12}},
+      {id:'fridge', name:'Solar Fridge', cost:150, desc:'Spoilage halved', fx:{spoilHalf:true}},
+      {id:'window2', name:'Second Window', cost:220, desc:'Capacity +60%', fx:{cap:1.6}},
+      {id:'menubbq', name:'Smoked Special', cost:160, desc:'MENU: +$1.20 a meal', fx:{revBonus:1.20}}],
+    properties:[
+      {district:'park', name:'Second Truck', cost:600, cap:55},
+      {district:'beach', name:'Third Truck', cost:950, cap:55},
+      {district:'downtown', name:'Commissary Kitchen', cost:1500, cap:110}]},
+  coffee:{name:'COFFEE SHOP', short:'COFFEE', color:'#c98d5e', icon:'☕', startCash:300, season:30, entry:900,
+    tag:'Rent every day — but regulars come back.',
+    product:'latte', unit:'latte', fair:4.50, cap:60,
+    supplies:{beans:{name:'Beans',base:.35,perish:.05}, milk:{name:'Milk',base:.25,perish:.50}, cups:{name:'Cups',base:.06,perish:0}, syrup:{name:'Syrup',base:.12,perish:0}},
+    recipe:{beans:1,milk:1,cups:1}, fixed:{rent:25}, repPower:1.4,
+    weather:{sunny:.95,heatwave:.90,cloudy:1.0,rainy:1.10,storm:.80},
+    upgrades:[
+      {id:'seats', name:'Comfy Seats', cost:150, desc:'Reputation grows 50% faster', fx:{repGain:1.5}},
+      {id:'espressopro', name:'Espresso Pro', cost:300, desc:'Capacity +50%', fx:{cap:1.5}},
+      {id:'pastry', name:'Pastry Case', cost:200, desc:'+$0.80 on every sale', fx:{revBonus:.80}},
+      {id:'loyalty', name:'Loyalty Cards', cost:60, desc:'Reputation losses halved', fx:{repShield:true}},
+      {id:'menumatcha', name:'Matcha Line', cost:180, desc:'MENU: demand +12%', fx:{traffic:1.12}}],
+    properties:[
+      {district:'stadium', name:'Stadium Kiosk', cost:900, cap:45, rent:20},
+      {district:'downtown', name:'Downtown Shop', cost:1200, cap:70, rent:40},
+      {district:'park', name:'Roastery', cost:2600, cap:120, rent:60}]},
+  merch:{name:'MERCH BRAND', short:'MERCH', color:'#b78cff', icon:'👕', startCash:200, season:30, entry:600,
+    tag:'Print drops. Hype sells. Unsold stock carries over.',
+    product:'printed tee', unit:'tee', fair:18, cap:38,
+    supplies:{blanks:{name:'Blank Tees',base:3.00,perish:0}, ink:{name:'Ink Sets',base:.50,perish:0}},
+    recipe:{blanks:1,ink:1}, fixed:{stall:4}, print:true,
+    weather:{sunny:1.0,heatwave:1.0,cloudy:1.0,rainy:1.0,storm:.80},
+    upgrades:[
+      {id:'presspro', name:'Heat Press Pro', cost:180, desc:'Ink use per tee halved', fx:{inkHalf:true}},
+      {id:'hypemachine', name:'Hype Machine', cost:120, desc:'Demand +12%', fx:{traffic:1.12}},
+      {id:'collab', name:'Collab Drop', cost:400, desc:'Demand +25%', fx:{traffic:1.25}},
+      {id:'webstore', name:'Web Store', cost:350, desc:'Passive online sales daily', fx:{webStore:true}}],
+    properties:[
+      {district:'park', name:'Pop-up Stall', cost:300, cap:30},
+      {district:'downtown', name:'Mall Kiosk', cost:900, cap:45},
+      {district:'downtown', name:'Flagship Store', cost:2000, cap:80}]},
+  data:{name:'DATA CENTER', short:'DATA CENTER', color:'#35e0ff', icon:'🖥', startCash:1000, season:45, entry:3000,
+    tag:'Racks, power bills, uptime. Slow start, huge ceiling.',
+    product:'rack-day of compute', unit:'contract', fair:14, cap:0, racksStart:2, rackCost:400,
+    supplies:{}, recipe:{}, fixed:{wages:30}, powerPerRack:3.2,
+    weather:{sunny:1.0,heatwave:.96,cloudy:1.0,rainy:1.0,storm:.92},
+    upgrades:[
+      {id:'generators', name:'Backup Generators', cost:500, desc:'Outage damage halved', fx:{genShield:true}},
+      {id:'cooling', name:'Cooling Loop', cost:650, desc:'Power bill −25%', fx:{powerCut:.75}},
+      {id:'fiber', name:'Fiber Uplink', cost:800, desc:'Client offers +40%', fx:{offers:1.4}},
+      {id:'opsteam', name:'Ops Team', cost:1200, desc:'Uptime recovers twice as fast', fx:{opsTeam:true}}],
+    properties:[
+      {district:'suburb', name:'Second Hall', cost:3000, cap:0, offersMult:1.3},
+      {district:'stadium', name:'Compute Campus', cost:8000, cap:0, offersMult:1.6}]}
+};
+var BIZ_KEYS=['lemonade','truck','coffee','merch','data'];
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var WATCH_BOTS=['ZEROX','TURTLE','QUILL','NEXUS'];
+/* E48: WATCH rotation — the 4-bot race quartet slides across the 8 council
+   bots, one step per season, persisted so a fresh load opens on the NEXT
+   quartet. The cursor advances + saves ONLY when the engine is present;
+   fallback seasons never consume it (E46/E47 pattern). */
+var WATCH_BOUT_KEY='stand-tycoon.watchBout';
+var watchBout=0; try{ watchBout=parseInt(localStorage.getItem(WATCH_BOUT_KEY)||'0',10)||0; }catch(e){ watchBout=0; }
+function watchQuartet(){ return [0,1,2,3].map(function(k){ return COUNCIL_IDS[(watchBout+k)%COUNCIL_IDS.length]; }); }
+function saveWatchBout(){ try{ localStorage.setItem(WATCH_BOUT_KEY, String(watchBout)); }catch(e){} }
+var DIVERSIFY_AT=5000;
+var AWAY_MS_PER_DAY=3*3600*1000; /* 1 CEO day per 3 real hours away, cap 7 */
+</script>
+<script>
+'use strict';
+/* ============================ STATE ============================ */
+function newBiz(type,owner,color){
+  var def=BUSINESSES[type];
+  var inv={}; Object.keys(def.supplies).forEach(function(k){ inv[k]=0; });
+  if(type==='merch') inv.shirts=0;
+  var startDistrict = type==='data' ? 'suburb' : (type==='coffee' ? 'downtown' : 'suburb');
+  return {
+    type:type, owner:owner, color:color||'#00ff88',
+    cash:def.startCash, rep:3.0, price:def.fair, quality:2,
+    inv:inv, units:[{district:startDistrict, name:def.name.split(' ')[0]+' #1', cap:def.cap, tier:0, home:true}],
+    upgrades:{}, loans:[], loanSeq:1, missedTotal:0, credit:600,
+    priceToday:def.fair, stockPlan:1, spot:'downtown', maint:1, printQty:0,
+    racks:def.racksStart||0, uptime:97, clients:0,
+    division:null, /* {type, cash, inv, units, upgrades, racks, uptime, rep, price} auto-managed */
+    stats:{revenue:0, profit:0, sold:0, days:0},
+    bankrupt:false, lastReport:null
+  };
+}
+function freshState(){
+  return {
+    view:'setup', mode:'solo', phase:'morning', panel:'buy',
+    selBiz:'lemonade', selBiz2:'coffee', selRegion:'florida', selCEO:'ZEROX',
+    players:[], activeIdx:0, day:1, seasonDays:30, seed:(Math.random()*1e9)|0,
+    weather:'sunny', prices:{}, stadiumEvent:false, dropDay:false,
+    paused:false, frame:0, hits:[], focus:0, msg:'',
+    openAnim:null, reports:[], log:[], ceoId:null, ceoAgent:null, ceoTimer:0, ceoSpeed:1,
+    watchAgents:{}, awaySummary:null, gameOver:false, winner:null,
+    seasonTraces:{}, /* E48: per-agent decide traces for this season, passed to recordResult so Elo AND per-tag learning both move */
+    online:{active:false, role:null, code:null, peer:null, ws:null, status:''},
+    walkers:[], coins:[], rain:[], feedDirty:true
+  };
+}
+var S=freshState();
+for(var ri=0;ri<70;ri++) S.rain.push({x:Math.random()*W,y:Math.random()*H,s:9+Math.random()*8});
+function setMsg(t){ S.msg=t; if(msgEl) msgEl.textContent=t; }
+function bizDef(p){ return BUSINESSES[p.type]; }
+function region(){ return REGIONS[S.selRegion]; }
+function dayRng(salt){ return mulberry32(S.seed + S.day*7919 + (salt||0)*104729); }
+
+/* ============================ ECONOMY ============================ */
+function trafficMult(p){
+  var m=1, def=bizDef(p);
+  def.upgrades.forEach(function(u){ if(p.upgrades[u.id] && u.fx && u.fx.traffic) m*=u.fx.traffic; });
+  return m;
+}
+function capMult(p){
+  var m=1, def=bizDef(p);
+  def.upgrades.forEach(function(u){ if(p.upgrades[u.id] && u.fx && u.fx.cap) m*=u.fx.cap; });
+  if(p.type==='truck' && p.units.length>=3) m*=1.15; /* commissary kitchen */
+  return m;
+}
+function unitCap(p,u){ return Math.round((u.cap||bizDef(p).cap)*capMult(p)); }
+function weatherFactor(p,weather){
+  var def=bizDef(p), f=def.weather[weather];
+  if(p.type==='lemonade' && p.upgrades.umbrella && (weather==='rainy'||weather==='storm')) f=Math.max(f,.75);
+  if(p.type==='lemonade' && weather==='heatwave' && region().thirst) f*=1.1;
+  return f;
+}
+function repFactor(p){ var f=.55+p.rep*.15; if(bizDef(p).repPower) f=Math.pow(f,bizDef(p).repPower); return f; }
+function priceFactor(p){
+  var fair=bizDef(p).fair*(p.quality===3?1.25:(p.quality===1?.8:1));
+  return clamp(1.62 - p.price/fair, .04, 1.5);
+}
+function makeable(p){
+  var def=bizDef(p);
+  if(p.type==='data') return p.racks;
+  if(p.type==='merch') return p.inv.shirts||0;
+  var m=Infinity;
+  Object.keys(def.recipe).forEach(function(k){
+    var per=def.recipe[k];
+    if(p.type==='merch') return;
+    if(k==='ink' && p.upgrades.presspro) per=.5;
+    if(k==='syrup') return;
+    m=Math.min(m, Math.floor((p.inv[k]||0)/per));
+  });
+  if(p.quality===3 && p.type==='coffee') m=Math.min(m, p.inv.syrup||0);
+  return m===Infinity?0:m;
+}
+function unitTraffic(p,u,weather){
+  var reg=region(), t;
+  if(p.type==='truck' && u.home) t=(bizDef(p).spots[p.spot]||{traffic:26}).traffic;
+  else t=DISTRICTS[u.district].traffic;
+  t*=reg.demand*weatherFactor(p,weather)*repFactor(p)*trafficMult(p);
+  if(reg.tourist && (u.district==='beach'||u.district==='park') && (S.day%7===6||S.day%7===0)) t*=1.3;
+  if(u.district==='stadium' && S.stadiumEvent) t*=2.2;
+  if(p.type==='merch' && S.dropDay) t*=1.8;
+  if(p.type==='lemonade' && reg.thirst) t*=1.15;
+  return t;
+}
+/* deterministic expected sales for one unit (no rng) */
+function expectedSoldUnit(p,u,weather){
+  var want=unitTraffic(p,u,weather)*priceFactor(p);
+  return Math.max(0, Math.min(Math.floor(want), unitCap(p,u)));
+}
+function dataOffers(p){
+  var reg=region(), m=1;
+  bizDef(p).upgrades.forEach(function(u){ if(p.upgrades[u.id] && u.fx && u.fx.offers) m*=u.fx.offers; });
+  p.units.forEach(function(u){ if(u.offersMult) m*=u.offersMult; });
+  var offers=(4 + p.rep + p.uptime/25) * (reg.dataDemand||1) * m;
+  if(p.uptime<85) offers*=.6;
+  return Math.max(1, Math.round(offers));
+}
+/* Simulate one full day for player p. Mutates inventory; returns report. */
+function simulateDay(p, rng){
+  var def=bizDef(p), reg=region(), weather=S.weather;
+  var rep={day:S.day, type:p.type, sold:0, want:0, revenue:0, fixed:0, fixedLines:[], perUnit:[], events:[]};
+  if(p.type==='data'){
+    var offers=dataOffers(p);
+    var accept=clamp(1.5 - p.price/def.fair, .05, 1);
+    var soldD=Math.min(Math.floor(offers*accept*(0.9+rng()*.2)), p.racks);
+    rep.sold=soldD; rep.want=offers; p.clients=soldD;
+    rep.revenue=soldD*p.price;
+    rep.perUnit.push({name:'Contracts', sold:soldD, want:offers});
+    var power=p.racks*def.powerPerRack*reg.power*(p.upgrades.cooling?.75:1);
+    rep.fixedLines.push(['Power bill',power]); rep.fixed+=power;
+  } else {
+    var stock=makeable(p);
+    p.units.forEach(function(u,ui){
+      var want=expectedSoldUnit(p,u,weather);
+      var jitter=.9+rng()*.2;
+      var sold=Math.min(Math.floor(want*jitter), stock);
+      stock-=sold;
+      rep.sold+=sold; rep.want+=want;
+      rep.perUnit.push({name:u.name, sold:sold, want:want});
+    });
+    /* consume supplies for what was sold */
+    var left=rep.sold;
+    if(p.type==='merch'){ p.inv.shirts=Math.max(0,(p.inv.shirts||0)-left); }
+    else Object.keys(def.recipe).forEach(function(k){
+      var per=def.recipe[k];
+      if(k==='ink' && p.upgrades.presspro) per=.5;
+      if(k==='syrup' && p.quality!==3) return;
+      p.inv[k]=Math.max(0,(p.inv[k]||0)-Math.ceil(left*per));
+    });
+    rep.revenue=rep.sold*(p.price + revBonus(p));
+    if(p.upgrades.webstore && p.type==='merch'){
+      var web=Math.min(p.inv.shirts||0, 6);
+      if(web>0){ p.inv.shirts-=web; rep.sold+=web; rep.revenue+=web*p.price*.9; rep.events.push('Web store sold '+web+' tees'); }
+    }
+  }
+  Object.keys(def.fixed).forEach(function(k){ var c=def.fixed[k]*reg.cost; rep.fixedLines.push([k==='rent'?'Rent':(k==='fuel'?'Fuel':'Fees'),c]); rep.fixed+=c; });
+  p.units.forEach(function(u){ if(u.rent){ var c=u.rent*reg.cost; rep.fixedLines.push(['Rent — '+u.name,c]); rep.fixed+=c; } });
+  rep.stockOut = rep.want>rep.sold+2 && rep.sold<rep.want*.7;
+  p.cash+=rep.revenue-rep.fixed;
+  p.stats.revenue+=rep.revenue; p.stats.sold+=rep.sold; p.stats.days++;
+  rep.profit=rep.revenue-rep.fixed;
+  /* division (diversify) runs manager-managed alongside */
+  if(p.division) rep.division=runDivisionDay(p);
+  return rep;
+}
+function revBonus(p){ var b=0; bizDef(p).upgrades.forEach(function(u){ if(p.upgrades[u.id] && u.fx && u.fx.revBonus) b+=u.fx.revBonus; }); return b; }
+function runDivisionDay(owner){
+  var d=owner.division, saveType=owner.type, saveDay=S.day;
+  /* reuse simulateDay by temporarily treating division as a player shell */
+  var shell={type:d.type, owner:owner.owner+' · DIV', color:owner.color, cash:0, rep:d.rep, price:d.price, quality:2,
+    inv:d.inv, units:d.units, upgrades:d.upgrades, loans:[], racks:d.racks, uptime:d.uptime, clients:0, stats:{revenue:0,profit:0,sold:0,days:0}, division:null, upgradesFx:null};
+  shell.upgrades=d.upgrades;
+  autoStock(shell, .9);
+  var rep=simulateDay(shell, dayRng(55+S.day));
+  d.inv=shell.inv; d.racks=shell.racks; d.uptime=shell.uptime; d.rep=clamp(shell.rep,0,5);
+  owner.cash+=rep.revenue-rep.fixed;
+  return {type:d.type, revenue:rep.revenue, fixed:rep.fixed, sold:rep.sold};
+}
+/* overnight: spoilage + data-center uptime events. Mutates p; returns notes. */
+function overnight(p, rng){
+  var def=bizDef(p), notes=[], spoilValue=0;
+  Object.keys(def.supplies).forEach(function(k){
+    var sup=def.supplies[k]; if(!sup.perish) return;
+    var rate=sup.perish;
+    if(p.type==='lemonade' && k==='ice' && p.upgrades.icemachine) rate=0;
+    if(p.upgrades.fridge) rate*=.5;
+    if(p.upgrades.spoilHalf) rate*=.5;
+    var lost=Math.min(p.inv[k]||0, Math.floor((p.inv[k]||0)*rate*(0.7+rng()*.6)));
+    if(lost>0){ p.inv[k]-=lost; spoilValue+=lost*sup.base; notes.push(lost+' '+sup.name.toLowerCase()+' spoiled'); }
+  });
+  if(p.type==='lemonade' && p.upgrades.icemachine) p.inv.ice=(p.inv.ice||0)+25;
+  if(p.type==='data'){
+    var risk=[.18,.08,.02][p.maint]||.08, maintCost=[0,25,70][p.maint]||0;
+    p.cash-=maintCost;
+    if(rng()<risk){
+      var dmg=(4+rng()*6)*(p.upgrades.generators?.5:1);
+      p.uptime=clamp(p.uptime-dmg,40,99.5);
+      notes.push('Outage! Uptime −'+dmg.toFixed(1)+'%');
+    } else {
+      p.uptime=clamp(p.uptime+(p.upgrades.opsteam?3:1.5),40,99.5);
+    }
+    if(maintCost>0) notes.push('Maintenance '+money0(maintCost));
+  }
+  return {notes:notes, spoilValue:spoilValue};
+}
+/* reputation drift after a day */
+function repDrift(p, rep){
+  var def=bizDef(p), fair=def.fair*(p.quality===3?1.25:(p.quality===1?.8:1)), d=0;
+  var ratio=p.price/fair;
+  if(ratio<=1.05 && p.quality>=2) d+=.09; else if(ratio<=1.25) d+=.02; else if(ratio>1.5) d-=.16; else d-=.05;
+  if(p.quality===1) d-=.04; if(p.quality===3) d+=.04;
+  if(rep.stockOut) d-=.05;
+  if(rep.spoilValue>8) d-=.03;
+  if(p.type==='data'){ if(p.uptime>=95) d+=.05; if(p.uptime<85) d-=.12; }
+  if(def.upgrades) def.upgrades.forEach(function(u){ if(p.upgrades[u.id] && u.fx && u.fx.repGain && d>0) d*=u.fx.repGain; if(p.upgrades[u.id] && u.fx && u.fx.repShield && d<0) d*=.5; });
+  p.rep=clamp(p.rep+d,0,5);
+  return d;
+}
+function propertyValue(p){
+  var v=0, def=bizDef(p);
+  p.units.forEach(function(u,i){ if(i===0) return; v+=u.value||0; });
+  Object.keys(p.upgrades).forEach(function(id){ if(!p.upgrades[id]) return; def.upgrades.forEach(function(u){ if(u.id===id) v+=u.cost*.6; }); });
+  if(p.type==='data') v+=p.racks*def.rackCost*.8;
+  var invV=0; Object.keys(def.supplies).forEach(function(k){ invV+=(p.inv[k]||0)*def.supplies[k].base; });
+  if(p.type==='merch') invV+=(p.inv.shirts||0)*(def.supplies.blanks.base+def.supplies.ink.base);
+  v+=invV*.5;
+  if(p.division){ v+=propertyValueShallow(p.division); }
+  return v;
+}
+function propertyValueShallow(d){
+  var def=BUSINESSES[d.type], v=def.entry*.8;
+  d.units.forEach(function(u,i){ if(i>0) v+=u.value||0; });
+  if(d.type==='data') v+=d.racks*def.rackCost*.8;
+  return v;
+}
+function loanBalance(p){ return p.loans.reduce(function(a,l){ return a+l.balance; },0); }
+function netWorth(p){ return Math.round(p.cash + propertyValue(p) - loanBalance(p)); }
+function creditLimit(p){ return Math.round(200 + Math.max(0,netWorth(p))*.5 + p.rep*40 + (p.credit-600)*.5); }
+
+/* ============================ LOANS ============================ */
+function takeLoan(p, amount){
+  var limit=creditLimit(p);
+  if(loanBalance(p)+amount>limit) return false;
+  var apr=clamp(.30-(p.credit-400)/200*.22,.08,.30); /* credit 400→30%, 600→19%, 800→8% */
+  var term=15;
+  var total=amount*(1+apr*term/365);
+  var daily=Math.ceil(total/term*100)/100;
+  p.loans.push({id:p.loanSeq++, principal:amount, balance:Math.round(total*100)/100, apr:apr, daily:daily, missed:0});
+  p.cash+=amount;
+  return true;
+}
+function loanPayments(p){
+  var paid=0, missedNotes=[];
+  p.loans.slice().forEach(function(l){
+    if(p.cash>=l.daily){ p.cash-=l.daily; l.balance=Math.round((l.balance-l.daily)*100)/100; paid+=l.daily; if(l.balance<=0.01) p.loans.splice(p.loans.indexOf(l),1); }
+    else { l.missed++; p.missedTotal++; p.rep=clamp(p.rep-.2,0,5); p.credit=Math.max(300,p.credit-25); missedNotes.push('Missed a loan payment (−★, credit down)'); }
+  });
+  return {paid:paid, notes:missedNotes};
+}
+function payoffLoan(p, id){
+  for(var i=0;i<p.loans.length;i++) if(p.loans[i].id===id){
+    if(p.cash<p.loans[i].balance) return false;
+    p.cash-=p.loans[i].balance; p.loans.splice(i,1); p.credit=Math.min(850,p.credit+15); return true;
+  }
+  return false;
+}
+
+/* ============================ DAY FLOW ============================ */
+function rollDay(){
+  var reg=region(), rng=dayRng(7);
+  var table=reg.weather, roll=rng(), acc=0, w='sunny';
+  for(var k in table){ acc+=table[k]; if(roll<=acc){ w=k; break; } }
+  S.weather=w;
+  S.stadiumEvent=rng()<.28;
+  S.dropDay=rng()<.22;
+  S.prices={};
+  S.players.forEach(function(p){
+    var def=bizDef(p);
+    Object.keys(def.supplies).forEach(function(sk){
+      S.prices[p.type+':'+sk]=Math.round(def.supplies[sk].base*reg.supply*(.85+rng()*.4)*100)/100;
+    });
+    if(p.division){ var dd=BUSINESSES[p.division.type]; Object.keys(dd.supplies).forEach(function(sk){ if(!S.prices[p.division.type+':'+sk]) S.prices[p.division.type+':'+sk]=Math.round(dd.supplies[sk].base*reg.supply*(.85+rng()*.4)*100)/100; }); }
+  });
+}
+function supplyPrice(p, sk){ return S.prices[p.type+':'+sk] || bizDef(p).supplies[sk].base; }
+function buySupply(p, sk, qty){
+  var def=bizDef(p); if(!def.supplies[sk]) return 0;
+  var cost=supplyPrice(p,sk)*qty;
+  if(p.cash<cost){ qty=Math.floor(p.cash/supplyPrice(p,sk)); cost=supplyPrice(p,sk)*qty; }
+  if(qty<=0) return 0;
+  p.cash-=cost; p.inv[sk]=(p.inv[sk]||0)+qty;
+  return qty;
+}
+function buyProperty(p, idx){
+  var def=bizDef(p), prop=def.properties[idx]; if(!prop) return false;
+  if(p.units.some(function(u){ return u.propIdx===idx; })) return false;
+  var cost=Math.round(prop.cost*region().cost);
+  if(p.cash<cost) return false;
+  p.cash-=cost;
+  p.units.push({district:prop.district, name:prop.name, cap:prop.cap, tier:idx+1, propIdx:idx, value:Math.round(cost*1.12), rent:prop.rent||0, offersMult:prop.offersMult||0});
+  return true;
+}
+function buyUpgrade(p, id){
+  var def=bizDef(p), up=null;
+  def.upgrades.forEach(function(u){ if(u.id===id) up=u; });
+  if(!up || p.upgrades[id]) return false;
+  var cost=Math.round(up.cost*region().cost);
+  if(p.cash<cost) return false;
+  p.cash-=cost; p.upgrades[id]=true; return true;
+}
+function buyRack(p){
+  var def=bizDef(p); if(p.type!=='data') return false;
+  var cost=Math.round(def.rackCost*region().cost);
+  if(p.cash<cost) return false;
+  p.cash-=cost; p.racks++; return true;
+}
+function printRun(p, qty){
+  if(p.type!=='merch') return 0;
+  qty=Math.min(qty, p.inv.blanks||0, Math.floor((p.inv.ink||0)/(p.upgrades.presspro?.5:1)));
+  if(qty<=0) return 0;
+  p.inv.blanks-=qty; p.inv.ink-=(qty*(p.upgrades.presspro?.5:1));
+  p.inv.shirts=(p.inv.shirts||0)+qty; return qty;
+}
+function startSeason(mode){
+  S.mode=mode; S.view='game'; S.day=1; S.gameOver=false; S.winner=null; S.log=[];
+  S.players=[]; S.reports=[]; S.awaySummary=null; S.seasonTraces={};
+  if(mode==='solo' || mode==='online'){
+    S.players.push(newBiz(S.selBiz,'YOU','#00ff88'));
+    S.seasonDays=BUSINESSES[S.selBiz].season;
+  } else if(mode==='duo'){
+    S.players.push(newBiz(S.selBiz,'PLAYER 1','#00ff88'));
+    S.players.push(newBiz(S.selBiz2,'PLAYER 2','#b78cff'));
+    S.seasonDays=Math.max(BUSINESSES[S.selBiz].season, BUSINESSES[S.selBiz2].season);
+  } else if(mode==='watch'){
+    WATCH_BOTS=watchQuartet(); /* E48: rotated quartet — next 4 council bots */
+    WATCH_BOTS.forEach(function(id,i){ S.players.push(newBiz(S.selBiz, id, ['#ff3860','#35e0ff','#ffd75e','#b78cff'][i])); });
+    S.seasonDays=BUSINESSES[S.selBiz].season;
+    S.watchAgents={};
+    var FE=window.FallibleEngine;
+    if(FE){ WATCH_BOTS.forEach(function(id){ try{ S.watchAgents[id]=FE.loadAgent(id); }catch(e){} }); watchBout++; saveWatchBout(); /* E48: cursor advances only with the engine — fallback never consumes it */ }
+  } else if(mode==='ceo'){
+    S.players.push(newBiz(S.selBiz, S.selCEO+' · CEO','#ffd75e'));
+    S.seasonDays=BUSINESSES[S.selBiz].season;
+    S.ceoId=S.selCEO; S.ceoAgent=null;
+    var FE2=window.FallibleEngine;
+    if(FE2){ try{ S.ceoAgent=FE2.loadAgent(S.selCEO); }catch(e){} }
+  }
+  S.activeIdx=0; S.phase='morning'; S.panel='buy';
+  rollDay();
+  if(mode==='watch' || mode==='ceo') botMorningAll();
+  syncModeButtons(); updateFeed();
+  setMsg(seasonIntro());
+}
+function seasonIntro(){
+  var b=BUSINESSES[S.selBiz], r=REGIONS[S.selRegion];
+  if(S.mode==='duo') return 'RIVAL SEASON — '+r.name+'. Player 1 mornings first. Most net worth at day '+S.seasonDays+' wins.';
+  if(S.mode==='watch') return 'WATCH — four council bots race '+b.name+' in '+r.name+'. Nobody touches anything. Enjoy.';
+  if(S.mode==='ceo') return 'AGENT CEO — '+S.selCEO+' runs your '+b.name+' in '+r.name+'. Watch the log. It saves itself.';
+  return b.name+' in '+r.name+' — '+S.seasonDays+' days. Start: '+money0(b.startCash)+'. '+b.tag;
+}
+function activePlayer(){ return S.players[S.activeIdx]; }
+function isAutoMode(){ return S.mode==='watch' || S.mode==='ceo'; }
+function morningDone(){
+  if(S.mode==='duo' && S.activeIdx===0){ S.activeIdx=1; S.phase='morning'; S.panel='buy'; setMsg('HANDOFF — Player 2, your morning. No peeking, Player 1.'); return; }
+  openDay();
+}
+function openDay(){
+  S.phase='open'; S.reports=[];
+  var soldTotal=0;
+  S.players.forEach(function(p,i){
+    if(p.bankrupt){ S.reports.push(null); return; }
+    var rep=simulateDay(p, dayRng(31+i*3));
+    S.reports.push(rep); soldTotal+=rep.sold;
+  });
+  spawnWalkers(soldTotal);
+  S.openAnim={t:0, dur:isAutoMode()?80:210, soldTotal:soldTotal, shown:0};
+  setMsg('OPEN — the city decides…');
+}
+function closeDay(){
+  var rng=dayRng(97);
+  S.players.forEach(function(p,i){
+    var rep=S.reports[i]; if(!rep || p.bankrupt) return;
+    var on=overnight(p, rng);
+    rep.spoilNotes=on.notes; rep.spoilValue=Math.round(on.spoilValue*100)/100;
+    var lp=loanPayments(p);
+    rep.loanPaid=lp.paid; rep.loanNotes=lp.notes;
+    rep.repDelta=repDrift(p, rep);
+    rep.profit=rep.revenue-rep.fixed-lp.paid;
+    p.stats.profit+=rep.profit;
+    rep.netWorth=netWorth(p);
+    if(S.mode==='watch' || S.mode==='ceo') logDay(p, rep);
+    if(p.cash<0 || p.missedTotal>=3){ p.bankrupt=true; rep.bankrupt=true; }
+  });
+  S.phase='report';
+  if(S.mode==='online') onlineSendDay();
+  /* season end? */
+  if(S.day>=S.seasonDays) return seasonEnd();
+  if(S.players.every(function(p){ return p.bankrupt; })) return seasonEnd();
+  setMsg('Day '+S.day+' closed. Read the report, then roll into tomorrow.');
+}
+function nextDay(){
+  S.day++; S.activeIdx=0; S.phase='morning'; S.panel='buy'; S.reports=[];
+  rollDay();
+  if(isAutoMode()) botMorningAll();
+  if(S.mode==='ceo') saveCEO();
+  var p=activePlayer();
+  if(p) setMsg('Day '+S.day+' — '+WEATHERS[S.weather].name+' forecast. '+(S.stadiumEvent?'Stadium event today! ':'')+(S.dropDay&&p.type==='merch'?'DROP DAY buzz in the air.':''));
+}
+function rankTitle(nw){
+  if(nw<500) return 'CURBSIDE DREAMER';
+  if(nw<1500) return 'STAND OWNER';
+  if(nw<4000) return 'LOCAL FAVOURITE';
+  if(nw<10000) return 'DISTRICT PLAYER';
+  if(nw<25000) return 'CITY TYCOON';
+  return 'MOGUL OF THE REACH';
+}
+function seasonEnd(){
+  if(S.gameOver) return; /* E48: seasonEnd fires exactly once per season — a second call (debug day, re-fired button, loaded over-save) records nothing */
+  S.view='season'; S.gameOver=true;
+  var ranked=S.players.slice().sort(function(a,b){ return netWorth(b)-netWorth(a); });
+  S.winner=ranked[0];
+  var FE=window.FallibleEngine;
+  if(FE && (S.mode==='watch')){
+    ranked.forEach(function(p,i){ var ag=S.watchAgents[p.owner]; if(ag){ try{ FE.recordResult(ag,'stand-tycoon',null, i===0?'win':'loss', (S.seasonTraces&&S.seasonTraces[p.owner])||null); }catch(e){} } });
+  }
+  if(FE && S.mode==='ceo' && S.ceoAgent){
+    try{ FE.recordResult(S.ceoAgent,'stand-tycoon',null, netWorth(S.players[0])>BUSINESSES[S.selBiz].startCash?'win':'loss', (S.seasonTraces&&S.seasonTraces[S.ceoId])||null); }catch(e){}
+  }
+  setMsg('SEASON OVER — '+S.winner.owner+' takes it at '+money0(netWorth(S.winner))+'. Rank: '+rankTitle(netWorth(S.winner))+'.');
+}
+/* ============================ SAVE / LOAD (1P + duo) ============================ */
+function serializeBiz(p){
+  return JSON.parse(JSON.stringify({type:p.type, owner:p.owner, color:p.color, cash:p.cash, rep:p.rep, price:p.price, quality:p.quality,
+    inv:p.inv, units:p.units, upgrades:p.upgrades, loans:p.loans, loanSeq:p.loanSeq, missedTotal:p.missedTotal, credit:p.credit,
+    spot:p.spot, maint:p.maint, racks:p.racks, uptime:p.uptime, clients:p.clients, stats:p.stats, bankrupt:p.bankrupt,
+    division:p.division?JSON.parse(JSON.stringify(p.division)):null}));
+}
+function reviveBiz(d){
+  var p=newBiz(d.type, d.owner, d.color);
+  Object.keys(d).forEach(function(k){ if(k!=='type') p[k]=d[k]; });
+  return p;
+}
+function saveState(){
+  try{
+    localStorage.setItem('stand-tycoon', JSON.stringify({v:1, mode:S.mode, region:S.selRegion, seed:S.seed, day:S.day,
+      seasonDays:S.seasonDays, players:S.players.map(serializeBiz), log:S.log.slice(0,40),
+      gameOver:S.gameOver, winnerOwner:S.winner?S.winner.owner:null})); /* E48: an over-save restores as over (never re-records) */
+    var FE0=window.FallibleEngine; if(FE0 && FE0.flush){ try{ FE0.flush(); }catch(e){} } /* E48: land unflushed traces before the save — persist() only flushes every 200 */
+    setMsg('State saved — day '+S.day+', '+S.players.map(function(p){ return p.owner+' '+money0(netWorth(p)); }).join(' · ')+'.');
+    return true;
+  }catch(e){ setMsg('Save failed in this browser.'); return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('stand-tycoon'); if(!raw){ setMsg('No saved state yet.'); return false; }
+    var d=JSON.parse(raw);
+    S.mode=d.mode; S.selRegion=d.region; S.seed=d.seed; S.day=d.day; S.seasonDays=d.seasonDays;
+    S.players=d.players.map(reviveBiz); S.log=d.log||[];
+    S.view='game'; S.phase='morning'; S.panel='buy'; S.activeIdx=0; S.gameOver=false;
+    S.seasonTraces={}; /* E48: the record covers post-load traces only (pre-save traces are already in the engine store) */
+    /* E48: rebuild the engine agents for the SAVED cast — a resumed WATCH
+       season keeps deciding on the engine instead of house heuristics. */
+    var FE=window.FallibleEngine;
+    S.watchAgents={};
+    if(d.mode==='watch' && FE){ S.players.forEach(function(p){ try{ S.watchAgents[p.owner]=FE.loadAgent(p.owner); }catch(e){} }); }
+    S.ceoAgent=null;
+    if(d.mode==='ceo' && FE){ var cid=(S.players[0]&&S.players[0].owner||'').split(' · ')[0]; if(cid){ S.ceoId=cid; S.selCEO=cid; try{ S.ceoAgent=FE.loadAgent(cid); }catch(e){} } }
+    /* E48: a save taken after the season ended restores as over — the
+       seasonEnd gameOver guard then blocks any re-record. Old saves
+       without the keys fall through to the previous behaviour. */
+    if(d.gameOver){ S.gameOver=true; S.view='season'; S.winner=null; if(d.winnerOwner){ S.players.forEach(function(p){ if(p.owner===d.winnerOwner) S.winner=p; }); } }
+    rollDay(); syncModeButtons(); updateFeed();
+    setMsg('State loaded — day '+S.day+'.');
+    return true;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+</script>
+<script>
+'use strict';
+/* ============================ BOT BRAIN (WATCH / CEO / managers) ============================ */
+function feAgentFor(p){
+  if(S.mode==='ceo') return S.ceoAgent;
+  if(S.mode==='watch') return S.watchAgents[p.owner]||null;
+  return null;
+}
+function botDecide(p, options, ctx){
+  var FE=window.FallibleEngine, agent=feAgentFor(p);
+  if(FE && agent){
+    try{ var r=FE.decide(agent,'stand-tycoon',options,ctx||{}); /* E48: keep the trace — seasonEnd passes it to recordResult so per-tag learning moves, not just Elo */
+      if(r.trace){ S.seasonTraces=S.seasonTraces||{}; (S.seasonTraces[agent.id]=S.seasonTraces[agent.id]||[]).push(r.trace); }
+      return r.pick; }catch(e){}
+  }
+  /* fallback heuristics: score + personality-flavoured noise */
+  var pers=(FE && FE.PERSONALITIES[p.owner]) || {risk:.5,caution:.5,curiosity:.5};
+  var best=null, bs=-1e9;
+  options.forEach(function(o){
+    var s=o.score + (Math.random()-.5)*4 + (o.tag==='gouge'?pers.risk*3:0) + (o.tag==='safe'?pers.caution*2:0) + (o.tag==='experiment'?pers.curiosity*2:0);
+    if(s>bs){ bs=s; best=o; }
+  });
+  return best;
+}
+function persOf(id){
+  var FE=window.FallibleEngine;
+  return (FE && FE.PERSONALITIES[id]) || {aggression:.5,caution:.5,risk:.5,focus:.6,curiosity:.5};
+}
+/* stock a business toward an expected-demand target; used by bots + divisions */
+function autoStock(p, mult){
+  var def=bizDef(p);
+  if(p.type==='data') return;
+  var want=0;
+  p.units.forEach(function(u){ want+=expectedSoldUnit(p,u,S.weather); });
+  want=Math.ceil(want*(mult||1));
+  if(p.type==='merch'){
+    var need=Math.max(0, want-(p.inv.shirts||0));
+    var prints=Math.min(need, Math.floor(p.cash*.5/Math.max(.01,(supplyPrice(p,'blanks')+supplyPrice(p,'ink')))));
+    if(prints>0){ buySupply(p,'blanks',prints); buySupply(p,'ink',Math.ceil(prints*(p.upgrades.presspro?.5:1))); printRun(p,prints); }
+    return;
+  }
+  /* budget across ALL recipe lines so one supply can't starve the others */
+  var unitCost=0;
+  Object.keys(def.recipe).forEach(function(k){ if(k!=='syrup') unitCost+=def.recipe[k]*supplyPrice(p,k); });
+  var affordable=unitCost>0?Math.floor(p.cash*.8/unitCost):want;
+  var target=Math.min(want, Math.max(0,affordable));
+  Object.keys(def.recipe).forEach(function(k){
+    var per=def.recipe[k]; if(k==='ink' && p.upgrades.presspro) per=.5; if(k==='syrup') return;
+    var have=Math.floor((p.inv[k]||0)/per), needUnits=Math.max(0, target-have);
+    if(needUnits>0) buySupply(p, k, Math.ceil(needUnits*per));
+  });
+  if(p.quality===3 && p.type==='coffee') buySupply(p,'syrup', Math.ceil(target*.5));
+}
+/* one bot runs one player's whole morning: price, stock, action. Logs in CEO/WATCH. */
+function botMorning(p){
+  var def=bizDef(p), pers=persOf(S.mode==='ceo'?S.ceoId:p.owner), fair=def.fair;
+  var logged=(S.mode==='ceo' || S.mode==='watch');
+  /* --- quality first (price options are priced off the quality-adjusted fair) --- */
+  p.quality = pers.caution>.7?3:((pers.curiosity>.8 && Math.random()<.5)?3:2);
+  var fairAdj=fair*(p.quality===3?1.25:1);
+  /* --- price decision --- */
+  var priceOpts=[
+    {key:'low', tag:'safe', score: 6 - pers.risk*3 + pers.caution*2, price:Math.round(fairAdj*.8*100)/100},
+    {key:'mid', tag:'steady', score: 9, price:fairAdj},
+    {key:'high', tag:'greedy', score: 5 + pers.risk*4 + pers.aggression*2, price:Math.round(fairAdj*1.3*100)/100},
+    {key:'gouge', tag:'gouge', score: 1 + pers.risk*6, price:Math.round(fairAdj*1.6*100)/100}
+  ];
+  var pp=botDecide(p, priceOpts, {timePressure:.2});
+  if(pp && pp.price){ if(Math.abs(pp.price-p.price)>.001 && logged) logLine(p, 'set price to '+money(pp.price)+' ('+pp.key+')'); p.price=pp.price; }
+  if(p.type==='truck'){ var spots=Object.keys(def.spots); p.spot = S.stadiumEvent?'stadium':spots[Math.floor(Math.random()*spots.length)]; }
+  if(p.type==='data'){ p.maint = pers.caution>.65?2:(pers.risk>.7?0:1); }
+  /* --- stock decision --- */
+  var stockOpts=[
+    {key:'light', tag:'safe', score: 5 + pers.caution*4, mult:.6},
+    {key:'full', tag:'steady', score: 8, mult:1.0},
+    {key:'heavy', tag:'greedy', score: 4 + pers.risk*4 + pers.curiosity*2, mult:1.5}
+  ];
+  var sp=botDecide(p, stockOpts, {});
+  autoStock(p, sp?sp.mult:1);
+  /* --- growth action decision --- */
+  var nextProp=null, nextPropCost=0;
+  def.properties.forEach(function(prop,idx){ if(!nextProp && !p.units.some(function(u){ return u.propIdx===idx; })){ nextProp=prop; nextPropCost=Math.round(prop.cost*region().cost); } });
+  var nextUp=null;
+  def.upgrades.forEach(function(u){ if(!nextUp && !p.upgrades[u.id]) nextUp=u; });
+  var acts=[{key:'save', tag:'safe', score: 4 + pers.caution*5}];
+  if(nextProp) acts.push({key:'expand', tag:'expand', score: (p.cash>=nextPropCost? 7:2) + pers.risk*3 + (1-pers.caution)*3, prop:nextProp});
+  if(nextUp) acts.push({key:'upgrade', tag:'upgrade', score: (p.cash>=Math.round(nextUp.cost*region().cost)? 6:1) + pers.curiosity*3, up:nextUp});
+  if(p.type==='data' && p.cash>=Math.round(def.rackCost*region().cost)) acts.push({key:'rack', tag:'expand', score: 7 + pers.risk*2});
+  var canLoan = loanBalance(p)<creditLimit(p)*.7;
+  if(nextProp && p.cash<nextPropCost && canLoan) acts.push({key:'loan', tag:'borrow', score: pers.risk*9 - pers.caution*6});
+  if(p.loans.length && p.cash>loanBalance(p)*1.4) acts.push({key:'payoff', tag:'safe', score: 3 + pers.caution*5});
+  var act=botDecide(p, acts, {});
+  if(act){
+    if(act.key==='expand' && act.prop){
+      var idx=def.properties.indexOf(act.prop);
+      if(p.cash>=nextPropCost){ if(buyProperty(p,idx) && logged) logLine(p,'bought '+act.prop.name+' in '+DISTRICTS[act.prop.district].name+' for '+money0(nextPropCost)); }
+      else if(canLoan){ var need=nextPropCost-p.cash+50; if(takeLoan(p, Math.min(need, creditLimit(p)-loanBalance(p)))){ if(logged) logLine(p,'took a loan to expand toward '+act.prop.name); if(buyProperty(p,idx) && logged) logLine(p,'bought '+act.prop.name+' in '+DISTRICTS[act.prop.district].name); } }
+    }
+    else if(act.key==='upgrade' && act.up){ if(buyUpgrade(p, act.up.id) && logged) logLine(p,'installed '+act.up.name+' ('+act.up.desc+')'); }
+    else if(act.key==='rack'){ if(buyRack(p) && logged) logLine(p,'racked up — now '+p.racks+' racks'); }
+    else if(act.key==='loan'){ var amt=Math.min(500, creditLimit(p)-loanBalance(p)); if(amt>50 && takeLoan(p,amt) && logged) logLine(p,'took a '+money0(amt)+' loan (leverage)'); }
+    else if(act.key==='payoff'){ var l0=p.loans[0]; if(l0 && payoffLoan(p,l0.id) && logged) logLine(p,'paid off a loan early'); }
+    else if(act.key==='save' && logged && Math.random()<.3) logLine(p,'passed on spending — saving (cash '+money0(p.cash)+')');
+  }
+  /* diversify when rich */
+  if(!p.division && netWorth(p)>=DIVERSIFY_AT && p.cash>=3000){
+    var alts=BIZ_KEYS.filter(function(k){ return k!==p.type; });
+    var pick=alts[Math.floor(Math.random()*alts.length)], adef=BUSINESSES[pick];
+    if(p.cash>=adef.entry+300){
+      p.cash-=adef.entry;
+      var d=newBiz(pick, p.owner+' · DIV', p.color);
+      p.division={type:pick, inv:d.inv, units:d.units, upgrades:{}, racks:d.racks, uptime:97, rep:3, price:adef.fair};
+      if(logged) logLine(p,'DIVERSIFIED — opened a manager-run '+adef.name+' division for '+money0(adef.entry));
+    }
+  }
+}
+function botMorningAll(){ S.players.forEach(function(p){ if(!p.bankrupt) botMorning(p); }); }
+function logLine(p, text){
+  S.log.unshift({day:S.day, who:p.owner, text:text});
+  if(S.log.length>60) S.log.length=60;
+  S.feedDirty=true;
+}
+function logDay(p, rep){
+  var line='sold '+rep.sold+' '+bizDef(p).unit+'s, '+money0(rep.revenue)+' in, profit '+money0(rep.profit)+', net worth '+money0(rep.netWorth);
+  logLine(p, line);
+  rep.events && rep.events.forEach(function(e){ logLine(p, e); });
+  (rep.spoilNotes||[]).forEach(function(n){ if(/Outage/.test(n)) logLine(p, n); });
+  if(rep.bankrupt) logLine(p, 'BANKRUPT — the city takes the keys.');
+}
+function updateFeed(){
+  var feed=$('ceoFeed'), list=$('ceoFeedList');
+  if(!feed || !list) return;
+  var show=(S.mode==='ceo' || S.mode==='watch') && S.view!=='setup';
+  feed.style.display=show?'block':'none';
+  if(!show || !S.feedDirty) return;
+  S.feedDirty=false;
+  var html='';
+  if(S.awaySummary) html+='<div class="le">⏰ <b>WHILE YOU WERE AWAY</b> — '+S.awaySummary.text+'</div>';
+  S.log.slice(0,40).forEach(function(e){ html+='<div class="le">Day '+e.day+' — <b>'+e.who+'</b> '+e.text+'</div>'; });
+  list.innerHTML=html || '<div class="le">No decisions yet.</div>';
+}
+/* ============================ CEO PERSISTENCE ============================ */
+function saveCEO(){
+  if(S.mode!=='ceo' || !S.players.length) return false;
+  if(S.phase!=='morning') return false; /* only persist clean morning states */
+  try{
+    localStorage.setItem('stand-tycoon-ceo', JSON.stringify({v:1, savedAt:Date.now(), ceoId:S.ceoId, biz:S.selBiz, region:S.selRegion,
+      seed:S.seed, day:S.day, seasonDays:S.seasonDays, player:serializeBiz(S.players[0]), log:S.log.slice(0,60)}));
+    var FE0=window.FallibleEngine; if(FE0 && FE0.flush){ try{ FE0.flush(); }catch(e){} } /* E48: land unflushed traces before the save */
+    return true;
+  }catch(e){ return false; }
+}
+function ceoSaveExists(){
+  try{ return !!localStorage.getItem('stand-tycoon-ceo'); }catch(e){ return false; }
+}
+function runCEODayInstant(){
+  /* one full CEO day with no animation (catch-up + harness) */
+  var p=S.players[0]; if(!p || p.bankrupt || S.gameOver) return null;
+  botMorning(p);
+  var rep=simulateDay(p, dayRng(31));
+  var on=overnight(p, dayRng(97));
+  rep.spoilNotes=on.notes; rep.spoilValue=Math.round(on.spoilValue*100)/100;
+  var lp=loanPayments(p); rep.loanPaid=lp.paid; rep.loanNotes=lp.notes;
+  rep.repDelta=repDrift(p, rep); rep.profit=rep.revenue-rep.fixed-lp.paid; p.stats.profit+=rep.profit;
+  rep.netWorth=netWorth(p);
+  logDay(p, rep);
+  if(p.cash<0 || p.missedTotal>=3) p.bankrupt=true;
+  if(S.day>=S.seasonDays || p.bankrupt){ seasonEnd(); return rep; }
+  S.day++; rollDay();
+  return rep;
+}
+function simulateAway(msElapsed){
+  var days=Math.min(7, Math.floor(msElapsed/AWAY_MS_PER_DAY));
+  var before={day:S.day, nw:netWorth(S.players[0]), units:S.players[0].units.length, cash:S.players[0].cash};
+  var built=[];
+  var ran=0;
+  for(var i=0;i<days;i++){
+    var u0=S.players[0].units.length;
+    if(runCEODayInstant()===null) break;
+    ran++;
+    if(S.players[0].units.length>u0) built.push(S.players[0].units[S.players[0].units.length-1].name);
+    if(S.gameOver) break;
+  }
+  var after=S.players[0];
+  var earned=netWorth(after)-before.nw;
+  var summary={days:ran, earned:earned, built:built,
+    text:'caught up '+ran+' day'+(ran===1?'':'s')+': net worth '+money0(before.nw)+' → '+money0(netWorth(after))+
+      (built.length?('; built '+built.join(', ')):'')+'; cash '+money0(after.cash)+', '+after.units.length+' location'+(after.units.length===1?'':'s')+' on the map.'};
+  S.awaySummary=summary;
+  S.feedDirty=true;
+  return summary;
+}
+function resumeCEO(){
+  try{
+    var raw=localStorage.getItem('stand-tycoon-ceo'); if(!raw) return false;
+    var d=JSON.parse(raw);
+    S.mode='ceo'; S.view='game'; S.selBiz=d.biz; S.selRegion=d.region; S.seed=d.seed; S.day=d.day;
+    S.seasonDays=d.seasonDays; S.ceoId=d.ceoId; S.selCEO=d.ceoId;
+    S.players=[reviveBiz(d.player)]; S.log=d.log||[]; S.activeIdx=0; S.phase='morning'; S.panel='buy'; S.gameOver=false;
+    var FE=window.FallibleEngine; S.ceoAgent=null;
+    if(FE){ try{ S.ceoAgent=FE.loadAgent(S.ceoId); }catch(e){} }
+    rollDay();
+    var elapsed=Date.now()-(d.savedAt||Date.now());
+    if(elapsed>=AWAY_MS_PER_DAY && !S.players[0].bankrupt) simulateAway(elapsed);
+    else S.awaySummary=null; /* morning decisions were saved with the state — resume as-is */
+    syncModeButtons(); updateFeed();
+    setMsg('Welcome back — '+S.ceoId+' kept the business running. '+(S.awaySummary?S.awaySummary.text:'Resumed on day '+S.day+'.'));
+    return true;
+  }catch(e){ return false; }
+}
+function startCEO(){
+  if(ceoSaveExists() && resumeCEO()) return;
+  startSeason('ceo');
+  saveCEO();
+}
+/* ============================ ONLINE (room-code, Wildspark pattern) ============================ */
+function onlineConnect(){
+  if(S.online.ws) return S.online.ws;
+  try{
+    var proto=(typeof location!=='undefined' && location.protocol==='https:')?'wss:':'ws:';
+    var host=(typeof location!=='undefined')?location.host:'localhost:3200';
+    var ws=new WebSocket(proto+'//'+host+'/ws/tycoon');
+    S.online.ws=ws;
+    ws.onmessage=function(ev){
+      var m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
+      if(m.t==='created'){ S.online.code=m.code; S.online.role='host'; onlineStatus('Room '+m.code+' — tell your rival the code. Waiting…'); }
+      else if(m.t==='joined'){ S.online.code=m.code; S.online.role='guest'; S.selRegion=m.region; onlineStatus('Joined room '+m.code+' ('+REGIONS[m.region].name+'). Your rival is HOST.'); startSeason('online'); }
+      else if(m.t==='guest-joined'){ onlineStatus('Rival joined! Both empires are live — sync lands at each day close.'); if(m.peer) S.online.peer=m.peer; }
+      else if(m.t==='day'){ S.online.peer=m.summary; onlineStatus('Rival day '+m.summary.day+' synced — net worth '+money0(m.summary.netWorth)+'.'); }
+      else if(m.t==='peer-left'){ onlineStatus('Rival left the room.'); }
+      else if(m.t==='error'){ onlineStatus('Online: '+m.error); }
+    };
+    ws.onclose=function(){ S.online.ws=null; };
+    return ws;
+  }catch(e){ return null; }
+}
+function onlineStatus(t){ S.online.status=t; var el=$('onlineStatus'); if(el) el.textContent=t; }
+function onlineHost(){
+  var ws=onlineConnect(); if(!ws){ onlineStatus('WebSocket unavailable here.'); return; }
+  var send=function(){ ws.send(JSON.stringify({t:'create', bizType:S.selBiz, region:S.selRegion})); startSeason('online'); };
+  if(ws.readyState===1) send(); else ws.onopen=send;
+}
+function onlineJoin(){
+  var code=($('roomCode') && $('roomCode').value || '').toUpperCase().trim();
+  if(code.length!==4){ onlineStatus('Enter the 4-letter room code first.'); return; }
+  var ws=onlineConnect(); if(!ws){ onlineStatus('WebSocket unavailable here.'); return; }
+  var send=function(){ ws.send(JSON.stringify({t:'join', code:code, bizType:S.selBiz})); };
+  if(ws.readyState===1) send(); else ws.onopen=send;
+}
+function onlineSendDay(){
+  var ws=S.online.ws; if(!ws || ws.readyState!==1 || !S.online.code) return;
+  var p=S.players[0]; if(!p) return;
+  var rep=S.reports[0];
+  try{ ws.send(JSON.stringify({t:'day', summary:{day:S.day, owner:p.owner, bizType:p.type, netWorth:netWorth(p),
+    revenue:rep?rep.revenue:0, profit:rep?rep.profit:0, units:p.units.map(function(u){ return {district:u.district, name:u.name}; })}})); }catch(e){}
+}
+</script>
+<script>
+'use strict';
+/* ============================ RENDER ============================ */
+function T(t,x,y,size,color,align,font){ ctx.fillStyle=color; var fam=font==='mono'?"'Share Tech Mono',monospace":(font==='orb'?"'Orbitron',sans-serif":"'Rajdhani',sans-serif"); ctx.font=(font==='orb'?'800':'600')+' '+size+'px '+fam; ctx.textAlign=align||'left'; ctx.textBaseline='middle'; ctx.fillText(t,x,y); }
+function rr(x,y,w,h,r,fill,stroke){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); if(fill){ ctx.fillStyle=fill; ctx.fill(); } if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=1.5; ctx.stroke(); } }
+function hit(x,y,w,h,fn){ S.hits.push({x:x,y:y,w:w,h:h,fn:fn}); return S.hits.length-1; }
+function btn(x,y,w,h,label,fn,opts){
+  opts=opts||{};
+  var idx=hit(x,y,w,h,fn);
+  var foc=S.focus===idx;
+  rr(x,y,w,h,6, opts.fill||(foc?'rgba(255,215,94,.25)':'rgba(12,6,24,.92)'), foc?'#ffd75e':(opts.color||'rgba(0,255,136,.4)'));
+  T(label,x+w/2,y+h/2,opts.size||13, opts.tcolor||(foc?'#fff':'#d8ffe9'),'center','orb');
+  return idx;
+}
+function stars(rep){ var s=''; for(var i=0;i<5;i++) s+= i<Math.round(rep)?'★':'☆'; return s; }
+function render(){
+  ctx.clearRect(0,0,W,H);
+  S.hits=[];
+  if(S.view==='setup') drawSetup();
+  else if(S.view==='season') drawSeason();
+  else drawGame();
+  if(S.focus>=S.hits.length) S.focus=Math.max(0,S.hits.length-1);
+}
+function drawSetup(){
+  var g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0a0618'); g.addColorStop(1,'#05010f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  T('BUSINESS TYCOON',W/2,34,30,'#fff','center','orb');
+  T('1 · CHOOSE YOUR BUSINESS',24,66,13,'#ffd75e','left','orb');
+  BIZ_KEYS.forEach(function(k,i){
+    var b=BUSINESSES[k], x=24+i*184, sel=S.selBiz===k;
+    rr(x,80,172,150,10, sel?'rgba(255,215,94,.13)':'rgba(12,6,24,.9)', sel?'#ffd75e':b.color);
+    T(b.icon,x+86,104,30,'#fff','center');
+    T(b.short,x+86,132,13.5,b.color,'center','orb');
+    T('Start '+money0(b.startCash)+' · '+b.season+' days',x+86,152,11,'#d8ffe9','center','mono');
+    wrapText(b.tag,x+10,168,152,12,'#7d8aa0');
+    hit(x,80,172,150,function(){ S.selBiz=k; setMsg(b.name+' — '+b.tag); });
+  });
+  T('2 · CHOOSE YOUR REGION',24,252,13,'#ffd75e','left','orb');
+  REGION_KEYS.forEach(function(k,i){
+    var r=REGIONS[k], x=24+i*184, sel=S.selRegion===k;
+    rr(x,266,172,86,10, sel?'rgba(0,255,136,.12)':'rgba(12,6,24,.9)', sel?'#00ff88':'rgba(0,255,136,.35)');
+    T(r.name,x+86,284,11.5,'#fff','center','orb');
+    wrapText(r.desc,x+10,300,152,11.5,'#7d8aa0');
+    hit(x,266,172,86,function(){ S.selRegion=k; setMsg(r.name+' — '+r.desc); });
+  });
+  T('3 · 2P RIVAL — PLAYER 2 BUSINESS',24,374,13,'#b78cff','left','orb');
+  BIZ_KEYS.forEach(function(k,i){
+    var b=BUSINESSES[k], x=24+i*184, sel=S.selBiz2===k;
+    rr(x,388,172,44,8, sel?'rgba(183,140,255,.15)':'rgba(12,6,24,.9)', sel?'#b78cff':'rgba(183,140,255,.3)');
+    T(b.icon+' '+b.short,x+86,410,12,'#d8ffe9','center','orb');
+    hit(x,388,172,44,function(){ S.selBiz2=k; setMsg('Player 2: '+b.name); });
+  });
+  T('4 · AGENT CEO — WHO RUNS IT WHILE YOU WATCH?',24,452,13,'#ffd75e','left','orb');
+  COUNCIL_IDS.forEach(function(id,i){
+    var x=24+i*114, sel=S.selCEO===id;
+    rr(x,466,106,36,8, sel?'rgba(255,215,94,.18)':'rgba(12,6,24,.9)', sel?'#ffd75e':'rgba(255,215,94,.3)');
+    T(id,x+53,484,11.5,'#fff','center','orb');
+    hit(x,466,106,36,function(){ S.selCEO=id; setMsg('CEO: '+id+' — '+(window.FallibleEngine?feStyleLine(id):'house heuristics')); });
+  });
+  T('Then press a mode below:  ▶ 1P SEASON · 👥 2P RIVAL · 👁 WATCH · 🤖 AGENT CEO · 🌐 ONLINE',W/2,536,14,'#d8ffe9','center','mono');
+  if(ceoSaveExists()) T('💾 A CEO business is saved — AGENT CEO will resume it (with a while-you-were-away catch-up).',W/2,562,12.5,'#ffd75e','center','mono');
+}
+function feStyleLine(id){
+  var p=window.FallibleEngine.PERSONALITIES[id]; if(!p) return '';
+  if(p.risk>.75) return 'leverages up, prices high, tilts hard';
+  if(p.caution>.75) return 'plays it safe, stocks light, hates debt';
+  if(p.curiosity>.8) return 'experiments constantly';
+  if(p.focus>.85) return 'steady, focused, low tilt';
+  return 'balanced operator';
+}
+function wrapText(t,x,y,maxW,size,color){
+  ctx.fillStyle=color; ctx.font='600 '+size+"px 'Rajdhani',sans-serif"; ctx.textAlign='left'; ctx.textBaseline='middle';
+  var words=t.split(' '), line='', yy=y;
+  for(var i=0;i<words.length;i++){
+    var test=line?line+' '+words[i]:words[i];
+    if(ctx.measureText(test).width>maxW && line){ ctx.fillText(line,x,yy); line=words[i]; yy+=size+3; }
+    else line=test;
+  }
+  if(line) ctx.fillText(line,x,yy);
+}
+/* ---- the street scene ---- */
+function drawScene(x,y,w,h,p){
+  var wth=WEATHERS[S.weather];
+  var g=ctx.createLinearGradient(0,y,0,y+h); g.addColorStop(0,wth.sky[0]); g.addColorStop(1,wth.sky[1]);
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  /* sun / moon glow */
+  var sg=ctx.createRadialGradient(x+w*.8,y+52,4,x+w*.8,y+52,90);
+  sg.addColorStop(0,wth.glow); sg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.globalAlpha=S.weather==='storm'||S.weather==='rainy'?.25:.8; ctx.fillStyle=sg; ctx.fillRect(x,y,w,h*.6); ctx.globalAlpha=1;
+  if(S.weather==='heatwave'){ ctx.globalAlpha=.16; ctx.fillStyle='#ff9d5c'; for(var hw=0;hw<3;hw++){ var wy=y+60+hw*36+Math.sin(S.frame*.05+hw)*4; ctx.fillRect(x+30,wy,w-60,3); } ctx.globalAlpha=1; }
+  /* far skyline */
+  ctx.fillStyle='rgba(10,8,28,.75)';
+  var rng=mulberry32(42);
+  for(var bx=x;bx<x+w;){ var bw=36+rng()*46, bh=50+rng()*90; ctx.fillRect(bx,y+h*.62-bh,bw,bh); bx+=bw+6; }
+  /* lit windows */
+  ctx.fillStyle='rgba(255,215,94,.5)';
+  var rng2=mulberry32(7);
+  for(var wi=0;wi<40;wi++){ ctx.fillRect(x+rng2()*w, y+h*.34+rng2()*h*.26, 3,4); }
+  /* street */
+  ctx.fillStyle='#1a1426'; ctx.fillRect(x,y+h*.78,w,h*.22);
+  ctx.fillStyle='#0f2e1d'; ctx.fillRect(x,y+h*.78,w,5);
+  ctx.fillStyle='rgba(255,215,94,.35)';
+  for(var dx=x+10;dx<x+w;dx+=46) ctx.fillRect(dx,y+h*.885,26,3);
+  /* district sign */
+  var dist=p&&p.units.length?p.units[0].district:'suburb';
+  T(DISTRICTS[dist].name+' · '+wth.icon+' '+wth.name, x+12, y+18, 12, '#fff','left','mono');
+  if(S.stadiumEvent) T('🏟 STADIUM EVENT TODAY', x+w-12, y+18, 12, '#ffd75e','right','mono');
+  /* the business */
+  drawBusiness(x+w*.5, y+h*.78, p);
+  /* weather particles */
+  if(S.weather==='rainy'||S.weather==='storm'){
+    ctx.strokeStyle='rgba(160,200,255,.5)'; ctx.lineWidth=1.4; ctx.beginPath();
+    S.rain.forEach(function(r){ var rx=x+((r.x+S.frame*r.s*.4)%w), ry=y+((r.y+S.frame*r.s)%h); ctx.moveTo(rx,ry); ctx.lineTo(rx-3,ry+11); });
+    ctx.stroke();
+  }
+  if(S.weather==='sunny'){ ctx.globalAlpha=.10; ctx.fillStyle='#ffd75e'; for(var sr=0;sr<3;sr++){ ctx.beginPath(); ctx.moveTo(x+w*.8,y+40); ctx.lineTo(x+w*(.55+sr*.16),y+h*.7); ctx.lineTo(x+w*(.63+sr*.16),y+h*.7); ctx.closePath(); ctx.fill(); } ctx.globalAlpha=1; }
+  /* walkers during OPEN */
+  if(S.phase==='open') drawWalkers(x,y,w,h);
+  /* coins */
+  S.coins=S.coins.filter(function(c){ return c.t>0; });
+  S.coins.forEach(function(c){ c.y-=1.1; c.t--; T(c.text,c.x,c.y,13,'#ffd75e','center','mono'); });
+}
+function drawBusiness(cx, groundY, p){
+  if(!p) return;
+  var col=p.color, t=p.type;
+  ctx.fillStyle='rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(cx,groundY+6,86,10,0,0,6.3); ctx.fill();
+  if(t==='data'){
+    rr(cx-78,groundY-108,156,108,6,'#101826','rgba(53,224,255,.5)');
+    for(var r=0;r<4;r++) for(var c=0;c<6;c++){ ctx.fillStyle=(S.frame>>4)%3===(r+c)%3?'#35e0ff':'rgba(53,224,255,.25)'; ctx.fillRect(cx-66+c*22, groundY-96+r*24, 12, 14); }
+    T('DATA HALL',cx,groundY-118,12,'#35e0ff','center','orb');
+  } else if(t==='truck'){
+    rr(cx-84,groundY-64,168,52,10,'#2a1408',col);
+    rr(cx-84,groundY-64,168,20,10,'rgba(255,157,92,.35)');
+    rr(cx-30,groundY-52,74,30,4,'#0a0f1c','rgba(255,255,255,.25)');
+    ctx.fillStyle='#0c0618'; ctx.beginPath(); ctx.arc(cx-52,groundY-8,13,0,6.3); ctx.arc(cx+54,groundY-8,13,0,6.3); ctx.fill();
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(cx-52,groundY-8,5,0,6.3); ctx.arc(cx+54,groundY-8,5,0,6.3); ctx.fill();
+    T('FOOD TRUCK',cx,groundY-74,12,col,'center','orb');
+  } else if(t==='coffee'){
+    rr(cx-80,groundY-96,160,96,4,'#1c110a',col);
+    rr(cx-88,groundY-96,176,16,6,'rgba(201,141,94,.5)',col);
+    rr(cx-52,groundY-70,104,52,3,'rgba(125,170,232,.18)','rgba(255,255,255,.2)');
+    T('☕',cx,groundY-112,20,'#fff','center');
+    T('COFFEE',cx,groundY-84,11,col,'center','orb');
+  } else if(t==='merch'){
+    ctx.fillStyle=col; ctx.fillRect(cx-76,groundY-84,152,6);
+    var cols=['#ff3860','#35e0ff','#ffd75e','#00ff88','#b78cff'];
+    for(var i=0;i<5;i++){ var tx=cx-62+i*30; ctx.fillStyle=cols[i]; rr(tx,groundY-78,24,40,3,cols[i]); ctx.fillStyle='rgba(0,0,0,.25)'; ctx.fillRect(tx+4,groundY-78,16,8); }
+    rr(cx-70,groundY-36,140,10,3,'#241536',col);
+    T('MERCH',cx,groundY-96,12,col,'center','orb');
+  } else { /* lemonade */
+    ctx.fillStyle='#3a2a08'; ctx.fillRect(cx-72,groundY-62,7,62); ctx.fillRect(cx+65,groundY-62,7,62);
+    rr(cx-72,groundY-44,144,10,3,'#3a2a08',col);
+    rr(cx-72,groundY-34,144,30,3,'rgba(255,215,94,.14)','rgba(255,215,94,.45)');
+    T('FRESH · DAILY',cx,groundY-19,10,'#ffd75e','center','mono');
+    for(var s2=0;s2<6;s2++){ ctx.fillStyle=s2%2?'#ffd75e':'#fff3c9'; ctx.beginPath(); ctx.moveTo(cx-78+s2*26,groundY-84); ctx.lineTo(cx-65+s2*26,groundY-84); ctx.lineTo(cx-72+s2*26,groundY-62); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle=col; ctx.fillRect(cx-78,groundY-86,156,4);
+    ctx.fillStyle='#ffd75e'; for(var l=0;l<4;l++){ ctx.beginPath(); ctx.arc(cx-48+l*30,groundY-26,7,0,6.3); ctx.fill(); }
+    rr(cx-16,groundY-38,32,20,3,'rgba(255,215,94,.3)','#ffd75e');
+    T('LEMONADE',cx,groundY-98,12,'#ffd75e','center','orb');
+  }
+  drawKeeper(cx+ (t==='data'?0:58), groundY, p);
+}
+function drawKeeper(x, groundY, p){
+  /* shaded keeper with rim light in the owner's colour */
+  ctx.fillStyle='rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(x,groundY+4,16,4,0,0,6.3); ctx.fill();
+  var bob=Math.sin(S.frame*.06)*1.5;
+  /* SPRITE STACK (finishing pass 2026-11-22): torso slices stepping down
+     in dark shades — the keeper stands as a stacked figure with volume,
+     not one flat rounded rect. */
+  for(var k=3;k>=1;k--) rr(x-11,groundY-34+bob+k*2.4,22,24,5,'rgba(6,10,16,'+(0.3+k*0.16)+')');
+  ctx.fillStyle='#274b63'; rr(x-11,groundY-34+bob,22,24,5,'#274b63');
+  ctx.fillStyle='rgba(255,255,255,.14)'; ctx.fillRect(x-11,groundY-34+bob,7,24);
+  ctx.strokeStyle=p.color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x+11,groundY-32+bob); ctx.lineTo(x+11,groundY-12+bob); ctx.stroke();
+  ctx.fillStyle='#e8b08a'; ctx.beginPath(); ctx.arc(x,groundY-42+bob,9,0,6.3); ctx.fill();
+  ctx.fillStyle='#1c1410'; ctx.beginPath(); ctx.arc(x,groundY-46+bob,9,Math.PI,6.3); ctx.fill();
+  T(p.owner.split(' ')[0], x, groundY+14, 9.5, p.color,'center','mono');
+}
+function spawnWalkers(soldTotal){
+  S.walkers=[];
+  var n=Math.min(36, 10+soldTotal);
+  var buyers=Math.min(n, Math.max(0,Math.round(soldTotal*.6)));
+  for(var i=0;i<n;i++){
+    var fromLeft=i%2===0;
+    S.walkers.push({x:fromLeft?-30-i*22:W+30+i*22, dir:fromLeft?1:-1, sp:1.1+Math.random()*1.3,
+      col:['#ff3860','#35e0ff','#ffd75e','#00ff88','#b78cff','#ff9d5c'][i%6], skin:['#e8b08a','#8a5a3a','#f5cfa5','#5a3a22'][i%4],
+      willBuy:i<buyers, bought:false, ph:Math.random()*6.28});
+  }
+}
+function drawWalkers(x,y,w,h){
+  var groundY=y+h*.78, standX=x+w*.5;
+  S.walkers.forEach(function(wk){
+    if(S.phase==='open' && !S.paused){ wk.x+=wk.dir*wk.sp*(S.openAnim? .9:0); }
+    if(wk.willBuy && !wk.bought && Math.abs(wk.x-standX)<14){ wk.bought=true; S.coins.push({x:wk.x,y:groundY-64,t:40,text:'+$'}); }
+    var bob=Math.abs(Math.sin(S.frame*.18+wk.ph))*3;
+    ctx.fillStyle='rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(wk.x,groundY+4,11,3.4,0,0,6.3); ctx.fill();
+    /* SPRITE STACK (finishing pass 2026-11-22): torso slices stepping
+       down in dark shades under every walker. */
+    for(var k=3;k>=1;k--) rr(wk.x-8,groundY-30-bob+k*2.2,16,20,4,'rgba(6,10,16,'+(0.3+k*0.16)+')');
+    rr(wk.x-8,groundY-30-bob,16,20,4,wk.col);
+    ctx.fillStyle='rgba(255,255,255,.16)'; ctx.fillRect(wk.x-8,groundY-30-bob,5,20);
+    ctx.strokeStyle=wk.col; ctx.lineWidth=1.6; ctx.beginPath(); ctx.moveTo(wk.x+8,groundY-28-bob); ctx.lineTo(wk.x+8,groundY-12-bob); ctx.stroke();
+    ctx.fillStyle=wk.skin; ctx.beginPath(); ctx.arc(wk.x,groundY-37-bob,7.5,0,6.3); ctx.fill();
+    ctx.fillStyle='#14100c'; ctx.fillRect(wk.x-7.5,groundY-44-bob,15,4);
+    /* legs */
+    ctx.strokeStyle='#141826'; ctx.lineWidth=3; ctx.beginPath();
+    var lp=Math.sin(S.frame*.18+wk.ph)*6;
+    ctx.moveTo(wk.x-3,groundY-10-bob); ctx.lineTo(wk.x-3+lp,groundY); ctx.moveTo(wk.x+3,groundY-10-bob); ctx.lineTo(wk.x+3-lp,groundY); ctx.stroke();
+  });
+}
+</script>
+<script>
+'use strict';
+/* ============================ GAME SCREEN ============================ */
+function drawGame(){
+  var g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#07040f'); g.addColorStop(1,'#05010f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  if(S.panel==='map' && S.phase!=='open'){ drawMap(); return; }
+  var p=activePlayer()||S.players[0];
+  /* HUD */
+  rr(10,8,940,44,8,'rgba(12,6,24,.95)','rgba(255,215,94,.35)');
+  T('DAY '+S.day+' / '+S.seasonDays, 22, 30, 15, '#ffd75e','left','orb');
+  if(p){
+    T(p.owner, 150, 30, 14, p.color,'left','orb');
+    T('CASH '+money(p.cash), 330, 30, 14, p.cash<0?'#ff3860':'#00ff88','left','mono');
+    T('NET WORTH '+money0(netWorth(p)), 500, 30, 14, '#fff','left','mono');
+    T(stars(p.rep)+' '+p.rep.toFixed(1), 700, 30, 14, '#ffd75e','left','mono');
+  }
+  T(WEATHERS[S.weather].icon+' '+WEATHERS[S.weather].name, 946, 30, 13, '#d8ffe9','right','mono');
+  if(S.mode==='duo' || S.mode==='watch' || S.mode==='online'){
+    var lx=22;
+    S.players.forEach(function(pl,i){ T((i===S.activeIdx&&S.mode==='duo'?'▶ ':'')+pl.owner+' '+money0(netWorth(pl)), lx, 66, 12.5, pl.color,'left','mono'); lx+=210; });
+    if(S.mode==='online' && S.online.peer) T('RIVAL '+S.online.peer.owner+' '+money0(S.online.peer.netWorth), lx, 66, 12.5, '#35e0ff','left','mono');
+    if(S.mode==='watch') T('WATCH RACE — LEADER: '+S.players.slice().sort(function(a,b){ return netWorth(b)-netWorth(a); })[0].owner, 946, 66, 12, '#ffd75e','right','mono');
+  }
+  if(S.phase==='open'){ drawScene(10,84,940,420,p); drawOpenBar(); return; }
+  drawScene(10,84,600,420,p);
+  if(S.phase==='report') drawReportPanel();
+  else if(S.panel==='buy') drawBuyPanel(p);
+  else if(S.panel==='set') drawSetPanel(p);
+  else if(S.panel==='expand') drawExpandPanel(p);
+  else if(S.panel==='bank') drawBankPanel(p);
+}
+function panelBase(p, title){
+  rr(622,84,328,420,10,'rgba(10,5,20,.96)','rgba(0,255,136,.3)');
+  T(title, 636, 104, 13.5, '#ffd75e','left','orb');
+  if(S.mode==='duo') T(p.owner+' — MORNING', 936, 104, 11, p.color,'right','mono');
+}
+function navBtns(p, backPanel){
+  var y=462;
+  btn(636,y,72,32,'SET →',function(){ S.panel='set'; }, {size:11});
+  btn(714,y,72,32,'EXPAND',function(){ S.panel='expand'; }, {size:11});
+  btn(792,y,72,32,'BANK',function(){ S.panel='bank'; }, {size:11});
+  btn(870,y,66,32,'MAP',function(){ S.panel='map'; }, {size:11});
+  if(backPanel) btn(636,y-38,300,30,'← BACK TO BUY',function(){ S.panel='buy'; }, {size:11});
+}
+function drawBuyPanel(p){
+  if(!p) return;
+  panelBase(p,'☀ MORNING — DAY '+S.day);
+  var def=bizDef(p), y=126;
+  T('Forecast: '+WEATHERS[S.weather].icon+' '+WEATHERS[S.weather].name+' · demand ×'+weatherFactor(p,S.weather).toFixed(2), 636, y, 12.5,'#d8ffe9','left','mono'); y+=18;
+  if(S.stadiumEvent) { T('🏟 Stadium event today — stadium traffic ×2.2', 636, y, 12,'#ffd75e','left','mono'); y+=18; }
+  if(S.dropDay && p.type==='merch') { T('🔥 DROP DAY — hype demand ×1.8', 636, y, 12,'#ff9d5c','left','mono'); y+=18; }
+  T('Cash '+money(p.cash)+' · makeable now: '+(p.type==='data'?p.racks+' racks':makeable(p)+' '+def.unit+'s'), 636, y, 12,'#7d8aa0','left','mono'); y+=24;
+  if(p.type==='data'){
+    T('RACKS OWNED: '+p.racks+' · UPTIME '+p.uptime.toFixed(1)+'%', 636, y, 14,'#35e0ff','left','orb'); y+=22;
+    T('Power today ≈ '+money(p.racks*def.powerPerRack*region().power*(p.upgrades.cooling?.75:1))+' · offers ≈ '+dataOffers(p), 636, y, 12,'#d8ffe9','left','mono'); y+=26;
+    btn(636,y,300,38,'BUY RACK — '+money0(def.rackCost*region().cost),function(){ if(buyRack(p)) setMsg('Rack installed. '+p.racks+' racks hum in the hall.'); else setMsg('Not enough cash for a rack.'); }, {color:'#35e0ff'});
+    y+=52;
+    T('Clients sign at SET — price per rack-day.', 636, y, 12,'#7d8aa0','left','mono');
+  } else {
+    Object.keys(def.supplies).forEach(function(sk){
+      var sup=def.supplies[sk], price=supplyPrice(p,sk);
+      T(sup.name, 636, y+11, 13,'#fff','left');
+      T(money(price)+' · own '+(p.inv[sk]||0)+(sup.perish?' · spoils':' · keeps'), 846, y+11, 10,'#7d8aa0','right','mono');
+      btn(852,y,38,24,'+1',function(){ buySupply(p,sk,1); }, {size:11});
+      btn(894,y,42,24,'+10',function(){ buySupply(p,sk,10); }, {size:11});
+      y+=32;
+    });
+    if(p.type==='merch'){ y+=4; T('Printed tees ready: '+(p.inv.shirts||0)+' (print at SET)', 636, y, 12,'#b78cff','left','mono'); y+=8; }
+  }
+  navBtns(p,false);
+  btn(636,424,300,30,'✓ DONE — TO SET',function(){ S.panel='set'; }, {size:12, color:'#ffd75e'});
+}
+function drawSetPanel(p){
+  if(!p) return;
+  panelBase(p,'🎚 SET — PRICE & PLAN');
+  var def=bizDef(p), y=130;
+  T('Price per '+def.unit+':', 636, y, 13,'#d8ffe9','left'); y+=24;
+  var step=p.type==='merch'||p.type==='data'?1:.25;
+  btn(636,y,54,36,'−',function(){ p.price=Math.max(step, Math.round((p.price-step)*100)/100); }, {size:18});
+  T(money(p.price), 766, y+18, 22,'#ffd75e','center','orb');
+  btn(842,y,54,36,'+',function(){ p.price=Math.round((p.price+step)*100)/100; }, {size:18});
+  y+=48;
+  T('Fair ≈ '+money(def.fair)+' · at this price, pull ×'+priceFactor(p).toFixed(2), 636, y, 12,'#7d8aa0','left','mono'); y+=24;
+  if(p.type!=='data'){
+    T('Recipe quality:', 636, y, 13,'#d8ffe9','left'); y+=22;
+    [['SKIMPY',1],['STANDARD',2],['PREMIUM',3]].forEach(function(qv,i){
+      btn(636+i*102,y,96,30,qv[0],function(){ p.quality=qv[1]; }, {size:11, fill:p.quality===qv[1]?'rgba(255,215,94,.25)':undefined, color:p.quality===qv[1]?'#ffd75e':undefined});
+    });
+    y+=42;
+  }
+  if(p.type==='truck'){
+    T('Today\'s spot for Truck #1:', 636, y, 13,'#d8ffe9','left'); y+=22;
+    Object.keys(def.spots).forEach(function(sk2){
+      var sp=def.spots[sk2];
+      btn(636,y,300,26,sp.name+' — traffic '+sp.traffic*(sk2==='stadium'&&S.stadiumEvent?' (EVENT ×2.2!)':''),function(){ p.spot=sk2; }, {size:11, fill:p.spot===sk2?'rgba(255,157,92,.25)':undefined, color:p.spot===sk2?'#ff9d5c':undefined});
+      y+=30;
+    });
+  }
+  if(p.type==='merch'){
+    T('Print run (blanks '+ (p.inv.blanks||0) +' · ink '+(p.inv.ink||0)+'):', 636, y, 13,'#d8ffe9','left'); y+=22;
+    btn(636,y,54,32,'−5',function(){ p.printQty=Math.max(0,p.printQty-5); }, {size:12});
+    T(p.printQty+' tees', 766, y+16, 17,'#b78cff','center','orb');
+    btn(842,y,54,32,'+5',function(){ p.printQty+=5; }, {size:12});
+    y+=40;
+    btn(636,y,300,32,'🖨 PRINT '+p.printQty+' TEES',function(){ var n=printRun(p,p.printQty); p.printQty=0; setMsg(n>0?('Printed '+n+' tees. Stock: '+p.inv.shirts):'Nothing to print — buy blanks + ink first.'); }, {size:12, color:'#b78cff'});
+    y+=42;
+  }
+  if(p.type==='data'){
+    T('Maintenance tier:', 636, y, 13,'#d8ffe9','left'); y+=22;
+    [['NONE $0',0],['STD $25',1],['WHITE-GLOVE $70',2]].forEach(function(mv,i){
+      btn(636+i*102,y,96,30,mv[0],function(){ p.maint=mv[1]; }, {size:10, fill:p.maint===mv[1]?'rgba(53,224,255,.25)':undefined, color:p.maint===mv[1]?'#35e0ff':undefined});
+    });
+    y+=40;
+    T('Uptime '+p.uptime.toFixed(1)+'% — below 85% clients churn.', 636, y, 12,'#7d8aa0','left','mono'); y+=20;
+  }
+  y=Math.max(y,388);
+  btn(636,y,300,44,'▶ OPEN THE DOORS',function(){ if(S.mode==='duo' && S.activeIdx===0){ morningDone(); } else openDay(); }, {size:15, color:'#00ff88', fill:'rgba(0,255,136,.12)'});
+  navBtns(p,true);
+}
+function drawExpandPanel(p){
+  if(!p) return;
+  panelBase(p,'🏗 EXPAND — GROW THE EMPIRE');
+  var def=bizDef(p), y=128;
+  T('UPGRADES', 636, y, 12,'#00ff88','left','orb'); y+=18;
+  def.upgrades.forEach(function(u){
+    var owned=!!p.upgrades[u.id], cost=Math.round(u.cost*region().cost);
+    T(u.name, 636, y+10, 12.5, owned?'#7d8aa0':'#fff','left');
+    if(owned) T('OWNED', 936, y+10, 11,'#00ff88','right','mono');
+    else btn(856,y,80,22,money0(cost),function(){ if(buyUpgrade(p,u.id)) setMsg(u.name+' installed — '+u.desc); else setMsg('Not enough cash for '+u.name+'.'); }, {size:11});
+    y+=24;
+    T(u.desc, 646, y+2, 10.5,'#7d8aa0','left','mono'); y+=12;
+  });
+  y+=6;
+  T('PROPERTIES — THE MAP IS THE SHOW', 636, y, 12,'#00ff88','left','orb'); y+=18;
+  def.properties.forEach(function(prop,idx){
+    var owned=p.units.some(function(u){ return u.propIdx===idx; }), cost=Math.round(prop.cost*region().cost);
+    T(prop.name+' · '+DISTRICTS[prop.district].name, 636, y+10, 12, owned?'#7d8aa0':'#fff','left');
+    if(owned) T('ON MAP ✓', 936, y+10, 11,'#00ff88','right','mono');
+    else btn(856,y,80,22,money0(cost),function(){ if(buyProperty(p,idx)){ setMsg(prop.name+' is yours — watch it rise on the city map (M).'); } else setMsg('Not enough cash for '+prop.name+'.'); }, {size:11});
+    y+=26;
+  });
+  y+=4;
+  rr(636,y,300,52,8, p.division?'rgba(0,255,136,.08)':'rgba(12,6,24,.9)', netWorth(p)>=DIVERSIFY_AT?'#ffd75e':'rgba(125,138,160,.4)');
+  if(p.division){ T('🏢 DIVISION: '+BUSINESSES[p.division.type].name+' (manager-run)', 646, y+16, 12,'#00ff88','left','orb'); T('It buys, prices and sells itself every day.', 646, y+36, 11,'#7d8aa0','left','mono'); }
+  else if(netWorth(p)>=DIVERSIFY_AT){
+    T('🏢 DIVERSIFY — UNLOCKED', 646, y+15, 12,'#ffd75e','left','orb');
+    var alts=BIZ_KEYS.filter(function(k){ return k!==p.type; });
+    alts.slice(0,2).forEach(function(k2,i2){
+      btn(646+i2*146,y+26,140,20,BUSINESSES[k2].short+' '+money0(BUSINESSES[k2].entry),function(){ buyDivision(p,k2); }, {size:9.5});
+    });
+  } else { T('🔒 DIVERSIFY at '+money0(DIVERSIFY_AT)+' net worth', 646, y+16, 12,'#7d8aa0','left','orb'); T('A second, manager-run business. Now: '+money0(netWorth(p)), 646, y+36, 11,'#7d8aa0','left','mono'); }
+  navBtns(p,true);
+}
+function buyDivision(p, type){
+  var def=BUSINESSES[type];
+  if(p.division || p.cash<def.entry) { setMsg('Diversify needs '+money0(def.entry)+' cash and no existing division.'); return false; }
+  p.cash-=def.entry;
+  var d=newBiz(type, p.owner+' · DIV', p.color);
+  p.division={type:type, inv:d.inv, units:d.units, upgrades:{}, racks:d.racks, uptime:97, rep:3, price:def.fair};
+  setMsg('Division opened: '+def.name+' — a manager runs it daily. Its profit lands in your cash.');
+  return true;
+}
+function drawBankPanel(p){
+  if(!p) return;
+  panelBase(p,'🏦 BANK — CREDIT & LOANS');
+  var y=130;
+  T('Credit limit '+money0(creditLimit(p))+' · borrowed '+money0(loanBalance(p)), 636, y, 12,'#d8ffe9','left','mono'); y+=16;
+  T('Credit score '+p.credit+' · limit grows with net worth + ★', 636, y, 11,'#7d8aa0','left','mono'); y+=22;
+  T('TAKE A LOAN (15-day term, auto-paid at close):', 636, y, 12.5,'#fff','left'); y+=20;
+  [100,300,1000].forEach(function(amt,i){
+    var ok=loanBalance(p)+amt<=creditLimit(p);
+    btn(636+i*102,y,96,32,money0(amt),function(){ if(takeLoan(p,amt)) setMsg('Loan taken: '+money0(amt)+' in hand. Daily payment starts tonight.'); else setMsg('Over your credit limit.'); }, {size:12, color:ok?'#00ff88':'rgba(125,138,160,.5)'});
+  });
+  y+=46;
+  if(!p.loans.length){ T('No active loans. Clean books.', 636, y, 12.5,'#7d8aa0','left','mono'); y+=20; }
+  p.loans.forEach(function(l){
+    rr(636,y,300,44,6,'rgba(12,6,24,.9)','rgba(255,215,94,.35)');
+    T('Loan '+money0(l.principal)+' @ '+(l.apr*100).toFixed(0)+'% APR', 646, y+13, 12,'#fff','left');
+    T('owes '+money(l.balance)+' · '+money(l.daily)+'/day'+(l.missed?' · ⚠ '+l.missed+' missed':''), 646, y+31, 11,'#7d8aa0','left','mono');
+    btn(862,y+9,66,26,'PAY OFF',function(){ if(payoffLoan(p,l.id)) setMsg('Loan paid off. Credit up.'); else setMsg('Not enough cash to pay it off.'); }, {size:10, color:'#ffd75e'});
+    y+=52;
+  });
+  y+=4;
+  T('Missed payments cost ★ and credit.', 636, y, 11.5,'#ff9d5c','left','mono'); y+=15;
+  T('3 misses = creditors seize the business.', 636, y, 11.5,'#ff9d5c','left','mono'); y+=15;
+  T('Paying off early raises your credit.', 636, y, 11.5,'#ff9d5c','left','mono');
+  navBtns(p,true);
+}
+function drawOpenBar(){
+  var a=S.openAnim, prog=a?clamp(a.t/a.dur,0,1):0;
+  var shown=a?Math.floor(a.soldTotal*prog):0;
+  rr(10,514,940,76,10,'rgba(10,5,20,.96)','rgba(0,255,136,.3)');
+  T('OPEN — DAY '+S.day, 24, 536, 14,'#ffd75e','left','orb');
+  T('sold so far: '+shown, 24, 562, 12.5,'#d8ffe9','left','mono');
+  rr(190,548,520,14,7,'rgba(255,255,255,.08)');
+  rr(190,548,Math.max(14,520*prog),14,7,'#00ff88');
+  btn(742,530,190,42,'⏩ SKIP TO CLOSE',function(){ if(S.openAnim) S.openAnim.t=S.openAnim.dur; }, {size:13, color:'#ffd75e'});
+  if(S.mode==='duo'||S.mode==='watch') S.players.forEach(function(pl,i){ var r=S.reports[i]; if(r) T(pl.owner+': '+r.sold+' sold · '+money0(r.revenue), 24+i*230, 582, 11, pl.color,'left','mono'); });
+}
+function drawReportPanel(){
+  panelBase(activePlayer(),'🧾 DAY '+S.day+' REPORT');
+  var y=128;
+  S.players.forEach(function(p,i){
+    var rep=S.reports[i];
+    T(p.owner+' — '+bizDef(p).name, 636, y, 13, p.color,'left','orb'); y+=17;
+    if(!rep){ T('bankrupt — out of the season', 646, y, 11.5,'#ff3860','left','mono'); y+=22; return; }
+    var lines=[['Sold', rep.sold+' '+bizDef(p).unit+'s (wanted '+rep.want+')'],['Revenue','+'+money(rep.revenue)],['Fixed costs','−'+money(rep.fixed)],['Loan payments','−'+money(rep.loanPaid||0)],['Spoilage','−'+money(rep.spoilValue||0)+' value'],['PROFIT',(rep.profit>=0?'+':'')+money(rep.profit)],['Reputation',(rep.repDelta>=0?'+':'')+(rep.repDelta||0).toFixed(2)+' → '+p.rep.toFixed(1)+'★'],['Net worth',money0(rep.netWorth)]];
+    lines.forEach(function(L){ T(L[0], 646, y, 11.5,'#7d8aa0','left','mono'); T(L[1], 936, y, 11.5, L[0]==='PROFIT'?(rep.profit>=0?'#00ff88':'#ff3860'):'#fff','right','mono'); y+=14.5; });
+    (rep.spoilNotes||[]).slice(0,2).forEach(function(n){ T('· '+n, 646, y, 10.5,'#ff9d5c','left','mono'); y+=13; });
+    if(rep.division) { T('· Division '+BUSINESSES[rep.division.type].short+': +'+money(rep.division.revenue-rep.division.fixed), 646, y, 10.5,'#00ff88','left','mono'); y+=13; }
+    if(rep.bankrupt){ T('💀 BANKRUPT', 646, y, 12,'#ff3860','left','orb'); y+=14; }
+    y+=8;
+  });
+  btn(636,452,300,40, S.day>=S.seasonDays?'FINISH SEASON':'▶ DAY '+(S.day+1), function(){ if(S.day>=S.seasonDays) seasonEnd(); else nextDay(); }, {size:14, color:'#00ff88', fill:'rgba(0,255,136,.12)'});
+}
+function drawMap(){
+  rr(10,8,940,584,10,'rgba(8,4,16,.98)','rgba(255,215,94,.35)');
+  T('🗺 THE CITY — YOUR EMPIRE, VISIBLE', 24, 30, 16,'#ffd75e','left','orb');
+  T('Districts grow as you buy. '+(S.mode==='duo'?'Violet = Player 2.':(S.mode==='online'&&S.online.peer?'Cyan outline = your rival.':'')), 24, 52, 12,'#7d8aa0','left','mono');
+  var gx=34, gy=76, cw=176, ch=150;
+  /* district zones */
+  Object.keys(DISTRICTS).forEach(function(dk){
+    var d=DISTRICTS[dk];
+    var xs=d.cells.map(function(c){ return c[0]; }), ys=d.cells.map(function(c){ return c[1]; });
+    var x0=gx+Math.min.apply(null,xs)*cw, y0=gy+Math.min.apply(null,ys)*ch;
+    var x1=gx+(Math.max.apply(null,xs)+1)*cw, y1=gy+(Math.max.apply(null,ys)+1)*ch;
+    rr(x0+3,y0+3,x1-x0-6,y1-y0-6,10,d.color+'2e', d.color);
+    T(d.name, x0+12, y0+16, 12, '#fff','left','orb');
+    T('traffic '+d.traffic, x0+12, y0+32, 10,'#d8ffe9','left','mono');
+  });
+  /* grid cells */
+  ctx.strokeStyle='rgba(255,255,255,.07)';
+  for(var cx2=0;cx2<5;cx2++) for(var cy2=0;cy2<3;cy2++) ctx.strokeRect(gx+cx2*cw, gy+cy2*ch, cw, ch);
+  /* buildings: collect units per district per owner */
+  var placed={};
+  function place(owner, color, units, peer){
+    units.forEach(function(u){
+      var d=DISTRICTS[u.district]; if(!d) return;
+      var key=u.district+':'+owner; placed[key]=(placed[key]||0);
+      var cell=d.cells[placed[key]%d.cells.length];
+      var slot=Math.floor(placed[key]/d.cells.length);
+      placed[key]++;
+      var bx=gx+cell[0]*cw+26+(slot%3)*50, by=gy+cell[1]*ch+106+Math.floor(slot/3)*38;
+      var bh=24+Math.min(16,(u.tier||0)*4);
+      rr(bx,by-bh,32,bh,3,'rgba(6,12,10,.94)',color);
+      ctx.fillStyle=color; ctx.fillRect(bx,by-bh,32,4);
+      ctx.fillStyle='rgba(255,215,94,.85)';
+      for(var wy=0;wy<Math.floor(bh/10);wy++) for(var wx=0;wx<2;wx++) if((wx+wy+slot)%2===0) ctx.fillRect(bx+6+wx*13, by-bh+7+wy*10, 6,5);
+      T(u.name.split(' ')[0].slice(0,8), bx+16, by+9, 8.5, '#fff','center','mono');
+    });
+  }
+  S.players.forEach(function(p){ place(p.owner, p.color, p.units, false); if(p.division) place(p.owner+' DIV', p.color, p.division.units, false); });
+  if(S.mode==='online' && S.online.peer) place(S.online.peer.owner, '#35e0ff', S.online.peer.units, true);
+  btn(742,540,190,36,'← BACK',function(){ S.panel='buy'; }, {size:13, color:'#ffd75e'});
+  S.players.forEach(function(p,i){ T(p.owner+': '+p.units.length+' locations · NW '+money0(netWorth(p)), 24, 552+i*18, 12, p.color,'left','mono'); });
+}
+function drawSeason(){
+  var g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0a0618'); g.addColorStop(1,'#05010f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  T('🏆 SEASON OVER', W/2, 70, 34,'#ffd75e','center','orb');
+  var ranked=S.players.slice().sort(function(a,b){ return netWorth(b)-netWorth(a); });
+  ranked.forEach(function(p,i){
+    var y=140+i*86;
+    rr(180,y,600,72,10, i===0?'rgba(255,215,94,.13)':'rgba(12,6,24,.9)', i===0?'#ffd75e':p.color);
+    T((i+1)+'. '+p.owner, 200, y+20, 17, p.color,'left','orb');
+    T(bizDef(p).name+' · '+p.units.length+' locations · sold '+p.stats.sold+' · revenue '+money0(p.stats.revenue), 200, y+44, 12,'#d8ffe9','left','mono');
+    T(money0(netWorth(p)), 760, y+22, 19,'#fff','right','orb');
+    T(rankTitle(netWorth(p)), 760, y+48, 11,'#ffd75e','right','mono');
+    if(p.bankrupt) T('BANKRUPT', 480, y+62, 11,'#ff3860','center','mono');
+  });
+  if(S.mode==='duo' && ranked.length>1) T('HEAD-TO-HEAD: '+ranked[0].owner+' beats '+ranked[1].owner+' by '+money0(netWorth(ranked[0])-netWorth(ranked[1])), W/2, 140+ranked.length*86+6, 15,'#fff','center','mono');
+  btn(330,520,300,44,'↻ NEW SEASON',function(){ S.view='setup'; S.players=[]; syncModeButtons(); }, {size:15, color:'#00ff88'});
+}
+</script>
+<script>
+'use strict';
+/* ============================ INPUT ============================ */
+function canvasPos(ev){
+  var r=cv.getBoundingClientRect();
+  var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX;
+  var cy=(ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY;
+  return {x:(cx-r.left)*W/r.width, y:(cy-r.top)*H/r.height};
+}
+function activateHit(i){ var h=S.hits[i]; if(h){ S.focus=i; h.fn(); } }
+cv.addEventListener('click', function(ev){
+  if(S.paused) return;
+  var pos=canvasPos(ev);
+  for(var i=0;i<S.hits.length;i++){ var h=S.hits[i]; if(pos.x>=h.x&&pos.x<=h.x+h.w&&pos.y>=h.y&&pos.y<=h.y+h.h){ activateHit(i); return; } }
+});
+function togglePause(force){
+  if(S.view!=='game') return;
+  S.paused=(force!==undefined)?force:!S.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=S.paused?'flex':'none';
+  if(S.paused && S.mode==='ceo') saveCEO();
+}
+document.addEventListener('keydown', function(ev){
+  var k=ev.key;
+  if(k==='Escape' || k==='p' || k==='P'){ togglePause(); ev.preventDefault(); return; }
+  if(S.paused) return;
+  if(k>='1' && k<='9'){ var idx=parseInt(k,10)-1; if(idx<S.hits.length) activateHit(idx); return; }
+  if(k==='m' || k==='M'){ if(S.view==='game' && S.phase!=='open') S.panel=(S.panel==='map')?'buy':'map'; return; }
+  if(k==='ArrowDown' || k==='ArrowRight'){ S.focus=Math.min(S.hits.length-1, S.focus+1); ev.preventDefault(); }
+  else if(k==='ArrowUp' || k==='ArrowLeft'){ S.focus=Math.max(0, S.focus-1); ev.preventDefault(); }
+  else if(k==='Enter' || k===' '){ if(S.hits.length) activateHit(S.focus); ev.preventDefault(); }
+});
+/* shell (handheld) wiring */
+document.querySelectorAll('#shellDeck .dpad button[data-k]').forEach(function(b){
+  b.addEventListener('click', function(){
+    var k=b.getAttribute('data-k');
+    if(k==='down'||k==='right') S.focus=Math.min(S.hits.length-1,S.focus+1);
+    else S.focus=Math.max(0,S.focus-1);
+  });
+});
+$('btnA').addEventListener('click', function(){ if(!S.paused && S.hits.length) activateHit(S.focus); });
+$('btnB').addEventListener('click', function(){ if(S.panel==='map') S.panel='buy'; else if(S.panel!=='buy') S.panel='buy'; });
+$('startBtn').addEventListener('click', function(){ togglePause(); });
+$('selectBtn').addEventListener('click', function(){ if(S.view==='game') S.panel=(S.panel==='map')?'buy':'map'; });
+/* pause overlay */
+$('resumeBtn').addEventListener('click', function(){ togglePause(false); });
+$('saveBtn').addEventListener('click', function(){ if(S.mode==='ceo'){ saveCEO(); setMsg('CEO business saved — it resumes (with catch-up) next visit.'); } else saveState(); });
+$('loadBtn').addEventListener('click', function(){ if(S.mode==='ceo'){ if(resumeCEO()) togglePause(false); } else if(loadState()) togglePause(false); });
+$('restartBtn').addEventListener('click', function(){ togglePause(false); S.view='setup'; S.players=[]; syncModeButtons(); setMsg('Pick a business. Pick a region. Build an empire in one season.'); });
+$('quitBtn').addEventListener('click', function(){ togglePause(false); S.view='setup'; S.players=[]; syncModeButtons(); });
+/* mode buttons */
+function syncModeButtons(){
+  var map={solo:'btnPlay', duo:'btnDuo', watch:'btnWatch', ceo:'btnCEO', online:'btnOnline'};
+  Object.keys(map).forEach(function(m){ var el=$(map[m]); if(el) el.classList.toggle('active', S.mode===m && S.view!=='setup'); });
+  updateFeed();
+}
+$('btnPlay').addEventListener('click', function(){ startSeason('solo'); });
+$('btnDuo').addEventListener('click', function(){ startSeason('duo'); });
+$('btnWatch').addEventListener('click', function(){ startSeason('watch'); });
+$('btnCEO').addEventListener('click', function(){ startCEO(); });
+$('btnOnline').addEventListener('click', function(){ var bar=$('onlineBar'); if(bar) bar.style.display='block'; onlineStatus('Host a room, or join with a code. You each run your own business in the host\'s region; net worth + map sync at every day close.'); });
+$('btnPause').addEventListener('click', function(){ togglePause(); });
+$('hostBtn').addEventListener('click', onlineHost);
+$('joinBtn').addEventListener('click', onlineJoin);
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+
+/* ============================ MAIN LOOP ============================ */
+var autoT=0;
+function loop(){
+  S.frame++;
+  if(!S.paused){
+    if(S.phase==='open' && S.openAnim){
+      S.openAnim.t++;
+      if(S.openAnim.t>=S.openAnim.dur){ S.openAnim=null; closeDay(); }
+    } else if(isAutoMode() && S.view==='game' && !S.gameOver){
+      autoT++;
+      if(S.phase==='morning' && autoT>30){ autoT=0; openDay(); }
+      else if(S.phase==='report' && autoT>110){ autoT=0; if(S.day<S.seasonDays) nextDay(); }
+    }
+  }
+  if(S.frame%20===0) updateFeed();
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============================ DEBUG / TEST SURFACE ============================ */
+window.__tycoon={
+  get state(){ return {view:S.view, mode:S.mode, phase:S.phase, panel:S.panel, day:S.day, seasonDays:S.seasonDays,
+    weather:S.weather, gameOver:S.gameOver, paused:S.paused, ceoId:S.ceoId, awaySummary:S.awaySummary,
+    winner:S.winner?S.winner.owner:null, log:S.log.slice(0,60),
+    online:{code:S.online.code, role:S.online.role, peer:S.online.peer},
+    players:S.players.map(function(p){ return {owner:p.owner, type:p.type, cash:Math.round(p.cash*100)/100, rep:p.rep,
+      price:p.price, quality:p.quality, inv:JSON.parse(JSON.stringify(p.inv)), units:p.units.length,
+      districts:p.units.map(function(u){ return u.district; }), netWorth:netWorth(p), bankrupt:p.bankrupt,
+      loans:p.loans.map(function(l){ return {principal:l.principal, balance:l.balance, daily:l.daily, missed:l.missed}; }),
+      racks:p.racks, uptime:p.uptime, hasDivision:!!p.division, missedTotal:p.missedTotal, credit:p.credit,
+      lastReport:S.reports[S.players.indexOf(p)]||null}; })}; },
+  debugNewGame:function(o){ o=o||{}; S.selBiz=o.type||'lemonade'; S.selRegion=o.region||'florida'; if(o.biz2) S.selBiz2=o.biz2; if(o.seed!==undefined) S.seed=o.seed; startSeason(o.mode||'solo'); },
+  debugSetWeather:function(w){ S.weather=w; },
+  debugWant:function(type, weather){
+    var save=S.weather; S.weather=weather;
+    var p=newBiz(type,'TEST','#fff');
+    Object.keys(BUSINESSES[type].supplies).forEach(function(k){ p.inv[k]=9999; });
+    if(type==='merch') p.inv.shirts=9999;
+    p.price=BUSINESSES[type].fair;
+    var total=0; p.units.forEach(function(u){ total+=expectedSoldUnit(p,u,weather); });
+    S.weather=save; return total;
+  },
+  debugBuy:function(sk,qty){ return buySupply(activePlayer(), sk, qty); },
+  debugGive:function(sk,qty){ var p=activePlayer(); p.inv[sk]=(p.inv[sk]||0)+qty; },
+  debugSetPrice:function(v){ activePlayer().price=v; },
+  debugSetQuality:function(v){ activePlayer().quality=v; },
+  debugSetCash:function(v){ activePlayer().cash=v; },
+  debugSetActive:function(i){ S.activeIdx=i; },
+  debugOpen:function(){ openDay(); S.openAnim=null; closeDay(); },
+  debugNext:function(){ nextDay(); },
+  debugFullDay:function(){ openDay(); S.openAnim=null; closeDay(); if(!S.gameOver && S.view==='game') nextDay(); },
+  debugTakeLoan:function(amt){ return takeLoan(activePlayer(), amt); },
+  debugPayoff:function(){ var p=activePlayer(); return p.loans.length?payoffLoan(p,p.loans[0].id):false; },
+  debugBuyProperty:function(idx){ return buyProperty(activePlayer(), idx); },
+  debugBuyUpgrade:function(id){ return buyUpgrade(activePlayer(), id); },
+  debugBuyRack:function(){ return buyRack(activePlayer()); },
+  debugPrint:function(n){ return printRun(activePlayer(), n); },
+  debugSave:saveState, debugLoad:loadState,
+  debugStartCEO:function(id, type, region){ S.selCEO=id||'ZEROX'; if(type) S.selBiz=type; if(region) S.selRegion=region; startSeason('ceo'); },
+  debugCEOInstantDay:function(){ return runCEODayInstant(); },
+  debugSaveCEO:saveCEO, debugResumeCEO:resumeCEO,
+  debugAway:function(ms){ return simulateAway(ms); },
+  debugNetWorth:function(i){ return netWorth(S.players[i||0]); },
+  debugSpoil:function(){ var p=activePlayer(); return overnight(p, dayRng(97)); },
+  feTraces:function(){ var FE=window.FallibleEngine; return FE?FE.stats().traceCount:-1; },
+  feMatches:function(){ var FE=window.FallibleEngine; return FE?FE.stats().matchesStored:-1; },
+  debugWatchBout:function(){ return watchBout; }, /* E48: persisted rotation cursor */
+  debugQuartet:function(){ return WATCH_BOTS.slice(); } /* E48: current WATCH race quartet */
+};
+/* ============================ AUTO (screenshots) ============================ */
+(function(){
+  var auto=q.get('auto'); if(!auto) return;
+  if(auto==='play'){ window.__tycoon.debugNewGame({type:'lemonade',region:'florida',seed:5}); ['lemons','sugar','cups','ice'].forEach(function(k){ buySupply(S.players[0],k,30); }); S.panel='buy'; }
+  else if(auto==='open'){ window.__tycoon.debugNewGame({type:'lemonade',region:'florida',seed:5}); ['lemons','sugar','cups','ice'].forEach(function(k){ buySupply(S.players[0],k,40); }); openDay(); }
+  else if(auto==='buy'){ window.__tycoon.debugNewGame({type:'truck',region:'desert',seed:5}); S.panel='buy'; }
+  else if(auto==='data'){ window.__tycoon.debugNewGame({type:'data',region:'techhub',seed:5}); S.panel='buy'; }
+  else if(auto==='bank'){ window.__tycoon.debugNewGame({type:'lemonade',region:'florida',seed:5}); takeLoan(S.players[0],300); S.panel='bank'; }
+  else if(auto==='map'){ window.__tycoon.debugNewGame({type:'lemonade',region:'florida',seed:5}); S.players[0].cash=5000; buyProperty(S.players[0],0); buyProperty(S.players[0],1); buyProperty(S.players[0],3); S.panel='map'; }
+  else if(auto==='report'){ window.__tycoon.debugNewGame({type:'lemonade',region:'florida',seed:5}); ['lemons','sugar','cups','ice'].forEach(function(k){ buySupply(S.players[0],k,40); }); window.__tycoon.debugOpen(); }
+  else if(auto==='watch'){ window.__tycoon.debugNewGame({type:'lemonade',region:'florida',seed:5,mode:'watch'}); }
+  else if(auto==='ceo'){ S.selCEO='ZEROX'; window.__tycoon.debugNewGame({type:'lemonade',region:'florida',seed:5,mode:'ceo'}); runCEODayInstant(); runCEODayInstant(); S.phase='morning'; }
+  else if(auto==='duo'){ window.__tycoon.debugNewGame({type:'lemonade',region:'florida',seed:5,mode:'duo',biz2:'coffee'}); }
+})();
+</script>
+</body>
+</html>

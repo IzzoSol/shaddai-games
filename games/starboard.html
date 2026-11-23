@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>STARBOARD — Party Board · Shaddai Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--acc:#b78cff;--gold:#ffd75e;--emer:#00ff88;--red:#ff3860;--cyan:#35e0ff;--ink:#f2eaff}
+  *{box-sizing:border-box}
+  body{margin:0;background:#070412;color:var(--ink);font-family:'Share Tech Mono',monospace}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid rgba(183,140,255,.25);background:linear-gradient(90deg,#160a2a,#070412)}
+  .topbar h1{font-family:'Orbitron',sans-serif;font-size:22px;margin:0;letter-spacing:4px;color:var(--acc);text-shadow:0 0 18px rgba(183,140,255,.7)}
+  .topbar h1 span{color:var(--gold)}
+  .tag{font-size:11px;letter-spacing:2px;color:#c4b2e8}
+  .spacer{flex:1}
+  .back{color:var(--cyan);text-decoration:none;font-size:12px;letter-spacing:1px}
+  .wrap{max-width:1020px;margin:0 auto;padding:14px}
+  #shell{position:relative}
+  canvas{width:100%;height:auto;display:block;border:2px solid rgba(183,140,255,.55);border-radius:14px;background:#0a0618;box-shadow:0 0 0 1px rgba(255,215,94,.35),0 0 42px rgba(183,140,255,.28)}
+  .hud{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:12px}
+  .box{border:1px solid rgba(183,140,255,.35);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.7;background:rgba(24,10,42,.55)}
+  .box b{font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:11px;color:var(--gold)}
+  .box.you{border-color:rgba(255,215,94,.8)}
+  .btnrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  /* Arcade tile standard: holographic glass, thick emerald rim, one gold accent, per-game tint */
+  .mbtn{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;color:#fff;background:linear-gradient(160deg,rgba(183,140,255,.22),rgba(7,4,18,.6));border:3px solid rgba(0,255,136,.85);border-radius:14px;padding:11px 16px;cursor:pointer;box-shadow:0 0 0 1px rgba(255,215,94,.55),0 0 22px rgba(0,255,136,.22),inset 0 0 18px rgba(255,255,255,.06);text-shadow:0 1px 2px #000}
+  .mbtn small{display:block;font-family:'Share Tech Mono',monospace;font-size:10px;color:#dcc8ff;letter-spacing:0;margin-top:3px}
+  .mbtn:hover{filter:brightness(1.25)}
+  .mbtn.active{outline:2px solid var(--gold);background:linear-gradient(160deg,rgba(183,140,255,.4),rgba(7,4,18,.6))}
+  .mbtn.vr{border-color:rgba(53,224,255,.85)}
+  #msg{margin-top:10px;min-height:20px;font-size:13px;color:#e8dcff}
+  #feed{margin-top:6px;font-size:11px;color:#b39ddb;min-height:34px;line-height:1.5}
+  .help{margin-top:14px;font-size:12px;line-height:1.8;color:#c4b2e8;border:1px solid rgba(183,140,255,.18);border-radius:10px;padding:12px;background:rgba(24,10,42,.5)}
+  .help b{color:var(--gold)} .k{display:inline-block;border:1px solid #5a3f8f;border-radius:4px;padding:0 6px;background:#140a24;color:#fff}
+  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,2,14,.82);z-index:50}
+  .overlay.open{display:flex}
+  .panel{width:min(92vw,420px);border:3px solid rgba(0,255,136,.85);border-radius:16px;padding:22px;background:linear-gradient(160deg,#1a0e30,#070412);box-shadow:0 0 0 1px rgba(255,215,94,.4),0 0 34px rgba(183,140,255,.25)}
+  .panel h2{font-family:'Orbitron',sans-serif;letter-spacing:3px;margin:0 0 6px;color:var(--acc)}
+  .panel p{font-size:12px;color:#c4b2e8;line-height:1.6}
+  .panel .mbtn{display:block;width:100%;margin-top:10px;text-align:center}
+  #shellDeck{display:none}
+  @media (max-width:640px){
+    .topbar h1{font-size:16px} .tag{display:none}
+    .hud{grid-template-columns:1fr 1fr}
+    body.touch #shell{border:1px solid rgba(183,140,255,.4);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#1a0e30,#070412);box-shadow:0 0 34px rgba(183,140,255,.16),inset 0 0 0 1px rgba(255,255,255,.04)}
+    body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--acc)}
+    body.touch #shell .shell-brand .shell-led{color:var(--acc);text-shadow:0 0 8px var(--acc)}
+    body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+    body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#140a24;border:1px solid rgba(183,140,255,.4);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+    body.touch #shellDeck button:active{background:var(--acc);color:#140a24}
+    .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:4px}
+    .dpad button{font-size:16px;border-radius:10px}
+    .dpad .c{visibility:hidden}
+    .abtns{display:flex;gap:10px;align-items:center;padding-top:34px}
+    .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:700}
+    .abtns button.b{width:48px;height:48px;font-size:15px}
+    .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+    .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#140a24}
+  }
+</style>
+</head>
+<body>
+<div class="topbar"><h1>STAR<span>BOARD</span></h1><span class="tag">Party Board · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI HANDHELD</span><span class="shell-led">● LIVE</span></div>
+    <canvas id="cv" width="960" height="560"></canvas>
+    <div id="shellDeck">
+      <div class="dpad">
+        <span class="c"></span><button id="padUp">▲</button><span class="c"></span>
+        <button id="padLeft">◀</button><span class="c"></span><button id="padRight">▶</button>
+        <span class="c"></span><button id="padDown">▼</button><span class="c"></span>
+      </div>
+      <div class="abtns"><button class="b" id="btnB">B</button><button id="btnA">A</button></div>
+      <div class="shell-pills"><button id="startBtn">START</button><button id="selectBtn">STOP</button></div>
+    </div>
+  </div>
+  <div class="hud">
+    <div class="box you" id="box0"><b>YOU · NOVA</b><br><span id="p0"></span></div>
+    <div class="box" id="box1"><b>ZEROX</b><br><span id="p1"></span></div>
+    <div class="box" id="box2"><b>TURTLE</b><br><span id="p2"></span></div>
+    <div class="box" id="box3"><b>ORACLE</b><br><span id="p3"></span></div>
+  </div>
+  <div class="btnrow">
+    <button class="mbtn active" id="btnSolo">Play — Solo Board<small>You + 3 council bots · 10 rounds</small></button>
+    <button class="mbtn" id="btnWatch">Watch<small>4 council bots play it · Fallible Engine</small></button>
+    <button class="mbtn" id="btnParty">Party — 4P Hot-Seat<small>Pass &amp; play · everyone rolls</small></button>
+    <button class="mbtn" id="btnRoll">Roll Dice<small>Space / Enter · A on handheld</small></button>
+    <button class="mbtn" id="btnPause">Pause<small>P / ESC · save &amp; load inside</small></button>
+    <button class="mbtn" id="btnMute">Sound: On<small>M to mute</small></button>
+    <button class="mbtn vr" id="btnVR">Enter VR (SIM)<small>WebXR via the shared XR engine · needs a headset</small></button>
+  </div>
+  <div id="msg">Press PLAY — or WATCH four council bots play the board.</div>
+  <div id="feed"></div>
+  <div class="help">
+    ⭐ <b>Briefing:</b> Four travellers race the <b>STARBOARD</b> — a 48-space star-chart loop around the Ember Isles. Roll the die, walk the board, grab <b>coins</b>, and buy <b>stars</b> for 20 coins whenever you land on the glowing star space. After every round the four of you meet in a <b>minigame</b> — STAR SNATCH (stop the needle), COIN CASCADE (memory pairs), DICE DUEL (high roll takes the pot). Ten rounds. Most stars wins; coins break ties.<br/>
+    🎲 <b>Spaces:</b> gold coin +3 · red coin −3 · EVENT (warp, shower, drain, swap) · DUEL (challenge a rival, winner takes 10) · LUCKY (+10, sometimes a free star) · BATTLE (everyone pays 5 into the pot, minigame decides it). Passing START pays +10.<br/>
+    🤖 <b>Watch:</b> four council bots play the whole voyage on the Fallible Engine — they decide star buys, duels and minigame moves through scored options, with traces recorded, and their result is filed at the end. ZEROX gambles, TURTLE saves, ORACLE plays the odds. They blunder on purpose.<br/>
+    🧍 <b>Characters:</b> every traveller is a sprite-stacked robot token — layered slices, rim light, ground shadow — never a flat blob. Press <span class="k">V</span> for the board-level table cam.<br/>
+    📱 <b>Handheld shell:</b> <span class="k">A</span> rolls / confirms, <span class="k">B</span> backs out, SELECT stops the minigame needle, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit).<br/>
+    🧪 <b>Clean-room:</b> party-board formula (dice movement, coin economy, star purchase, round minigames, hot-seat multiplayer — the documented behaviour of the classic party-board games, SPEC lane: read as design reference, never run or copied); our own code, board, travellers, minigames, names and story. VR runs through the shared XR engine and is labelled SIM until a headset verifies it in-world.
+  </div>
+</div>
+<div class="overlay" id="pauseOverlay">
+  <div class="panel">
+    <h2 id="pauseTitle">PAUSED</h2>
+    <p id="pauseSub">The board waits. Your voyage is held exactly where you left it.</p>
+    <button class="mbtn" id="resumeBtn">Resume</button>
+    <button class="mbtn" id="saveBtn">Save state</button>
+    <button class="mbtn" id="loadBtn">Load state</button>
+    <button class="mbtn" id="restartBtn">Restart voyage</button>
+    <button class="mbtn" id="quitArcadeBtn">Quit to Arcade</button>
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script src="xr-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   STARBOARD — original Mario Party-style party board for the Shaddai Arcade.
+   Clean-room SPEC lane: the party-board formula (dice movement around a loop,
+   coin economy, star purchase, round minigames, hot-seat multiplayer) written
+   from documented behaviour of the classic party-board games — read as design
+   reference only, never run or copied. Our own board (48-space Ember Isles
+   loop), travellers (NOVA + council bots ZEROX / TURTLE / ORACLE), minigames
+   (STAR SNATCH / COIN CASCADE / DICE DUEL), events and story. Modes: 1P solo,
+   WATCH 4 bots on the Fallible Engine (scored options + traces + recordResult),
+   PARTY 4P hot-seat. Board-level table cam (V); VR via the shared XR engine
+   is SIM-labelled. Handheld shell on mobile. Sprite-stacked tokens everywhere.
+   ========================================================================== */
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var CW=cv.width, CH=cv.height;
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var XE=(typeof window!=='undefined' && window.XREngine) || null;
+var SAVE_KEY='shaddai.starboard';
+function clamp(v,a,b){return v<a?a:v>b?b:v;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+function makeRng(seed){ var st={a:(seed||1)|0}; return {next:function(){ st.a=st.a+0x6D2B79F5|0; var t=Math.imul(st.a^st.a>>>15,1|st.a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }, get a(){return st.a;}, set a(v){st.a=v|0;}}; }
+
+/* ---------- audio (tiny, guarded) ---------- */
+var AC=null, muted=false;
+function beep(f,d,type,g){ if(muted) return; try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); var o=AC.createOscillator(),gn=AC.createGain(); o.type=type||'square'; o.frequency.value=f; gn.gain.value=g||0.04; o.connect(gn); gn.connect(AC.destination); o.start(); gn.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+(d||0.08)); o.stop(AC.currentTime+(d||0.08)); }catch(e){} }
+function sfx(name){ if(name==='dice') beep(520,0.06,'square',0.04); else if(name==='coin') beep(1320,0.09,'sine',0.05); else if(name==='star') { beep(880,0.12,'sine',0.05); beep(1320,0.18,'sine',0.04); } else if(name==='bad') beep(180,0.15,'sawtooth',0.05); else if(name==='win') { beep(660,0.12,'sine',0.05); beep(990,0.2,'sine',0.05); } else if(name==='duel') beep(220,0.12,'sawtooth',0.05); }
+
+/* ---------- board ---------- */
+var BOARD_LEN=48, STAR_SPOTS=[12,24,36], ROUNDS=10, STAR_COST=20;
+var SPACE_TYPES={}; // index -> type
+var TILE_W=44, TILE_H=44;
+function boardXY(i){
+  // uniform walk around a rounded rectangle, 48 stops
+  var x0=70,y0=60,x1=890,y1=480, per=2*((x1-x0)+(y1-y0)), d=(i/BOARD_LEN)*per;
+  var w=x1-x0, h=y1-y0;
+  if(d<w) return {x:x0+d,y:y0};
+  d-=w; if(d<h) return {x:x1,y:y0+d};
+  d-=h; if(d<w) return {x:x1-d,y:y1};
+  d-=w; return {x:x0,y:y1-d};
+}
+function buildBoard(seed){
+  var rng=mulberry32(seed||1);
+  var deck=[];
+  var i; for(i=0;i<18;i++) deck.push('coin+');
+  for(i=0;i<6;i++) deck.push('coin-');
+  for(i=0;i<8;i++) deck.push('event');
+  for(i=0;i<4;i++) deck.push('duel');
+  for(i=0;i<4;i++) deck.push('lucky');
+  for(i=0;i<4;i++) deck.push('battle');
+  for(i=deck.length-1;i>0;i--){ var j=Math.floor(rng()*(i+1)); var t=deck[i]; deck[i]=deck[j]; deck[j]=t; }
+  var types={}, k=0;
+  for(i=0;i<BOARD_LEN;i++){
+    if(i===0){ types[i]='start'; continue; }
+    if(STAR_SPOTS.indexOf(i)>=0){ types[i]='star'; continue; }
+    types[i]=deck[k++];
+  }
+  return types;
+}
+var PLAYERS=[
+  {id:'YOU', name:'NOVA', color:'#ffd75e', rim:'#fff3c4', skill:0.55, bot:false},
+  {id:'ZEROX', name:'ZEROX', color:'#ff3860', rim:'#ffb3c2', skill:0.62, bot:true},
+  {id:'TURTLE', name:'TURTLE', color:'#00ff88', rim:'#b8ffd9', skill:0.48, bot:true},
+  {id:'ORACLE', name:'ORACLE', color:'#35e0ff', rim:'#c4f4ff', skill:0.58, bot:true}
+];
+var EVENTS=[
+  {id:'shower', text:'COIN SHOWER +8 coins', fx:function(p){ p.coins+=8; }},
+  {id:'drain', text:'COIN DRAIN −5 coins', fx:function(p){ p.coins=Math.max(0,p.coins-5); }},
+  {id:'warp6', text:'WARP FORWARD +6 spaces', fx:function(p){ moveSteps(p,6,true); }},
+  {id:'warp4', text:'WARP BACK −4 spaces', fx:function(p){ p.pos=((p.pos-4)%BOARD_LEN+BOARD_LEN)%BOARD_LEN; }},
+  {id:'swap', text:'SWAP COINS with the richest traveller', fx:function(p){ var rich=richestExcept(p); if(rich){ var c=p.coins; p.coins=rich.coins; rich.coins=c; } }},
+  {id:'toll', text:'ISLE TOLL −5 coins to the pot', fx:function(p){ var pay=Math.min(5,p.coins); p.coins-=pay; state.pot+=pay; }}
+];
+var MGS=['snatch','cascade','duel'];
+function richestExcept(p){
+  var best=null; state.players.forEach(function(q){ if(q!==p && (!best||q.coins>best.coins)) best=q; });
+  return best;
+}
+
+/* ---------- state ---------- */
+var state=null, watchTraces=[], watchBot=null, watchTimer=0, lastT=0, rafId=0;
+var mgMarker=0, mgDir=1, mgTimer=0;
+function newState(mode,seed){
+  var rng=makeRng(seed||1);
+  return {mode:mode||'solo', phase:'menu', seed:seed||1, rng:rng, rngA:rng.a, time:0,
+    round:1, turn:0, sub:'roll', die:0, stepsLeft:0, mgKind:null, mgIdx:0,
+    players:PLAYERS.map(function(pl,i){ return {id:pl.id,name:pl.name,color:pl.color,rim:pl.rim,skill:pl.skill,
+      bot: mode==='watch' ? true : (mode==='party' ? false : pl.bot),
+      pos:0, coins:10, stars:0, won:0, mgWins:0}; }),
+    starPos:STAR_SPOTS[0], starNum:0, pot:0, log:[], winner:null, over:false,
+    paused:false, cam:'top', muted:muted, watchDone:false, lastEvent:null, lastDuel:null, mgHumanStop:null};
+}
+function cur(){ return state.players[state.turn]; }
+function log(s){ state.log.push(s); if(state.log.length>6) state.log.shift(); var f=$('feed'); if(f) f.textContent=state.log.join(' · '); }
+function feed(s){ log(s); }
+function setMsg(s){ var m=$('msg'); if(m) m.textContent=s; }
+function $(id){ return document.getElementById(id); }
+function richest(){ var best=state.players[0]; state.players.forEach(function(p){ if(p.coins>best.coins) best=p; }); return best; }
+
+/* ---------- Fallible Engine bridge ---------- */
+function botDecide(agentId, options, context){
+  // options: [{id, score}] — returns picked id. FE when present, best-score fallback when absent.
+  if(FE){
+    try{
+      var agent=FE.loadAgent(agentId);
+      var res=FE.decide(agent,'starboard',options,context||{});
+      if(res && res.pick!=null){
+        watchTraces.push({agent:agentId, pick:res.pick, t:+state.time.toFixed(1), trace:res.trace||null});
+        return res.pick;
+      }
+    }catch(e){}
+  }
+  var best=options[0];
+  options.forEach(function(o){ if(o.score>best.score) best=o; });
+  watchTraces.push({agent:agentId, pick:best.id, t:+state.time.toFixed(1), trace:null, fallback:true});
+  return best.id;
+}
+function recordWatchResults(){
+  if(!FE) return;
+  state.players.forEach(function(p){
+    if(!p.bot) return;
+    var outcome = state.winner===p ? 'win' : (state.winner ? 'loss' : 'draw');
+    try{ FE.recordResult(p.id,'starboard',null,outcome,{traces:watchTraces,stars:p.stars,coins:p.coins,rounds:ROUNDS,mgWins:p.mgWins}); }catch(e){}
+  });
+}
+
+/* ---------- turns ---------- */
+function rollDie(){
+  if(!state || state.phase!=='play' || state.sub!=='roll') return 0;
+  var d=1+Math.floor(state.rng.next()*6);
+  state.die=d; state.stepsLeft=d; state.sub='move';
+  setMsg(cur().name+' rolled a '+d+'.');
+  log(cur().name+' rolled '+d); sfx('dice');
+  return d;
+}
+function moveSteps(p,n,silent){
+  var i;
+  for(i=0;i<n;i++){
+    p.pos=(p.pos+1)%BOARD_LEN;
+    if(p.pos===0){ p.coins+=10; if(!silent) log(p.name+' passed START +10'); }
+  }
+}
+function stepMove(){
+  // one animated step per call (live loop); returns true when movement done
+  if(state.stepsLeft<=0) return true;
+  var p=cur();
+  p.pos=(p.pos+1)%BOARD_LEN;
+  if(p.pos===0){ p.coins+=10; log(p.name+' passed START +10'); sfx('coin'); }
+  state.stepsLeft--;
+  if(state.stepsLeft<=0){ state.sub='resolve'; resolveSpace(p); return true; }
+  return false;
+}
+function resolveSpace(p){
+  var type = SPACE_TYPES[p.pos];
+  if(p.pos===0) type='start';
+  var msg='';
+  if(type==='start'){ msg=p.name+' is home — START.'; }
+  else if(type==='coin+'){ p.coins+=3; msg=p.name+' +3 coins.'; sfx('coin'); }
+  else if(type==='coin-'){ p.coins=Math.max(0,p.coins-3); msg=p.name+' −3 coins.'; sfx('bad'); }
+  else if(type==='star'){ msg=starSpace(p); }
+  else if(type==='event'){ var ev=EVENTS[Math.floor(state.rng.next()*EVENTS.length)]; state.lastEvent=ev.id; ev.fx(p); msg=p.name+' — EVENT: '+ev.text+'.'; sfx(ev.id==='drain'||ev.id==='toll'?'bad':'coin'); }
+  else if(type==='duel'){ msg=duelSpace(p); }
+  else if(type==='lucky'){ if(state.rng.next()<0.2){ p.stars++; msg=p.name+' — LUCKY STAR! +1 star.'; sfx('star'); } else { p.coins+=10; msg=p.name+' — LUCKY +10 coins.'; sfx('coin'); } }
+  else if(type==='battle'){ msg=battleSpace(p); }
+  setMsg(msg); log(msg);
+  state.sub='done';
+}
+function starSpace(p){
+  if(p.coins<STAR_COST) return p.name+' reached the STAR but only has '+p.coins+' coins (needs '+STAR_COST+').';
+  var buy;
+  if(p.bot){
+    var keep = p.coins-STAR_COST;
+    buy = botDecide(p.id,[
+      {id:'buy', score: 1.0 + (p.stars<2?0.4:0) + (keep<10?-0.3:0) + (p.id==='ZEROX'?0.25:0) + (p.id==='TURTLE'?-0.35:0)},
+      {id:'skip', score: 0.5 + (keep<5?0.5:0) + (p.id==='TURTLE'?0.3:0)}
+    ],{coins:p.coins, stars:p.stars, round:state.round})==='buy';
+  } else {
+    buy = true; // human always buys when they can afford it
+  }
+  if(!buy) return p.name+' skipped the star ('+p.coins+' coins kept).';
+  p.coins-=STAR_COST; p.stars++; state.starNum++;
+  state.starPos=STAR_SPOTS[state.starNum % STAR_SPOTS.length];
+  sfx('star');
+  return p.name+' bought a STAR for '+STAR_COST+'! Stars sold: '+state.starNum+'.';
+}
+function duelSpace(p){
+  var rivals=state.players.filter(function(q){ return q!==p; });
+  var foe=rivals[Math.floor(state.rng.next()*rivals.length)];
+  var a=1+Math.floor(state.rng.next()*6), b=1+Math.floor(state.rng.next()*6);
+  while(a===b){ a=1+Math.floor(state.rng.next()*6); b=1+Math.floor(state.rng.next()*6); }
+  var win = a>b;
+  var take=Math.min(10, win?foe.coins:p.coins);
+  if(win){ p.coins+=take; foe.coins-=take; } else { foe.coins+=take; p.coins-=take; }
+  state.lastDuel={challenger:p.id, foe:foe.id, a:a, b:b, winner: win?p.id:foe.id, take:take};
+  sfx('duel');
+  return 'DUEL! '+p.name+' ('+a+') vs '+foe.name+' ('+b+') — '+(win?p.name:foe.name)+' takes '+take+' coins.';
+}
+function battleSpace(p){
+  var pot=0;
+  state.players.forEach(function(q){ var pay=Math.min(5,q.coins); q.coins-=pay; pot+=pay; });
+  state.pot=pot;
+  var w=resolveMinigame('duel', true, true);
+  w.coins+=pot;
+  var msg='BATTLE! Everyone paid into a '+pot+'-coin pot — '+w.name+' won the showdown and takes it.';
+  state.pot=0; sfx('win');
+  return msg;
+}
+function endTurn(){
+  if(state.sub!=='done') return;
+  state.turn++;
+  if(state.turn>=state.players.length){
+    state.turn=0;
+    startMinigame();
+    return;
+  }
+  state.sub='roll';
+  var p=cur();
+  setMsg(p.name+' to roll. Round '+state.round+'/'+ROUNDS+'.');
+  if(p.bot && (state.mode==='watch' || state.mode==='solo')) autoBotTurn();
+}
+function autoBotTurn(){
+  // bot rolls and walks immediately (live loop animates via stepMove; harness drives doTurn)
+  if(state.phase!=='play' || state.sub!=='roll') return;
+  rollDie();
+}
+
+/* ---------- minigames ---------- */
+function startMinigame(){
+  state.mgKind=MGS[state.mgIdx % MGS.length];
+  state.mgIdx++;
+  state.sub='minigame';
+  mgMarker=50; mgDir=1; mgTimer=0;
+  var names={snatch:'STAR SNATCH — stop the needle nearest 78', cascade:'COIN CASCADE — memory pairs', duel:'DICE DUEL — high roll wins'};
+  setMsg('MINIGAME · '+names[state.mgKind]+'.');
+  log('Minigame: '+state.mgKind);
+  if(state.mode==='watch'){ resolveMinigame(state.mgKind); }
+}
+function mgScores(kind){
+  // per-player minigame performance; bots decide through FE, humans use skill + rng
+  var out=[];
+  state.players.forEach(function(p){
+    var sc=0, pick=null;
+    if(kind==='snatch'){
+      var target=78;
+      var stop;
+      if(p.bot){
+        pick=botDecide(p.id,[
+          {id:'early', score:0.4+p.skill*0.3},
+          {id:'on', score:0.7+p.skill*0.4+(p.id==='ORACLE'?0.15:0)},
+          {id:'late', score:0.4+p.skill*0.3}
+        ],{kind:'snatch', target:target});
+        stop = pick==='early' ? 55+state.rng.next()*12 : pick==='late' ? 85+state.rng.next()*12 : 70+state.rng.next()*14;
+      } else {
+        stop = state.mgHumanStop!=null ? state.mgHumanStop : 55+state.rng.next()*30;
+      }
+      sc = 100-Math.abs(target-stop);
+    } else if(kind==='cascade'){
+      var pairs;
+      if(p.bot){
+        pick=botDecide(p.id,[
+          {id:'safe', score:0.5+p.skill*0.3},
+          {id:'bold', score:0.6+p.skill*0.5+(p.id==='ZEROX'?0.2:0)}
+        ],{kind:'cascade'});
+        pairs = pick==='bold' ? 3+Math.floor(state.rng.next()*3) : 2+Math.floor(state.rng.next()*3);
+      } else {
+        pairs = 2+Math.floor(state.rng.next()*4);
+      }
+      sc = pairs*10 + Math.floor(p.skill*10);
+    } else { // duel
+      var roll=1+Math.floor(state.rng.next()*6);
+      if(p.bot){
+        pick=botDecide(p.id,[
+          {id:'steady', score:0.5},
+          {id:'risky', score:0.55+(p.id==='ZEROX'?0.25:0)}
+        ],{kind:'duel'});
+        if(pick==='risky' && state.rng.next()<0.35) roll=Math.min(6,roll+2);
+      }
+      sc=roll*10;
+    }
+    out.push({p:p, score:sc, pick:pick});
+  });
+  return out;
+}
+function resolveMinigame(kind, silent, noRound){
+  var scores=mgScores(kind);
+  scores.sort(function(a,b){ return b.score-a.score; });
+  var w=scores[0].p;
+  w.coins+=10; w.mgWins++;
+  if(!silent){
+    setMsg('MINIGAME · '+kind.toUpperCase()+' — '+w.name+' wins +10 coins ('+scores.map(function(s){ return s.p.name+' '+s.score; }).join(' · ')+').');
+    log(w.name+' won the '+kind+' minigame +10');
+    sfx('win');
+  }
+  state.mgKind=null; state.mgHumanStop=null;
+  if(!noRound) endRound();
+  return w;
+}
+function endRound(){
+  state.round++;
+  state.turn=0;
+  if(state.round>ROUNDS){ finishGame(); return; }
+  state.sub='roll';
+  setMsg('ROUND '+state.round+'/'+ROUNDS+' — '+cur().name+' to roll.');
+  if(cur().bot && (state.mode==='watch' || state.mode==='solo')) autoBotTurn();
+}
+function finishGame(){
+  state.phase='over'; state.over=true; state.sub='done';
+  var sorted=state.players.slice().sort(function(a,b){ return (b.stars-a.stars)||(b.coins-a.coins); });
+  state.winner=sorted[0];
+  recordWatchResults();
+  setMsg('VOYAGE OVER — '+state.winner.name+' wins with '+state.winner.stars+' stars and '+state.winner.coins+' coins!');
+  log('Winner: '+state.winner.name+' ('+state.winner.stars+'★ '+state.winner.coins+'c)');
+  sfx('win');
+}
+function doTurn(){
+  // synchronous full turn for the current player (harness + WATCH driver)
+  if(state.phase!=='play') return false;
+  if(state.sub==='roll') rollDie();
+  var guard=0;
+  while(state.sub==='move' && guard++<200) stepMove();
+  if(state.sub==='resolve'){ /* resolveSpace already ran inside stepMove */ }
+  if(state.sub==='done') endTurn();
+  return true;
+}
+function runWatchGame(maxSteps){
+  var n=0;
+  while(state.phase==='play' && n++<(maxSteps||20000)){
+    if(state.sub==='roll') rollDie();
+    else if(state.sub==='move'){ var g=0; while(state.sub==='move' && g++<200) stepMove(); }
+    else if(state.sub==='minigame') resolveMinigame(MGS[(state.mgIdx-1)%MGS.length]);
+    else if(state.sub==='done') endTurn();
+    else break;
+  }
+  return state;
+}
+
+/* ---------- start / modes ---------- */
+function startGame(mode,seed){
+  watchBot=null; watchTraces=[]; mgMarker=50;
+  SPACE_TYPES=buildBoard(seed||1);
+  state=newState(mode,seed||1);
+  state.phase='play';
+  setMode(mode);
+  var first=cur();
+  setMsg((mode==='watch'?'WATCH — four council bots play the Starboard.':mode==='party'?'PARTY — '+first.name+' rolls first. Pass the device around.':'SOLO — '+first.name+' rolls first. Ten rounds, most stars wins.')+' Round 1/'+ROUNDS+'.');
+  feed((mode==='watch'?'ZEROX · TURTLE · ORACLE · NOVA':'You · ZEROX · TURTLE · ORACLE')+' set sail on the Ember Isles loop. Stars cost '+STAR_COST+' coins.');
+  if(first.bot) autoBotTurn();
+  return state;
+}
+function startWatch(seed){ return startGame('watch',seed||7); }
+function startSolo(seed){ return startGame('solo',seed||1); }
+function startParty(seed){ return startGame('party',seed||3); }
+function setMode(mode){
+  ['btnSolo','btnWatch','btnParty'].forEach(function(id){ var b=$(id); if(b) b.classList.toggle('active', (id==='btnSolo'&&mode==='solo')||(id==='btnWatch'&&mode==='watch')||(id==='btnParty'&&mode==='party')); });
+}
+function enterVR(){
+  if(XE&&XE.enter){ try{ XE.enter('starboard'); setMsg('VR (SIM) — the shared XR engine is handling the session.'); return; }catch(e){} }
+  setMsg('VR is SIM-labelled: the shared XR engine needs a headset session to go live.');
+}
+
+/* ---------- save / load ---------- */
+function saveGame(){
+  if(!state) return false;
+  try{
+    var snap={mode:state.mode, seed:state.seed, rngA:state.rng.a, round:state.round, turn:state.turn,
+      sub:state.sub, die:state.die, stepsLeft:state.stepsLeft, mgIdx:state.mgIdx,
+      players:state.players.map(function(p){ return {pos:p.pos, coins:p.coins, stars:p.stars, mgWins:p.mgWins}; }),
+      starPos:state.starPos, starNum:state.starNum, pot:state.pot, phase:state.phase, cam:state.cam};
+    localStorage.setItem(SAVE_KEY, JSON.stringify(snap));
+    setMsg('Saved — voyage held at round '+state.round+'.'); return true;
+  }catch(e){ return false; }
+}
+function loadGame(){
+  var raw=null; try{ raw=localStorage.getItem(SAVE_KEY); }catch(e){}
+  if(!raw) return false;
+  var snap; try{ snap=JSON.parse(raw); }catch(e){ return false; }
+  SPACE_TYPES=buildBoard(snap.seed);
+  state=newState(snap.mode, snap.seed);
+  state.rng.a=snap.rngA;
+  state.round=snap.round; state.turn=snap.turn; state.sub=snap.sub; state.die=snap.die;
+  state.stepsLeft=snap.stepsLeft; state.mgIdx=snap.mgIdx; state.starPos=snap.starPos;
+  state.starNum=snap.starNum; state.pot=snap.pot; state.phase=snap.phase; state.cam=snap.cam||'top';
+  snap.players.forEach(function(sp,i){ var p=state.players[i]; p.pos=sp.pos; p.coins=sp.coins; p.stars=sp.stars; p.mgWins=sp.mgWins; });
+  state.over = state.phase==='over';
+  setMode(snap.mode);
+  setMsg('Loaded — round '+state.round+', '+cur().name+' to play.');
+  return true;
+}
+
+/* ---------- render ---------- */
+var TYPE_STYLE={
+  'start':{c:'#ffd75e', bg:'#3a2c05', g:'START'},
+  'coin+':{c:'#ffd75e', bg:'#2a2205', g:'+3'},
+  'coin-':{c:'#ff3860', bg:'#2a0a12', g:'−3'},
+  'event':{c:'#35e0ff', bg:'#062a33', g:'?'},
+  'duel':{c:'#ff3860', bg:'#33060f', g:'⚔'},
+  'lucky':{c:'#00ff88', bg:'#052a1a', g:'🍀'},
+  'battle':{c:'#ff7a1a', bg:'#331505', g:'⚑'},
+  'star':{c:'#ffd75e', bg:'#4a3605', g:'★'}
+};
+function drawToken(x,y,p,scale){
+  var s=scale||1;
+  // ground shadow
+  ctx.save();
+  ctx.globalAlpha=0.45; ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(x,y+16*s,16*s,5*s,0,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+  // sprite-stacked slices: layered discs with volume, rim light on the lit side
+  var shades=['#00000055','#00000033','', ''];
+  var i, w;
+  for(i=0;i<4;i++){
+    w=(15-i*2.5)*s;
+    var yy=y+8*s-i*7*s;
+    ctx.beginPath(); ctx.ellipse(x,yy,w,7*s,0,0,Math.PI*2);
+    if(i===0) ctx.fillStyle='rgba(0,0,0,0.55)';
+    else if(i===1) ctx.fillStyle=shade(p.color,-40);
+    else if(i===2) ctx.fillStyle=p.color;
+    else ctx.fillStyle=shade(p.color,40);
+    ctx.fill();
+  }
+  // rim light arc (gold on the lit side)
+  ctx.beginPath(); ctx.ellipse(x,y-13*s,9*s,6*s,0,Math.PI*1.15,Math.PI*1.85);
+  ctx.strokeStyle=p.rim; ctx.lineWidth=2*s; ctx.stroke();
+  // head + face dot
+  ctx.beginPath(); ctx.arc(x,y-22*s,7*s,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill();
+  ctx.beginPath(); ctx.arc(x,y-22*s,7*s,0,Math.PI*2); ctx.strokeStyle=p.rim; ctx.lineWidth=1.5*s; ctx.stroke();
+  ctx.fillStyle='#0a0618'; ctx.font='bold '+Math.round(10*s)+'px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText(p.name[0],x,y-19*s);
+  ctx.restore();
+}
+function shade(hex,amt){
+  var n=parseInt(hex.slice(1),16), r=clamp((n>>16)+amt,0,255), g=clamp(((n>>8)&255)+amt,0,255), b=clamp((n&255)+amt,0,255);
+  return 'rgb('+r+','+g+','+b+')';
+}
+function render(){
+  if(!ctx) return;
+  ctx.clearRect(0,0,CW,CH);
+  // backdrop: deep violet sky + ember glow
+  var bg=ctx.createLinearGradient(0,0,0,CH);
+  bg.addColorStop(0,'#120826'); bg.addColorStop(0.6,'#0a0618'); bg.addColorStop(1,'#160a2a');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,CW,CH);
+  ctx.save();
+  if(state && state.cam==='table'){
+    // board-level table cam: horizon band + squashed board
+    var hz=ctx.createLinearGradient(0,0,0,120);
+    hz.addColorStop(0,'#2a1550'); hz.addColorStop(1,'rgba(42,21,80,0)');
+    ctx.fillStyle=hz; ctx.fillRect(0,0,CW,120);
+    ctx.translate(0,70); ctx.scale(1,0.66);
+  }
+  // isle glow
+  var glow=ctx.createRadialGradient(CW/2,270,40,CW/2,270,420);
+  glow.addColorStop(0,'rgba(183,140,255,0.20)'); glow.addColorStop(1,'rgba(183,140,255,0)');
+  ctx.fillStyle=glow; ctx.fillRect(0,0,CW,CH);
+  // tiles
+  var types=SPACE_TYPES;
+  for(var i=0;i<BOARD_LEN;i++){
+    var p=boardXY(i), st=TYPE_STYLE[types[i]]||TYPE_STYLE['coin+'];
+    var activeStar = -1; // all three star shops are live; no single active spot
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(p.x-22,p.y-22,TILE_W,TILE_H,9) : ctx.rect(p.x-22,p.y-22,TILE_W,TILE_H);
+    ctx.fillStyle= activeStar===i ? '#6a4a00' : st.bg; ctx.fill();
+    ctx.strokeStyle= activeStar===i ? '#ffd75e' : st.c; ctx.lineWidth= activeStar===i?3:1.5; ctx.stroke();
+    ctx.fillStyle=st.c; ctx.font='bold 13px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(activeStar===i?'★':st.g, p.x, p.y+5);
+    if(activeStar===i){ ctx.font='9px Share Tech Mono, monospace'; ctx.fillStyle='#ffd75e'; ctx.fillText('STAR '+STAR_COST+'c', p.x, p.y+34); }
+  }
+  // centre panel
+  ctx.fillStyle='rgba(10,6,24,0.85)';
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(300,150,360,240,16) : ctx.rect(300,150,360,240); ctx.fill();
+  ctx.strokeStyle='rgba(183,140,255,0.5)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#b78cff'; ctx.font='bold 20px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('★ STARBOARD ★', 480, 182);
+  ctx.fillStyle='#e8dcff'; ctx.font='13px Share Tech Mono, monospace';
+  if(state){
+    ctx.fillText('ROUND '+Math.min(state.round,ROUNDS)+'/'+ROUNDS+' · ★ SHOPS at 12 · 24 · 36 · POT '+state.pot, 480, 208);
+    var y=232;
+    state.players.forEach(function(pl,idx){
+      var turnMark = (state.turn===idx && state.phase==='play') ? '▶ ' : '  ';
+      ctx.fillStyle=pl.color; ctx.font='bold 14px Orbitron, sans-serif'; ctx.textAlign='left';
+      ctx.fillText(turnMark+pl.name, 330, y);
+      ctx.fillStyle='#e8dcff'; ctx.font='13px Share Tech Mono, monospace'; ctx.textAlign='right';
+      ctx.fillText(pl.stars+'★  '+pl.coins+'c  ·  space '+pl.pos, 630, y);
+      y+=26;
+    });
+    ctx.textAlign='center'; ctx.fillStyle='#ffd75e'; ctx.font='bold 15px Orbitron, sans-serif';
+    if(state.phase==='over' && state.winner) ctx.fillText('🏆 '+state.winner.name+' WINS THE VOYAGE', 480, y+8);
+    else if(state.sub==='minigame' && state.mgKind==='snatch'){ ctx.fillText('STOP THE NEEDLE NEAREST 78', 480, y+8); drawNeedle(480, y+34); }
+    else if(state.sub==='minigame'){ ctx.fillText('MINIGAME · '+state.mgKind.toUpperCase(), 480, y+8); }
+    else if(state.sub==='roll') ctx.fillText(cur().name+' — ROLL THE DIE', 480, y+8);
+    else if(state.die) ctx.fillText('DIE: '+state.die+' · '+cur().name+' walks…', 480, y+8);
+  } else {
+    ctx.fillText('Press PLAY — or WATCH the council play.', 480, 232);
+  }
+  // tokens on the board
+  if(state){
+    state.players.forEach(function(pl,idx){
+      var p=boardXY(pl.pos);
+      var off=[{x:-12,y:-8},{x:12,y:-8},{x:-12,y:10},{x:12,y:10}][idx];
+      drawToken(p.x+off.x, p.y+off.y, pl, 0.85);
+    });
+  }
+  ctx.restore();
+  updateHud();
+}
+function drawNeedle(cx,cy){
+  ctx.save();
+  ctx.fillStyle='#140a24'; ctx.fillRect(cx-110,cy-8,220,16);
+  ctx.strokeStyle='#b78cff'; ctx.strokeRect(cx-110,cy-8,220,16);
+  ctx.fillStyle='#00ff88'; ctx.fillRect(cx+78-110-2,cy-8,4,16);
+  ctx.fillStyle='#ffd75e'; ctx.fillRect(cx+mgMarker-110-3,cy-12,6,24);
+  ctx.restore();
+}
+function updateHud(){
+  if(!state) return;
+  state.players.forEach(function(pl,i){
+    var el=$('p'+i); if(el) el.textContent=pl.stars+'★ · '+pl.coins+' coins · space '+pl.pos+(state.turn===i&&state.phase==='play'?' · ▶':'');
+  });
+}
+
+/* ---------- live loop ---------- */
+var moveTimer=0, watchTickT=0;
+function step(dt){
+  if(!state) return;
+  if(state.paused || state.phase!=='play') { render(); return; }
+  state.time+=dt;
+  if(state.mode==='watch'){
+    watchTickT-=dt;
+    if(watchTickT<=0){
+      watchTickT=0.45;
+      if(state.sub==='roll') rollDie();
+      else if(state.sub==='move'){ var g=0; while(state.sub==='move' && g++<200) stepMove(); }
+      else if(state.sub==='minigame') resolveMinigame(MGS[(state.mgIdx-1)%MGS.length]);
+      else if(state.sub==='done') endTurn();
+    }
+  } else {
+    if(state.sub==='move'){
+      moveTimer-=dt;
+      if(moveTimer<=0){ moveTimer=0.14; stepMove(); }
+    } else if(state.sub==='minigame'){
+      mgTimer+=dt;
+      if(state.mgKind==='snatch'){
+        mgMarker+=mgDir*dt*90;
+        if(mgMarker>=100){ mgMarker=100; mgDir=-1; }
+        if(mgMarker<=0){ mgMarker=0; mgDir=1; }
+        if(mgTimer>6){ state.mgHumanStop=Math.round(mgMarker); resolveMinigame('snatch'); }
+      } else if(mgTimer>2.5){
+        resolveMinigame(state.mgKind);
+      }
+    } else if(state.sub==='roll' && cur().bot){
+      moveTimer-=dt;
+      if(moveTimer<=0){ moveTimer=0.5; rollDie(); }
+    }
+  }
+  render();
+}
+function loop(t){
+  var now=t||0, dt=Math.min(0.05,(now-lastT)/1000||0.016); lastT=now;
+  step(dt);
+  rafId=requestAnimationFrame(loop);
+}
+function stopNeedle(){
+  if(state && state.phase==='play' && state.sub==='minigame' && state.mgKind==='snatch'){
+    state.mgHumanStop=Math.round(mgMarker);
+    resolveMinigame('snatch');
+  }
+}
+function primaryAction(){
+  if(!state || state.phase!=='play' || state.paused) return;
+  if(state.sub==='roll') rollDie();
+  else if(state.sub==='minigame' && state.mgKind==='snatch') stopNeedle();
+  else if(state.sub==='done') endTurn();
+}
+function togglePause(){
+  if(!state) return;
+  state.paused=!state.paused;
+  var o=$('pauseOverlay'); if(o) o.classList.toggle('open', state.paused);
+  if(state.paused) setMsg('Paused — voyage held.');
+}
+
+/* ---------- input ---------- */
+function bindBtn(id,down,up){
+  var el=$(id); if(!el) return;
+  el.addEventListener('pointerdown',function(e){ e.preventDefault(); down(); });
+  if(up){ el.addEventListener('pointerup',function(e){ e.preventDefault(); up(); }); el.addEventListener('pointerleave',up); }
+}
+document.addEventListener('keydown',function(e){
+  if(e.key===' '||e.key==='Enter'){ e.preventDefault(); primaryAction(); }
+  else if(e.key==='v'||e.key==='V'){ if(state){ state.cam=state.cam==='top'?'table':'top'; setMsg('Camera: '+(state.cam==='top'?'top-down':'board-level table cam')+'.'); } }
+  else if(e.key==='p'||e.key==='P'||e.key==='Escape'){ togglePause(); }
+  else if(e.key==='m'||e.key==='M'){ muted=!muted; var b=$('btnMute'); if(b) b.innerHTML='Sound: '+(muted?'Off':'On')+'<small>M to mute</small>'; if(state) state.muted=muted; }
+  else if(e.key==='r'||e.key==='R'){ if(state) startGame(state.mode, state.seed); }
+});
+$('btnSolo').addEventListener('click',function(){ startSolo(1); });
+$('btnWatch').addEventListener('click',function(){ startWatch(7); });
+$('btnParty').addEventListener('click',function(){ startParty(3); });
+$('btnRoll').addEventListener('click',primaryAction);
+$('btnPause').addEventListener('click',togglePause);
+$('btnMute').addEventListener('click',function(){ muted=!muted; this.innerHTML='Sound: '+(muted?'Off':'On')+'<small>M to mute</small>'; if(state) state.muted=muted; });
+$('btnVR').addEventListener('click',enterVR);
+$('resumeBtn').addEventListener('click',togglePause);
+$('saveBtn').addEventListener('click',function(){ saveGame(); });
+$('loadBtn').addEventListener('click',function(){ if(loadGame()) togglePause(); else setMsg('No saved voyage found.'); });
+$('restartBtn').addEventListener('click',function(){ togglePause(); if(state) startGame(state.mode, state.seed); });
+$('quitArcadeBtn').addEventListener('click',function(){ window.location.href='../arcade.html'; });
+cv.addEventListener('click',function(){ if(state&&state.sub==='minigame'&&state.mgKind==='snatch') stopNeedle(); else primaryAction(); });
+if(('ontouchstart' in window)||(navigator.maxTouchPoints>0)) document.body.classList.add('touch');
+bindBtn('padUp',primaryAction); bindBtn('padLeft',function(){});
+bindBtn('padRight',function(){}); bindBtn('padDown',function(){});
+bindBtn('btnA',primaryAction); bindBtn('btnB',togglePause);
+bindBtn('startBtn',togglePause); bindBtn('selectBtn',stopNeedle);
+
+/* ---------- boot ---------- */
+SPACE_TYPES=buildBoard(1);
+state=newState('solo',1);
+render();
+lastT=0; rafId=requestAnimationFrame(loop);
+
+window.__starboard={
+  state:function(){ return state; },
+  hasFE:function(){ return !!FE; },
+  hasXE:function(){ return !!XE; },
+  startGame:function(mode,seed){ return startGame(mode,seed); },
+  step:function(dt){ step(dt||0.016); },
+  render:render,
+  rollDie:rollDie, doTurn:doTurn, runWatchGame:runWatchGame,
+  resolveMinigame:resolveMinigame, mgScores:mgScores,
+  resolveSpace:resolveSpace, moveSteps:moveSteps, endTurn:endTurn,
+  saveGame:saveGame, loadGame:loadGame, stopNeedle:stopNeedle,
+  setMgStop:function(v){ state.mgHumanStop=v; },
+  board:function(){ return SPACE_TYPES; },
+  boardXY:boardXY, events:function(){ return EVENTS; },
+  watchTraces:function(){ return watchTraces; },
+  watchPlayers:function(){ return state?state.players.filter(function(p){return p.bot;}):[]; },
+  primaryAction:primaryAction, togglePause:togglePause
+};
+</script>
+</body>
+</html>

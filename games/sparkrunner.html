@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SPARKRUNNER — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#04120c;--panel:#071a12;--border:rgba(0,255,136,.22);--green:#00ff88;--gold:#ffd75e;--cyan:#35e0ff;--red:#ff3860;--violet:#b78cff;--text:#c6e8d4;--dim:#5d7a6b}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.10),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(4,18,12,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .hud{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text);margin:6px 0}
+  .hud b{color:#fff}.hud span{border:1px solid var(--border);padding:4px 10px;background:var(--panel)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:2px}
+  .dpad button{font-size:15px;border-radius:8px}
+  .dpad .c{visibility:hidden}
+  .abtns{display:flex;gap:10px;align-items:center;padding-top:26px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(2,10,6,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#071a12;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .abtns button{width:52px;height:52px}.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>SPARK<span>RUNNER</span></h1><span class="tag">LFSR jungle run · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="544"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The jungle waits.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad">
+        <button class="c"></button><button data-k="up">▲</button><button class="c"></button>
+        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
+        <button class="c"></button><button data-k="down2">▼</button><button class="c"></button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — toggle chase cam">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button class="b" id="btnB" title="B — swing / climb">B</button>
+        <button id="btnA" title="A — jump">A</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">Run the jungle, JOLT.</div>
+  <div class="hud">
+    <span>SCENE <b id="hudScene">1/12</b></span>
+    <span>SCORE <b id="hudScore">0</b></span>
+    <span>SPARKS <b id="hudSparks">0</b></span>
+    <span>LIVES <b id="hudLives">●●●</b></span>
+    <span>TIME <b id="hudTime">3:00</b></span>
+    <span>BEST <b id="hudHi">0</b></span>
+  </div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ Run<small>1P — 12 scenes, 3:00 on the clock</small></button>
+    <button class="mbtn" id="btnRace">⚔ Race a bot<small>You vs QUILL, same jungle</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>Two council bots race the jungle</small></button>
+    <button class="mbtn" id="btnFP">🎥 Chase cam<small>V — run right behind JOLT</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+  </div>
+  <div class="help">
+    <b>SPARKRUNNER</b> — courier-bot <b>JOLT</b> sprints the neon jungle of <b>Ember Hollow</b>, gathering lost Sparks before the clock runs out. Every scene is grown from one reversible <b>LFSR</b>: 255 possible jungle screens, each with its own pits, thorn logs, spark-eels, vines, climb-walls and treasure — the same seed always grows the same jungle. <span class="k">← → / A D</span> run, <span class="k">SPACE / W / ↑</span> jump, <span class="k">B / X</span> grab a vine and swing, <span class="k">↑ ↓</span> climb a wall ladder. Fall in a pit, touch a thorn log or a spark-eel and you lose a life; quicksand slows you down. Reach the far edge to enter the next scene — finish all <b>12 scenes</b> before 3:00 and the leftover time pays a bonus. <span class="k">V</span> switches to <b>chase cam</b>: the camera rides right behind JOLT. <span class="k">M</span> mutes, <span class="k">P</span> pauses, <span class="k">R</span> restarts.<br/>
+    <b>WATCH</b> is two council bots racing the same jungle on the Fallible Engine — a rotating pair, each with its own style: some gamble on late jumps and grab every spark, others jump early and play it safe. They mistime jumps on purpose and sometimes lawn-dart into the pits. <b>RACE</b> puts you against QUILL's ghost on the same seed.<br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: D-pad runs and climbs, <span class="k">A</span> jumps, <span class="k">B</span> swings, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles chase cam.<br/>
+    <b>Clean-room:</b> the jungle-runner formula (LFSR-grown scenes, run / jump / climb / swing) re-implemented from the documented behaviour of the classic 1982 jungle runner in our own code — SPEC LANE, read as text/docs only. All names, characters, scenes, art and tuning are original; no copied code, assets or names.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   SPARKRUNNER — original LFSR jungle runner for the Shaddai Arcade.
+   Clean-room SPEC LANE: the 1982 jungle-runner formula (one reversible LFSR
+   grows 255 scenes; run / jump / climb / swing across pits, logs, creatures,
+   vines and walls against a clock) re-implemented from documented behaviour
+   in our own JS. The reference disassembly was READ as text only — no code,
+   art, names, scenes or levels were copied, run or moved into this file.
+   JOLT, Ember Hollow, spark-eels and every scene here are original.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var W=960, H=544, GY=448, GOAL_SCENES=12, RUN_TIME=180;
+var FE=(typeof window!=='undefined')?window.FallibleEngine:null;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+var msgEl=$('msg');
+function setMsg(t){ if(msgEl) msgEl.textContent=t; }
+
+/* ---------- LFSR: 8-bit Galois, poly x^8+x^6+x^5+x^4+1 (tap mask 0xB8).
+   Reversible: stepping backwards recovers the previous state, so any scene
+   can be regenerated from its number alone. ---------- */
+function lfsrStep(s){ return (s>>1) ^ ((s&1)?0xB8:0); }
+function lfsrBack(t){ // exact inverse of lfsrStep: bit 7 of the output IS the dropped bit
+  var dropped=(t&0x80)?1:0;
+  var unxored=t ^ (dropped?0xB8:0); // undo the tap xor applied when dropped==1
+  return ((unxored<<1)&0xFE)|dropped; // shift back up, restore the dropped bit
+}
+function lfsrScene(n){
+  var s=((n%255)+1)&0xFF; if(!s) s=0xA5;
+  var next=function(){ s=lfsrStep(s); return s; };
+  var sc={num:n, seed:s, pits:[], logs:[], eels:[], vines:[], sparks:[], chest:null, wall:null, sand:[], ledges:[]};
+  // Pit count 1-3, from LFSR bits; widths 56-110; never at the very start or end.
+  var pitCount=1+(next()%3);
+  var px=180;
+  for(var i=0;i<pitCount;i++){
+    var w=56+(next()%55);
+    px+=40+(next()%120);
+    if(px+w>W-90) break;
+    sc.pits.push({x:px,w:w});
+    px+=w;
+  }
+  // Thorn logs: 0-2, sitting on ground between pits.
+  var logCount=next()%3;
+  for(var j=0;j<logCount;j++){
+    var lx=140+(next()%700);
+    if(inPit(sc,lx,64)) continue;
+    sc.logs.push({x:lx,w:64,h:26,spikes:3+(next()%3)});
+  }
+  // Spark-eels: 1-2 patrolling a ground stretch.
+  var eelCount=1+(next()%2);
+  for(var k=0;k<eelCount;k++){
+    var ex=200+(next()%600), ew=90+(next()%90);
+    sc.eels.push({x0:ex,x1:ex+ew,x:ex,dir:1,speed:0.8+(next()%12)/10});
+  }
+  // Vines: 0-2 hanging from the canopy, for swinging over wide pits.
+  var vineCount=next()%3;
+  for(var v=0;v<vineCount;v++){
+    sc.vines.push({x:220+(next()%560), top:96+(next()%40), len:150+(next()%90)});
+  }
+  // Sparks: 3-5, some high (jump / vine / ledge), some low.
+  var sparkCount=3+(next()%3);
+  for(var sp=0;sp<sparkCount;sp++){
+    var sx=120+(next()%760);
+    var sy=GY-40-(next()%3)*70;
+    if(inPit(sc,sx,20) && sy>GY-60) sy=GY-120; // keep pit sparks reachable by jump
+    sc.sparks.push({x:sx,y:sy,taken:false,anim:next()%60});
+  }
+  // Treasure chest on a ledge in ~2 of 5 scenes.
+  if(next()%5<2){
+    var cx=300+(next()%500);
+    var cy=GY-150-(next()%2)*40;
+    sc.chest={x:cx,y:cy,taken:false};
+    sc.ledges.push({x:cx-40,y:cy+26,w:100,h:16});
+  }
+  // Climb-wall: in ~1 of 3 scenes a stone wall blocks the path (ladder to climb).
+  if(next()%3===0){
+    var wx=420+(next()%300);
+    sc.wall={x:wx,w:36,h:150,top:GY-150};
+  }
+  // Quicksand: in ~1 of 3 scenes a slow patch. (Use %3, not the LFSR low bit:
+  // the low bit correlates with the seed and almost never fires here.)
+  if(next()%3===0){
+    var qx=200+(next()%560);
+    if(!inPit(sc,qx,90)) sc.sand.push({x:qx,w:90});
+  }
+  return sc;
+}
+function inPit(sc,x,w){
+  for(var i=0;i<sc.pits.length;i++){
+    var p=sc.pits[i];
+    if(x+w>p.x && x<p.x+p.w) return true;
+  }
+  return false;
+}
+function groundYAt(sc,x){
+  return inPit(sc,x,2) ? Infinity : GY;
+}
+
+/* ---------- audio: tiny WebAudio blips, M mutes ---------- */
+var audioCtx=null, muted=false;
+function blip(freq,dur,type,vol){
+  if(muted) return;
+  try{
+    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    var o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type||'square'; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.05, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function sfx(name){
+  if(name==='jump') blip(340,0.10,'square',0.04);
+  else if(name==='spark') blip(980,0.10,'sine',0.05);
+  else if(name==='chest') { blip(660,0.10,'sine',0.05); setTimeout(function(){blip(990,0.16,'sine',0.05);},100); }
+  else if(name==='die') blip(110,0.25,'sawtooth',0.06);
+  else if(name==='scene') { blip(520,0.10,'sine',0.05); setTimeout(function(){blip(780,0.14,'sine',0.05);},90); }
+  else if(name==='swing') blip(520,0.08,'triangle',0.04);
+  else if(name==='win') { blip(523,0.12,'sine',0.05); setTimeout(function(){blip(659,0.12,'sine',0.05);},110); setTimeout(function(){blip(784,0.22,'sine',0.05);},220); }
+}
+
+/* ---------- state ---------- */
+var state={
+  phase:'title', mode:'solo', paused:false, cam:false,
+  scene:0, frame:0, timeLeft:RUN_TIME, lives:3, score:0, sparks:0,
+  best:0, over:false, result:'', banner:'',
+  player:null, bot:null, sceneData:null, botScene:0, botSceneData:null,
+  watch:null, feAgentId:null, feAgentBId:null, feTraces:[], feRecorded:false,
+  particles:[], fireflies:[], keys:{}, touch:{left:false,right:false,up:false,down:false}
+};
+try{
+  var sv=localStorage.getItem('sparkrunner.best');
+  if(sv) state.best=parseInt(sv,10)||0;
+  var sv2=localStorage.getItem('sparkrunner.save');
+  if(sv2){ try{ state._saved=JSON.parse(sv2); }catch(e){} }
+}catch(e){}
+function persistBest(){ try{ localStorage.setItem('sparkrunner.best', String(state.best)); }catch(e){} }
+/* E54: flush the engine's throttled trace persistence BEFORE saving, and
+   persist the engine identity (watch pair ids, per-agent engine trace lists,
+   the exactly-once guard, match/over state) — the old save kept run stats
+   only, so a fresh load after a WATCH save lost the agents and the traces
+   and reopened the save as a solo run. */
+function saveState(){
+  try{
+    if(FE) FE.flush();
+    var data={
+      scene:state.scene, score:state.score, sparks:state.sparks,
+      lives:state.lives, timeLeft:state.timeLeft, best:state.best,
+      mode:state.mode, phase:state.phase, over:state.over, result:state.result,
+      feRecorded:state.feRecorded,
+      feAgentIds: state.watch ? state.watch.bots.map(function(b){ return b.id; })
+        : (state.bot ? [state.bot.botId] : null),
+      feTraces: state.watch ? state.watch.bots.map(function(b){ return b.r.feTraces; })
+        : (state.bot ? [state.bot.feTraces] : null),
+      watchTraces: state.watch ? state.watch.bots.map(function(b){ return b.r.trace; }) : null,
+      watchScenes: state.watch ? state.watch.bots.map(function(b){ return b.scene; }) : null,
+      watchX: state.watch ? state.watch.bots.map(function(b){ return b.r.x; }) : null,
+      watchY: state.watch ? state.watch.bots.map(function(b){ return b.r.y; }) : null,
+      winner: state.watch ? state.watch.winner : null,
+      raceBotScene: state.bot ? state.botScene : null
+    };
+    localStorage.setItem('sparkrunner.save', JSON.stringify(data));
+    setMsg('Saved — scene '+(state.scene+1)+', '+state.score+' pts.');
+    return true;
+  }catch(e){ setMsg('Save failed in this browser.'); return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('sparkrunner.save');
+    if(!raw){ setMsg('No saved run yet.'); return false; }
+    var o=JSON.parse(raw);
+    if(o.mode==='watch'){ restoreWatchSave(o); }
+    else {
+      startGame(o.mode||'solo', o.scene||0);
+      state.score=o.score||0; state.sparks=o.sparks||0; state.lives=o.lives||3;
+      state.timeLeft=o.timeLeft||RUN_TIME;
+      if(o.best) state.best=o.best;
+      if(o.mode==='race' && state.bot){
+        if(o.feTraces && o.feTraces[0]) state.bot.feTraces=o.feTraces[0];
+        if(o.raceBotScene!==null && typeof o.raceBotScene==='number'){
+          state.botScene=o.raceBotScene; state.botSceneData=lfsrScene(o.raceBotScene);
+        }
+      }
+      state.feRecorded=!!o.feRecorded;
+      if(o.over){
+        state.over=true; state.phase='over'; state.result=o.result||'';
+        setMsg('Loaded — finished run, final score '+state.score+'.');
+        updateHud();
+        return true;
+      }
+    }
+    setMsg('Loaded — scene '+(state.scene+1)+', '+state.score+' pts.');
+    return true;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+/* E54: rebuild a saved WATCH match on the engine instead of reopening it as
+   a solo run — same pair (no cursor advance), agents via FE.loadAgent, the
+   per-agent trace lists, the exactly-once guard, and the per-bot scene
+   progress. An over-save restores as over, never as a fresh match. */
+function restoreWatchSave(o){
+  var ids=(o.feAgentIds && o.feAgentIds.length===2)? o.feAgentIds : ['ZEROX','TURTLE'];
+  state.mode='watch'; state.phase='watch'; state.paused=false;
+  state.scene=o.scene||0; state.timeLeft=(typeof o.timeLeft==='number')?o.timeLeft:RUN_TIME;
+  state.lives=o.lives||3; state.score=o.score||0; state.sparks=o.sparks||0; state.frame=0;
+  state.feTraces=[]; state.feRecorded=!!o.feRecorded;
+  state.player=null; state.bot=null;
+  state.watch={bots:makeWatchBots(ids), winner:o.winner||null, over:!!o.over};
+  loadScene(0);
+  state.watch.bots.forEach(function(b,i){
+    b.scene=(o.watchScenes && typeof o.watchScenes[i]==='number')? o.watchScenes[i] : 0;
+    b.sc=lfsrScene(b.scene); b.scenes=b.scene;
+    if(o.feTraces && o.feTraces[i]) b.r.feTraces=o.feTraces[i];
+    if(o.watchTraces && o.watchTraces[i]){ b.r.trace=o.watchTraces[i]; b.trace=b.r.trace; }
+    if(o.watchX && typeof o.watchX[i]==='number') b.r.x=o.watchX[i];
+    if(o.watchY && typeof o.watchY[i]==='number') b.r.y=o.watchY[i];
+  });
+  if(o.over){
+    state.over=true; state.phase='over'; state.result=o.result||(o.winner?('watch:'+o.winner):'');
+    setMsg('Loaded — WATCH over, '+(o.winner||'nobody')+' took the jungle.');
+  } else {
+    setMsg('Loaded — WATCH '+ids[0]+' vs '+ids[1]+' resumes.');
+  }
+  hidePause(); updateHud();
+}
+function makeRunner(x,y,color){
+  return {x:x,y:y,w:22,h:34,vx:0,vy:0,face:1,onGround:false,coyote:0,buffer:0,
+    dead:false,deadT:0,invuln:0,anim:0,runT:0,swinging:false,vine:null,swingA:0,swingV:0,
+    climbing:false,sink:0,color:color,trail:[],stuckT:0,lastX:x,finished:false,finishT:0};
+}
+function loadScene(idx){
+  state.scene=idx;
+  state.sceneData=lfsrScene(idx);
+  state.particles=[];
+  var startX=40;
+  if(state.player) { state.player.x=startX; state.player.y=GY-34; state.player.vx=0; state.player.vy=0; state.player.dead=false; state.player.swinging=false; state.player.climbing=false; state.player.sink=0; }
+  if(state.bot && state.mode!=='race') { state.bot.x=startX; state.bot.y=GY-34; state.bot.vx=0; state.bot.vy=0; state.bot.dead=false; state.bot.swinging=false; state.bot.climbing=false; state.bot.sink=0; }
+  if(state.watch) state.watch.bots.forEach(function(b){ b.r.x=startX; b.r.y=GY-34; b.r.vx=0; b.r.vy=0; b.r.dead=false; b.r.swinging=false; b.r.climbing=false; b.r.sink=0; });
+}
+function startGame(mode,sceneIdx){
+  state.mode=mode; state.phase=(mode==='watch')?'watch':'play';
+  state.paused=false; state.over=false; state.result=''; state.banner='';
+  state.scene=sceneIdx||0; state.timeLeft=RUN_TIME; state.lives=3;
+  state.score=0; state.sparks=0; state.frame=0; state.feTraces=[]; state.feRecorded=false;
+  state.player=makeRunner(40,GY-34,'#00ff88');
+  state.bot=null; state.watch=null;
+  if(mode==='race'){
+    state.bot=makeBotRunner('QUILL',40,GY-34,'#b78cff');
+    state.botScene=0; state.botSceneData=lfsrScene(0);
+    setMsg('RACE — you vs QUILL, same jungle. First to scene 12 wins.');
+  } else if(mode==='watch'){
+    startWatch();
+    return;
+  } else {
+    setMsg('Run! Grab Sparks, clear 12 scenes before 3:00.');
+  }
+  loadScene(state.scene);
+  hidePause();
+  updateHud();
+}
+function hidePause(){ var o=$('pauseOverlay'); if(o) o.style.display='none'; }
+function showPause(){
+  var o=$('pauseOverlay'); if(o) o.style.display='flex';
+  var s=$('pauseSub'); if(s) s.textContent='Scene '+(state.scene+1)+' · '+state.score+' pts · '+state.sparks+' sparks';
+}
+function togglePause(){
+  if(state.phase!=='play' && state.phase!=='watch') return;
+  state.paused=!state.paused;
+  if(state.paused) showPause(); else hidePause();
+}
+function toggleCam(){ state.cam=!state.cam; setMsg(state.cam?'Chase cam — riding right behind JOLT.':'Wide jungle view.'); }
+function toggleMute(){ muted=!muted; setMsg(muted?'Muted.':'Sound on.'); }
+
+/* ---------- physics ---------- */
+var GRAV=0.55, MAXFALL=12, ACCEL=0.5, AIR_ACCEL=0.32, MAXRUN=4.2, JUMP_V=-11.5;
+function stepRunner(p,input,sc){
+  if(p.dead){ p.deadT--; if(p.deadT<=0) respawn(p); return; }
+  if(p.invuln>0) p.invuln--;
+  p.anim++; p.runT+=Math.abs(p.vx)>0.5?1:0;
+  if(p.buffer>0) p.buffer--;
+  if(input.jump) p.buffer=8;
+  // Climbing: on a wall ladder and pressing up/down.
+  var onLadder=false;
+  if(sc.wall && Math.abs((p.x+p.w/2)-(sc.wall.x+sc.wall.w/2))<34 && p.y+p.h>sc.wall.top-10 && p.y<GY){
+    onLadder=true;
+  }
+  if(onLadder && (input.up||input.down)){
+    p.climbing=true;
+  }
+  if(p.climbing){
+    if(!onLadder){ p.climbing=false; }
+    else{
+      p.vy=(input.up?-2.2:(input.down?2.2:0));
+      p.vx=0;
+      p.y+=p.vy;
+      if(p.y<=sc.wall.top-p.h){ p.y=sc.wall.top-p.h; p.climbing=false; p.onGround=true; }
+      if(p.y+p.h>=GY){ p.y=GY-p.h; p.climbing=false; p.onGround=true; }
+      return;
+    }
+  }
+  // Swinging on a vine: pendulum around the vine top.
+  if(p.swinging && p.vine){
+    var v=p.vine, L=v.len;
+    p.swingV-=0.03*Math.sin(p.swingA);
+    p.swingV*=0.995;
+    p.swingA+=p.swingV;
+    var px2=v.x+Math.sin(p.swingA)*L, py2=v.top+Math.cos(p.swingA)*L;
+    p.x=px2-p.w/2; p.y=py2-6;
+    p.vx=Math.cos(p.swingA)*p.swingV*L;
+    if(input.jump){
+      p.swinging=false; p.vine=null;
+      p.vx=Math.max(-8,Math.min(8,Math.cos(p.swingA)*p.swingV*L*1.2));
+      p.vy=-8.5; p.onGround=false;
+      sfx('swing');
+    }
+    if(p.y+p.h>=GY){ p.swinging=false; p.vine=null; p.y=GY-p.h; p.onGround=true; }
+    return;
+  }
+  // Horizontal run.
+  var acc=p.onGround?ACCEL:AIR_ACCEL;
+  var inSand=false;
+  for(var s=0;s<sc.sand.length;s++){ if(p.x+p.w>sc.sand[s].x && p.x<sc.sand[s].x+sc.sand[s].w && p.onGround) inSand=true; }
+  var maxSp=inSand?MAXRUN*0.45:MAXRUN;
+  if(input.left){ p.vx-=acc; p.face=-1; }
+  if(input.right){ p.vx+=acc; p.face=1; }
+  if(!input.left&&!input.right){ p.vx*=p.onGround?0.7:0.985; }
+  if(p.vx>maxSp) p.vx=maxSp; if(p.vx<-maxSp) p.vx=-maxSp;
+  // Quicksand sink.
+  if(inSand){ p.sink+=0.25; if(p.sink>26){ killRunner(p,'quicksand'); return; } }
+  else if(p.sink>0) p.sink=Math.max(0,p.sink-0.5);
+  // Gravity + jump (coyote + buffer).
+  p.vy+=GRAV; if(p.vy>MAXFALL) p.vy=MAXFALL;
+  if(p.onGround) p.coyote=8; else if(p.coyote>0) p.coyote--;
+  if(p.buffer>0 && (p.onGround||p.coyote>0)){
+    p.vy=JUMP_V; p.onGround=false; p.coyote=0; p.buffer=0;
+    sfx('jump');
+  }
+  p.x+=p.vx;
+  if(p.x<8){ p.x=8; p.vx=0; }
+  if(p.x>W-8-p.w){ p.x=W-8-p.w; }
+  // Wall: solid block; stop horizontal motion unless above its top.
+  if(sc.wall){
+    var wl=sc.wall;
+    if(p.y+p.h>wl.top+6 && p.x+p.w>wl.x && p.x<wl.x+wl.w){
+      if(p.vx>0 && p.x+p.w-wl.x<wl.w/2+12) p.x=wl.x-p.w;
+      else if(p.vx<0) p.x=wl.x+wl.w;
+      p.vx=0;
+    }
+  }
+  // Vertical: ground segments + ledges.
+  var prevBottom=p.y+p.h;
+  p.y+=p.vy;
+  var gy=groundYAt(sc,p.x+p.w/2);
+  var landed=false;
+  if(p.vy>=0){
+    if(gy!==Infinity && prevBottom<=gy && p.y+p.h>=gy){ p.y=gy-p.h; p.vy=0; p.onGround=true; landed=true; }
+    if(sc.wall && p.x+p.w>sc.wall.x && p.x<sc.wall.x+sc.wall.w && prevBottom<=sc.wall.top && p.y+p.h>=sc.wall.top){ p.y=sc.wall.top-p.h; p.vy=0; p.onGround=true; landed=true; }
+    for(var li=0;li<sc.ledges.length;li++){
+      var lg=sc.ledges[li];
+      if(p.x+p.w>lg.x && p.x<lg.x+lg.w && prevBottom<=lg.y && p.y+p.h>=lg.y){ p.y=lg.y-p.h; p.vy=0; p.onGround=true; landed=true; }
+    }
+  }
+  if(!landed) p.onGround=false;
+  // Fell into a pit.
+  if(p.y>H+30){ killRunner(p,'pit'); return; }
+  // Vine grab: airborne, near a vine, pressing swing.
+  if(!p.onGround && input.swing && !p.swinging){
+    for(var vi=0;vi<sc.vines.length;vi++){
+      var vn=sc.vines[vi];
+      if(Math.abs((p.x+p.w/2)-vn.x)<16 && p.y<vn.top+vn.len && p.y>vn.top-40){
+        p.swinging=true; p.vine=vn; p.swingA=0.35; p.swingV=0; p.vy=0;
+        sfx('swing');
+        break;
+      }
+    }
+  }
+  // Hazards: thorn logs and spark-eels.
+  if(p.invuln<=0){
+    for(var hi=0;hi<sc.logs.length;hi++){
+      var lg2=sc.logs[hi];
+      if(p.x+p.w>lg2.x+4 && p.x<lg2.x+lg2.w-4 && p.y+p.h>GY-lg2.h && p.y<GY){
+        killRunner(p,'log'); return;
+      }
+    }
+    for(var ei=0;ei<sc.eels.length;ei++){
+      var e=sc.eels[ei];
+      if(p.x+p.w>e.x-6 && p.x<e.x+26 && p.y+p.h>GY-16 && p.y<GY+6){
+        killRunner(p,'eel'); return;
+      }
+    }
+  }
+  // Pickups: sparks + chest.
+  for(var si=0;si<sc.sparks.length;si++){
+    var sp2=sc.sparks[si];
+    if(!sp2.taken && Math.abs((p.x+p.w/2)-sp2.x)<28 && Math.abs((p.y+p.h/2)-sp2.y)<30){
+      sp2.taken=true; if(p===state.player){ state.score+=100; state.sparks++; }
+      burst(sp2.x,sp2.y,'#ffd75e',10); sfx('spark');
+    }
+  }
+  if(sc.chest && !sc.chest.taken && Math.abs((p.x+p.w/2)-sc.chest.x)<30 && Math.abs((p.y+p.h/2)-sc.chest.y)<32){
+    sc.chest.taken=true; if(p===state.player){ state.score+=500; } burst(sc.chest.x,sc.chest.y,'#ffd75e',18); sfx('chest');
+  }
+}
+function killRunner(p,cause){
+  if(p.dead) return;
+  p.dead=true; p.deadT=70; p.swinging=false; p.climbing=false; p.vx=0; p.vy=0;
+  burst(p.x+p.w/2,p.y+p.h/2,'#ff3860',14); sfx('die');
+  if(p===state.player){
+    state.lives--;
+    setMsg(cause==='pit'?'Into the pit! Lives left: '+state.lives:(cause==='quicksand'?'Swallowed by quicksand! Lives left: '+state.lives:cause==='log'?'Thorn log! Lives left: '+state.lives:'Spark-eel bite! Lives left: '+state.lives));
+    if(state.lives<=0){ endRun(false,'Out of lives — the jungle wins this time.'); }
+  }
+}
+function respawn(p){
+  p.x=40; p.y=GY-p.h; p.vx=0; p.vy=0; p.dead=false; p.invuln=90; p.swinging=false; p.climbing=false; p.sink=0;
+}
+function burst(x,y,color,n){
+  for(var i=0;i<n;i++){
+    state.particles.push({x:x,y:y,vx:(Math.random()-0.5)*4,vy:(Math.random()-0.7)*4,t:0,life:30+Math.random()*20,color:color});
+  }
+}
+function endRun(win,msg){
+  state.over=true; state.phase='over'; state.result=win?'win':'lose';
+  var bonus=0;
+  if(win){ bonus=Math.floor(state.timeLeft)*10; state.score+=bonus; }
+  if(state.score>state.best){ state.best=state.score; persistBest(); }
+  setMsg(msg+(win?' Time bonus +'+bonus+'.':'')+' Final score '+state.score+'. Best '+state.best+'.');
+  if(win) sfx('win');
+  recordFeMatch(win?'win':'loss');
+  updateHud();
+}
+/* E54: one canonical record per match, agent objects (not string ids — the
+   old call passed w.bots[i].id and threw inside eloOf, so nothing was ever
+   recorded) and the per-agent ENGINE trace lists (the old call passed the
+   custom {t,at,pick,dist} objects, which carry no pickTag, so E8 could never
+   credit them). WATCH records the pair against each other; RACE records the
+   QUILL ghost vs the 1200 field, but only when a finisher exists — a
+   time-out or out-of-lives is a player loss on the clock, not a bot win. */
+function recordFeMatch(outcome){
+  if(!FE || state.feRecorded) return;
+  try{
+    if(state.mode==='watch'){
+      var w=state.watch;
+      if(w && w.bots.length===2 && w.bots[0].r.agent && w.bots[1].r.agent){
+        FE.recordMatch(w.bots[0].r.agent, w.bots[1].r.agent, 'sparkrunner',
+          w.winner===w.bots[0].id?'win':'loss', w.bots[0].r.feTraces, w.bots[1].r.feTraces);
+        state.feRecorded=true;
+      }
+    } else if(state.mode==='race'){
+      var rb=state.bot;
+      if(rb && rb.agent && (state.botScene>=GOAL_SCENES || state.scene>=GOAL_SCENES)){
+        FE.recordResult(rb.agent,'sparkrunner',null, outcome==='win'?'loss':'win', rb.feTraces);
+        state.feRecorded=true;
+      }
+    }
+  }catch(e){}
+}
+
+/* ---------- bots: Fallible Engine personalities race the jungle ---------- */
+var BOT_STYLE={
+  ZEROX:{react:150, err:26, speed:1.0, greed:0.95, vine:0.8, label:'ZEROX — gambles, jumps late, grabs everything'},
+  TURTLE:{react:230, err:10, speed:0.86, greed:0.35, vine:0.3, label:'TURTLE — jumps early, plays it safe'},
+  QUILL:{react:190, err:16, speed:0.94, greed:0.65, vine:0.55, label:'QUILL — curious, swings when it looks fun'},
+  ORBIT:{react:170, err:20, speed:0.97, greed:0.75, vine:0.6, label:'ORBIT — steady, chases sparks'}
+};
+function feLoad(id){
+  if(!FE) return null;
+  try{ return FE.loadAgent(id); }catch(e){ return null; }
+}
+function makeBotRunner(id,x,y,color){
+  var r=makeRunner(x,y,color);
+  r.botId=id; r.style=BOT_STYLE[id]||BOT_STYLE.ORBIT;
+  r.trace=[]; r.feTraces=[]; r.agent=feLoad(id);
+  r.plan=null; r.decideAt=0; r.botInput={left:false,right:false,up:false,down:false,jump:false,swing:false};
+  return r;
+}
+function botThink(b,sc){
+  var st=b.style, inp=b.botInput;
+  inp.left=false; inp.right=true; inp.up=false; inp.down=false; inp.jump=false; inp.swing=false;
+  if(b.dead || b.finished) return inp;
+  var cx=b.x+b.w/2, gy=groundYAt(sc,cx);
+  // Climbing: if a wall blocks us and we are against it, climb.
+  if(sc.wall && cx>sc.wall.x-30 && cx<sc.wall.x+sc.wall.w+30 && b.y+b.h>sc.wall.top){
+    if(b.onGround || b.climbing){ inp.up=true; inp.right=false; return inp; }
+  }
+  // Find the next pit edge ahead.
+  var pit=null;
+  for(var i=0;i<sc.pits.length;i++){
+    var p=sc.pits[i];
+    if(p.x+p.w>cx && p.x>cx-10){ pit=p; break; }
+  }
+  // Find the next thorn log ahead.
+  var log=null;
+  for(var j=0;j<sc.logs.length;j++){
+    var l=sc.logs[j];
+    if(l.x+l.w>cx && l.x>cx-10){ log=l; break; }
+  }
+  var obstacle=pit||null;
+  var obsX=pit?pit.x:(log?log.x:Infinity);
+  var obsW=pit?pit.w:(log?log.w:0);
+  // Decision point: an obstacle inside reaction range, on the ground.
+  if(b.onGround && obsX-cx<st.react && obsX-cx>0){
+    if(!b.plan || b.plan.obsX!==obsX){
+      var opts=[
+        {key:'jump-early', score:st.react>200?0.9:0.4, tag:'cautious'},
+        {key:'jump-ontime', score:0.8, tag:'steady'},
+        {key:'jump-late', score:st.greed>0.8?0.9:0.3, tag:'gamble'}
+      ];
+      var pick='jump-ontime';
+      var agent=b.agent; // E54: the agent loaded once at bot creation — the
+      // old code called feLoad(b.botId) on EVERY decision (fresh object).
+      if(agent&&FE){
+        try{
+          var res=FE.decide(agent,'sparkrunner',opts,{dist:obsX-cx,width:obsW});
+          pick=res.pick.key;
+          b.feTraces.push(res.trace); // E54: per-agent ENGINE trace list —
+          // the record reads these lists, so E8 credits each bot's own picks.
+          state.feTraces.push(res.trace); // finishing pass 2026-11-22: the
+          // shared list is the documented state surface (harness + snapshots
+          // read it) — mirror each trace so it stays truthful, per-agent
+          // lists above remain the record of credit.
+          b.trace.push({t:state.frame,at:'obstacle',pick:pick,dist:Math.round(obsX-cx)});
+        }catch(e){ pick=opts[1].key; }
+      } else {
+        pick=opts[Math.floor(Math.random()*opts.length)].key;
+      }
+      var lead={ 'jump-early':st.react*0.75, 'jump-ontime':st.react*0.45, 'jump-late':st.react*0.2 }[pick];
+      b.plan={obsX:obsX, jumpAt:obsX-lead+(Math.random()*2-1)*st.err, pick:pick};
+    }
+    if(b.plan && cx>=b.plan.jumpAt){ inp.jump=true; b.plan=null; }
+  }
+  // Vine: swing across a wide pit if one hangs near it and the bot likes vines.
+  if(!b.onGround && sc.vines.length && Math.random()<st.vine){
+    for(var v=0;v<sc.vines.length;v++){
+      if(Math.abs(cx-sc.vines[v].x)<20 && pit && pit.w>80){ inp.swing=true; break; }
+    }
+  }
+  // Spark greed: jump for a low spark just overhead.
+  if(b.onGround){
+    for(var s2=0;s2<sc.sparks.length;s2++){
+      var sp3=sc.sparks[s2];
+      if(!sp3.taken && Math.abs(sp3.x-cx)<24 && sp3.y<b.y-10 && sp3.y>b.y-130 && Math.random()<st.greed){
+        inp.jump=true; break;
+      }
+    }
+  }
+  return inp;
+}
+function botStep(b,sc){
+  var inp=botThink(b,sc);
+  // Personality speed: scale the run input by holding right (engine caps speed);
+  // slower bots get a lower cap via a per-bot max applied after the step.
+  stepRunner(b,inp,sc);
+  if(b.style && b.style.speed<1 && Math.abs(b.vx)>MAXRUN*b.style.speed){
+    b.vx=MAXRUN*b.style.speed*Math.sign(b.vx);
+  }
+}
+/* E54: WATCH rotates through the council in pairs (ASIMOV/SHADDAI,
+   ZEROX/ORACLE, NEXUS/TURTLE, QUILL/PIKADON, then wraps) — the old
+   WATCH_BOTS was hardcoded ZEROX/TURTLE, so every WATCH match was the same
+   pair. The cursor lives in localStorage and advances once per watch start;
+   no engine, no rotation — the fallback pair stays ZEROX/TURTLE. */
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var WATCH_COLORS={ASIMOV:'#e8f2ee',SHADDAI:'#ffd75e',ZEROX:'#ff3860',ORACLE:'#b78cff',NEXUS:'#ff9f1c',TURTLE:'#35e0ff',QUILL:'#ff7ad9',PIKADON:'#7dff5e'};
+var feWatchIdx=0;
+try{ feWatchIdx=JSON.parse(localStorage.getItem('sparkrunner.feWatchIdx')||'0')||0; }catch(e){ feWatchIdx=0; }
+function feSaveWatchIdx(){ try{ localStorage.setItem('sparkrunner.feWatchIdx', JSON.stringify(feWatchIdx)); }catch(e){} }
+function feNextWatchPair(){
+  var a=COUNCIL_IDS[feWatchIdx%COUNCIL_IDS.length]; feWatchIdx++;
+  var b=COUNCIL_IDS[feWatchIdx%COUNCIL_IDS.length]; feWatchIdx++;
+  feSaveWatchIdx();
+  return [a,b];
+}
+function makeWatchBots(ids){
+  return ids.map(function(id){
+    var r=makeBotRunner(id,40,GY-34,WATCH_COLORS[id]||'#35e0ff');
+    return {id:id, color:WATCH_COLORS[id]||'#35e0ff', r:r, trace:r.trace, scenes:0, sparks:0};
+  });
+}
+function startWatch(){
+  state.mode='watch'; state.phase='watch'; state.paused=false; state.over=false; state.result='';
+  state.scene=0; state.timeLeft=RUN_TIME; state.lives=3; state.score=0; state.sparks=0; state.frame=0;
+  state.feTraces=[]; state.feRecorded=false;
+  state.player=null; state.bot=null;
+  var ids=FE? feNextWatchPair() : ['ZEROX','TURTLE'];
+  state.watch={bots:makeWatchBots(ids), winner:null, over:false};
+  loadScene(0);
+  // Watch runners need their own per-bot scene progress: they share the scene
+  // layout (same seed) but advance independently.
+  state.watch.bots.forEach(function(b){ b.scene=0; b.sc=lfsrScene(0); });
+  setMsg('WATCH — '+ids[0]+' vs '+ids[1]+' race the jungle. Imperfect on purpose.');
+  hidePause(); updateHud();
+}
+function watchTick(){
+  var w=state.watch; if(!w) return;
+  w.bots.forEach(function(b){
+    if(w.over) return; // E54: once the first bot wins, the other bot must not
+    // act again in the same pass (no post-match decisions, no winner overwrite).
+    b.sc.eels.forEach(function(e){
+      e.x+=e.dir*e.speed;
+      if(e.x>e.x1){ e.x=e.x1; e.dir=-1; }
+      if(e.x<e.x0){ e.x=e.x0; e.dir=1; }
+    });
+    if(b.r.x>=W-40){
+      // Advance this bot to its next scene on its own layout.
+      b.scene++;
+      b.r.finished=false; b.r.x=40; b.r.y=GY-34; b.r.vx=0; b.r.vy=0;
+      b.sc=lfsrScene(b.scene); b.scenes=b.scene;
+      if(b.scene>=GOAL_SCENES){
+        w.winner=b.id; w.over=true; state.over=true; state.phase='over';
+        state.result='watch:'+b.id;
+        setMsg('WATCH — '+b.id+' takes the jungle! ('+w.bots[0].scenes+' vs '+w.bots[1].scenes+' scenes)');
+        recordFeMatch('win');
+      }
+    }
+    if(!w.over) botStep(b.r,b.sc);
+  });
+  // Timer end: most scenes (then most sparks) wins.
+  if(state.timeLeft<=0 && !w.over){
+    w.over=true; state.over=true; state.phase='over';
+    var a=w.bots[0], c=w.bots[1];
+    var win=(a.scenes!==c.scenes)?(a.scenes>c.scenes?a:c):(a.r.trace.length>=c.r.trace.length?a:c);
+    w.winner=win.id; state.result='watch:'+win.id;
+    setMsg('WATCH — time! '+win.id+' leads the jungle ('+a.scenes+' vs '+c.scenes+' scenes).');
+    recordFeMatch('win');
+  }
+}
+
+/* ---------- tick ---------- */
+function tick(){
+  state.frame++;
+  if(state.phase==='watch'){ watchTick(); if(!state.over) state.timeLeft-=1/60; }
+  else if(state.phase==='play'){
+    var sc=state.sceneData;
+    // Eels patrol.
+    sc.eels.forEach(function(e){
+      e.x+=e.dir*e.speed;
+      if(e.x>e.x1){ e.x=e.x1; e.dir=-1; }
+      if(e.x<e.x0){ e.x=e.x0; e.dir=1; }
+    });
+    sc.sparks.forEach(function(sp){ sp.anim++; });
+    // Player.
+    var inp=readInput();
+    stepRunner(state.player,inp,sc);
+    // Race bot on its own copy of the same seed — first to scene 12 wins.
+    if(state.bot && !state.over){
+      botStep(state.bot,state.botSceneData);
+      state.botSceneData.eels.forEach(function(e){
+        e.x+=e.dir*e.speed;
+        if(e.x>e.x1){ e.x=e.x1; e.dir=-1; }
+        if(e.x<e.x0){ e.x=e.x0; e.dir=1; }
+      });
+      if(state.bot.x>=W-40){
+        state.botScene++;
+        if(state.botScene>=GOAL_SCENES){
+          endRun(false,'QUILL finished the jungle first. Final score '+state.score+'.');
+        } else {
+          state.botSceneData=lfsrScene(state.botScene);
+          state.bot.x=40; state.bot.y=GY-34; state.bot.vx=0; state.bot.vy=0;
+        }
+      }
+    }
+    // Player reaches the far edge: next scene.
+    if(state.player && state.player.x>=W-40 && !state.player.finished){
+      state.player.finished=true;
+      state.scene++;
+      if(state.scene>=GOAL_SCENES){
+        endRun(true,'JOLT clears the jungle! ');
+      } else {
+        state.player.finished=false;
+        loadScene(state.scene);
+        sfx('scene');
+        setMsg('Scene '+(state.scene+1)+'/'+GOAL_SCENES+' — the jungle changes.');
+      }
+    }
+    // Clock.
+    if(!state.over){
+      state.timeLeft-=1/60;
+      if(state.timeLeft<=0){ state.timeLeft=0; endRun(false,'Time! The jungle keeps its Sparks.'); }
+    }
+  }
+  // Particles + fireflies always drift.
+  state.particles.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.t++; });
+  state.particles=state.particles.filter(function(p){ return p.t<p.life; });
+  if(state.fireflies.length<26 && Math.random()<0.3){
+    state.fireflies.push({x:Math.random()*W,y:80+Math.random()*300,ph:Math.random()*6.28,sp:0.2+Math.random()*0.5});
+  }
+  state.fireflies.forEach(function(f){ f.x+=Math.sin(state.frame/40+f.ph)*f.sp; f.y+=Math.cos(state.frame/50+f.ph)*0.3; if(f.x<0)f.x=W; if(f.x>W)f.x=0; });
+  updateHud();
+}
+function readInput(){
+  var k=state.keys, t=state.touch;
+  return {
+    left:k['ArrowLeft']||k['KeyA']||t.left,
+    right:k['ArrowRight']||k['KeyD']||t.right,
+    up:k['ArrowUp']||k['KeyW']||t.up,
+    down:k['ArrowDown']||k['KeyS']||t.down,
+    jump:k['Space']||k['KeyW']||k['ArrowUp']||t.up,
+    swing:k['KeyB']||k['KeyX']||t.swing
+  };
+}
+function updateHud(){
+  var set=function(id,txt){ var e=$(id); if(e) e.textContent=txt; };
+  set('hudScene',(state.scene+1)+'/'+GOAL_SCENES);
+  set('hudScore',state.score);
+  set('hudSparks',state.sparks);
+  set('hudLives','●'.repeat(Math.max(0,state.lives))+'○'.repeat(Math.max(0,3-state.lives)));
+  var tl=Math.max(0,state.timeLeft), m=Math.floor(tl/60), s=Math.floor(tl%60);
+  set('hudTime',m+':'+(s<10?'0':'')+s);
+  set('hudHi',state.best);
+}
+
+/* ---------- render: layered neon jungle ---------- */
+/* ---------- SPRITE STACK runner (char sweep 2026-11-22) ----------
+   JOLT + the bot runners rebuilt as true slice stacks: silhouette
+   slices layered bottom to top with baked 3-tone shading (dark core
+   -> mid -> lit top edge), dramatic rim light in the runner's own
+   colour, planted-feet sprint cycle (boots sit on the ground line,
+   lift only on the swing half), speed lean, jump tuck, vine-swing
+   and climb poses, idle breathing. Gear details differ per bot id
+   (BOT_STYLE / WATCH identities) on the same rig. Pure presentation:
+   reads physics state, never writes it. */
+function sparkShade(hex,amt){
+  var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  if(amt>=0){ r+=(255-r)*amt; g+=(255-g)*amt; b+=(255-b)*amt; }
+  else { r*=1+amt; g*=1+amt; b*=1+amt; }
+  return 'rgb('+(r|0)+','+(g|0)+','+(b|0)+')';
+}
+function drawRunner(c,p,scale){
+  var col=(p.color&&p.color.charAt(0)==='#')?p.color:'#00ff88';
+  var dark=sparkShade(col,-0.72), deep=sparkShade(col,-0.42), mid=sparkShade(col,-0.14),
+      lit=sparkShade(col,0.48), pale=sparkShade(col,0.82);
+  var steel='#26303e', steelD='#0e141d', steelL='#63768c', gold='#ffd75e', goldD='#c9962e';
+  var cx=p.x+p.w/2, feet=p.y+p.h+(p.sink||0);
+  var running=p.onGround&&Math.abs(p.vx)>0.5;
+  var air=!p.onGround&&!p.climbing&&!p.swinging;
+  var F=p.face>=0?1:-1;
+  var stride=running?Math.sin(p.runT*0.55):0;
+  var spd=Math.min(1,Math.abs(p.vx)/4.2);
+  var bob=running?Math.abs(Math.sin(p.runT*0.55))*1.6:(p.onGround?Math.sin(p.anim*0.06)*0.55:0);
+  c.save();
+  if(p.invuln>0 && Math.floor(state.frame/6)%2===0) c.globalAlpha=0.45;
+  /* contact shadow + colour pool (shrinks/fades in the air) */
+  c.fillStyle='rgba(0,0,0,'+(p.onGround?0.38:0.20)+')';
+  c.beginPath(); c.ellipse(cx,feet+3,p.onGround?13.5:9.5,3,0,0,6.29); c.fill();
+  c.globalAlpha=0.12; c.fillStyle=col;
+  c.beginPath(); c.ellipse(cx,feet+3,12.5,3.2,0,0,6.29); c.fill(); c.globalAlpha=1;
+  /* speed streaks behind a sprinting runner */
+  if(running&&spd>0.45){
+    c.strokeStyle=lit; c.lineWidth=1.4;
+    for(var si=0;si<3;si++){
+      var sy=feet-8-si*6, sl2=6+spd*11+((state.frame*2+si*7)%5);
+      c.globalAlpha=0.34-si*0.09;
+      c.beginPath(); c.moveTo(cx-F*9,sy); c.lineTo(cx-F*(9+sl2),sy); c.stroke();
+    }
+    c.globalAlpha=1;
+  }
+  c.translate(cx,feet-bob);
+  if(p.dead) c.rotate(F*0.55);
+  else if(p.swinging) c.rotate(F*0.16+Math.sin(p.swingA||0)*0.10);
+  else if(p.climbing) c.rotate(F*0.05);
+  else if(air) c.rotate(F*(p.vy<0?0.10:0.20));            /* lean into rise, tip into fall */
+  else if(running) c.rotate(F*spd*0.15);                  /* speed lean */
+  if(p.onGround&&!running) c.scale(1,1+Math.sin(p.anim*0.06)*0.016); /* idle breathing */
+  /* slice helper: one horizontal armour slice, 3-tone baked shading */
+  function sl(u,y,w,fill,top){
+    var x=u-w/2;
+    c.fillStyle=fill;
+    c.beginPath();
+    c.moveTo(x+1.4,y); c.lineTo(x+w-1.4,y); c.lineTo(x+w,y+1.6); c.lineTo(x+w,y+3.1);
+    c.lineTo(x,y+3.1); c.lineTo(x,y+1.6); c.closePath(); c.fill();
+    if(top){ c.fillStyle=top; c.fillRect(x+1.6,y+0.3,w-3.2,1.25); }
+    c.fillStyle='rgba(0,0,0,.32)'; c.fillRect(x+1.2,y+2.5,w-2.4,0.8);
+  }
+  function block(u,y,w,h,fill,top){
+    c.fillStyle=fill; c.fillRect(u-w/2,y,w,h);
+    if(top){ c.fillStyle=top; c.fillRect(u-w/2+1,y+0.5,w-2,1.3); }
+    c.fillStyle='rgba(0,0,0,.4)'; c.fillRect(u-w/2,y+h-1.1,w,1.1);
+  }
+  /* leg pose in facing space (u = forward) */
+  var fU,bU,fLift,bLift;
+  if(p.climbing){ fU=4.8; fLift=5.0; bU=3.6; bLift=10.0; }
+  else if(p.swinging){ fU=5.2; fLift=2.0; bU=-2.2; bLift=5.5; }        /* trailing tuck */
+  else if(air){ fU=4.4; fLift=1.4; bU=-3.2; bLift=4.6; }               /* jump tuck */
+  else if(running){ fU=2.7+stride*3.8; fLift=stride<0?-stride*2.4:0; bU=-2.7-stride*3.8; bLift=stride>0?stride*2.4:0; }
+  else { fU=3.8; fLift=0; bU=-3.8; bLift=0; }
+  var fX=fU*F, bX=bU*F;
+  function leg(bx,lift,front){
+    sl(bx,-6.4-lift*0.55,front?5.6:5.2,front?steel:steelD,front?lit:steelL);  /* shin guard */
+    sl(bx,-3.1-lift,front?8.8:8.2,steelD,steelL);                             /* boot */
+    c.fillStyle=front?mid:deep;                                               /* toe cap */
+    c.fillRect(F>0?bx+1.7:bx-4.4,-3.0-lift,2.7,2.2);
+    c.fillStyle=front?lit:mid; c.fillRect(F>0?bx+3.4:bx-4.4,-3.0-lift,1.0,2.2); /* toe rim spark */
+    c.fillStyle='rgba(0,0,0,.55)'; c.fillRect(bx-4.4,-0.7-lift,8.8,0.9);      /* sole */
+  }
+  var gear=p.botId||'JOLT';
+  /* scarf: streams behind the neck in the runner's colour, harder at speed */
+  var sway=Math.sin(p.anim*0.18)*1.5+spd*2.2;
+  c.strokeStyle=deep; c.lineWidth=3.6; c.beginPath();
+  c.moveTo(-F*4,-19.5);
+  c.quadraticCurveTo(-F*10,-18+sway*0.4,-F*(11+spd*6),-19.5+sway);
+  c.stroke();
+  c.strokeStyle=mid; c.lineWidth=2.2; c.beginPath();
+  c.moveTo(-F*4,-20.1);
+  c.quadraticCurveTo(-F*10,-18.6+sway*0.4,-F*(11+spd*6),-20.1+sway);
+  c.stroke();
+  /* back arm (far side, darker) — swings against the back leg */
+  var baU=-7.4+(running?stride*1.7:(p.climbing?-2.5:0));
+  if(p.climbing){ sl(baU*F,-24.5,4.2,dark,null); block(baU*F,-27.6,4.6,3.6,steelD,null); }
+  else { sl(baU*F,-16.5,4.4,dark,null); block(baU*F,-13.4,4.8,3.8,steelD,null); }
+  /* backpack / gear slab on the far side — TURTLE carries a full shell */
+  if(gear==='TURTLE'){
+    sl(-F*8.8,-18.8,6.4,deep,mid); sl(-F*8.8,-15.9,6.8,mid,lit); sl(-F*8.8,-13.0,6.4,deep,mid);
+  } else {
+    sl(-F*8.4,-18.4,5.4,steelD,steelL);
+    sl(-F*8.4,-15.7,5.8,steel,steelL);
+    if(Math.sin(p.anim*0.12)>0.2){ c.fillStyle=pale; c.beginPath(); c.arc(-F*8.4,-20.6,1.25,0,6.29); c.fill(); }
+  }
+  /* legs: back first, then front (planted — boots sit on the ground line) */
+  leg(bX,bLift,false);
+  leg(fX,fLift,true);
+  /* hip + belt with gold buckle */
+  sl(0,-9.6,13,dark,mid);
+  sl(0,-10.9,13.6,steelD,steelL);
+  c.fillStyle=gold; c.fillRect(-1.7,-11.1,3.4,2.4);
+  /* torso stack: three armour plates stepping up, tones rising */
+  sl(0,-13.6,14,deep,mid);
+  sl(0,-16.2,14.6,mid,lit);
+  sl(0,-18.8,13.8,col,pale);
+  /* chest core: lit diamond set into the top plate */
+  c.fillStyle=pale; c.beginPath();
+  c.moveTo(0,-19.6); c.lineTo(2.6,-17.2); c.lineTo(0,-14.8); c.lineTo(-2.6,-17.2); c.closePath(); c.fill();
+  c.fillStyle='#ffffff'; c.beginPath();
+  c.moveTo(0,-18.4); c.lineTo(1.3,-17.2); c.lineTo(0,-16.0); c.lineTo(-1.3,-17.2); c.closePath(); c.fill();
+  /* shoulder pads */
+  sl(-F*6.9,-19.6,6.2,deep,null);
+  sl(F*6.9,-19.9,6.8,mid,lit);
+  /* front arm: swings against the front leg; raised to the vine when
+     swinging, reaching up when climbing, tucked in a jump */
+  if(p.swinging){
+    sl(F*6.4,-24.8,4.4,mid,lit);
+    block(F*6.8,-28.2,4.8,3.8,steel,steelL);
+    c.fillStyle=lit; c.fillRect(F*6.8-2.4,-28.2,4.8,1.1);
+  } else if(p.climbing){
+    sl(F*7.6,-25.2,4.4,mid,lit);
+    block(F*8.0,-28.4,4.8,3.8,steel,steelL);
+  } else {
+    var faU=7.4+(running?-stride*1.9:(air?1.8:0));
+    sl(faU*F,-16.6,4.6,mid,lit);
+    block(faU*F,-13.5,5.2,4.0,steel,steelL);
+    c.fillStyle=lit; c.fillRect(faU*F-2.6,-13.5,5.2,1.1);
+  }
+  /* neck + helm stack */
+  sl(0,-21.3,5.4,steelD,null);
+  sl(0,-23.2,15.2,steelD,steelL);          /* brim */
+  sl(0,-25.8,13.6,deep,mid);               /* dome low */
+  sl(0,-28.3,11.4,mid,lit);                /* dome high */
+  sl(0,-30.6,7.4,col,pale);                /* crest plate */
+  /* per-bot helm gear — same rig, distinct silhouettes */
+  if(gear==='ZEROX'){                       /* twin blade horns */
+    c.fillStyle=steelD;
+    c.beginPath(); c.moveTo(-5.5,-29.5); c.lineTo(-8.5,-34.5); c.lineTo(-3.4,-31.2); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(5.5,-29.5); c.lineTo(8.5,-34.5); c.lineTo(3.4,-31.2); c.closePath(); c.fill();
+    c.fillStyle=lit; c.fillRect(-0.8,-34.6,1.6,3.6);
+  } else if(gear==='SHADDAI'){              /* gold crown prongs */
+    c.fillStyle=goldD; c.fillRect(-4.6,-33.8,9.2,1.8);
+    c.fillStyle=gold;
+    c.fillRect(-4.6,-35.6,1.8,2.2); c.fillRect(-0.9,-36.2,1.8,2.8); c.fillRect(2.8,-35.6,1.8,2.2);
+  } else if(gear==='ORACLE'){               /* halo ring + seer gem */
+    c.strokeStyle=lit; c.lineWidth=1.5; c.beginPath(); c.ellipse(0,-34.6,6.4,2.0,0,0,6.29); c.stroke();
+    c.fillStyle=pale; c.beginPath(); c.arc(0,-31.8,1.7,0,6.29); c.fill();
+  } else if(gear==='QUILL'){                /* quill spikes sweeping back */
+    c.strokeStyle=mid; c.lineWidth=1.8;
+    for(var qi=0;qi<3;qi++){
+      c.beginPath(); c.moveTo(-F*2,-30.5+qi*2.2);
+      c.quadraticCurveTo(-F*8,-32+qi*2.4,-F*(12+qi*1.5),-29.5+qi*2.6); c.stroke();
+    }
+    c.fillStyle=gold; c.fillRect(-0.8,-33.2,1.6,2.6);
+  } else if(gear==='NEXUS'){                /* dual antennae, lit tips */
+    c.strokeStyle=steelL; c.lineWidth=1.5;
+    c.beginPath(); c.moveTo(-3.4,-30.8); c.lineTo(-5.2,-35.2); c.stroke();
+    c.beginPath(); c.moveTo(3.4,-30.8); c.lineTo(5.2,-35.2); c.stroke();
+    c.fillStyle=pale;
+    c.beginPath(); c.arc(-5.2,-35.6,1.5,0,6.29); c.fill();
+    c.beginPath(); c.arc(5.2,-35.6,1.5,0,6.29); c.fill();
+  } else if(gear==='PIKADON'){              /* swept ear-spikes */
+    c.fillStyle=deep;
+    c.beginPath(); c.moveTo(-6.2,-28.6); c.lineTo(-10.5,-33.8); c.lineTo(-3.8,-30.6); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(6.2,-28.6); c.lineTo(10.5,-33.8); c.lineTo(3.8,-30.6); c.closePath(); c.fill();
+    c.fillStyle=lit; c.fillRect(-0.8,-33.6,1.6,3.0);
+  } else if(gear==='TURTLE'){               /* smooth shell dome, no crest fin */
+    sl(0,-31.4,9.6,deep,lit);
+  } else if(gear==='ASIMOV'){               /* silver fin, classic robot */
+    c.fillStyle=steelL; c.fillRect(-0.9,-35.8,1.8,5.2);
+    c.fillStyle=pale; c.beginPath(); c.arc(0,-36.2,1.6,0,6.29); c.fill();
+  } else {                                  /* JOLT / default: antenna + lamp */
+    c.strokeStyle=lit; c.lineWidth=1.6;
+    c.beginPath(); c.moveTo(F*2.5,-30.8); c.lineTo(F*4.5,-35.0); c.stroke();
+    c.fillStyle='#ff3860'; c.beginPath(); c.arc(F*4.5,-35.4,2.1,0,6.29); c.fill();
+    c.fillStyle=pale; c.beginPath(); c.arc(F*4.5,-35.4,0.9,0,6.29); c.fill();
+  }
+  /* visor: dark band biased to the facing side, one bright eye slit */
+  c.fillStyle='#03130c'; c.fillRect(F>0?-4.6:-6.6,-26.9,11.2,3.6);
+  c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(F>0?-4.6:-6.6,-23.9,11.2,0.7);
+  c.fillStyle='#eaffff'; c.fillRect(F>0?1.2:-5.6,-25.9,4.4,1.7);
+  c.fillStyle=lit; c.fillRect(F>0?5.6:-6.8,-25.9,1.2,1.7);
+  /* dramatic rim light in the runner's colour, down the facing silhouette */
+  c.strokeStyle=lit; c.globalAlpha=0.9; c.lineWidth=1.5; c.beginPath();
+  c.moveTo(F*3.7,-30.4); c.lineTo(F*5.8,-28.1); c.lineTo(F*6.9,-25.6); c.lineTo(F*7.7,-23.0);
+  c.stroke();
+  c.globalAlpha=0.55; c.beginPath();
+  c.moveTo(F*7.4,-18.6); c.lineTo(F*7.1,-13.4); c.lineTo(F*6.6,-10.6);
+  c.stroke(); c.globalAlpha=1;
+  c.restore();
+}
+function roundRect(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r);
+  c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath();
+}
+function drawScene(c,sc,camX,y0,hh,scale){
+  c.save();
+  c.translate(0,y0);
+  var Hh=hh;
+  // Sky gradient.
+  var sky=c.createLinearGradient(0,0,0,Hh);
+  sky.addColorStop(0,'#0b2a1e'); sky.addColorStop(0.55,'#071a12'); sky.addColorStop(1,'#030a06');
+  c.fillStyle=sky; c.fillRect(0,0,W,Hh);
+  // Low sun + glow.
+  var sun=c.createRadialGradient(760,90,4,760,90,120);
+  sun.addColorStop(0,'rgba(255,215,94,0.9)'); sun.addColorStop(0.25,'rgba(255,179,71,0.35)'); sun.addColorStop(1,'rgba(255,179,71,0)');
+  c.fillStyle=sun; c.fillRect(620,-10,300,240);
+  c.fillStyle='#ffd75e'; c.beginPath(); c.arc(760,90,26,0,6.29); c.fill();
+  // Far jungle silhouettes (parallax 0.25).
+  c.fillStyle='#0d3a26';
+  for(var i=0;i<14;i++){
+    var tx=((i*173 - camX*0.25)%(W+200))-100;
+    var th=90+((i*67)%70);
+    c.beginPath();
+    c.moveTo(tx,300); c.lineTo(tx+30,300-th); c.lineTo(tx+60,300);
+    c.closePath(); c.fill();
+    c.beginPath(); c.arc(tx+30,300-th,18,0,6.29); c.fill();
+  }
+  // Mid trees (parallax 0.5).
+  c.fillStyle='#0f4a2e';
+  for(var j=0;j<10;j++){
+    var mx=((j*211 - camX*0.5)%(W+260))-130;
+    var mh=130+((j*53)%60);
+    c.fillRect(mx,340-mh,14,mh);
+    c.beginPath(); c.arc(mx+7,340-mh,34,0,6.29); c.fill();
+    c.beginPath(); c.arc(mx-16,340-mh+14,22,0,6.29); c.fill();
+    c.beginPath(); c.arc(mx+30,340-mh+14,22,0,6.29); c.fill();
+  }
+  // Ground: layered earth with grass top, pits as dark gaps.
+  var gy=GY*(hh/H);
+  c.fillStyle='#123d24'; c.fillRect(0,gy,W,hh-gy);
+  c.fillStyle='#0a2417'; c.fillRect(0,gy+26,W,hh-gy-26);
+  c.fillStyle='#2f8f52'; c.fillRect(0,gy,W,7);
+  // Pits: black gaps with thorn teeth at the lips.
+  sc.pits.forEach(function(p){
+    c.fillStyle='#01040a';
+    c.fillRect(p.x,gy,p.w,hh-gy);
+    c.fillStyle='#123d24';
+    c.beginPath(); c.moveTo(p.x,gy); c.lineTo(p.x+10,gy+16); c.lineTo(p.x+20,gy); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(p.x+p.w-20,gy); c.lineTo(p.x+p.w-10,gy+16); c.lineTo(p.x+p.w,gy); c.closePath(); c.fill();
+  });
+  // Quicksand patches.
+  sc.sand.forEach(function(s){
+    c.fillStyle='rgba(190,150,60,0.55)';
+    c.fillRect(s.x,gy,s.w,10);
+    c.fillStyle='rgba(120,90,30,0.8)';
+    for(var q=0;q<5;q++){ c.fillRect(s.x+8+q*16,gy+3,8,3); }
+  });
+  // Thorn logs.
+  sc.logs.forEach(function(l){
+    c.fillStyle='#5e3a1a'; c.fillRect(l.x,gy-l.h,l.w,l.h);
+    c.fillStyle='#7a4d24'; c.fillRect(l.x,gy-l.h,l.w,6);
+    c.fillStyle='#ff3860';
+    for(var sp=0;sp<l.spikes;sp++){
+      var sx2=l.x+8+sp*(l.w-16)/Math.max(1,l.spikes-1);
+      c.beginPath(); c.moveTo(sx2-5,gy-l.h); c.lineTo(sx2,gy-l.h-12); c.lineTo(sx2+5,gy-l.h); c.closePath(); c.fill();
+    }
+  });
+  // Climb wall + ladder.
+  if(sc.wall){
+    var wl=sc.wall;
+    c.fillStyle='#3a3f4a'; c.fillRect(wl.x,wl.top,wl.w,GY-wl.top);
+    c.fillStyle='#565d6e'; c.fillRect(wl.x,wl.top,wl.w,8);
+    c.fillStyle='#23272f';
+    for(var wy=wl.top+18;wy<GY-8;wy+=18) c.fillRect(wl.x+4,wy,wl.w-8,4);
+    c.fillStyle='#ffd75e';
+    c.fillRect(wl.x+8,wl.top+6,4,GY-wl.top-6); c.fillRect(wl.x+wl.w-12,wl.top+6,4,GY-wl.top-6);
+    for(var wr=wl.top+16;wr<GY-8;wr+=16) c.fillRect(wl.x+8,wr,wl.w-16,3);
+  }
+  // Ledges.
+  sc.ledges.forEach(function(lg){
+    c.fillStyle='#1d5c38'; c.fillRect(lg.x,lg.y,lg.w,lg.h);
+    c.fillStyle='#2f8f52'; c.fillRect(lg.x,lg.y,lg.w,4);
+  });
+  // Vines hanging from the canopy.
+  sc.vines.forEach(function(vn){
+    c.strokeStyle='#1d7a44'; c.lineWidth=4;
+    c.beginPath(); c.moveTo(vn.x,vn.top); c.lineTo(vn.x,vn.top+vn.len); c.stroke();
+    c.strokeStyle='#2f8f52'; c.lineWidth=2;
+    c.beginPath(); c.moveTo(vn.x,vn.top); c.lineTo(vn.x+6,vn.top+vn.len*0.5); c.stroke();
+    c.fillStyle='#00ff88';
+    c.beginPath(); c.arc(vn.x,vn.top+vn.len,5,0,6.29); c.fill();
+  });
+  // Spark-eels: glowing segmented serpents patrolling the ground.
+  sc.eels.forEach(function(e){
+    var seg=6;
+    for(var sgi=seg;sgi>=0;sgi--){
+      var ex2=e.x+sgi*5*e.dir, ey2=GY-10+Math.sin(state.frame/9+sgi)*3;
+      c.fillStyle=sgi===0?'#ff3860':(sgi%2?'#7a1030':'#b81f45');
+      c.beginPath(); c.arc(ex2,ey2,sgi===0?8:6,0,6.29); c.fill();
+    }
+    c.fillStyle='#fff';
+    c.fillRect(e.x+3*e.dir-1,GY-13,2,2);
+  });
+  // Sparks: rotating gold diamonds with glow.
+  sc.sparks.forEach(function(sp){
+    if(sp.taken) return;
+    var pul=1+Math.sin((state.frame+sp.anim)/12)*0.15;
+    var g2=c.createRadialGradient(sp.x,sp.y,1,sp.x,sp.y,22);
+    g2.addColorStop(0,'rgba(255,215,94,0.7)'); g2.addColorStop(1,'rgba(255,215,94,0)');
+    c.fillStyle=g2; c.fillRect(sp.x-22,sp.y-22,44,44);
+    c.save(); c.translate(sp.x,sp.y); c.rotate(Math.sin((state.frame+sp.anim)/20)*0.3); c.scale(pul,pul);
+    c.fillStyle='#ffd75e';
+    c.beginPath(); c.moveTo(0,-11); c.lineTo(8,0); c.lineTo(0,11); c.lineTo(-8,0); c.closePath(); c.fill();
+    c.fillStyle='#fff3c4';
+    c.beginPath(); c.moveTo(0,-6); c.lineTo(4,0); c.lineTo(0,6); c.lineTo(-4,0); c.closePath(); c.fill();
+    c.restore();
+  });
+  // Treasure chest.
+  if(sc.chest && !sc.chest.taken){
+    var ch2=sc.chest;
+    c.fillStyle='#7a4d24'; c.fillRect(ch2.x-16,ch2.y-4,32,20);
+    c.fillStyle='#ffd75e'; c.fillRect(ch2.x-16,ch2.y-4,32,5);
+    c.fillStyle='#ffd75e'; c.fillRect(ch2.x-3,ch2.y-4,6,20);
+    c.fillStyle='rgba(255,215,94,0.5)';
+    c.beginPath(); c.arc(ch2.x,ch2.y-8,10+Math.sin(state.frame/10)*2,0,6.29); c.fill();
+  }
+  // Foreground ferns (near layer, no parallax — they belong to the scene).
+  c.fillStyle='#0a2a1c';
+  for(var fi=0;fi<12;fi++){
+    var fx=((fi*167)%(W+80))-40;
+    c.beginPath(); c.moveTo(fx,Hh); c.lineTo(fx+8,Hh-26-((fi*29)%18)); c.lineTo(fx+16,Hh); c.closePath(); c.fill();
+  }
+  // Particles (spark bursts).
+  state.particles.forEach(function(p){
+    c.globalAlpha=Math.max(0,1-p.t/p.life);
+    c.fillStyle=p.color; c.fillRect(p.x-2,p.y-2,4,4);
+    c.globalAlpha=1;
+  });
+  // Fireflies.
+  state.fireflies.forEach(function(f){
+    var a=0.4+Math.sin(state.frame/20+f.ph)*0.35;
+    c.globalAlpha=Math.max(0.08,a);
+    c.fillStyle='#a8ffd0';
+    c.beginPath(); c.arc(f.x,f.y,2.2,0,6.29); c.fill();
+    c.globalAlpha=1;
+  });
+  c.restore();
+}
+function render(){
+  ctx.clearRect(0,0,W,H);
+  if(state.phase==='title'){
+    drawTitle();
+    return;
+  }
+  if(state.phase==='watch' && state.watch){
+    // Two stacked lanes, one per bot.
+    var lanes=state.watch.bots;
+    lanes.forEach(function(b,i){
+      var y0=i*(H/2), hh=H/2;
+      ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,y0,W,hh);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0,y0,W,hh); ctx.clip();
+      drawScene(ctx,b.sc,0,y0,hh,1);
+      drawRunnerInLane(b.r,y0,hh);
+      ctx.restore();
+      ctx.fillStyle='#fff'; ctx.font='700 13px "Share Tech Mono", monospace';
+      ctx.fillText(b.id+' · SCENE '+(b.scene+1)+' · '+(BOT_STYLE[b.id]||BOT_STYLE.ORBIT).label, 12, y0+20);
+      if(state.watch.winner===b.id){
+        ctx.fillStyle='#ffd75e'; ctx.font='800 20px Orbitron, sans-serif';
+        ctx.fillText('★ WINNER', W-160, y0+26);
+      }
+    });
+    ctx.fillStyle='rgba(0,255,136,0.4)'; ctx.fillRect(0,H/2-1,W,2);
+    return;
+  }
+  var sc=state.sceneData; if(!sc) return;
+  if(state.cam){
+    // Chase cam: zoom 1.5x centred on the runner.
+    var px=state.player?state.player.x+11:480, py=state.player?state.player.y+17:300;
+    ctx.save();
+    ctx.translate(W/2,H/2); ctx.scale(1.5,1.5); ctx.translate(-px,-py);
+    drawScene(ctx,sc,px-W/2,0,H,1);
+    if(state.player) drawRunner(ctx,state.player,1);
+    if(state.bot) drawGhost(ctx,state.bot);
+    ctx.restore();
+    ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,W,26);
+    ctx.fillStyle='#00ff88'; ctx.font='700 12px "Share Tech Mono", monospace';
+    ctx.fillText('CHASE CAM — V for wide view', 12, 17);
+  } else {
+    drawScene(ctx,sc,0,0,H,1);
+    if(state.player) drawRunner(ctx,state.player,1);
+    if(state.bot) drawGhost(ctx,state.bot);
+  }
+  if(state.over){
+    ctx.fillStyle='rgba(2,10,6,0.72)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#fff'; ctx.font='900 34px Orbitron, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.result==='win'?'JUNGLE CLEARED!':(state.result&&state.result.indexOf('watch:')===0?'WATCH OVER':'RUN OVER'), W/2, H/2-30);
+    ctx.font='600 16px Rajdhani, sans-serif'; ctx.fillStyle='#ffd75e';
+    ctx.fillText('Score '+state.score+' · Sparks '+state.sparks+' · Best '+state.best, W/2, H/2+4);
+    ctx.fillStyle='#c6e8d4'; ctx.font='500 14px Rajdhani, sans-serif';
+    ctx.fillText('Press R to run again — or WATCH the bots.', W/2, H/2+34);
+    ctx.textAlign='left';
+  }
+}
+function drawGhost(c,b){
+  c.save(); c.globalAlpha=0.55;
+  drawRunner(c,b,1);
+  c.restore();
+  c.fillStyle='#b78cff'; c.font='700 11px "Share Tech Mono", monospace';
+  c.fillText('QUILL · SCENE '+(state.scene+1), b.x-10, b.y-12);
+}
+function drawRunnerInLane(r,y0,hh){
+  // Lanes are half-height: draw the runner scaled into the lane.
+  ctx.save();
+  ctx.translate(0,y0);
+  ctx.scale(1,hh/H);
+  drawRunner(ctx,r,1);
+  ctx.restore();
+}
+function drawTitle(){
+  drawScene(ctx,lfsrScene(0),0,0,H,1);
+  ctx.fillStyle='rgba(2,10,6,0.55)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#00ff88'; ctx.font='900 52px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('SPARKRUNNER', W/2, 190);
+  ctx.fillStyle='#ffd75e'; ctx.font='600 18px Rajdhani, sans-serif';
+  ctx.fillText('JOLT sprints the LFSR jungle — 255 scenes, one seed, 3:00 on the clock.', W/2, 226);
+  ctx.fillStyle='#c6e8d4'; ctx.font='500 16px Rajdhani, sans-serif';
+  ctx.fillText('▶ RUN   ·   ⚔ RACE A BOT   ·   👁 WATCH THE BOTS RACE', W/2, 268);
+  ctx.fillText('← → run · SPACE jump · B swing · ↑ ↓ climb · V chase cam · P pause', W/2, 296);
+  ctx.fillStyle='#5d7a6b'; ctx.font='500 13px "Share Tech Mono", monospace';
+  ctx.fillText('Best score: '+state.best, W/2, 330);
+  ctx.textAlign='left';
+}
+
+/* ---------- input ---------- */
+function bindBtn(id,fn){
+  var e=$(id); if(e) e.addEventListener('click',fn);
+}
+function bindHold(id,down,up){
+  var e=$(id); if(!e) return;
+  var on=function(ev){ if(ev&&ev.preventDefault) ev.preventDefault(); down(); };
+  var off=function(ev){ if(ev&&ev.preventDefault) ev.preventDefault(); up(); };
+  e.addEventListener('pointerdown',on); e.addEventListener('pointerup',off);
+  e.addEventListener('pointerleave',off); e.addEventListener('pointercancel',off);
+}
+bindBtn('btnSolo',function(){ startGame('solo'); });
+bindBtn('btnRace',function(){ startGame('race'); });
+bindBtn('btnWatch',function(){ startGame('watch'); });
+bindBtn('btnFP',function(){ toggleCam(); });
+bindBtn('btnPause',function(){ togglePause(); });
+bindBtn('resumeBtn',function(){ togglePause(); });
+bindBtn('saveBtn',function(){ saveState(); });
+bindBtn('loadBtn',function(){ loadState(); });
+bindBtn('restartBtn',function(){ startGame(state.mode==='watch'?'solo':state.mode); });
+bindBtn('quitArcadeBtn',function(){ location.href='../arcade.html'; });
+bindBtn('startBtn',function(){ togglePause(); });
+bindBtn('selectBtn',function(){ toggleCam(); });
+bindBtn('btnA',function(){ state.keys['Space']=true; setTimeout(function(){ state.keys['Space']=false; },120); });
+bindBtn('btnB',function(){ state.keys['KeyB']=true; setTimeout(function(){ state.keys['KeyB']=false; },200); });
+document.addEventListener('keydown',function(e){
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code)>=0) e.preventDefault();
+  state.keys[e.code]=true;
+  if(e.code==='KeyP'){ togglePause(); return; }
+  if(e.code==='KeyM'){ toggleMute(); return; }
+  if(e.code==='KeyV'){ toggleCam(); return; }
+  if(e.code==='KeyR' && state.phase!=='title'){ startGame(state.mode==='watch'?'solo':state.mode); return; }
+  if(e.code==='Enter' && state.phase==='title'){ startGame('solo'); return; }
+});
+document.addEventListener('keyup',function(e){ state.keys[e.code]=false; });
+// Handheld shell: D-pad + touch.
+(function(){
+  var deck=document.querySelectorAll('#shellDeck [data-k]');
+  for(var i=0;i<deck.length;i++){
+    (function(btn){
+      var k=btn.getAttribute('data-k');
+      var set=function(v){
+        if(k==='left') state.touch.left=v;
+        else if(k==='right') state.touch.right=v;
+        else if(k==='up') state.touch.up=v;
+        else if(k==='down'||k==='down2') state.touch.down=v;
+      };
+      btn.addEventListener('pointerdown',function(ev){ ev.preventDefault(); set(true); });
+      btn.addEventListener('pointerup',function(ev){ ev.preventDefault(); set(false); });
+      btn.addEventListener('pointerleave',function(){ set(false); });
+      btn.addEventListener('pointercancel',function(){ set(false); });
+    })(deck[i]);
+  }
+  var ab=document.getElementById('btnA'), bb=document.getElementById('btnB');
+  if(ab){
+    ab.addEventListener('pointerdown',function(ev){ ev.preventDefault(); state.touch.up=true; });
+    ab.addEventListener('pointerup',function(ev){ ev.preventDefault(); state.touch.up=false; });
+    ab.addEventListener('pointerleave',function(){ state.touch.up=false; });
+  }
+  if(bb){
+    bb.addEventListener('pointerdown',function(ev){ ev.preventDefault(); state.touch.swing=true; });
+    bb.addEventListener('pointerup',function(ev){ ev.preventDefault(); state.touch.swing=false; });
+    bb.addEventListener('pointerleave',function(){ state.touch.swing=false; });
+  }
+  if(('ontouchstart' in window)||(typeof navigator!=='undefined'&&navigator.maxTouchPoints>0)){
+    document.body.classList.add('touch');
+  }
+  // Tap the stage to jump on touch devices.
+  cv.addEventListener('pointerdown',function(ev){
+    if(!document.body.classList.contains('touch')) return;
+    state.touch.up=true; setTimeout(function(){ state.touch.up=false; },140);
+  });
+})();
+// Fireflies seeded for the title screen.
+for(var fi2=0;fi2<20;fi2++){
+  state.fireflies.push({x:Math.random()*W,y:80+Math.random()*300,ph:Math.random()*6.28,sp:0.2+Math.random()*0.5});
+}
+
+/* ---------- loop ---------- */
+function loop(){
+  requestAnimationFrame(loop);
+  if(!state.paused && (state.phase==='play'||state.phase==='watch')) tick();
+  render();
+}
+if(q.get('auto')==='play'){ startGame('solo'); }
+else if(q.get('auto')==='watch'){ startGame('watch'); }
+else if(q.get('auto')==='race'){ startGame('race'); }
+requestAnimationFrame(loop);
+
+/* ---------- test API (vm harness) ---------- */
+if(typeof window!=='undefined'){
+  window.__sparkrunner={
+    state:state, lfsrScene:lfsrScene, lfsrStep:lfsrStep, lfsrBack:lfsrBack,
+    startGame:startGame, startWatch:startWatch,
+    togglePause:togglePause, toggleCam:toggleCam, toggleMute:toggleMute,
+    saveState:saveState, loadState:loadState,
+    GOAL_SCENES:GOAL_SCENES, RUN_TIME:RUN_TIME, GY:GY, W:W, H:H,
+    debugKey:function(code,down){ state.keys[code]=down; },
+    debugTouch:function(k,v){ state.touch[k]=v; },
+    debugPlace:function(x,y){ if(state.player){ state.player.x=x; state.player.y=y; state.player.vx=0; state.player.vy=0; } },
+    debugSetTime:function(t){ state.timeLeft=t; },
+    muted:function(){ return muted; },
+    debugSetLives:function(n){ state.lives=n; },
+    debugKill:function(){ if(state.player) killRunner(state.player,'test'); },
+    watchCursor:function(){ return feWatchIdx; }
+  };
+}
+</script>
+</body>
+</html>

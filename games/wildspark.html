@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WILDSPARK — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<!--
+  WILDSPARK — our own creature battler (original IP, clean-room).
+  Battle mechanics are documented behaviour learned from the pokeemerald /
+  pokecrystal byte-matching decomps (SPEC lane only — read, never copied);
+  Tuxemon (GPL-3) informed the roster structure only. EVERY creature, name,
+  type, move, person, place and line of dialogue in this file is original.
+  Three.js r128 (MIT, Copyright 2010-2021 Three.js Authors) vendored at
+  /vendor/three.min.js — licence notice kept in that file. No WebXR in v1;
+  the first-person grove + 3D battle arena are the verified modes.
+  No copyrighted characters, names, sprites or sounds. Mechanics are free;
+  expression is ours.
+-->
+<style>
+  :root{--bg:#02080a;--panel:#071009;--border:rgba(120,220,160,.18);--ember:#ff9a3d;--leaf:#3ddc78;--tide:#35c8ff;--spark:#ffe14d;--stone:#c9a06a;--shade:#b06bff;--bloom:#ff6fae;--gale:#7df0e0;--green:#00ff88;--gold:#ffd75e;--red:#ff3860;--text:#cfe6d8;--dim:#6b8a7a}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.10),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(5,12,8,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12);overflow:hidden}
+  #game{position:relative;width:100%;aspect-ratio:16/9;background:#01060a}
+  #game canvas{display:block;width:100%;height:100%}
+  .screen{position:absolute;inset:0;display:none}
+  .screen.on{display:block}
+  #hud{position:absolute;inset:0;pointer-events:none;z-index:4;font-family:'Share Tech Mono',monospace}
+  #hud .hud-tl{position:absolute;top:10px;left:12px;font-size:13px;color:#eaf6ff;text-shadow:0 0 8px rgba(0,255,136,.8)}
+  #hud .hud-tl b{color:var(--gold)}
+  #hud .hud-tr{position:absolute;top:10px;right:12px;font-size:13px;color:#eaf6ff;text-align:right;text-shadow:0 0 8px rgba(0,255,136,.8)}
+  #hud .hud-bl{position:absolute;left:12px;bottom:10px;font-size:11px;color:var(--dim);letter-spacing:1px}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .mbtn:disabled{opacity:.45;cursor:default}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--green);font-size:12px}
+  /* ---- dialogue box (shared by story + NPCs) ---- */
+  #dlg{position:absolute;left:6%;right:6%;bottom:5%;z-index:8;background:rgba(3,10,7,.94);border:1px solid rgba(0,255,136,.45);border-radius:10px;padding:12px 16px;display:none;box-shadow:0 0 30px rgba(0,255,136,.25)}
+  #dlg .who{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:4px}
+  #dlg .txt{font-size:16px;line-height:1.5;color:#eaf6ff;min-height:44px}
+  #dlg .hint{font-size:10px;color:var(--dim);text-align:right;font-family:'Share Tech Mono',monospace}
+  /* ---- cutscene ---- */
+  #cutPanel{position:absolute;inset:0;z-index:9;display:none;background:radial-gradient(120% 100% at 50% 0%,#0a2a1a,#02080a)}
+  #cutPanel .art{position:absolute;inset:0 0 34% 0}
+  #cutPanel .art canvas{width:100%;height:100%;display:block}
+  #cutPanel .cap{position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(0deg,rgba(2,8,6,.96),rgba(2,8,6,.75));border-top:1px solid rgba(0,255,136,.3);padding:14px 20px}
+  #cutPanel .cap .who{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold)}
+  #cutPanel .cap .txt{font-size:17px;line-height:1.55;color:#eaf6ff;margin-top:6px;min-height:52px}
+  #cutPanel .cap .hint{font-size:10px;color:var(--dim);text-align:right;font-family:'Share Tech Mono',monospace}
+  /* ---- battle HUD (HTML over the 3D arena) ---- */
+  .bbar{position:absolute;z-index:5;font-family:'Share Tech Mono',monospace;min-width:210px;max-width:46%}
+  .bbar .nm{font-size:13px;color:#fff;letter-spacing:1px;text-shadow:0 0 8px rgba(0,0,0,.9)}
+  .bbar .lv{color:var(--gold);font-size:11px;margin-left:6px}
+  .bbar .hpwrap{height:8px;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.6);margin-top:3px}
+  .bbar .hpwrap i{display:block;height:100%;background:linear-gradient(90deg,#00ff88,#ffd75e)}
+  .bbar .hpwrap i.low{background:linear-gradient(90deg,#ff3860,#ff9a3d)}
+  .bbar .hpnum{font-size:10px;color:#cfe6d8;margin-top:2px}
+  .bbar .st{font-size:10px;color:#ff9a3d;letter-spacing:1px}
+  #foeBar{top:12px;left:14px}
+  #myBar{bottom:118px;right:14px;text-align:right}
+  #myBar .hpwrap i{margin-left:auto}
+  #battleMenu{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;gap:6px;padding:10px 12px;background:linear-gradient(0deg,rgba(2,8,6,.97),rgba(2,8,6,.6))}
+  #battleMenu .bcol{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  #battleMenu button{padding:9px 6px;background:#0a1a12;border:1px solid rgba(0,255,136,.35);color:#eaf6ff;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  #battleMenu button small{display:block;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);margin-top:2px;text-transform:none}
+  #battleMenu button:disabled{opacity:.4;cursor:default}
+  #battleMenu button.sel{border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,94,.4)}
+  #battleLog{position:absolute;top:12px;right:14px;z-index:5;width:300px;max-width:44%;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.5;color:#cfe6d8;text-align:right;text-shadow:0 1px 2px #000;pointer-events:none}
+  #battleLog div{opacity:.9}
+  /* ---- menu / roster / versus screens (HTML) ---- */
+  .panel{position:absolute;inset:0;z-index:5;overflow:auto;padding:18px 22px;background:linear-gradient(180deg,rgba(2,10,6,.97),rgba(2,8,10,.97))}
+  .panel h2{font-family:'Orbitron',sans-serif;color:#fff;font-size:18px;letter-spacing:2px;margin:0 0 4px}
+  .panel h2 span{color:var(--green)}
+  .panel .sub{color:var(--dim);font-size:12px;font-family:'Share Tech Mono',monospace;margin-bottom:12px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .card{background:#07130c;border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;text-align:center}
+  .card.sel{border-color:var(--gold);box-shadow:0 0 14px rgba(255,215,94,.35)}
+  .card canvas{width:120px;height:120px}
+  .card .nm{font-family:'Orbitron',sans-serif;font-size:12px;color:#fff;letter-spacing:1px}
+  .card .meta{font-size:11px;color:var(--dim);font-family:'Share Tech Mono',monospace;margin-top:2px}
+  .card .ty{font-size:10px;letter-spacing:1px;font-family:'Share Tech Mono',monospace}
+  .bigbtn{display:block;width:100%;margin:8px 0;padding:13px;background:#0a1a12;border:1px solid rgba(0,255,136,.4);color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;text-transform:uppercase}
+  .bigbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:3px;text-transform:none;letter-spacing:0}
+  .bigbtn:disabled{opacity:.45;cursor:default}
+  .roomcode{font-family:'Orbitron',sans-serif;font-size:34px;letter-spacing:10px;color:var(--gold);text-align:center;margin:10px 0;text-shadow:0 0 18px rgba(255,215,94,.5)}
+  input.txt{width:100%;padding:11px;background:#04120a;border:1px solid rgba(0,255,136,.4);color:#fff;font-family:'Orbitron',sans-serif;font-size:18px;letter-spacing:6px;text-align:center;text-transform:uppercase}
+  /* ---- handheld shell (MOBILE PLAY standard) ---- */
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #stageWrap{border-radius:10px;overflow:hidden;border:1px solid rgba(0,255,136,.25)}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch .dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:2px}
+  body.touch .dpad button{font-size:18px;border-radius:8px}
+  body.touch .dpad .u{grid-column:2;grid-row:1}body.touch .dpad .l{grid-column:1;grid-row:2}body.touch .dpad .r{grid-column:3;grid-row:2}body.touch .dpad .d{grid-column:2;grid-row:3}
+  body.touch .abtns{display:flex;gap:10px;align-items:flex-start}
+  body.touch .abtns button{width:62px;height:62px;border-radius:50%;font-size:15px}
+  body.touch .abtns .btnB{border-color:rgba(255,56,96,.6);color:#ff9db1}
+  body.touch .startrow{display:flex;flex-direction:column;gap:6px}
+  body.touch .startrow button{padding:8px 12px;font-size:10px;letter-spacing:2px;border-radius:16px}
+  #pauseOverlay{position:absolute;inset:0;z-index:20;display:none;background:rgba(2,6,4,.88);text-align:center;padding-top:16%}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px}
+  #pauseOverlay .mbtn{max-width:280px;margin:8px auto;display:block}
+  /* ---- first-person polish (dim 10): compass + LOCK gauges, FP frame, speed lines ---- */
+  #hudCompass{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:11px;color:#cfe6d8;letter-spacing:2px;text-shadow:0 1px 2px #000;white-space:nowrap}
+  #hudLock{position:absolute;top:30px;right:12px;font-size:11px;color:var(--gold);text-align:right;letter-spacing:1px;text-shadow:0 1px 2px #000}
+  #fpLock{position:absolute;top:70px;left:14px;z-index:5;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold);letter-spacing:1px;text-shadow:0 1px 2px #000;background:rgba(2,8,6,.55);border:1px solid rgba(255,215,94,.35);padding:6px 10px;display:none}
+  .fp-frame{position:absolute;inset:0;pointer-events:none;z-index:3;background:radial-gradient(125% 105% at 50% 45%,transparent 60%,rgba(2,8,6,.5) 100%)}
+  .fp-frame i{position:absolute;width:26px;height:26px;border:0 solid rgba(255,215,94,.55)}
+  .fp-frame i.tl{top:10px;left:10px;border-top-width:2px;border-left-width:2px}
+  .fp-frame i.tr{top:10px;right:10px;border-top-width:2px;border-right-width:2px}
+  .fp-frame i.bl{bottom:34px;left:10px;border-bottom-width:2px;border-left-width:2px}
+  .fp-frame i.br{bottom:34px;right:10px;border-bottom-width:2px;border-right-width:2px}
+  .fp-frame .glare{position:absolute;top:-25%;left:10%;width:30%;height:150%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.045) 45%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.045) 55%,transparent);transform:rotate(8deg)}
+  #fpFx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+  /* ---- fullscreen (FULLSCREEN standard): the shell — stage on desktop, the
+     whole handheld console on phones — goes true fullscreen via the
+     Fullscreen API, the 16:9 stage keeping aspect and filling the frame. ---- */
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*960/540));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*960/540))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(100vw,calc((100vh - 190px)*960/540))}
+  @media (max-width:640px){ #battleLog{display:none} .bbar{min-width:150px}
+    .topbar .tag{display:none}
+    #hud .hud-tl{font-size:11px} #hud .hud-tr{font-size:10px;top:28px}
+    #hudCompass{display:none}
+    #hudLock{top:46px;font-size:10px}
+    #fpLock{top:64px;font-size:11px;max-width:72%}
+    body.touch .dpad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px)}
+    body.touch .abtns button{width:54px;height:54px}
+    body.touch #shellDeck{gap:4px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:61,220,120}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>WILD<span>SPARK</span></h1><span class="tag">Ember Hollow · Original Creature Battler</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>◆ SHADDAI HANDHELD</span><span class="shell-led">● REC</span><span>WILDSPARK</span></div>
+    <div id="stageWrap"><div id="game">
+      <!-- MENU -->
+      <div class="screen panel on" id="screenMenu">
+        <h2>WILD<span>SPARK</span></h2>
+        <div class="sub">EMBER HOLLOW — the grove's wild Sparks are going dim. One trainer, one rival, one keeper hiding something.</div>
+        <button class="bigbtn" id="btnStory">▶ Begin the Story<small>First-person walk through Ember Hollow · story beats · rival battles · Keeper finale</small></button>
+        <button class="bigbtn" id="btnContinue">↻ Continue<small id="continueSub">No save found yet</small></button>
+        <button class="bigbtn" id="btnWatch">👁 Watch — Bot Exhibition<small>VEX vs ORBIT vs HALO — personality bots battle, imperfect on purpose</small></button>
+        <button class="bigbtn" id="btnVersus">⚔ Local Versus — 2 Players<small>Battle saved parties on one device · draft pick if a side has no save</small></button>
+        <button class="bigbtn" id="btnOnline">🌐 Room-Code Versus — Online<small>Host a 4-letter room, a friend joins · relay on the arcade server (LAN/local LIVE · public internet SIM)</small></button>
+        <button class="bigbtn" id="btnRoster">▦ Roster &amp; Collection<small>32 original creatures · 8 original types · party of 6 · collection box</small></button>
+        <button class="bigbtn" id="btnHow">? How to Play<small>Types · catching · evolution · controls</small></button>
+        <div class="sub" id="menuSaveLine" style="margin-top:10px"></div>
+      </div>
+      <!-- EXPLORE (first-person 3D grove / classic top-down fallback) -->
+      <div class="screen" id="screenExplore">
+        <div id="explore3d" style="position:absolute;inset:0"></div>
+        <canvas id="explore2d" style="position:absolute;inset:0;width:100%;height:100%;display:none"></canvas>
+        <div id="hud"><div class="hud-tl" id="hudExplore">EMBER HOLLOW · <b id="hudBeat">Intro</b></div><div class="hud-tr" id="hudParty"></div><div id="hudCompass"></div><div id="hudLock"></div><div class="hud-bl">WASD walk · drag to look · E talk / interact · C classic view · P pause</div></div>
+        <div class="fp-frame"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i><span class="glare"></span></div>
+        <div id="dlg"><div class="who" id="dlgWho"></div><div class="txt" id="dlgTxt"></div><div class="hint">SPACE / CLICK advance · ESC close</div></div>
+      </div>
+      <!-- BATTLE -->
+      <div class="screen" id="screenBattle">
+        <div id="arena3d" style="position:absolute;inset:0"></div>
+        <div id="battleLog"></div>
+        <div id="fpLock"></div>
+        <div class="fp-frame"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i><span class="glare"></span></div>
+        <div class="bbar" id="foeBar"><div class="nm"><span id="foeName">—</span><span class="lv" id="foeLv"></span></div><div class="hpwrap"><i id="foeHp" style="width:100%"></i></div><div class="hpnum" id="foeHpNum"></div><div class="st" id="foeSt"></div></div>
+        <div class="bbar" id="myBar"><div class="nm"><span id="myName">—</span><span class="lv" id="myLv"></span></div><div class="hpwrap"><i id="myHp" style="width:100%"></i></div><div class="hpnum" id="myHpNum"></div><div class="st" id="mySt"></div></div>
+        <div id="battleMenu"><div class="bcol" id="moveBtns"></div><div class="bcol" style="flex:0 0 132px;display:flex;flex-direction:column;gap:6px"><button id="btnOrb">◉ Snare Orb<small id="orbCount">x0</small></button><button id="btnRun">Run</button></div></div>
+      </div>
+      <!-- CUTSCENE -->
+      <div id="cutPanel"><div class="art"><canvas id="cutCanvas"></canvas></div><div class="cap"><div class="who" id="cutWho"></div><div class="txt" id="cutTxt"></div><div class="hint">SPACE / CLICK advance · ESC skip</div></div></div>
+      <!-- ROSTER -->
+      <div class="screen panel" id="screenRoster">
+        <h2>ROSTER <span>&amp; COLLECTION</span></h2><div class="sub" id="rosterSub"></div>
+        <div class="cards" id="rosterCards"></div>
+        <div class="row"><button class="mbtn" id="btnRosterBack">← Back</button></div>
+      </div>
+      <!-- VERSUS -->
+      <div class="screen panel" id="screenVersus">
+        <h2>LOCAL <span>VERSUS</span></h2><div class="sub">Two trainers, one device, open picks — like the classics. Pick 3 creatures each.</div>
+        <div id="versusPick"></div>
+        <div class="row"><button class="mbtn" id="btnVersusBack">← Back</button></div>
+      </div>
+      <!-- ONLINE -->
+      <div class="screen panel" id="screenOnline">
+        <h2>ROOM-CODE <span>VERSUS</span></h2><div class="sub">Relay: ws://<span id="relayHost">this server</span>/ws/wildspark · no accounts, no matchmaking — room codes only.</div>
+        <div class="row"><button class="mbtn" id="btnHost">Host a Room</button><button class="mbtn" id="btnJoinShow">Join a Room</button></div>
+        <div id="onlineBox"></div>
+        <div class="row"><button class="mbtn" id="btnOnlineBack">← Back</button></div>
+      </div>
+      <!-- HOW TO -->
+      <div class="screen panel" id="screenHow">
+        <h2>HOW TO <span>PLAY</span></h2>
+        <div class="sub">TYPES — EMBER burns LEAF + BLOOM · LEAF drinks TIDE · TIDE douses EMBER · SPARK shocks TIDE + GALE · STONE crushes EMBER + SPARK · SHADE haunts BLOOM + GALE · BLOOM roots STONE + TIDE · GALE scatters EMBER + LEAF. Same-type moves hit 1.5× (STAB).</div>
+        <div class="sub">CATCHING — weaken a wild Spark, then throw a SNARE ORB (◉). Low HP + a status = a far better catch. Caught Sparks join your party (max 6) or the box.</div>
+        <div class="sub">GROWTH — win battles for XP. Creatures evolve at level 16 (starters + wild lines) — evolutions visibly grow the design. Story state, party and box save to this browser automatically.</div>
+        <div class="sub">CONTROLS — Explore: WASD walk, drag to look, E talk, C classic top-down view. Battle: click a move, ◉ throw an orb, Run to flee wild battles. Mobile: D-pad + A interact / B back, START for save &amp; load.</div>
+        <div class="row"><button class="mbtn" id="btnHowBack">← Back</button></div>
+      </div>
+      <!-- PAUSE -->
+      <div id="pauseOverlay"><h2>PAUSED</h2><div class="sub" style="color:#6b8a7a;font-family:'Share Tech Mono',monospace">WILDSPARK · EMBER HOLLOW</div>
+        <button class="mbtn" id="pauseSave">Save Game</button>
+        <button class="mbtn" id="pauseLoad">Load Game</button>
+        <button class="mbtn" id="pauseResume">Resume</button>
+        <button class="mbtn" id="pauseQuit">Quit to Menu</button>
+      </div>
+      <canvas id="fpFx"></canvas>
+    </div></div>
+    <div id="shellDeck">
+      <div class="dpad"><button class="u" data-d="up">▲</button><button class="l" data-d="left">◀</button><button class="r" data-d="right">▶</button><button class="d" data-d="down">▼</button></div>
+      <div class="startrow"><button id="startBtn">START</button><button id="selectBtn">SELECT</button></div>
+      <div class="abtns"><button class="btnB" id="btnB">B</button><button id="btnA">A</button></div>
+    </div>
+  </div>
+  <div id="msg"></div>
+  <div class="row">
+    <button class="mbtn" id="mStory">Story<small>Ember Hollow</small></button>
+    <button class="mbtn" id="mWatch">Watch<small>Bot exhibition</small></button>
+    <button class="mbtn" id="mVersus">Local Versus<small>2 players</small></button>
+    <button class="mbtn" id="mOnline">Online<small>Room code</small></button>
+    <button class="mbtn" id="mRoster">Roster<small>32 creatures</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — stage fills the screen</small></button>
+  </div>
+  <div class="help"><b>WILDSPARK</b> — our own creature battler. <b>Explore</b> Ember Hollow in first person (WASD + drag-look, or C for the classic top-down view), <b>battle</b> wild Sparks, <b>catch</b> them with Snare Orbs, <b>evolve</b> them, and follow the story: the grove is going dim, your rival <b>Rue</b> blames Keeper <b>Wren</b> — and Wren is hiding something. <span class="k">Room-code online versus runs on the arcade server's WebSocket relay (LAN/local LIVE, public internet SIM). Flat first-person is the verified mode.</span> <span class="k">First-person: the camera eases, leans and bobs as you walk; the compass + ◈ LOCK point at your objective; battles drift the camera and punch on every turn.</span> ⛶ <b>Fullscreen:</b> <span class="k">F</span> or the Fullscreen button — the stage (on phones, the whole handheld shell) fills the screen; <span class="k">Esc</span> exits fullscreen.</div>
+</div>
+<script src="../vendor/three.min.js"></script>
+<script src="../games/agent-engine.js"></script>
+<script>
+'use strict';
+/* ==========================================================================
+   WILDSPARK — original creature battler. All data below is original.
+   Battle mechanics are documented behaviour (pokeemerald/pokecrystal SPEC
+   lane); every number, name and line here is ours.
+   ========================================================================== */
+var THREE = (typeof window !== 'undefined' && window.THREE) || null;
+function $(id){ return document.getElementById(id); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function mulberry32(seed){ var a = seed >>> 0; return function(){ a |= 0; a = (a + 0x6D2B79F5) | 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function pickR(rng, arr){ return arr[Math.floor(rng()*arr.length)]; }
+
+/* ---------------- TYPES (original 8) ---------------- */
+var TYPES = ['EMBER','LEAF','TIDE','SPARK','STONE','SHADE','BLOOM','GALE'];
+var TYPE_COLOR = {EMBER:'#ff9a3d',LEAF:'#3ddc78',TIDE:'#35c8ff',SPARK:'#ffe14d',STONE:'#c9a06a',SHADE:'#b06bff',BLOOM:'#ff6fae',GALE:'#7df0e0'};
+/* CHART[attack][defend] = multiplier (1 = neutral, omitted = 1) */
+var CHART = {
+  EMBER:{LEAF:2,BLOOM:2,EMBER:0.5,STONE:0.5,TIDE:0.5},
+  LEAF:{TIDE:2,STONE:2,EMBER:0.5,LEAF:0.5,GALE:0.5},
+  TIDE:{EMBER:2,STONE:2,LEAF:0.5,TIDE:0.5,BLOOM:0.5},
+  SPARK:{TIDE:2,GALE:2,STONE:0.5,SPARK:0.5,LEAF:0.5},
+  STONE:{EMBER:2,SPARK:2,GALE:0.5,STONE:0.5,LEAF:0.5},
+  SHADE:{BLOOM:2,GALE:2,SHADE:0.5,STONE:0.5},
+  BLOOM:{STONE:2,TIDE:2,EMBER:0.5,SHADE:0.5,BLOOM:0.5},
+  GALE:{EMBER:2,LEAF:2,STONE:0.5,SPARK:0.5,GALE:0.5}
+};
+function effectiveness(moveType, defTypes){
+  var m = 1;
+  for (var i=0;i<defTypes.length;i++){ var row = CHART[moveType] || {}; m *= (row[defTypes[i]] === undefined ? 1 : row[defTypes[i]]); }
+  return m;
+}
+
+/* ---------------- MOVES (~40, original) ---------------- */
+/* effect: burn | poison | static(paralysis-lite) | heal | atkdn | defup | spd | sleep */
+var MOVES = {
+  tackle:{n:'Tackle',t:'EMBER',p:40,a:100}, pounce:{n:'Quick Pounce',t:'GALE',p:40,a:100,pr:1},
+  cinder:{n:'Cinder Scratch',t:'EMBER',p:45,a:100}, flamelick:{n:'Flame Lick',t:'EMBER',p:55,a:95,fx:'burn',fxc:.1},
+  blazerush:{n:'Blaze Rush',t:'EMBER',p:75,a:90}, emberburst:{n:'Ember Burst',t:'EMBER',p:90,a:85},
+  inferno:{n:'Inferno Roar',t:'EMBER',p:110,a:80,fx:'burn',fxc:.2},
+  leafcut:{n:'Leaf Cut',t:'LEAF',p:50,a:100}, vinelash:{n:'Vine Lash',t:'LEAF',p:55,a:95},
+  seedbarrage:{n:'Seed Barrage',t:'LEAF',p:70,a:90}, photosynth:{n:'Photosynth',t:'LEAF',p:0,a:100,fx:'heal'},
+  thorntrap:{n:'Thorn Trap',t:'LEAF',p:60,a:95,fx:'poison',fxc:.2},
+  bubblepop:{n:'Bubble Pop',t:'TIDE',p:45,a:100}, aquajet:{n:'Aqua Jet',t:'TIDE',p:55,a:100,pr:1},
+  tidalslam:{n:'Tidal Slam',t:'TIDE',p:85,a:90}, mistveil:{n:'Mist Veil',t:'TIDE',p:0,a:100,fx:'defup'},
+  staticzap:{n:'Static Zap',t:'SPARK',p:45,a:100,fx:'static',fxc:.15}, voltbite:{n:'Volt Bite',t:'SPARK',p:60,a:95,fx:'static',fxc:.1},
+  thunderclap:{n:'Thunder Clap',t:'SPARK',p:90,a:85,fx:'static',fxc:.2}, surgedash:{n:'Surge Dash',t:'SPARK',p:50,a:100,pr:1},
+  rocktoss:{n:'Rock Toss',t:'STONE',p:50,a:95}, boulderroll:{n:'Boulder Roll',t:'STONE',p:70,a:90},
+  quakestomp:{n:'Quake Stomp',t:'STONE',p:85,a:90}, stonewall:{n:'Stone Wall',t:'STONE',p:0,a:100,fx:'defup'},
+  shadowclaw:{n:'Shadow Claw',t:'SHADE',p:60,a:100}, gloombite:{n:'Gloom Bite',t:'SHADE',p:55,a:95,fx:'poison',fxc:.15},
+  nightveil:{n:'Night Veil',t:'SHADE',p:0,a:100,fx:'atkdn'}, hex:{n:'Hex',t:'SHADE',p:70,a:95},
+  petaldance:{n:'Petal Dance',t:'BLOOM',p:70,a:90}, sporecloud:{n:'Spore Cloud',t:'BLOOM',p:0,a:90,fx:'sleep'},
+  pollenburst:{n:'Pollen Burst',t:'BLOOM',p:60,a:95}, bloomheal:{n:'Bloom Heal',t:'BLOOM',p:0,a:100,fx:'heal'},
+  gust:{n:'Gust',t:'GALE',p:45,a:100}, wingslash:{n:'Wing Slash',t:'GALE',p:60,a:95},
+  cyclone:{n:'Cyclone',t:'GALE',p:85,a:85}, divebomb:{n:'Dive Bomb',t:'GALE',p:90,a:85},
+  growl:{n:'Growl',t:'EMBER',p:0,a:100,fx:'atkdn'}, shellup:{n:'Shell Up',t:'STONE',p:0,a:100,fx:'defup'},
+  focus:{n:'Focus',t:'GALE',p:0,a:100,fx:'spd'},
+  flareup:{n:'Flare Up',t:'EMBER',p:65,a:95,fx:'burn',fxc:.1},
+  galeforce:{n:'Galeforce',t:'GALE',p:100,a:85}
+};
+
+/* ---------------- SPECIES (24, original) ---------------- */
+/* art: plan cub|bird|serpent|sprout|floater|fish · c body · b belly · a accent · ear/horn/tail flags */
+var SPECIES = {
+  cindercub:{n:'Cindercub',ty:['EMBER'],bs:{hp:48,atk:55,def:42,spa:58,spd:44,spe:52},moves:['tackle','cinder','growl','flamelick'],evo:{to:'embermane',lv:16},art:{plan:'cub',c:'#e8642a',b:'#ffd9a0',a:'#ff9a3d',ear:1,tail:1},d:'A cub with a pilot-light tail. It sneezes sparks when excited.'},
+  embermane:{n:'Embermane',ty:['EMBER'],bs:{hp:72,atk:88,def:66,spa:92,spd:70,spe:84},moves:['cinder','flamelick','blazerush','emberburst','inferno'],art:{plan:'cub',c:'#c23d12',b:'#ffcf8a',a:'#ffd75e',ear:1,tail:1,mane:1},d:'Its mane burns hotter the braver it feels. The grove calls it the little sun.'},
+  sproutle:{n:'Sproutle',ty:['LEAF'],bs:{hp:50,atk:48,def:55,spa:55,spd:52,spe:45},moves:['tackle','leafcut','growl','vinelash'],evo:{to:'brambleback',lv:16},art:{plan:'sprout',c:'#4fae4a',b:'#c9f2b0',a:'#3ddc78',ear:0,tail:0},d:'A sprout that walks. It photosynthesises while it naps.'},
+  brambleback:{n:'Brambleback',ty:['LEAF'],bs:{hp:78,atk:78,def:92,spa:80,spd:84,spe:58},moves:['leafcut','vinelash','seedbarrage','thorntrap','photosynth'],art:{plan:'sprout',c:'#2f7a34',b:'#a8e08a',a:'#8affc1',ear:0,tail:0,thorn:1},d:'Thorns like a fence, patience like a tree. Nothing rushes a Brambleback.'},
+  bubblip:{n:'Bubblip',ty:['TIDE'],bs:{hp:52,atk:45,def:50,spa:60,spd:55,spe:48},moves:['tackle','bubblepop','growl','aquajet'],evo:{to:'currentide',lv:16},art:{plan:'fish',c:'#2f9fd8',b:'#c8ecff',a:'#35c8ff',ear:0,tail:1},d:'It blows bubbles that smell faintly of rain. Pops them when it laughs.'},
+  currentide:{n:'Currentide',ty:['TIDE'],bs:{hp:80,atk:70,def:78,spa:95,spd:82,spe:72},moves:['bubblepop','aquajet','tidalslam','mistveil'],art:{plan:'fish',c:'#1a6fb0',b:'#a8e0ff',a:'#7df0e0',ear:0,tail:1,fin:1},d:'It rides its own tide. Old sailors say a Currentide can carry a river uphill.'},
+  zappit:{n:'Zappit',ty:['SPARK'],bs:{hp:44,atk:58,def:38,spa:62,spd:42,spe:78},moves:['tackle','staticzap','pounce','voltbite'],evo:{to:'voltzard',lv:16},art:{plan:'cub',c:'#e8c832',b:'#fff3b0',a:'#ffe14d',ear:1,tail:1},d:'Static clings to its fur. Touch it on a dry day and you will know.'},
+  voltzard:{n:'Voltzard',ty:['SPARK'],bs:{hp:66,atk:86,def:58,spa:96,spd:64,spe:104},moves:['staticzap','voltbite','thunderclap','surgedash'],art:{plan:'cub',c:'#c8a010',b:'#ffedb0',a:'#ffe14d',ear:1,tail:1,bolt:1},d:'A storm with a heartbeat. Its tail crackles before it strikes.'},
+  pebblit:{n:'Pebblit',ty:['STONE'],bs:{hp:55,atk:60,def:70,spa:40,spd:60,spe:30},moves:['tackle','rocktoss','shellup','boulderroll'],evo:{to:'boulderback',lv:16},art:{plan:'floater',c:'#a88a62',b:'#e8d3ae',a:'#c9a06a',ear:0,tail:0},d:'A pebble that learned to roll uphill. Stubborn as the hill itself.'},
+  boulderback:{n:'Boulderback',ty:['STONE'],bs:{hp:88,atk:92,def:104,spa:58,spd:88,spe:42},moves:['rocktoss','boulderroll','quakestomp','stonewall'],art:{plan:'floater',c:'#7a6248',b:'#cbb28a',a:'#e8c88a',ear:0,tail:0,crag:1},d:'It is less a creature than a landslide that decided to stay.'},
+  wispurr:{n:'Wispurr',ty:['SHADE'],bs:{hp:46,atk:62,def:44,spa:64,spd:48,spe:70},moves:['tackle','shadowclaw','nightveil','gloombite'],evo:{to:'gloomcat',lv:16},art:{plan:'cub',c:'#6a4a9e',b:'#cdb8f0',a:'#b06bff',ear:1,tail:1},d:'It purrs in a frequency only the dark can hear.'},
+  gloomcat:{n:'Gloomcat',ty:['SHADE'],bs:{hp:70,atk:92,def:66,spa:98,spd:70,spe:98},moves:['shadowclaw','gloombite','hex','nightveil'],art:{plan:'cub',c:'#4a2a78',b:'#b89ae0',a:'#d0a0ff',ear:1,tail:1,moon:1},d:'Its eyes are two small moons. It appears where it is needed, never where it is called.'},
+  petalfox:{n:'Petalfox',ty:['BLOOM'],bs:{hp:48,atk:52,def:46,spa:62,spd:50,spe:66},moves:['tackle','petaldance','growl','pollenburst'],evo:{to:'floravine',lv:16},art:{plan:'cub',c:'#e86a9e',b:'#ffd6e8',a:'#ff6fae',ear:1,tail:1},d:'It sheds petals wherever it runs. The grove blooms in its footprints.'},
+  floravine:{n:'Floravine',ty:['BLOOM'],bs:{hp:74,atk:80,def:72,spa:96,spd:80,spe:88},moves:['petaldance','pollenburst','sporecloud','bloomheal'],art:{plan:'cub',c:'#c23d6e',b:'#ffb8d8',a:'#ff8fc0',ear:1,tail:1,vine:1},d:'A fox made of the whole garden at once. Bees follow it like a parade.'},
+  gustlet:{n:'Gustlet',ty:['GALE'],bs:{hp:42,atk:50,def:40,spa:55,spd:44,spe:88},moves:['tackle','gust','pounce','wingslash'],evo:{to:'stormwing',lv:18},art:{plan:'bird',c:'#5ac8c0',b:'#d8fff8',a:'#7df0e0',ear:0,tail:1},d:'It is mostly wind with a beak attached. It has never once stood still.'},
+  stormwing:{n:'Stormwing',ty:['GALE'],bs:{hp:68,atk:84,def:62,spa:90,spd:66,spe:112},moves:['gust','wingslash','cyclone','divebomb'],art:{plan:'bird',c:'#2a8a84',b:'#b8fff4',a:'#a0fff0',ear:0,tail:1,storm:1},d:'When it dives, the sky dives with it. Pilots chart its flight like weather.'},
+  embermoth:{n:'Embermoth',ty:['EMBER','GALE'],bs:{hp:50,atk:52,def:48,spa:70,spd:52,spe:80},moves:['cinder','gust','flamelick','wingslash'],art:{plan:'bird',c:'#d86a2a',b:'#ffd9a0',a:'#ff9a3d',ear:0,tail:0,wing:1},d:'Its wings shed embers like pollen. Moths follow it home.'},
+  mossimp:{n:'Mossimp',ty:['LEAF','SHADE'],bs:{hp:52,atk:55,def:58,spa:58,spd:55,spe:48},moves:['leafcut','shadowclaw','nightveil','vinelash'],art:{plan:'sprout',c:'#5a8a4a',b:'#c8e8b0',a:'#b06bff',ear:1,tail:0},d:'It hides in the moss and giggles at passers-by. The moss giggles back.'},
+  droplet:{n:'Droplet',ty:['TIDE'],bs:{hp:44,atk:42,def:48,spa:58,spd:50,spe:55},moves:['bubblepop','aquajet','mistveil'],art:{plan:'fish',c:'#4ab8e8',b:'#d8f2ff',a:'#35c8ff',ear:0,tail:1},d:'One drop, travelling. It has crossed the whole grove three times.'},
+  sparkmole:{n:'Sparkmole',ty:['SPARK','STONE'],bs:{hp:58,atk:64,def:72,spa:48,spd:62,spe:35},moves:['staticzap','rocktoss','shellup','boulderroll'],art:{plan:'floater',c:'#b89a4a',b:'#f0e0b0',a:'#ffe14d',ear:0,tail:0},d:'It digs with electric claws. The tunnels glow for days.'},
+  craggle:{n:'Craggle',ty:['STONE'],bs:{hp:60,atk:66,def:78,spa:44,spd:64,spe:28},moves:['rocktoss','boulderroll','quakestomp','shellup'],art:{plan:'floater',c:'#8a7a62',b:'#d8c8a8',a:'#c9a06a',ear:0,tail:0,crag:1},d:'It argues with boulders. It usually wins.'},
+  shroomlet:{n:'Shroomlet',ty:['LEAF','BLOOM'],bs:{hp:50,atk:46,def:52,spa:60,spd:52,spe:40},moves:['leafcut','sporecloud','petaldance','photosynth'],art:{plan:'sprout',c:'#c86a8a',b:'#f0d8e0',a:'#ff6fae',ear:0,tail:0,cap:1},d:'A mushroom that walks at dusk. Its spores smell like rain on warm stone.'},
+  nimbat:{n:'Nimbat',ty:['GALE','SHADE'],bs:{hp:48,atk:58,def:44,spa:62,spd:48,spe:82},moves:['gust','shadowclaw','nightveil','wingslash'],art:{plan:'bird',c:'#5a4a8a',b:'#c8b8e8',a:'#b06bff',ear:1,tail:0},d:'It sleeps in clouds and wakes at thunder. Its wings are night itself.'},
+  glowbug:{n:'Glowbug',ty:['SPARK','BLOOM'],bs:{hp:46,atk:48,def:44,spa:66,spd:50,spe:72},moves:['staticzap','pollenburst','sporecloud','pounce'],art:{plan:'floater',c:'#e8d84a',b:'#fff8c8',a:'#ff6fae',ear:0,tail:0,glow:1},d:'Its lantern never goes out. Lost travellers follow it home.'},
+  mudpup:{n:'Mudpup',ty:['TIDE','STONE'],bs:{hp:62,atk:58,def:66,spa:52,spd:64,spe:38},moves:['bubblepop','rocktoss','aquajet','shellup'],art:{plan:'cub',c:'#7a6a8a',b:'#d8d0e8',a:'#35c8ff',ear:1,tail:1},d:'It loves mud the way other pups love sun. Its paws are always wet.'},
+  cinderwisp:{n:'Cinderwisp',ty:['EMBER','SHADE'],bs:{hp:46,atk:56,def:42,spa:72,spd:50,spe:76},moves:['cinder','shadowclaw','flamelick','hex'],art:{plan:'floater',c:'#8a4a6a',b:'#e8c8d8',a:'#ff9a3d',ear:0,tail:0,glow:1},d:'A spark that refused to go out. It drifts through the dim grove, looking for light.'},
+  thornkit:{n:'Thornkit',ty:['LEAF'],bs:{hp:48,atk:56,def:52,spa:54,spd:50,spe:58},moves:['leafcut','vinelash','thorntrap','pounce'],art:{plan:'cub',c:'#4a8a3a',b:'#c8e8a8',a:'#3ddc78',ear:1,tail:1,thorn:1},d:'Small, sharp, and proud of it. It practices its thorns on old logs.'},
+  rooklet:{n:'Rooklet',ty:['STONE','GALE'],bs:{hp:54,atk:60,def:64,spa:50,spd:58,spe:60},moves:['rocktoss','gust','wingslash','stonewall'],art:{plan:'bird',c:'#8a8a9a',b:'#e0e0e8',a:'#7df0e0',ear:0,tail:1},d:'It builds its nest from pebbles and wind. The nest never falls.'},
+  rootle:{n:'Rootle',ty:['LEAF','STONE'],bs:{hp:64,atk:60,def:74,spa:48,spd:66,spe:30},moves:['leafcut','rocktoss','photosynth','shellup'],art:{plan:'sprout',c:'#6a7a4a',b:'#d8e0b8',a:'#c9a06a',ear:0,tail:0},d:'Half root, half rock. It has not moved in a week. It is in no hurry.'},
+  mistfox:{n:'Mistfox',ty:['GALE'],bs:{hp:50,atk:54,def:46,spa:64,spd:52,spe:80},moves:['gust','wingslash','cyclone','mistveil'],art:{plan:'cub',c:'#9ab8c8',b:'#e8f4f8',a:'#7df0e0',ear:1,tail:1},d:'It runs inside the morning mist. You hear its paws before you see them.'},
+  emberpup:{n:'Emberpup',ty:['EMBER'],bs:{hp:50,atk:58,def:44,spa:56,spd:46,spe:60},moves:['cinder','flamelick','pounce','growl'],art:{plan:'cub',c:'#d85a2a',b:'#ffd0a0',a:'#ff9a3d',ear:1,tail:1},d:'It chases its own sparks in circles. The grove lets it.'},
+  coralkid:{n:'Coralkid',ty:['TIDE','BLOOM'],bs:{hp:52,atk:50,def:54,spa:62,spd:56,spe:52},moves:['bubblepop','pollenburst','aquajet','bloomheal'],art:{plan:'fish',c:'#e86a8a',b:'#ffd8e8',a:'#35c8ff',ear:0,tail:1,fin:1},d:'A reef that swims. Small fish hide in its branches.'}
+};
+var STARTERS = ['cindercub','sproutle','bubblip'];
+var DRAFT_POOL = ['cindercub','sproutle','bubblip','zappit','pebblit','wispurr','petalfox','gustlet','embermoth','mossimp','droplet','glowbug'];
+
+/* ---------------- PEOPLE (original) ---------------- */
+var PEOPLE = {
+  player:{n:'You',c:'#3ddc78',hair:'#2a4a38',cloth:'#1a5a3a'},
+  rue:{n:'Rue',c:'#ff5a5a',hair:'#c22a2a',cloth:'#5a1a1a',d:'Your rival. Quick to blame, quicker to run — but she never leaves a friend behind.'},
+  wren:{n:'Keeper Wren',c:'#ffd75e',hair:'#e8e0c8',cloth:'#2a4a2a',d:'Keeper of Ember Hollow. She tends the grove\'s light — and keeps one secret.'},
+  pip:{n:'Pip',c:'#35c8ff',hair:'#3a2a1a',cloth:'#1a3a5a',d:'A kid from the hollow\'s edge. He knows every hiding spot in the grass.'},
+  tam:{n:'Old Tam',c:'#c9a06a',hair:'#e8e0d0',cloth:'#4a3a2a',d:'Sells orbs and stories. Mostly stories.'},
+  sable:{n:'Ranger Sable',c:'#7df0e0',hair:'#1a2a2a',cloth:'#1a4a4a',d:'Ranger of the ember-grass. She counts the dimming Sparks every dawn.'}
+};
+
+/* ---------------- STORY BEATS ---------------- */
+/* beats: 0 intro, 1 starter, 2 tutorial catch, 3 rival 1, 4 mid beat + quests, 5 rival 2, 6 keeper finale, 7 done */
+var STORY = [
+  {id:0, title:'Intro', lines:[
+    {who:'wren',txt:'You came. Good. The grove is going dim, and I am running out of hands to hold the light.'},
+    {who:'wren',txt:'Wild Sparks — the little creatures of Ember Hollow — carry the grove\'s ember. Lately their light fades. I do not know why.'},
+    {who:'wren',txt:'Take one of these three. A partner. Then walk the hollow, catch Sparks, and find out what is dimming them.'}]},
+  {id:1, title:'Choose a Starter', lines:[{who:'wren',txt:'Three partners, three tempers. Choose the one that feels like you.'}]},
+  {id:2, title:'First Catch', lines:[
+    {who:'pip',txt:'Whoa, a real trainer! Okay okay — see that grass? Wild Sparks hide in it. Walk in and one might jump you!'},
+    {who:'pip',txt:'Weaken it first, then throw a SNARE ORB. Low health plus a status makes the catch way easier. I gave you 5 orbs. Don\'t waste them!'}]},
+  {id:3, title:'Rival Battle 1', lines:[
+    {who:'rue',txt:'Well well. Wren\'s new pet trainer. She told you the grove is dimming? She CAUSED it. She\'s hiding something in the old hollow.'},
+    {who:'rue',txt:'You believe her? Prove you\'re not just another one of her errands. Battle me. Right here.'}]},
+  {id:4, title:'The Dimming', lines:[
+    {who:'sable',txt:'I count the dim Sparks every dawn. Twenty-four last week. Eleven today. Something is drinking the light.'},
+    {who:'tam',txt:'The old hollow, child. Behind the thorn wall. Wren goes there at night with her lantern low. Ask her — or ask Rue. One of them is lying.'},
+    {who:'rue',txt:'...Fine. I followed her once. She wasn\'t stealing light. She was FEEDING it. To something under the hollow. I didn\'t wait to see what.'}]},
+  {id:5, title:'Rival Battle 2', lines:[
+    {who:'rue',txt:'You heard Sable. Eleven Sparks left lit. If Wren is feeding something, I have to know what — and I have to be strong enough to stop it.'},
+    {who:'rue',txt:'So battle me again. If I can\'t beat you, I can\'t face what\'s under the hollow. And neither can you.'}]},
+  {id:6, title:'Keeper Finale', lines:[
+    {who:'wren',txt:'You found the old hollow. Then I owe you the truth — all of it.'},
+    {who:'wren',txt:'Under the hollow sleeps a Spark older than the grove. When it dreams, it drinks light. I have fed it my own ember for years so it would not wake hungry.'},
+    {who:'wren',txt:'But my ember is nearly gone. It will wake — and it will wake hungry. The only way to calm it is a trainer it respects. Battle it with me. Together.'}]},
+  {id:7, title:'Dawn', lines:[
+    {who:'wren',txt:'It sleeps again — and this time, it dreams of sunlight. Look: the grove is lighting back up, one Spark at a time.'},
+    {who:'rue',txt:'...I was wrong about you, Wren. And about you, trainer. Don\'t make me say it twice.'},
+    {who:'wren',txt:'Ember Hollow is yours now too. Keep walking it. Keep catching. And when the light dims again — it will — come find me.'}]}
+];
+
+/* ---------------- CORE: creature instances ---------------- */
+function stat(base, lv){ return Math.floor(((2*base + 10) * lv) / 100) + 5; }
+function hpStat(base, lv){ return Math.floor(((2*base + 10) * lv) / 100) + lv + 10; }
+function makeMon(speciesId, lv, rng){
+  var s = SPECIES[speciesId]; if(!s) throw new Error('unknown species ' + speciesId);
+  lv = lv || 5;
+  var m = {species:speciesId, level:lv, xp:0, xpNext:xpFor(lv), status:null, sleepTurns:0,
+    moves:[], atkStage:0, defStage:0, spdStage:0};
+  m.maxHp = hpStat(s.bs.hp, lv); m.hp = m.maxHp;
+  m.atk = stat(s.bs.atk, lv); m.def = stat(s.bs.def, lv); m.spa = stat(s.bs.spa, lv);
+  m.spd = stat(s.bs.spd, lv); m.spe = stat(s.bs.spe, lv);
+  var pool = s.moves.slice(0, 4);
+  for (var i=0;i<pool.length;i++) m.moves.push({id:pool[i], pp:16});
+  return m;
+}
+function xpFor(lv){ return Math.floor(20 * lv * Math.sqrt(lv)); }
+function monName(m){ return SPECIES[m.species].n; }
+function monTypes(m){ return SPECIES[m.species].ty; }
+function calcDamage(att, def, moveId, rng){
+  rng = rng || Math.random;
+  var mv = MOVES[moveId];
+  if(!mv || !mv.p) return {dmg:0, eff:1, crit:false, stab:1, miss:false};
+  if (rng()*100 >= mv.a) return {dmg:0, eff:1, crit:false, stab:1, miss:true};
+  var eff = effectiveness(mv.t, monTypes(def));
+  var stab = monTypes(att).indexOf(mv.t) >= 0 ? 1.5 : 1;
+  var crit = rng() < 0.0625;
+  var atkStat = (mv.t==='EMBER'||mv.t==='LEAF'||mv.t==='TIDE'||mv.t==='SPARK') ? att.spa : att.atk;
+  var defStat = (mv.t==='EMBER'||mv.t==='LEAF'||mv.t==='TIDE'||mv.t==='SPARK') ? def.spd : def.def;
+  var atkMul = Math.max(0.5, 1 + 0.25 * (att.atkStage||0));
+  var defMul = Math.max(0.5, 1 + 0.25 * (def.defStage||0));
+  var base = Math.floor((((2*att.level/5 + 2) * mv.p * (atkStat*atkMul) / Math.max(1,(defStat*defMul))) / 50) + 2);
+  var dmg = Math.max(1, Math.floor(base * stab * eff * (crit?1.5:1) * (0.85 + rng()*0.15)));
+  return {dmg:dmg, eff:eff, crit:crit, stab:stab, miss:false};
+}
+function catchChance(mon, ball){
+  var hpFrac = mon.hp / mon.maxHp;
+  var base = (1 - hpFrac*0.66) * (ball === 'lux' ? 1.5 : 1.0);
+  if (mon.status === 'sleep') base *= 2;
+  else if (mon.status) base *= 1.5;
+  return clamp(base, 0.05, 0.95);
+}
+function gainXp(mon, amount){
+  var out = {leveled:false, evolved:null, levels:0};
+  mon.xp += amount;
+  while (mon.xp >= mon.xpNext && mon.level < 50){
+    mon.xp -= mon.xpNext; mon.level++; out.levels++; out.leveled = true;
+    mon.xpNext = xpFor(mon.level);
+    var s = SPECIES[mon.species];
+    var oldMax = mon.maxHp;
+    mon.maxHp = hpStat(s.bs.hp, mon.level); mon.hp += (mon.maxHp - oldMax);
+    mon.atk = stat(s.bs.atk, mon.level); mon.def = stat(s.bs.def, mon.level);
+    mon.spa = stat(s.bs.spa, mon.level); mon.spd = stat(s.bs.spd, mon.level); mon.spe = stat(s.bs.spe, mon.level);
+    if (s.evo && mon.level >= s.evo.lv){ out.evolved = s.evo.to; mon.species = s.evo.to;
+      var s2 = SPECIES[mon.species];
+      mon.maxHp = hpStat(s2.bs.hp, mon.level); mon.hp = mon.maxHp;
+      mon.atk = stat(s2.bs.atk, mon.level); mon.def = stat(s2.bs.def, mon.level);
+      mon.spa = stat(s2.bs.spa, mon.level); mon.spd = stat(s2.bs.spd, mon.level); mon.spe = stat(s2.bs.spe, mon.level);
+      var newMoves = s2.moves.slice(0,4);
+      mon.moves = newMoves.map(function(id){ return {id:id, pp:16}; });
+      break;
+    }
+  }
+  return out;
+}
+
+/* ---------------- BATTLE ENGINE (pure, testable) ---------------- */
+function newBattle(teamA, teamB, opts){
+  opts = opts || {};
+  return {a:{team:teamA, active:0, name:opts.nameA||'You'},
+          b:{team:teamB, active:0, name:opts.nameB||'Foe'},
+          kind:opts.kind||'wild', turn:0, log:[], over:false, winner:null,
+          rng:opts.rng || Math.random, seed:opts.seed || 0};
+}
+function activeMon(bt, side){ var s = bt[side]; return s.team[s.active]; }
+function fainted(m){ return !m || m.hp <= 0; }
+function nextAlive(team, from){
+  for (var i=0;i<team.length;i++){ var idx = (from + i) % team.length; if (team[idx].hp > 0) return idx; }
+  return -1;
+}
+function applyStatusDamage(bt, side){
+  var m = activeMon(bt, side); if(!m || fainted(m)) return;
+  if (m.status === 'burn'){ m.hp = Math.max(0, m.hp - Math.max(1, Math.floor(m.maxHp/16))); bt.log.push(monName(m)+' is hurt by its burn!'); }
+  else if (m.status === 'poison'){ m.hp = Math.max(0, m.hp - Math.max(1, Math.floor(m.maxHp/8))); bt.log.push(monName(m)+' is hurt by poison!'); }
+  if (fainted(m)) bt.log.push(monName(m)+' fainted!');
+}
+function doMove(bt, side, moveId){
+  var att = activeMon(bt, side), def = activeMon(bt, side==='a'?'b':'a');
+  if(!att || !def || fainted(att) || fainted(def)) return null;
+  if (att.status === 'sleep'){ att.sleepTurns--; if (att.sleepTurns > 0){ bt.log.push(monName(att)+' is fast asleep!'); return {sleep:true}; } att.status = null; bt.log.push(monName(att)+' woke up!'); }
+  if (att.status === 'static' && bt.rng() < 0.25){ bt.log.push(monName(att)+' is paralysed! It can\'t move!'); return {paralysed:true}; }
+  var mv = MOVES[moveId]; if(!mv) return null;
+  var slot = null;
+  for (var i=0;i<att.moves.length;i++) if (att.moves[i].id === moveId) slot = att.moves[i];
+  if (slot && slot.pp <= 0){ bt.log.push(monName(att)+' has no PP left for '+mv.n+'!'); return {noPP:true}; }
+  if (slot) slot.pp--;
+  if (mv.fx === 'heal'){ var heal = Math.floor(att.maxHp/2); att.hp = Math.min(att.maxHp, att.hp + heal); bt.log.push(monName(att)+' used '+mv.n+' and recovered '+heal+' HP!'); return {heal:heal}; }
+  if (mv.fx === 'defup'){ att.defStage = Math.min(3,(att.defStage||0)+1); bt.log.push(monName(att)+' used '+mv.n+' — defence rose!'); return {buff:true}; }
+  if (mv.fx === 'spd'){ att.spdStage = Math.min(3,(att.spdStage||0)+1); bt.log.push(monName(att)+' used '+mv.n+' — it feels focused!'); return {buff:true}; }
+  if (mv.fx === 'atkdn'){ def.atkStage = Math.max(-3,(def.atkStage||0)-1); bt.log.push(monName(att)+' used '+mv.n+' — '+monName(def)+'\'s attack fell!'); return {debuff:true}; }
+  var res = calcDamage(att, def, moveId, bt.rng);
+  if (res.miss){ bt.log.push(monName(att)+' used '+mv.n+' — but it missed!'); return res; }
+  def.hp = Math.max(0, def.hp - res.dmg);
+  var txt = monName(att)+' used '+mv.n+' — '+res.dmg+' damage!';
+  if (res.crit) txt += ' A critical hit!';
+  if (res.eff > 1) txt += ' It\'s super effective!';
+  else if (res.eff < 1 && res.eff > 0) txt += ' It\'s not very effective...';
+  bt.log.push(txt);
+  if (mv.fx && mv.fxc && bt.rng() < mv.fxc && !def.status && !fainted(def)){
+    if (mv.fx === 'sleep'){ def.status = 'sleep'; def.sleepTurns = 2; bt.log.push(monName(def)+' fell asleep!'); }
+    else { def.status = mv.fx; bt.log.push(monName(def)+' is now '+mv.fx+'ed!'); }
+  }
+  if (fainted(def)) bt.log.push(monName(def)+' fainted!');
+  return res;
+}
+function resolveTurn(bt, moveA, moveB){
+  if (bt.over) return bt;
+  bt.turn++;
+  var A = activeMon(bt,'a'), B = activeMon(bt,'b');
+  var order = (A.spe * (A.status==='static'?0.5:1)) >= (B.spe * (B.status==='static'?0.5:1)) ? ['a','b'] : ['b','a'];
+  var moves = {a:moveA, b:moveB};
+  for (var k=0;k<2;k++){ var side = order[k]; if (!fainted(activeMon(bt, side)) && !fainted(activeMon(bt, side==='a'?'b':'a'))) doMove(bt, side, moves[side]); }
+  applyStatusDamage(bt,'a'); applyStatusDamage(bt,'b');
+  ['a','b'].forEach(function(side){
+    var s = bt[side];
+    if (fainted(activeMon(bt, side))){
+      var nx = nextAlive(s.team, s.active+1);
+      if (nx < 0){ bt.over = true; bt.winner = side==='a'?'b':'a'; bt.log.push(s.name+' is out of creatures!'); }
+      else { s.active = nx; bt.log.push(s.name+' sends out '+monName(activeMon(bt, side))+'!'); }
+    }
+  });
+  return bt;
+}
+/* Bot move-picking personalities — imperfect by design. */
+function botPickMove(bt, side, personality){
+  var m = activeMon(bt, side), foe = activeMon(bt, side==='a'?'b':'a');
+  if(!m) return null;
+  var rng = bt.rng;
+  var opts = m.moves.filter(function(s){ return s.pp > 0; });
+  if (!opts.length) return m.moves[0].id;
+  function score(slot){
+    var mv = MOVES[slot.id];
+    if (!mv.p) return personality === 'HALO' ? 40 : 5;
+    var eff = effectiveness(mv.t, monTypes(foe));
+    var s2 = mv.p * eff * (monTypes(m).indexOf(mv.t)>=0?1.5:1);
+    if (personality === 'VEX') return s2 * (0.9 + rng()*0.2);
+    if (personality === 'HALO') return s2 * 0.7 + (m.hp/m.maxHp < 0.4 && mv.fx==='heal' ? 80 : 0) + rng()*10;
+    return s2 * (0.75 + rng()*0.5); /* ORBIT: balanced, noisy */
+  }
+  var best = opts[0], bestS = -1;
+  opts.forEach(function(s){ var sc = score(s); if (sc > bestS){ bestS = sc; best = s; } });
+  /* VEX sometimes gambles on a wild pick; HALO sometimes plays it too safe. */
+  if (personality === 'VEX' && rng() < 0.15) return pickR(rng, opts).id;
+  if (personality === 'HALO' && rng() < 0.1) return opts[0].id;
+  return best.id;
+}
+
+/* ---------------- SAVE ---------------- */
+var SAVE_KEY = 'wildspark-save-v1';
+function defaultSave(){
+  return {story:0, party:[], box:[], orbs:5, luxOrbs:0, seen:{}, caught:0, wins:0, rivalWins:0,
+          quests:{pip:false, tam:false, sable:false}, flags:{}, created:Date.now()};
+}
+var S = defaultSave();
+function saveGame(){
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); return true; } catch(e){ return false; }
+}
+function loadGame(){
+  try { var raw = localStorage.getItem(SAVE_KEY); if(!raw) return false; var d = JSON.parse(raw); if(!d || !d.party) return false; S = d; return true; } catch(e){ return false; }
+}
+function markSeen(id){ S.seen[id] = true; }
+
+/* ---------------- CREATURE ART (canvas vector, shaded + rim light) ---------------- */
+/* Every creature drawn individually from its art params: shaded body, rim
+   light in its type colour, distinct silhouette, face that reads at mobile
+   size, idle bob. Evolutions visibly grow the design (bigger canvas scale). */
+function drawCreature(ctx, speciesId, t, size, opts){
+  opts = opts || {};
+  var sp = SPECIES[speciesId]; if(!sp) return;
+  var art = sp.art, ty = sp.ty[0];
+  var rim = TYPE_COLOR[ty];
+  var bob = Math.sin(t*2.2 + (opts.phase||0)) * size * 0.03;
+  var blink = (Math.sin(t*0.7 + (opts.phase||0)) > 0.985) ? 0.15 : 1;
+  var cx = size/2, cy = size/2 + bob;
+  var s = size/220; /* design space 220 */
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(s, s);
+  /* ground glow */
+  var gg = ctx.createRadialGradient(0, 78, 4, 0, 78, 70);
+  gg.addColorStop(0, rim + '55'); gg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.ellipse(0, 78, 70, 14, 0, 0, Math.PI*2); ctx.fill();
+  function shade(c, dark){
+    /* CHAR2: deeper contrast — tight highlight, long fall to near-black */
+    var n = parseInt(c.slice(1),16), lr=(n>>16)&255, lg=(n>>8)&255, lb=n&255;
+    var lite = 'rgb('+Math.floor(lr+(255-lr)*0.35)+','+Math.floor(lg+(255-lg)*0.35)+','+Math.floor(lb+(255-lb)*0.35)+')';
+    var g = ctx.createRadialGradient(-18, -22, 6, 0, 0, 62);
+    g.addColorStop(0, lite); g.addColorStop(0.32, c); g.addColorStop(0.78, dark || '#00000088'); g.addColorStop(1, 'rgba(3,5,8,0.94)');
+    return g;
+  }
+  function rimStroke(w){ ctx.strokeStyle = rim; ctx.lineWidth = w; ctx.shadowColor = rim; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0; }
+  function face(x, y, r){
+    /* CHAR2 fierce face: angled brow ridge, slit eyes in the type colour
+       with dark cores, scar across the right eye, fanged jaw — no smile.
+       Sized to read at mobile size. */
+    var ey = y - r*0.05;
+    ctx.strokeStyle = 'rgba(240,230,210,0.85)'; ctx.lineWidth = r*0.06; /* scar */
+    ctx.beginPath(); ctx.moveTo(x + r*0.26, ey - r*0.32); ctx.lineTo(x + r*0.54, ey + r*0.2); ctx.stroke();
+    ctx.strokeStyle = '#0b0e12'; ctx.lineWidth = r*0.13; ctx.lineCap = 'round'; /* brow ridge */
+    ctx.beginPath(); ctx.moveTo(x - r*0.68, ey - r*0.3); ctx.lineTo(x - r*0.12, ey - r*0.08); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + r*0.68, ey - r*0.3); ctx.lineTo(x + r*0.12, ey - r*0.08); ctx.stroke();
+    ctx.fillStyle = rim; /* slit eyes, type-colour */
+    ctx.beginPath(); ctx.ellipse(x - r*0.42, ey, r*0.2, r*0.1*blink + r*0.03, -0.35, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + r*0.42, ey, r*0.2, r*0.1*blink + r*0.03, 0.35, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#0b0e12'; /* dark cores */
+    ctx.beginPath(); ctx.ellipse(x - r*0.42, ey, r*0.07, r*0.16*blink + r*0.02, -0.35, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + r*0.42, ey, r*0.07, r*0.16*blink + r*0.02, 0.35, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#0b0e12'; ctx.lineWidth = r*0.07; /* jaw line */
+    ctx.beginPath(); ctx.moveTo(x - r*0.34, y + r*0.38); ctx.lineTo(x + r*0.34, y + r*0.38); ctx.stroke();
+    ctx.fillStyle = '#f4f1e6'; /* fangs */
+    ctx.beginPath(); ctx.moveTo(x - r*0.27, y + r*0.38); ctx.lineTo(x - r*0.16, y + r*0.38); ctx.lineTo(x - r*0.215, y + r*0.57); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + r*0.27, y + r*0.38); ctx.lineTo(x + r*0.16, y + r*0.38); ctx.lineTo(x + r*0.215, y + r*0.57); ctx.closePath(); ctx.fill();
+    ctx.lineCap = 'butt';
+  }
+  var dark = (function(){ var n = parseInt(art.c.slice(1),16); var r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+    return 'rgb('+Math.floor(r*0.45)+','+Math.floor(g*0.45)+','+Math.floor(b*0.45)+')'; })();
+  ctx.lineJoin = 'round';
+  if (art.plan === 'cub'){
+    /* tail */
+    if (art.tail){ ctx.fillStyle = art.a; ctx.beginPath(); ctx.moveTo(34, 20); ctx.quadraticCurveTo(72, -6 + Math.sin(t*3)*6, 66, -34); ctx.quadraticCurveTo(60, -44, 52, -36); ctx.quadraticCurveTo(56, -10, 28, 6); ctx.closePath(); ctx.fill(); rimStroke(3); }
+    /* body */
+    ctx.fillStyle = shade(art.c, dark);
+    ctx.beginPath(); ctx.ellipse(0, 28, 52, 40, 0, 0, Math.PI*2); ctx.fill(); rimStroke(3.5);
+    ctx.fillStyle = art.b; ctx.globalAlpha = 0.85;
+    ctx.beginPath(); ctx.ellipse(-2, 44, 34, 22, 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+    /* head */
+    ctx.fillStyle = shade(art.c, dark);
+    ctx.beginPath(); ctx.arc(-6, -34, 38, 0, Math.PI*2); ctx.fill(); rimStroke(3.5);
+    if (art.ear){ ctx.fillStyle = art.c;
+      ctx.beginPath(); ctx.moveTo(-34, -58); ctx.lineTo(-44, -88); ctx.lineTo(-18, -66); ctx.closePath(); ctx.fill(); rimStroke(2.5);
+      ctx.beginPath(); ctx.moveTo(18, -62); ctx.lineTo(30, -90); ctx.lineTo(38, -58); ctx.closePath(); ctx.fill(); rimStroke(2.5); }
+    if (art.mane){ ctx.strokeStyle = art.a; ctx.lineWidth = 7; ctx.shadowColor = art.a; ctx.shadowBlur = 12;
+      for (var mi=0; mi<8; mi++){ var ma = Math.PI*(0.15 + mi*0.11); ctx.beginPath(); ctx.moveTo(-6 + Math.cos(ma)*36, -34 + Math.sin(ma)*36); ctx.lineTo(-6 + Math.cos(ma)*52, -34 + Math.sin(ma)*52); ctx.stroke(); } ctx.shadowBlur = 0; }
+    if (art.moon){ ctx.fillStyle = '#ffe14d'; ctx.beginPath(); ctx.arc(24, -62, 9, 0, Math.PI*2); ctx.fill(); }
+    if (art.vine){ ctx.strokeStyle = '#3ddc78'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(30, 10); ctx.quadraticCurveTo(58, -6, 48, -34); ctx.stroke(); }
+    if (art.thorn){ ctx.fillStyle = '#8affc1'; for (var ti=0; ti<3; ti++){ ctx.beginPath(); ctx.moveTo(-24+ti*22, -4); ctx.lineTo(-18+ti*22, -22); ctx.lineTo(-10+ti*22, -4); ctx.closePath(); ctx.fill(); } }
+    face(-6, -36, 26);
+    /* legs */
+    ctx.fillStyle = dark;
+    ctx.fillRect(-34, 56, 14, 20); ctx.fillRect(-6, 60, 14, 18); ctx.fillRect(20, 56, 14, 20);
+  } else if (art.plan === 'bird'){
+    ctx.fillStyle = shade(art.c, dark);
+    ctx.beginPath(); ctx.ellipse(0, 22, 42, 46, 0, 0, Math.PI*2); ctx.fill(); rimStroke(3.5);
+    ctx.fillStyle = art.b; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.ellipse(0, 40, 26, 24, 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+    /* wings */
+    var flap = Math.sin(t*4)*10;
+    ctx.fillStyle = art.a;
+    ctx.beginPath(); ctx.moveTo(-30, 0); ctx.quadraticCurveTo(-78, -20 - flap, -66, 22); ctx.quadraticCurveTo(-48, 26, -30, 18); ctx.closePath(); ctx.fill(); rimStroke(2.5);
+    ctx.beginPath(); ctx.moveTo(30, 0); ctx.quadraticCurveTo(78, -20 - flap, 66, 22); ctx.quadraticCurveTo(48, 26, 30, 18); ctx.closePath(); ctx.fill(); rimStroke(2.5);
+    /* head + beak */
+    ctx.fillStyle = shade(art.c, dark);
+    ctx.beginPath(); ctx.arc(0, -38, 30, 0, Math.PI*2); ctx.fill(); rimStroke(3.5);
+    ctx.fillStyle = '#ffd75e'; ctx.beginPath(); ctx.moveTo(-4, -34); ctx.lineTo(16, -28); ctx.lineTo(-4, -20); ctx.closePath(); ctx.fill();
+    if (art.storm){ ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 3; ctx.shadowColor = '#ffe14d'; ctx.shadowBlur = 8; ctx.beginPath(); ctx.moveTo(-8, -66); ctx.lineTo(2, -52); ctx.lineTo(-4, -52); ctx.lineTo(6, -38); ctx.stroke(); ctx.shadowBlur = 0; }
+    if (art.wing){ ctx.fillStyle = art.a; ctx.beginPath(); ctx.ellipse(0, -64, 26, 10, 0, 0, Math.PI*2); ctx.fill(); }
+    face(0, -40, 20);
+    ctx.fillStyle = dark; ctx.fillRect(-10, 62, 8, 16); ctx.fillRect(4, 62, 8, 16);
+  } else if (art.plan === 'serpent'){
+    ctx.strokeStyle = shade(art.c, dark); ctx.lineCap = 'round';
+    ctx.lineWidth = 34;
+    ctx.beginPath(); ctx.moveTo(-52, 66); ctx.quadraticCurveTo(-40, 10, 0, -6); ctx.quadraticCurveTo(30, -16, 34, -40); ctx.stroke();
+    ctx.strokeStyle = rim; ctx.lineWidth = 3; ctx.shadowColor = rim; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.moveTo(-52, 66); ctx.quadraticCurveTo(-40, 10, 0, -6); ctx.quadraticCurveTo(30, -16, 34, -40); ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.fillStyle = shade(art.c, dark); ctx.beginPath(); ctx.arc(36, -52, 26, 0, Math.PI*2); ctx.fill(); rimStroke(3);
+    face(36, -54, 18);
+  } else if (art.plan === 'sprout'){
+    ctx.fillStyle = shade(art.c, dark);
+    ctx.beginPath(); ctx.ellipse(0, 34, 44, 38, 0, 0, Math.PI*2); ctx.fill(); rimStroke(3.5);
+    ctx.fillStyle = art.b; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.ellipse(0, 48, 28, 20, 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+    /* leafy head */
+    ctx.fillStyle = art.a;
+    ctx.beginPath(); ctx.moveTo(0, -78); ctx.quadraticCurveTo(34, -58, 26, -26); ctx.quadraticCurveTo(0, -34, 0, -78); ctx.fill(); rimStroke(2.5);
+    ctx.beginPath(); ctx.moveTo(0, -78); ctx.quadraticCurveTo(-34, -58, -26, -26); ctx.quadraticCurveTo(0, -34, 0, -78); ctx.fill(); rimStroke(2.5);
+    if (art.cap){ ctx.fillStyle = '#ff6fae'; ctx.beginPath(); ctx.ellipse(0, -46, 34, 14, 0, Math.PI, 0); ctx.fill(); rimStroke(2.5); }
+    if (art.thorn){ ctx.fillStyle = '#8affc1'; for (var si=0; si<3; si++){ ctx.beginPath(); ctx.moveTo(-28+si*26, 8); ctx.lineTo(-22+si*26, -12); ctx.lineTo(-14+si*26, 8); ctx.closePath(); ctx.fill(); } }
+    ctx.fillStyle = shade(art.c, dark); ctx.beginPath(); ctx.arc(0, -30, 30, 0, Math.PI*2); ctx.fill(); rimStroke(3);
+    face(0, -32, 21);
+    ctx.fillStyle = dark; ctx.fillRect(-26, 64, 12, 16); ctx.fillRect(14, 64, 12, 16);
+  } else if (art.plan === 'floater'){
+    var fy = Math.sin(t*1.8)*6;
+    ctx.fillStyle = shade(art.c, dark);
+    ctx.beginPath(); ctx.ellipse(0, -6 + fy, 48, 44, 0, 0, Math.PI*2); ctx.fill(); rimStroke(3.5);
+    if (art.crag){ ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(-30, -30+fy); ctx.lineTo(-18, -52+fy); ctx.lineTo(-6, -30+fy); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(8, -34+fy); ctx.lineTo(18, -54+fy); ctx.lineTo(28, -32+fy); ctx.closePath(); ctx.fill(); }
+    if (art.glow){ ctx.fillStyle = art.a; ctx.shadowColor = art.a; ctx.shadowBlur = 16; ctx.beginPath(); ctx.arc(0, -52+fy, 10, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0; }
+    if (art.bolt){ ctx.fillStyle = '#ffe14d'; ctx.beginPath(); ctx.moveTo(-6, -58+fy); ctx.lineTo(8, -44+fy); ctx.lineTo(0, -44+fy); ctx.lineTo(10, -28+fy); ctx.lineTo(-10, -44+fy); ctx.lineTo(-2, -44+fy); ctx.closePath(); ctx.fill(); }
+    face(0, -8 + fy, 30);
+    ctx.fillStyle = art.b; ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.ellipse(0, 22+fy, 30, 14, 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+  } else { /* fish */
+    ctx.fillStyle = shade(art.c, dark);
+    ctx.beginPath(); ctx.ellipse(0, 0, 56, 38, 0, 0, Math.PI*2); ctx.fill(); rimStroke(3.5);
+    if (art.tail){ ctx.fillStyle = art.a; ctx.beginPath(); ctx.moveTo(-46, 0); ctx.lineTo(-82, -26); ctx.lineTo(-82, 26); ctx.closePath(); ctx.fill(); rimStroke(2.5); }
+    if (art.fin){ ctx.fillStyle = art.a; ctx.beginPath(); ctx.moveTo(-6, -34); ctx.quadraticCurveTo(10, -58, 26, -34); ctx.closePath(); ctx.fill(); rimStroke(2); }
+    ctx.fillStyle = art.b; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.ellipse(6, 14, 34, 18, 0, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+    face(26, -2, 20);
+  }
+  /* level / name tag handled by caller */
+  ctx.restore();
+}
+function drawPerson(ctx, pid, t, size){
+  var p = PEOPLE[pid]; if(!p) return;
+  var cx = size/2, cy = size/2, s = size/220;
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s);
+  var bob = Math.sin(t*1.6)*2;
+  /* shoulders / cloak */
+  var g = ctx.createLinearGradient(0, 20, 0, 110);
+  g.addColorStop(0, p.cloth); g.addColorStop(1, '#0a0f0c');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(-58, 108); ctx.quadraticCurveTo(-52, 30, 0, 26 + bob); ctx.quadraticCurveTo(52, 30, 58, 108); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = p.c; ctx.lineWidth = 3; ctx.shadowColor = p.c; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
+  /* neck + head */
+  ctx.fillStyle = '#e8b88a'; ctx.fillRect(-9, 6 + bob, 18, 22);
+  var hg = ctx.createRadialGradient(-12, -38, 4, 0, -30, 34);
+  hg.addColorStop(0, '#ffe0b8'); hg.addColorStop(1, '#d8a878');
+  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, -30 + bob, 32, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = p.c; ctx.lineWidth = 2.5; ctx.shadowColor = p.c; ctx.shadowBlur = 8; ctx.stroke(); ctx.shadowBlur = 0;
+  /* hair */
+  ctx.fillStyle = p.hair;
+  ctx.beginPath(); ctx.arc(0, -38 + bob, 33, Math.PI*0.95, Math.PI*2.05); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-32, -30 + bob); ctx.quadraticCurveTo(-36, 6 + bob, -24, -2 + bob); ctx.lineTo(-20, -28 + bob); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(32, -30 + bob); ctx.quadraticCurveTo(36, 6 + bob, 24, -2 + bob); ctx.lineTo(20, -28 + bob); ctx.closePath(); ctx.fill();
+  /* eyes */
+  var blink = (Math.sin(t*0.7) > 0.985) ? 0.15 : 1;
+  ctx.fillStyle = '#101418';
+  ctx.beginPath(); ctx.ellipse(-12, -30 + bob, 3.5, 5*blink, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(12, -30 + bob, 3.5, 5*blink, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#101418'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, -18 + bob, 7, 0.2*Math.PI, 0.8*Math.PI); ctx.stroke();
+  /* signature detail */
+  if (pid === 'rue'){ ctx.strokeStyle = '#ff5a5a'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(-30, 34 + bob); ctx.quadraticCurveTo(0, 52 + bob, 30, 34 + bob); ctx.stroke(); }
+  if (pid === 'wren'){ ctx.fillStyle = '#ffd75e'; ctx.shadowColor = '#ffd75e'; ctx.shadowBlur = 14; ctx.beginPath(); ctx.arc(0, 62 + bob, 7, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0; }
+  ctx.restore();
+}
+function creatureCanvas(speciesId){
+  var c = document.createElement('canvas'); c.width = 256; c.height = 256;
+  drawCreature(c.getContext('2d'), speciesId, 0.6, 256, {});
+  return c;
+}
+function creatureTexture(speciesId){
+  return new THREE.CanvasTexture(creatureCanvas(speciesId));
+}
+function personTexture(pid){
+  var c = document.createElement('canvas'); c.width = 256; c.height = 256;
+  drawPerson(c.getContext('2d'), pid, 0.6, 256);
+  return new THREE.CanvasTexture(c);
+}
+
+/* ---------------- 3D: GROVE + ARENA ---------------- */
+var renderer = null, exploreScene = null, arenaScene = null, clockT = 0;
+var gfxOK = false, classicView = false;
+var player = {x:0, z:14, yaw:0, speed:6};
+var keys = {};
+var GRASS_ZONES = [{x:-14,z:-8,r:7},{x:10,z:-14,r:8},{x:18,z:6,r:6},{x:-20,z:8,r:6},{x:0,z:-22,r:7}];
+var NPC_SPOTS = [
+  {id:'wren', x:-4, z:-2, beat:6, label:'Keeper Wren'},
+  {id:'rue', x:8, z:-6, beat:3, label:'Rue'},
+  {id:'pip', x:-12, z:6, beat:2, label:'Pip'},
+  {id:'tam', x:14, z:-2, beat:4, label:'Old Tam'},
+  {id:'sable', x:2, z:-16, beat:4, label:'Ranger Sable'}
+];
+function makeRenderer(){
+  if (!THREE) return null;
+  try {
+    var r = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
+    r.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    r.setClearColor(0x02080a);
+    return r;
+  } catch(e){ return null; }
+}
+function glowTexture(color){
+  var c = document.createElement('canvas'); c.width = 64; c.height = 64;
+  var x = c.getContext('2d');
+  var g = x.createRadialGradient(32,32,2,32,32,30);
+  g.addColorStop(0, color); g.addColorStop(0.4, color+'88'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = g; x.fillRect(0,0,64,64);
+  return new THREE.CanvasTexture(c);
+}
+function buildGrove(scene){
+  scene.fog = new THREE.Fog(0x06120c, 18, 70);
+  var ground = new THREE.Mesh(new THREE.PlaneGeometry(140,140),
+    new THREE.MeshStandardMaterial({color:0x0d2a18, roughness:1}));
+  ground.rotation.x = -Math.PI/2; scene.add(ground);
+  /* layered environment: far silhouettes + mid trees + ground dressing */
+  var trunkMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:1});
+  var leafMat = new THREE.MeshStandardMaterial({color:0x0f4a26, roughness:1, emissive:0x062a14, emissiveIntensity:0.6});
+  var leafMat2 = new THREE.MeshStandardMaterial({color:0x14603a, roughness:1, emissive:0x0a3a20, emissiveIntensity:0.6});
+  for (var i=0;i<46;i++){
+    var a = (i/46)*Math.PI*2 + Math.sin(i*7.3)*0.3;
+    var rr = 16 + ((i*37)%44);
+    var tx = Math.cos(a)*rr, tz = Math.sin(a)*rr;
+    if (Math.abs(tx) < 6 && Math.abs(tz-14) < 6) continue;
+    var h = 7 + ((i*13)%9);
+    var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.6, h*0.4, 6), trunkMat);
+    trunk.position.set(tx, h*0.2, tz); scene.add(trunk);
+    var cone = new THREE.Mesh(new THREE.ConeGeometry(2.2 + ((i*7)%14)/10, h*0.7, 7), i%2?leafMat:leafMat2);
+    cone.position.set(tx, h*0.4 + h*0.32, tz); scene.add(cone);
+    var cone2 = new THREE.Mesh(new THREE.ConeGeometry(1.5, h*0.4, 7), i%2?leafMat2:leafMat);
+    cone2.position.set(tx, h*0.4 + h*0.6, tz); scene.add(cone2);
+  }
+  /* far silhouette ring (the grove wall) */
+  var farMat = new THREE.MeshBasicMaterial({color:0x04180e, fog:true});
+  for (var j=0;j<26;j++){
+    var fa = (j/26)*Math.PI*2;
+    var fr = 62 + (j%5)*3;
+    var fh = 18 + (j%7)*3;
+    var sil = new THREE.Mesh(new THREE.ConeGeometry(7, fh, 5), farMat);
+    sil.position.set(Math.cos(fa)*fr, fh/2 - 1, Math.sin(fa)*fr); scene.add(sil);
+  }
+  /* ember flowers — emissive dressing */
+  var flowerGeo = new THREE.SphereGeometry(0.28, 8, 8);
+  for (var k=0;k<70;k++){
+    var fa2 = Math.random()*Math.PI*2, fr2 = 4 + Math.random()*42;
+    var col = pickR(Math.random, ['#ff9a3d','#ffd75e','#ff6fae','#3ddc78']);
+    var fl = new THREE.Mesh(flowerGeo, new THREE.MeshBasicMaterial({color:new THREE.Color(col)}));
+    fl.position.set(Math.cos(fa2)*fr2, 0.3, Math.sin(fa2)*fr2);
+    scene.add(fl);
+  }
+  /* light shafts */
+  var shaftMat = new THREE.MeshBasicMaterial({color:0xffe9a8, transparent:true, opacity:0.07, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide});
+  for (var s2=0;s2<8;s2++){
+    var shaft = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 26), shaftMat);
+    shaft.position.set((Math.random()-0.5)*50, 12, (Math.random()-0.5)*50);
+    shaft.rotation.z = 0.25; shaft.rotation.y = Math.random()*Math.PI;
+    scene.add(shaft);
+  }
+  /* drifting spores (ambient particles) */
+  var sporeCount = 260, sporePos = new Float32Array(sporeCount*3);
+  for (var p=0;p<sporeCount;p++){ sporePos[p*3] = (Math.random()-0.5)*70; sporePos[p*3+1] = Math.random()*12; sporePos[p*3+2] = (Math.random()-0.5)*70; }
+  var sporeGeo = new THREE.BufferGeometry();
+  sporeGeo.setAttribute('position', new THREE.Float32BufferAttribute(sporePos, 3));
+  var spores = new THREE.Points(sporeGeo, new THREE.PointsMaterial({color:0xa8ffc8, size:0.35, transparent:true, opacity:0.8, blending:THREE.AdditiveBlending, depthWrite:false}));
+  spores.name = 'spores'; scene.add(spores);
+  /* warm fireflies — FP polish: a second, gold particle layer that drifts
+     near the walker's eye line and reads as living light in the dim grove */
+  var ffCount = 120, ffPos = new Float32Array(ffCount*3);
+  for (var p=0;p<ffCount;p++){ ffPos[p*3] = (Math.random()-0.5)*60; ffPos[p*3+1] = 0.5 + Math.random()*6; ffPos[p*3+2] = (Math.random()-0.5)*60; }
+  var ffGeo = new THREE.BufferGeometry();
+  ffGeo.setAttribute('position', new THREE.Float32BufferAttribute(ffPos, 3));
+  var fireflies = new THREE.Points(ffGeo, new THREE.PointsMaterial({color:0xffd75e, size:0.45, transparent:true, opacity:0.9, blending:THREE.AdditiveBlending, depthWrite:false}));
+  fireflies.name = 'fireflies'; scene.add(fireflies);
+  /* encounter grass patches — tall, glowing */
+  GRASS_ZONES.forEach(function(gz){
+    var gm = new THREE.MeshStandardMaterial({color:0x1a7a3a, roughness:1, emissive:0x0a3a1a, emissiveIntensity:0.8});
+    for (var b=0;b<14;b++){
+      var ba = Math.random()*Math.PI*2, br = Math.random()*gz.r*0.8;
+      var blade = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1.6 + Math.random(), 5), gm);
+      blade.position.set(gz.x + Math.cos(ba)*br, 0.8, gz.z + Math.sin(ba)*br);
+      blade.rotation.z = (Math.random()-0.5)*0.4;
+      scene.add(blade);
+    }
+  });
+  /* lights */
+  scene.add(new THREE.AmbientLight(0x88bb99, 0.55));
+  var sun = new THREE.DirectionalLight(0xffe9a8, 0.9); sun.position.set(20, 30, 10); scene.add(sun);
+  var emberLight = new THREE.PointLight(0xff9a3d, 1.2, 30); emberLight.position.set(0, 4, -10); scene.add(emberLight);
+  return {spores:spores, emberLight:emberLight, fireflies:fireflies};
+}
+function buildExplore(){
+  if (!THREE) return false;
+  if (!renderer) renderer = makeRenderer();
+  if (!renderer) return false;
+  exploreScene = new THREE.Scene();
+  exploreScene.background = new THREE.Color(0x06120c);
+  var cam = new THREE.PerspectiveCamera(72, 16/9, 0.1, 200);
+  exploreScene.userData.camera = cam;
+  exploreScene.userData.grove = buildGrove(exploreScene);
+  /* NPC billboards */
+  var rings = [];
+  NPC_SPOTS.forEach(function(npc){
+    var tex = personTexture(npc.id);
+    var spr = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true}));
+    spr.scale.set(2.4, 2.4, 1); spr.position.set(npc.x, 1.6, npc.z);
+    spr.userData.npc = npc; exploreScene.add(spr);
+    var ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.05, 24),
+      new THREE.MeshBasicMaterial({color:0x00ff88, transparent:true, opacity:0.7, side:THREE.DoubleSide}));
+    ring.rotation.x = -Math.PI/2; ring.position.set(npc.x, 0.06, npc.z); exploreScene.add(ring);
+    rings.push(ring);
+  });
+  exploreScene.userData.grove.rings = rings;
+  var host = $('explore3d');
+  if (host && !host.contains(renderer.domElement)){ host.appendChild(renderer.domElement); }
+  sizeRenderer();
+  gfxOK = true;
+  return true;
+}
+function sizeRenderer(){
+  var w = ($('game') && $('game').clientWidth) || 960, h = ($('game') && $('game').clientHeight) || 540;
+  var fx = $('fpFx');
+  if (fx){ fx.width = w; fx.height = h; }
+  if (!renderer) return;
+  renderer.setSize(w, h, false);
+  [exploreScene, arenaScene].forEach(function(sc){ if (sc && sc.userData.camera){ sc.userData.camera.aspect = w/h; sc.userData.camera.updateProjectionMatrix(); } });
+}
+function exploreTick(dt){
+  if (!exploreScene || !exploreScene.userData.camera) return;
+  var cam = exploreScene.userData.camera;
+  var sp = player.speed * dt;
+  var fwd = {x:-Math.sin(player.yaw), z:-Math.cos(player.yaw)};
+  var right = {x:Math.cos(player.yaw), z:-Math.sin(player.yaw)};
+  var mx = 0, mz = 0;
+  if (keys.w || keys.up){ mx += fwd.x; mz += fwd.z; }
+  if (keys.s || keys.down){ mx -= fwd.x; mz -= fwd.z; }
+  if (keys.a || keys.left){ mx -= right.x; mz -= right.z; }
+  if (keys.d || keys.right){ mx += right.x; mz += right.z; }
+  if (mx || mz){ var len = Math.hypot(mx, mz); player.x += mx/len*sp; player.z += mz/len*sp;
+    var rr = Math.hypot(player.x, player.z); if (rr > 46){ player.x *= 46/rr; player.z *= 46/rr; }
+    checkGrass(dt);
+  }
+  fpCam.moving = !!(mx || mz);
+  stepFpCam(dt);
+  cam.position.set(player.x, fpCam.y, player.z);
+  cam.rotation.y = fpCam.yaw;
+  cam.rotation.z = fpCam.roll;
+  var grove = exploreScene.userData.grove;
+  if (grove && grove.spores){ grove.spores.rotation.y += dt*0.02; grove.spores.position.y = Math.sin(clockT*0.4)*0.4; }
+  if (grove && grove.fireflies){ grove.fireflies.rotation.y += dt*0.015; grove.fireflies.position.y = Math.sin(clockT*0.5)*0.3; }
+  if (grove && grove.emberLight){ grove.emberLight.intensity = 1.1 + Math.sin(clockT*1.7)*0.25; }
+  if (grove && grove.rings){ grove.rings.forEach(function(r, i){ r.material.opacity = 0.5 + Math.sin(clockT*2 + i*1.3)*0.2; var s = 1 + Math.sin(clockT*2 + i*1.3)*0.06; r.scale.set(s, s, 1); }); }
+  drawFpStreaks(fpCam.vel);
+  renderExploreHud();
+  if (renderer) renderer.render(exploreScene, cam);
+  if (classicView) drawClassic();
+}
+function inGrass(){
+  for (var i=0;i<GRASS_ZONES.length;i++){ var g = GRASS_ZONES[i];
+    if (Math.hypot(player.x-g.x, player.z-g.z) < g.r) return true; }
+  return false;
+}
+var grassTimer = 0;
+function checkGrass(dt){
+  if (!inGrass()){ grassTimer = 0; return; }
+  grassTimer += dt;
+  if (grassTimer > 1.6){ grassTimer = 0; if (Math.random() < 0.55) triggerWild(); }
+}
+function drawClassic(){
+  var cv = $('explore2d'); if(!cv) return;
+  var w = cv.width = cv.clientWidth || 960, h = cv.height = cv.clientHeight || 540;
+  var x2 = cv.getContext('2d'); if(!x2) return;
+  x2.fillStyle = '#071a0e'; x2.fillRect(0,0,w,h);
+  var sc = Math.min(w,h)/110;
+  function px(v){ return w/2 + v*sc; } function pz(v){ return h/2 + v*sc; }
+  GRASS_ZONES.forEach(function(g){ x2.fillStyle = '#1a7a3a'; x2.beginPath(); x2.arc(px(g.x), pz(g.z), g.r*sc, 0, Math.PI*2); x2.fill(); });
+  NPC_SPOTS.forEach(function(n){ x2.fillStyle = '#ffd75e'; x2.beginPath(); x2.arc(px(n.x), pz(n.z), 8, 0, Math.PI*2); x2.fill(); x2.fillStyle = '#fff'; x2.font = '11px monospace'; x2.fillText(n.label, px(n.x)+10, pz(n.z)+4); });
+  x2.fillStyle = '#00ff88'; x2.beginPath(); x2.arc(px(player.x), pz(player.z), 7, 0, Math.PI*2); x2.fill();
+  x2.strokeStyle = '#00ff88'; x2.beginPath(); x2.moveTo(px(player.x), pz(player.z)); x2.lineTo(px(player.x - Math.sin(player.yaw)*14), pz(player.z - Math.cos(player.yaw)*14)); x2.stroke();
+  x2.fillStyle = '#cfe6d8'; x2.font = '12px monospace'; x2.fillText('CLASSIC VIEW — top-down · C to return to first person', 12, 20);
+}
+/* ---- battle arena (3D, same grove, creatures rendered large) ---- */
+var arena = {foe:null, my:null, foeTex:null, myTex:null, weather:null};
+function buildArena(foeSpecies, mySpecies, foeTypes, myTypes){
+  if (!THREE) return false;
+  if (!renderer) renderer = makeRenderer();
+  if (!renderer) return false;
+  arenaScene = new THREE.Scene();
+  arenaScene.background = new THREE.Color(0x04120c);
+  var cam = new THREE.PerspectiveCamera(60, 16/9, 0.1, 200);
+  cam.position.set(0, 3.2, 11); cam.lookAt(0, 1.6, 0);
+  arenaScene.userData.camera = cam;
+  var grove = buildGrove(arenaScene);
+  arenaScene.userData.grove = grove;
+  /* creatures as TRUE 3D SPRITE STACKS (CHAR2): the canvas texture is
+     split into 12 horizontal bands, one plane per band, each band pushed
+     on a belly profile (mid bands forward, crown + feet recessed) so the
+     creature has real depth in the arena instead of one flat plane. */
+  function monPlane(speciesId, x, y, z, scale, flip){
+    var src = creatureCanvas(speciesId);
+    var BANDS = 12, bh = Math.ceil(256/BANDS);
+    var mesh = new THREE.Group();
+    for (var bi=0; bi<BANDS; bi++){
+      var bc = document.createElement('canvas'); bc.width = 256; bc.height = bh;
+      var bg2 = bc.getContext('2d'); if (bg2 && bg2.drawImage) bg2.drawImage(src, 0, -bi*bh);
+      var bmat = new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(bc), transparent:true, side:THREE.DoubleSide});
+      var bm = new THREE.Mesh(new THREE.PlaneGeometry(scale, scale*(bh/256)), bmat);
+      var v = (bi+0.5)/BANDS;
+      bm.position.set(0, scale/2 - v*scale, Math.sin(v*Math.PI)*scale*0.085);
+      mesh.add(bm);
+    }
+    mesh.position.set(x, y, z); if (flip) mesh.rotation.y = Math.PI;
+    arenaScene.add(mesh);
+    var glow = new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture(TYPE_COLOR[SPECIES[speciesId].ty[0]]), transparent:true, opacity:0.5, blending:THREE.AdditiveBlending, depthWrite:false}));
+    glow.scale.set(scale*1.1, scale*1.1, 1); glow.position.set(x, y, z-0.2); arenaScene.add(glow);
+    return {mesh:mesh, glow:glow, baseY:y, baseX:x};
+  }
+  arena.foe = monPlane(foeSpecies, 1.6, 2.6, -4.5, 4.6, false);
+  arena.my = monPlane(mySpecies, -1.8, 1.9, 1.5, 4.2, true);
+  /* weather / particles per type matchup */
+  var wcol = TYPE_COLOR[(foeTypes && foeTypes[0]) || 'EMBER'];
+  var wcount = 180, wpos = new Float32Array(wcount*3);
+  for (var i=0;i<wcount;i++){ wpos[i*3]=(Math.random()-0.5)*30; wpos[i*3+1]=Math.random()*12; wpos[i*3+2]=(Math.random()-0.5)*20; }
+  var wgeo = new THREE.BufferGeometry();
+  wgeo.setAttribute('position', new THREE.Float32BufferAttribute(wpos, 3));
+  arena.weather = new THREE.Points(wgeo, new THREE.PointsMaterial({color:new THREE.Color(wcol), size:0.3, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending, depthWrite:false}));
+  arenaScene.add(arena.weather);
+  var host = $('arena3d');
+  if (host){ while (host.firstChild) host.removeChild(host.firstChild); host.appendChild(renderer.domElement); }
+  sizeRenderer();
+  gfxOK = true;
+  return true;
+}
+function arenaTick(dt, lunge){
+  if (!arenaScene || !arenaScene.userData.camera) return;
+  var t = clockT;
+  if (arena.foe){ arena.foe.mesh.position.y = arena.foe.baseY + Math.sin(t*2.2)*0.12; arena.foe.mesh.position.x = arena.foe.baseX + (lunge==='foe' ? -Math.sin(Math.min(1,(t%1))*Math.PI)*1.2 : 0); }
+  if (arena.my){ arena.my.mesh.position.y = arena.my.baseY + Math.sin(t*2.2+1)*0.12; arena.my.mesh.position.x = arena.my.baseX + (lunge==='my' ? Math.sin(Math.min(1,(t%1))*Math.PI)*1.2 : 0); }
+  if (arena.weather) arena.weather.rotation.y += dt*0.03;
+  var grove = arenaScene.userData.grove;
+  if (grove && grove.spores) grove.spores.rotation.y += dt*0.02;
+  if (grove && grove.fireflies){ grove.fireflies.rotation.y += dt*0.015; grove.fireflies.position.y = Math.sin(clockT*0.5)*0.3; }
+  stepArenaCam(dt);
+  var cam = arenaScene.userData.camera;
+  cam.position.set(arenaCam.x, arenaCam.y, arenaCam.z - arenaCam.punch);
+  cam.lookAt(0, 1.6, 0);
+  if (arena.foe && arena.foe.glow) arena.foe.glow.material.opacity = 0.4 + Math.sin(t*3)*0.15;
+  if (arena.my && arena.my.glow) arena.my.glow.material.opacity = 0.3 + Math.sin(t*3+1)*0.1;
+  drawFpStreaks(arenaCam.vel);
+  renderer.render(arenaScene, cam);
+}
+
+/* ---------------- FIRST-PERSON POLISH (dim 10, 2026-11-22) ---------------- */
+/* Smooth eased camera, walk bob + strafe lean, compass + objective LOCK,
+   speed lines, pulsing NPC rings + fireflies, battle camera drift +
+   punch + foe glow pulse + battle LOCK. Presentation only — no gameplay
+   rule is touched; camera/lock/glow state is visual-only, never saved. */
+function angNorm(a){ while (a > Math.PI) a -= Math.PI*2; while (a < -Math.PI) a += Math.PI*2; return a; }
+var fpCam = {yaw:0, y:2.1, roll:0, vel:0, walkPhase:0, moving:false};
+function snapFpCam(){ fpCam.yaw = player.yaw; fpCam.y = 2.1; fpCam.roll = 0; fpCam.vel = 0; fpCam.walkPhase = 0; fpCam.moving = false; }
+function stepFpCam(dt){
+  var prevYaw = fpCam.yaw;
+  fpCam.yaw += angNorm(player.yaw - fpCam.yaw) * 0.12;
+  var slew = Math.abs(angNorm(fpCam.yaw - prevYaw));
+  if (fpCam.moving) fpCam.walkPhase += dt * 11;
+  var targetY = 2.1 + (fpCam.moving ? Math.sin(fpCam.walkPhase) * 0.055 : 0);
+  fpCam.y += (targetY - fpCam.y) * 0.2;
+  var leanTarget = (keys.a ? 0.035 : 0) - (keys.d ? 0.035 : 0);
+  var breathe = Math.sin(clockT * 0.8) * 0.004;
+  fpCam.roll += ((leanTarget + breathe) - fpCam.roll) * 0.12;
+  fpCam.vel = fpCam.vel * 0.85 + slew + (fpCam.moving ? 0.004 : 0);
+}
+/* ---- compass + objective LOCK (explore) ---- */
+var CARDINALS = ['N','NE','E','SE','S','SW','W','NW'];
+function headingDeg(){ var h = (-fpCam.yaw * 180 / Math.PI) % 360; return (h + 360) % 360; }
+function compassText(){
+  var h = headingDeg();
+  var parts = [];
+  for (var k = -4; k <= 4; k++){
+    var a = (Math.round((h + k * 15) / 15) * 15 + 360) % 360;
+    var label = (a % 45 === 0) ? CARDINALS[Math.round(a / 45) % 8] : String(a);
+    parts.push(k === 0 ? '[' + label + ']' : label);
+  }
+  return parts.join('  ');
+}
+function bearingArrow(rel){
+  var d = Math.abs(rel);
+  if (d < 0.39) return '↑';
+  if (d < 1.18) return rel > 0 ? '↗' : '↖';
+  if (d < 1.96) return rel > 0 ? '→' : '←';
+  if (d < 2.75) return rel > 0 ? '↘' : '↙';
+  return '↓';
+}
+function storyObjectiveId(){
+  if (S.story === 2) return 'pip';
+  if (S.story === 3 || S.story === 5) return 'rue';
+  if (S.story === 6) return 'wren';
+  return null;
+}
+function computeFpLock(){
+  if (mode !== 'explore') return null;
+  var obj = storyObjectiveId(), pick = null, bd = 46;
+  NPC_SPOTS.forEach(function(n){
+    var d = Math.hypot(player.x - n.x, player.z - n.z);
+    if (obj && n.id === obj){ if (d < 46) pick = {kind:'npc', id:n.id, name:n.label, dist:d, star:true, x:n.x, z:n.z}; return; }
+    if (!pick && d < bd){ pick = {kind:'npc', id:n.id, name:n.label, dist:d, star:false, x:n.x, z:n.z}; bd = d; }
+  });
+  if (!pick){
+    var gz = null, gd = 1e9;
+    GRASS_ZONES.forEach(function(g){ var d = Math.hypot(player.x - g.x, player.z - g.z); if (d < gd){ gd = d; gz = g; } });
+    if (gz) pick = {kind:'grass', name:'TALL GRASS', dist:gd, star:false, x:gz.x, z:gz.z};
+  }
+  if (!pick) return null;
+  var headingTo = Math.atan2(-(pick.x - player.x), -(pick.z - player.z));
+  pick.rel = angNorm(headingTo - fpCam.yaw);
+  pick.arrow = bearingArrow(pick.rel);
+  return pick;
+}
+var _hudCache = {compass:'', lock:'', party:''};
+function renderExploreHud(){
+  if (mode !== 'explore') return;
+  var c = compassText();
+  if (c !== _hudCache.compass){ _hudCache.compass = c; var ce = $('hudCompass'); if (ce) ce.textContent = c; }
+  var lock = computeFpLock();
+  var lt = lock ? ('◈ ' + (lock.star ? '★ ' : '') + lock.name.toUpperCase() + ' · ' + Math.round(lock.dist) + 'm ' + lock.arrow) : '';
+  if (lt !== _hudCache.lock){ _hudCache.lock = lt; var le = $('hudLock'); if (le) le.textContent = lt; }
+  var pt = S.party.map(function(m){ return monName(m) + ' Lv' + m.level + ' ' + m.hp + '/' + m.maxHp; }).join(' · ') + ' · ◉x' + S.orbs;
+  if (pt !== _hudCache.party){ _hudCache.party = pt; var pe = $('hudParty'); if (pe) pe.innerHTML = pt; }
+}
+/* ---- battle camera drift + punch + LOCK (battle) ---- */
+var arenaCam = {x:0, y:3.2, z:11, vel:0, target:0, punch:0};
+function stepArenaCam(dt){
+  var prevX = arenaCam.x;
+  arenaCam.x += (arenaCam.target - arenaCam.x) * 0.06;
+  arenaCam.target *= 0.97;
+  arenaCam.punch *= 0.94;
+  arenaCam.y = 3.2 + Math.sin(clockT * 0.8) * 0.05;
+  var slew = Math.abs(arenaCam.x - prevX);
+  arenaCam.vel = arenaCam.vel * 0.85 + slew;
+}
+function arenaBeat(bt){
+  if (!bt) return;
+  arenaCam.punch = 0.3;
+  var A = activeMon(bt, 'a');
+  arenaCam.target = (A && A.hp / A.maxHp < 0.3) ? -0.8 : 0.8;
+}
+function computeBattleLock(){
+  var bt = currentBattle; if (!bt) return null;
+  var A = activeMon(bt, 'a'), B = activeMon(bt, 'b');
+  if (!A || !B) return null;
+  var best = null, bestScore = -1;
+  A.moves.forEach(function(slot){
+    var mv = MOVES[slot.id];
+    if (!mv || !mv.p || slot.pp <= 0) return;
+    var eff = effectiveness(mv.t, monTypes(B));
+    var sc = mv.p * eff * (monTypes(A).indexOf(mv.t) >= 0 ? 1.5 : 1);
+    if (sc > bestScore){ bestScore = sc; best = {move:mv, eff:eff}; }
+  });
+  if (!best) return {name:monName(B), move:null, eff:1, label:'—', hp:B.hp, maxHp:B.maxHp, turn:bt.turn};
+  var label = best.eff > 1 ? 'SUPER EFFECTIVE' : (best.eff < 1 ? 'RESISTED' : 'NEUTRAL');
+  return {name:monName(B), move:best.move.n, type:best.move.t, eff:best.eff,
+    stab: monTypes(A).indexOf(best.move.t) >= 0, label:label, hp:B.hp, maxHp:B.maxHp, turn:bt.turn};
+}
+var _battleLockCache = '';
+function renderBattleLock(){
+  var el = $('fpLock'); if (!el) return;
+  var lock = computeBattleLock();
+  if (!lock){ el.style.display = 'none'; _battleLockCache = ''; return; }
+  var t = '◈ LOCK — ' + lock.name.toUpperCase() +
+    (lock.move ? ' · ' + lock.move.toUpperCase() + ' vs ' + lock.type + ' · ' + lock.label + (lock.stab ? ' · 1.5× STAB' : '') : ' · NO DAMAGING MOVE') +
+    ' · HP ' + lock.hp + '/' + lock.maxHp + ' · TURN ' + lock.turn;
+  if (t !== _battleLockCache){ _battleLockCache = t; el.textContent = t; }
+  el.style.display = 'block';
+}
+/* ---- speed lines (explore + battle) ---- */
+function drawFpStreaks(vel){
+  var cv = $('fpFx'); if (!cv) return;
+  var w = cv.width, h = cv.height;
+  if (!w || !h) return;
+  var x = cv.getContext('2d'); if (!x) return;
+  var a = Math.min(0.5, vel * 2.4);
+  x.clearRect(0, 0, w, h);
+  if (a < 0.03) return;
+  var cx = w / 2, cy = h / 2;
+  x.strokeStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')';
+  x.lineWidth = 1.5;
+  for (var i = 0; i < 16; i++){
+    var ang = (i / 16) * Math.PI * 2 + 0.31;
+    var r0 = Math.min(w, h) * 0.22 + ((i * 37) % 40);
+    var len = 26 + ((i * 53) % 40) + vel * 160;
+    x.beginPath();
+    x.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0);
+    x.lineTo(cx + Math.cos(ang) * (r0 + len), cy + Math.sin(ang) * (r0 + len));
+    x.stroke();
+  }
+}
+
+/* ---------------- SCREENS / DIALOGUE / CUTSCENES ---------------- */
+var mode = 'menu', paused = false, currentBattle = null, battleKind = 'wild';
+var dlgQueue = [], dlgCb = null, dlgIdx = 0, dlgTimer = null;
+function showScreen(id){
+  ['screenMenu','screenExplore','screenBattle','screenRoster','screenVersus','screenOnline','screenHow'].forEach(function(s){ var e=$(s); if(e) e.classList.toggle('on', s===id); });
+  $('cutPanel').style.display = 'none';
+  if (id) mode = id.replace('screen','').toLowerCase();
+  if (id === 'screenExplore'){ sizeRenderer(); }
+}
+function msg(t){ var m = $('msg'); if(m) m.textContent = t || ''; }
+function showDlg(who, text, cb){
+  dlgQueue = [{who:who, txt:text}]; dlgCb = cb || null; dlgIdx = 0;
+  $('dlg').style.display = 'block'; renderDlgLine();
+}
+function showDlgLines(lines, cb){
+  dlgQueue = lines.slice(); dlgCb = cb || null; dlgIdx = 0;
+  $('dlg').style.display = 'block'; renderDlgLine();
+}
+function renderDlgLine(){
+  var line = dlgQueue[dlgIdx]; if(!line){ hideDlg(); return; }
+  $('dlgWho').textContent = (PEOPLE[line.who] ? PEOPLE[line.who].n : line.who).toUpperCase();
+  var full = line.txt, el = $('dlgTxt'), i = 0;
+  el.textContent = '';
+  if (dlgTimer) clearInterval(dlgTimer);
+  dlgTimer = setInterval(function(){ i += 2; el.textContent = full.slice(0, i); if (i >= full.length) clearInterval(dlgTimer); }, 18);
+}
+function advanceDlg(){
+  var line = dlgQueue[dlgIdx];
+  if (line && $('dlgTxt').textContent.length < line.txt.length){ if (dlgTimer) clearInterval(dlgTimer); $('dlgTxt').textContent = line.txt; return; }
+  dlgIdx++;
+  if (dlgIdx >= dlgQueue.length) hideDlg();
+  else renderDlgLine();
+}
+function hideDlg(){ $('dlg').style.display = 'none'; if (dlgTimer) clearInterval(dlgTimer); var cb = dlgCb; dlgCb = null; if (cb) cb(); }
+/* cutscene player: 2-4 panels, portraits + backdrop, SPACE/click advance, ESC skip */
+var cutPanels = [], cutIdx = 0, cutCb = null, cutTimer = null;
+function playCutscene(panels, cb){
+  cutPanels = panels; cutIdx = 0; cutCb = cb || null;
+  $('cutPanel').style.display = 'block';
+  renderCutPanel();
+}
+function renderCutPanel(){
+  var p = cutPanels[cutIdx]; if(!p){ endCutscene(); return; }
+  $('cutWho').textContent = (PEOPLE[p.who] ? PEOPLE[p.who].n : p.who).toUpperCase();
+  var cv = $('cutCanvas'); cv.width = cv.clientWidth || 960; cv.height = cv.clientHeight || 360;
+  var x = cv.getContext('2d');
+  var g = x.createLinearGradient(0, 0, 0, cv.height);
+  g.addColorStop(0, p.bg1 || '#0a2a1a'); g.addColorStop(1, p.bg2 || '#02080a');
+  x.fillStyle = g; x.fillRect(0, 0, cv.width, cv.height);
+  /* scene dressing: stars / embers / silhouettes */
+  for (var i=0;i<60;i++){ x.fillStyle = 'rgba(255,215,94,'+(0.2+((i*37)%50)/100)+')'; x.beginPath(); x.arc((i*97)%cv.width, (i*61)%(cv.height*0.7), 1.5, 0, Math.PI*2); x.fill(); }
+  x.fillStyle = '#04180e';
+  for (var j=0;j<9;j++){ var bx = j*130 + 20; x.beginPath(); x.moveTo(bx, cv.height); x.lineTo(bx+30, cv.height-90-((j*53)%60)); x.lineTo(bx+60, cv.height); x.closePath(); x.fill(); }
+  if (p.person){ drawPerson(x, p.person, 0.8, 300); }
+  if (p.creature){ var c2 = document.createElement('canvas'); c2.width = 300; c2.height = 300; drawCreature(c2.getContext('2d'), p.creature, 0.8, 300, {}); x.drawImage(c2, cv.width-330, cv.height-310, 300, 300); }
+  var el = $('cutTxt'), full = p.txt, i = 0;
+  el.textContent = '';
+  if (cutTimer) clearInterval(cutTimer);
+  cutTimer = setInterval(function(){ i += 2; el.textContent = full.slice(0, i); if (i >= full.length) clearInterval(cutTimer); }, 16);
+}
+function advanceCut(){
+  var p = cutPanels[cutIdx];
+  if (p && $('cutTxt').textContent.length < p.txt.length){ if (cutTimer) clearInterval(cutTimer); $('cutTxt').textContent = p.txt; return; }
+  cutIdx++;
+  if (cutIdx >= cutPanels.length) endCutscene();
+  else renderCutPanel();
+}
+function endCutscene(){ $('cutPanel').style.display = 'none'; if (cutTimer) clearInterval(cutTimer); var cb = cutCb; cutCb = null; if (cb) cb(); }
+
+/* ---------------- STORY FLOW ---------------- */
+var storyHandlers = {};
+function startStory(){
+  if (S.party.length && S.story > 0){ enterExplore(); return; }
+  S = defaultSave();
+  playCutscene([
+    {who:'wren', person:'wren', txt:'You came. Good. The grove is going dim, and I am running out of hands to hold the light.', bg1:'#0a2a1a', bg2:'#02080a'},
+    {who:'wren', person:'wren', creature:'cinderwisp', txt:'Wild Sparks carry the grove\'s ember. Lately their light fades. I do not know why — but I mean to find out.', bg1:'#0a1a2a', bg2:'#02080a'},
+    {who:'wren', person:'wren', txt:'Take one of these three as your partner. Then walk the hollow, catch Sparks, and find what is dimming them.', bg1:'#1a2a0a', bg2:'#02080a'}
+  ], function(){ S.story = 1; showStarterPick(); });
+}
+function showStarterPick(){
+  showScreen('screenRoster');
+  $('rosterSub').textContent = 'CHOOSE YOUR PARTNER — Keeper Wren is watching. One of these three walks with you from here.';
+  var wrap = $('rosterCards'); wrap.innerHTML = '';
+  STARTERS.forEach(function(id){
+    var sp = SPECIES[id];
+    var card = document.createElement('div'); card.className = 'card';
+    var cv = document.createElement('canvas'); cv.width = 160; cv.height = 160;
+    drawCreature(cv.getContext('2d'), id, 0.8, 160, {});
+    card.appendChild(cv);
+    var nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = sp.n.toUpperCase(); card.appendChild(nm);
+    var ty = document.createElement('div'); ty.className = 'ty'; ty.style.color = TYPE_COLOR[sp.ty[0]]; ty.textContent = sp.ty.join(' / '); card.appendChild(ty);
+    var meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = sp.d; card.appendChild(meta);
+    card.onclick = function(){
+      var mon = makeMon(id, 5);
+      S.party = [mon]; markSeen(id); S.story = 2; saveGame();
+      showDlgLines([{who:'wren', txt:'A fine choice. ' + sp.n + ' already looks at you like you belong to each other.'},
+        {who:'pip', txt:'Pip here! Meet me by the tall grass — I\'ll show you how catching works. I gave you 5 SNARE ORBS!'}],
+        function(){ enterExplore(); });
+    };
+    wrap.appendChild(card);
+  });
+}
+function enterExplore(){
+  showScreen('screenExplore');
+  snapFpCam();
+  $('hudBeat').textContent = STORY[S.story] ? STORY[S.story].title : 'Ember Hollow';
+  $('hudParty').innerHTML = S.party.map(function(m){ return monName(m)+' Lv'+m.level; }).join(' · ') + ' · ◉x'+S.orbs;
+  if (THREE){ if (!exploreScene) buildExplore(); else sizeRenderer(); }
+  else { classicView = true; var e2 = $('explore2d'); if (e2) e2.style.display = 'block'; }
+  msg(S.story === 2 ? 'Find Pip by the tall grass — walk into the grass to meet wild Sparks.' : 'Explore Ember Hollow. E talks to people. Grass hides wild Sparks.');
+}
+function nearestNPC(){
+  var best = null, bd = 4;
+  NPC_SPOTS.forEach(function(n){ var d = Math.hypot(player.x-n.x, player.z-n.z); if (d < bd){ bd = d; best = n; } });
+  return best;
+}
+function talkTo(npc){
+  if (!npc) return;
+  if (npc.id === 'pip' && S.story === 2){
+    showDlgLines(STORY[2].lines, function(){ S.story = 3; saveGame(); $('hudBeat').textContent = STORY[3].title; });
+  } else if (npc.id === 'rue' && S.story === 3){
+    showDlgLines(STORY[3].lines, function(){ startRivalBattle(1); });
+  } else if (npc.id === 'sable' && S.story === 4){
+    showDlgLines([{who:'sable', txt:STORY[4].lines[0].txt}], function(){ S.quests.sable = true; checkMidBeat(); });
+  } else if (npc.id === 'tam' && S.story === 4){
+    showDlgLines([{who:'tam', txt:STORY[4].lines[1].txt}, {who:'tam', txt:'Here — take 3 more SNARE ORBS and a LUX ORB. On the house. Don\'t tell Wren.'}], function(){ S.quests.tam = true; S.orbs += 3; S.luxOrbs += 1; saveGame(); checkMidBeat(); });
+  } else if (npc.id === 'rue' && S.story === 4){
+    showDlgLines([{who:'rue', txt:STORY[4].lines[2].txt}], function(){ S.quests.rue = true; checkMidBeat(); });
+  } else if (npc.id === 'rue' && S.story === 5){
+    showDlgLines(STORY[5].lines, function(){ startRivalBattle(2); });
+  } else if (npc.id === 'wren' && S.story === 6){
+    showDlgLines(STORY[6].lines, function(){ startFinaleBattle(); });
+  } else if (npc.id === 'wren' && S.story <= 5){
+    showDlg('wren', S.story < 3 ? 'The hollow is waiting, trainer. Pip is by the tall grass.' : 'Rue is looking for you. She is loud, but her heart is in the right place. Usually.');
+  } else {
+    var p = PEOPLE[npc.id];
+    showDlg(npc.id, p.d || 'The grove hums around you.');
+  }
+}
+function checkMidBeat(){
+  saveGame();
+  if (S.quests.sable && S.quests.tam && S.quests.rue){ S.story = 5; saveGame(); $('hudBeat').textContent = STORY[5].title; showDlg('rue', 'I\'m by the old thorn wall. Come and battle me — I need to know I\'m strong enough for what\'s down there.'); }
+}
+function rivalTeam(n){
+  if (n === 1) return [makeMon('emberpup', 6), makeMon('zappit', 6)];
+  return [makeMon('embermane', 14), makeMon('voltzard', 14), makeMon('mistfox', 13)];
+}
+function startRivalBattle(n){
+  battleKind = 'rival';
+  var team = S.party.filter(function(m){ return m.hp > 0; });
+  if (!team.length){ S.party.forEach(function(m){ m.hp = m.maxHp; }); team = S.party; }
+  startBattle(team, rivalTeam(n), {kind:'trainer', nameB:'Rue', onWin:function(){
+    S.rivalWins++;
+    if (n === 1){ S.story = 4; saveGame(); showDlgLines([{who:'rue', txt:'...Fine. You\'re stronger than you look. Sable counts the dim Sparks every dawn — go ask her what she\'s seen.'}], function(){ enterExplore(); }); }
+    else { S.story = 6; saveGame(); showDlgLines([{who:'rue', txt:'Okay. Okay. You win. ...I\'ll watch the thorn wall while you talk to Wren. If something wakes up down there — I\'m coming with you.'}], function(){ enterExplore(); }); }
+  }, onLose:function(){
+    showDlg('rue', 'Ha! Not yet. Heal up at the hollow\'s edge and come back — I\'ll be right here.');
+    S.party.forEach(function(m){ m.hp = m.maxHp; }); saveGame(); enterExplore();
+  }});
+}
+function startFinaleBattle(){
+  battleKind = 'finale';
+  var boss = makeMon('cinderwisp', 26);
+  boss.maxHp = Math.floor(boss.maxHp*1.6); boss.hp = boss.maxHp; boss.atk += 10; boss.spa += 14;
+  var team = S.party.filter(function(m){ return m.hp > 0; });
+  if (!team.length){ S.party.forEach(function(m){ m.hp = m.maxHp; }); team = S.party; }
+  startBattle(team, [boss], {kind:'boss', nameB:'The Hollow Spark', onWin:function(){
+    S.story = 7; S.wins++; saveGame();
+    playCutscene([
+      {who:'wren', person:'wren', creature:'cinderwisp', txt:'It sleeps again — and this time, it dreams of sunlight. Look: the grove is lighting back up, one Spark at a time.', bg1:'#0a2a1a', bg2:'#02080a'},
+      {who:'rue', person:'rue', txt:'...I was wrong about you, Wren. And about you, trainer. Don\'t make me say it twice.', bg1:'#1a0a0a', bg2:'#02080a'},
+      {who:'wren', person:'wren', txt:'Ember Hollow is yours now too. Keep walking it. Keep catching. And when the light dims again — come find me.', bg1:'#0a2a1a', bg2:'#02080a'}
+    ], function(){ saveGame(); enterExplore(); msg('STORY COMPLETE — Ember Hollow shines again. Keep catching!'); });
+  }, onLose:function(){
+    showDlg('wren', 'It is still too strong. Train your Sparks, evolve them — and we will face it together again.');
+    S.party.forEach(function(m){ m.hp = m.maxHp; }); saveGame(); enterExplore();
+  }});
+}
+function wildPool(){
+  var lv = 5 + S.story + Math.floor(Math.random()*3);
+  var ids = Object.keys(SPECIES).filter(function(id){ return STARTERS.indexOf(id) < 0 || S.story > 2; });
+  if (S.story <= 2) ids = ['droplet','thornkit','emberpup','zappit','pebblit','glowbug','mossimp'];
+  return {id: pickR(Math.random, ids), lv: lv};
+}
+function triggerWild(){
+  if (mode !== 'explore' || currentBattle) return;
+  var w = wildPool();
+  var foe = makeMon(w.id, w.lv);
+  battleKind = 'wild';
+  var team = S.party.filter(function(m){ return m.hp > 0; });
+  if (!team.length){ S.party.forEach(function(m){ m.hp = m.maxHp; }); team = S.party; }
+  startBattle(team, [foe], {kind:'wild', nameB:'Wild ' + monName(foe), onWin:function(won){
+    if (won && won.caught){ /* handled in catch flow */ }
+  }, onLose:function(){ S.party.forEach(function(m){ m.hp = m.maxHp; }); saveGame(); enterExplore(); }});
+}
+
+/* ---------------- BATTLE CONTROLLER ---------------- */
+var battleUI = {turnLock:false, awaiting:'player', versus:null, net:null};
+function startBattle(teamA, teamB, opts){
+  opts = opts || {};
+  var bt = newBattle(teamA.slice(), teamB.slice(), {kind:opts.kind||'wild', nameA:opts.nameA||'You', nameB:opts.nameB||'Foe', rng:opts.rng, seed:opts.seed||0});
+  currentBattle = bt; battleUI = {turnLock:false, awaiting:'player', versus:opts.versus||null, net:opts.net||null};
+  battleKind = opts.kind || 'wild';
+  arenaCam = {x:0, y:3.2, z:11, vel:0, target:0, punch:0};
+  showScreen('screenBattle');
+  if (THREE) buildArena(activeMon(bt,'b').species, activeMon(bt,'a').species, monTypes(activeMon(bt,'b')), monTypes(activeMon(bt,'a')));
+  renderBattle();
+  logLine((opts.kind==='wild' ? 'A wild ' : '') + monName(activeMon(bt,'b')) + ' appeared!');
+  if (opts.kind === 'wild') msg('Wild battle — weaken it, then throw a Snare Orb (◉)!');
+  else msg('Trainer battle — ' + bt.b.name + ' wants to battle!');
+  if (opts.onWin) bt.onWin = opts.onWin;
+  if (opts.onLose) bt.onLose = opts.onLose;
+  return bt;
+}
+function logLine(t){
+  var el = $('battleLog'); if(!el) return;
+  var d = document.createElement('div'); d.textContent = t; el.appendChild(d);
+  while (el.children.length > 7) el.removeChild(el.firstChild);
+}
+function renderBattle(){
+  var bt = currentBattle; if(!bt) return;
+  var A = activeMon(bt,'a'), B = activeMon(bt,'b');
+  if (A){ $('myName').textContent = monName(A); $('myLv').textContent = 'Lv'+A.level;
+    $('myHp').style.width = Math.max(0, A.hp/A.maxHp*100)+'%';
+    $('myHp').className = A.hp/A.maxHp < 0.25 ? 'low' : '';
+    $('myHpNum').textContent = A.hp+' / '+A.maxHp;
+    $('mySt').textContent = A.status ? A.status.toUpperCase() : ''; }
+  if (B){ $('foeName').textContent = (bt.kind==='boss' ? '✦ ' : '') + monName(B); $('foeLv').textContent = 'Lv'+B.level;
+    $('foeHp').style.width = Math.max(0, B.hp/B.maxHp*100)+'%';
+    $('foeHp').className = B.hp/B.maxHp < 0.25 ? 'low' : '';
+    $('foeHpNum').textContent = B.hp+' / '+B.maxHp;
+    $('foeSt').textContent = B.status ? B.status.toUpperCase() : ''; }
+  $('orbCount').textContent = 'x'+S.orbs+' · LUX x'+S.luxOrbs;
+  var mb = $('moveBtns'); mb.innerHTML = '';
+  if (A) A.moves.forEach(function(slot){
+    var mv = MOVES[slot.id];
+    var b = document.createElement('button');
+    b.innerHTML = mv.n + '<small>'+mv.t+' · '+(mv.p?mv.p+' pow':'—')+' · PP '+slot.pp+'</small>';
+    b.disabled = battleUI.turnLock || slot.pp <= 0;
+    b.onclick = function(){ playerChooseMove(slot.id); };
+    mb.appendChild(b);
+  });
+  $('btnOrb').disabled = battleUI.turnLock || bt.kind !== 'wild' || (S.orbs <= 0 && S.luxOrbs <= 0);
+  $('btnRun').disabled = battleUI.turnLock || bt.kind === 'trainer';
+  renderBattleLock();
+}
+function playerChooseMove(moveId){
+  var bt = currentBattle; if(!bt || battleUI.turnLock || bt.over) return;
+  if (battleUI.net){ battleUI.net.sendMove(moveId); battleUI.turnLock = true; renderBattle(); return; }
+  if (battleUI.versus){ versusChoose(moveId); return; }
+  battleUI.turnLock = true; renderBattle();
+  var foeMove = botPickMove(bt, 'b', bt.kind==='wild' ? 'ORBIT' : (bt.kind==='boss' ? 'VEX' : 'ORBIT'));
+  setTimeout(function(){ finishTurn(bt, moveId, foeMove); }, 350);
+}
+function finishTurn(bt, moveA, moveB){
+  var before = bt.log.length;
+  resolveTurn(bt, moveA, moveB);
+  arenaBeat(bt);
+  bt.log.slice(before).forEach(logLine);
+  renderBattle();
+  if (bt.over){ endBattle(bt); return; }
+  battleUI.turnLock = false;
+  renderBattle();
+}
+function endBattle(bt){
+  battleUI.turnLock = true;
+  var won = bt.winner === 'a';
+  if (won){
+    var foe = bt.b.team[0];
+    var xp = 18 + foe.level*6;
+    var A = activeMon(bt,'a');
+    if (A && !fainted(A)){
+      var res = gainXp(A, xp);
+      logLine(monName(A)+' gained '+xp+' XP!');
+      if (res.leveled) logLine(monName(A)+' grew to Lv'+A.level+'!');
+      if (res.evolved){ logLine('✦ '+monName(A)+' EVOLVED into '+SPECIES[res.evolved].n+'! ✦'); msg(monName(A)+' evolved into '+SPECIES[res.evolved].n+'!'); }
+    }
+    S.wins++;
+    if (bt.kind === 'wild' && S.story === 2){ S.story = 3; }
+    saveGame();
+  }
+  setTimeout(function(){
+    currentBattle = null;
+    if (bt.onWin && won) bt.onWin({caught:false});
+    else if (bt.onLose && !won) bt.onLose();
+    else if (bt.kind === 'wild' || bt.kind === 'trainer' || bt.kind === 'boss'){ enterExplore(); }
+    else { showScreen('screenMenu'); }
+  }, 1400);
+}
+function throwOrb(kind){
+  var bt = currentBattle; if(!bt || battleUI.turnLock || bt.over || bt.kind !== 'wild') return;
+  if (kind === 'lux' && S.luxOrbs <= 0) kind = 'snare';
+  if (kind === 'snare' && S.orbs <= 0) return;
+  if (kind === 'lux') S.luxOrbs--; else S.orbs--;
+  saveGame();
+  var foe = activeMon(bt,'b');
+  var ch = catchChance(foe, kind);
+  logLine('You threw a '+(kind==='lux'?'LUX ORB':'SNARE ORB')+'! ('+Math.round(ch*100)+'% chance)');
+  battleUI.turnLock = true; renderBattle();
+  setTimeout(function(){
+    if (Math.random() < ch){
+      logLine('✦ Gotcha! '+monName(foe)+' was caught! ✦');
+      markSeen(foe.species); S.caught++;
+      var caught = JSON.parse(JSON.stringify(foe)); caught.hp = caught.maxHp; caught.status = null;
+      if (S.party.length < 6) S.party.push(caught); else S.box.push(caught);
+      saveGame();
+      bt.over = true; bt.winner = 'a';
+      setTimeout(function(){ currentBattle = null; showDlg('wren', monName(foe)+' joined your party! The grove feels a little brighter.'); enterExplore(); }, 900);
+    } else {
+      logLine('Oh no! '+monName(foe)+' broke free!');
+      var foeMove = botPickMove(bt, 'b', 'ORBIT');
+      setTimeout(function(){ finishTurn(bt, null, foeMove); }, 350);
+    }
+  }, 700);
+}
+
+/* ---------------- Fallible Engine wiring (E16, 2026-11-21): in WATCH mode
+   one council agent plays side 'a' per exhibition bout, rotating across
+   bouts (bout n: COUNCIL_IDS[n%8], so 8 bouts give every agent exactly one
+   bout). Every side-'a' bot decision goes through FallibleEngine.decide —
+   the game scores the active mon's moves with its own heuristic (power x
+   effectiveness x STAB, same as botPickMove's score, normalised to 0..1
+   for the engine's softmax), the engine samples by personality
+   temperature. Tags name the reason the option is attractive (type
+   matchup / STAB / resisted / heal / buff / debuff / status), so E8
+   per-tag learning builds real strategies. Side 'b' keeps the legacy
+   personality bot (VEX / ORBIT / HALO) as the opponent field. One bout
+   records one recordResult (win = side 'a' takes the exhibition, else
+   loss), so Elo moves at K=24 vs the 1200 field. Engine absent -> the
+   legacy botPickMove for both sides, unchanged. Solo / story / versus /
+   online play records nothing; save/load and battle rules are untouched.
+   The league page reads per-game Elo generically, so 'wildspark' appears
+   there with no league.html change. Probe (probe-e16.js, 40 bouts):
+   mean 9.0 turns/bout, side-A baseline win rate 35% (legacy both sides),
+   so the harness runs 12+ bouts to clear 100 traces. */
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var wsBout=0, wsAgentId=null, wsAgent=null, wsTraces=[], wsRecorded=false;
+function wsSetupAgent(){
+  wsAgentId=FE?COUNCIL_IDS[wsBout%8]:null; wsBout++; /* no engine -> no agent, even as a label */
+  wsAgent=null; wsTraces=[]; wsRecorded=false;
+  if(FE){ try{ wsAgent=FE.loadAgent(wsAgentId); }catch(e){ wsAgent=null; } }
+}
+function wsClearAgent(){
+  wsAgentId=null; wsAgent=null; wsTraces=[]; wsRecorded=false;
+}
+/* Score the active mon's moves for the engine; tags name the reason the
+   option is attractive, so per-tag learning (E8) builds real strategies.
+   Scores are the GAME's heuristic — personality enters only through the
+   engine's temperature. */
+function wsMoveOptions(bt, side){
+  var m = activeMon(bt, side), foe = activeMon(bt, side==='a'?'b':'a');
+  if(!m || !foe) return [];
+  var opts = m.moves.filter(function(s){ return s.pp > 0; });
+  if(!opts.length) opts = m.moves.slice(0, 1);
+  return opts.map(function(slot){
+    var mv = MOVES[slot.id];
+    var tag, score;
+    if(!mv.p){
+      if(mv.fx==='heal'){ tag='heal'; score=(m.hp/m.maxHp<0.45)?0.75:0.20; }
+      else if(mv.fx==='defup'||mv.fx==='spd'){ tag='buff'; score=0.35; }
+      else if(mv.fx==='atkdn'){ tag='debuff'; score=0.35; }
+      else { tag='status'; score=0.40; }
+    } else {
+      var eff = effectiveness(mv.t, monTypes(foe));
+      var stab = monTypes(m).indexOf(mv.t)>=0 ? 1.5 : 1;
+      if(eff>1) tag='type-matchup';
+      else if(eff<1) tag='resisted';
+      else if(stab>1) tag='stab';
+      else tag='neutral';
+      score = Math.min(1, (mv.p*eff*stab)/165);
+    }
+    return {key:slot.id, tag:tag, score:score};
+  });
+}
+/* Side-'a' move pick in WATCH mode: council agent via the engine when
+   present, else the legacy personality bot. Other callers (solo foe,
+   versus, online) keep calling botPickMove directly and never touch FE. */
+function wsPickMove(bt, side, personality){
+  if(FE && wsAgent && side==='a'){
+    var opts = wsMoveOptions(bt, side);
+    if(opts.length){
+      try{
+        var m = activeMon(bt, side);
+        var res = FE.decide(wsAgent, 'wildspark', opts,
+          {timePressure: m && m.hp/m.maxHp < 0.3 ? 0.7 : 0.2});
+        wsTraces.push(res.trace);
+        return res.pick.key;
+      }catch(e){}
+    }
+  }
+  return botPickMove(bt, side, personality);
+}
+/* One WATCH bout = one recordResult for the side-'a' agent, guarded so a
+   bout records exactly once. */
+function recordWatchResult(){
+  if(wsRecorded) return;
+  wsRecorded=true;
+  if(!FE || !wsAgent || !watchState) return;
+  try{ FE.recordResult(wsAgent,'wildspark',null,watchState.bt.winner==='a'?'win':'loss',wsTraces); }catch(e){}
+}
+
+/* ---------------- WATCH (bot exhibition) ---------------- */
+var watchState = null, watchTimer = null;
+function startWatch(){
+  var pool = Object.keys(SPECIES);
+  function team(n){ var t = []; for (var i=0;i<3;i++){ var id = pickR(Math.random, pool); t.push(makeMon(id, 12 + Math.floor(Math.random()*8))); } return t; }
+  var pers = ['VEX','ORBIT','HALO'];
+  /* E16: with the engine, side 'a' is the rotating council agent and side
+     'b' is the legacy personality bot; without it, both sides are legacy
+     personalities as before. */
+  var pB = pickR(Math.random, pers), pA;
+  if (FE){ wsSetupAgent(); pA = wsAgentId; }
+  else { pA = pickR(Math.random, pers); }
+  var bt = newBattle(team(), team(), {kind:'exhibition', nameA:pA, nameB:pB, rng:Math.random});
+  currentBattle = bt; battleKind = 'watch';
+  watchState = {bt:bt, pA:pA, pB:pB, traces:[], games:0};
+  showScreen('screenBattle');
+  if (THREE) buildArena(activeMon(bt,'b').species, activeMon(bt,'a').species, monTypes(activeMon(bt,'b')), monTypes(activeMon(bt,'a')));
+  $('battleLog').innerHTML = '';
+  logLine('EXHIBITION — '+pA+' vs '+pB+' (bot personalities, imperfect on purpose)');
+  msg('WATCH — '+pA+' vs '+pB+' · bots play themselves');
+  battleUI.turnLock = true; renderBattle();
+  watchStep();
+}
+function watchStep(){
+  var ws = watchState; if(!ws) return;
+  var bt = ws.bt;
+  if (bt.over){
+    ws.traces.push({game:ws.games, winner:bt.winner==='a'?ws.pA:ws.pB, turns:bt.turn});
+    recordWatchResult(); /* E16: exactly one recordResult per bout */
+    logLine('🏆 '+ (bt.winner==='a'?ws.pA:ws.pB) +' takes the exhibition in '+bt.turn+' turns!');
+    ws.games++;
+    watchTimer = setTimeout(function(){ if (watchState === ws) startWatch(); }, 2600);
+    return;
+  }
+  var before = bt.log.length;
+  var mA = wsPickMove(bt,'a',ws.pA), mB = botPickMove(bt,'b',ws.pB); /* E16: side 'a' via the engine when present */
+  resolveTurn(bt, mA, mB);
+  arenaBeat(bt);
+  bt.log.slice(before).forEach(logLine);
+  renderBattle();
+  watchTimer = setTimeout(watchStep, 900);
+}
+function stopWatch(){ if (watchTimer) clearTimeout(watchTimer); watchTimer = null; watchState = null; }
+
+/* ---------------- ROSTER SCREEN ---------------- */
+function showRoster(){
+  showScreen('screenRoster');
+  var seen = Object.keys(S.seen).length;
+  $('rosterSub').textContent = 'Seen '+seen+' / '+Object.keys(SPECIES).length+' · Caught '+S.caught+' · Party '+S.party.length+'/6 · Box '+S.box.length+' · ◉ Orbs x'+S.orbs+' · LUX x'+S.luxOrbs;
+  var wrap = $('rosterCards'); wrap.innerHTML = '';
+  Object.keys(SPECIES).forEach(function(id){
+    var sp = SPECIES[id];
+    var owned = S.party.concat(S.box).some(function(m){ return m.species === id; });
+    var card = document.createElement('div'); card.className = 'card';
+    if (owned) card.classList.add('sel');
+    var cv = document.createElement('canvas'); cv.width = 140; cv.height = 140;
+    if (S.seen[id] || owned) drawCreature(cv.getContext('2d'), id, 0.8, 140, {});
+    else { var x = cv.getContext('2d'); x.fillStyle = '#0a1a12'; x.fillRect(0,0,140,140); x.fillStyle = '#3a5a4a'; x.font = 'bold 64px Orbitron'; x.textAlign = 'center'; x.fillText('?', 70, 90); }
+    card.appendChild(cv);
+    var nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = (S.seen[id]||owned) ? sp.n.toUpperCase() : '???'; card.appendChild(nm);
+    var ty = document.createElement('div'); ty.className = 'ty'; ty.style.color = TYPE_COLOR[sp.ty[0]]; ty.textContent = (S.seen[id]||owned) ? sp.ty.join(' / ') : 'NOT SEEN'; card.appendChild(ty);
+    var meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = (S.seen[id]||owned) ? sp.d : 'Walk the ember-grass to meet it.'; card.appendChild(meta);
+    wrap.appendChild(card);
+  });
+}
+
+/* ---------------- LOCAL VERSUS ---------------- */
+var versusState = null;
+function showVersus(){
+  showScreen('screenVersus');
+  var pool = DRAFT_POOL.slice();
+  var picks = {p1:[], p2:[]}, turn = 'p1';
+  var box = $('versusPick');
+  function render(){
+    box.innerHTML = '';
+    var h = document.createElement('div'); h.className = 'sub';
+    h.textContent = (turn==='p1' ? 'PLAYER 1' : 'PLAYER 2') + ' — pick 3 creatures ('+picks[turn].length+'/3 chosen)';
+    box.appendChild(h);
+    var grid = document.createElement('div'); grid.className = 'cards';
+    pool.forEach(function(id){
+      var sp = SPECIES[id];
+      var card = document.createElement('div'); card.className = 'card';
+      if (picks[turn].indexOf(id) >= 0) card.classList.add('sel');
+      var cv = document.createElement('canvas'); cv.width = 120; cv.height = 120;
+      drawCreature(cv.getContext('2d'), id, 0.8, 120, {});
+      card.appendChild(cv);
+      var nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = sp.n.toUpperCase(); card.appendChild(nm);
+      card.onclick = function(){
+        if (picks[turn].indexOf(id) >= 0) picks[turn] = picks[turn].filter(function(x){ return x!==id; });
+        else if (picks[turn].length < 3) picks[turn].push(id);
+        if (picks[turn].length === 3){
+          if (turn === 'p1'){ turn = 'p2'; }
+          else { startLocalVersus(picks.p1, picks.p2); return; }
+        }
+        render();
+      };
+      grid.appendChild(card);
+    });
+    box.appendChild(grid);
+    var note = document.createElement('div'); note.className = 'sub';
+    note.textContent = 'Saved party? Player 1 can use it from the menu — draft is the quick start. Open picks, like the classics.';
+    box.appendChild(note);
+  }
+  render();
+}
+function startLocalVersus(ids1, ids2){
+  var t1 = ids1.map(function(id){ return makeMon(id, 15); });
+  var t2 = ids2.map(function(id){ return makeMon(id, 15); });
+  versusState = {side:'a', picked:{a:null, b:null}};
+  var bt = startBattle(t1, t2, {kind:'versus', nameA:'Player 1', nameB:'Player 2', versus:true,
+    onWin:function(){ showDlg('wren', (bt.winner==='a' ? 'Player 1' : 'Player 2') + ' wins the versus! The grove applauds.'); },
+    onLose:function(){}});
+  battleUI.versus = true;
+  msg('LOCAL VERSUS — Player 1, choose a move!');
+  renderBattle();
+}
+function versusChoose(moveId){
+  var bt = currentBattle; if(!bt || bt.over) return;
+  var side = versusState.side;
+  versusState.picked[side] = moveId;
+  if (side === 'a'){ versusState.side = 'b'; msg('LOCAL VERSUS — Player 2, choose a move!'); battleUI.turnLock = false; renderBattle(); return; }
+  battleUI.turnLock = true; renderBattle();
+  var mA = versusState.picked.a, mB = versusState.picked.b;
+  versusState.picked = {a:null, b:null}; versusState.side = 'a';
+  setTimeout(function(){ finishTurn(bt, mA, mB); if (!bt.over) msg('LOCAL VERSUS — Player 1, choose a move!'); }, 350);
+}
+
+/* ---------------- ONLINE (room-code WebSocket relay) ---------------- */
+var net = null;
+function wsURL(){
+  var proto = (location.protocol === 'https:') ? 'wss://' : 'ws://';
+  return proto + location.host + '/ws/wildspark';
+}
+function NetClient(){
+  this.ws = null; this.code = null; this.role = null; this.seed = 0;
+  this.myTeam = null; this.foeTeam = null; this.pendingMove = null; this.foeMove = null;
+  this.onEvent = function(){};
+}
+NetClient.prototype.connect = function(){
+  var self = this;
+  return new Promise(function(resolve, reject){
+    try { self.ws = new WebSocket(wsURL()); } catch(e){ reject(e); return; }
+    self.ws.onopen = function(){ resolve(); };
+    self.ws.onerror = function(){ reject(new Error('relay unreachable')); };
+    self.ws.onmessage = function(ev){ self.handle(JSON.parse(ev.data)); };
+    self.ws.onclose = function(){ self.onEvent({t:'closed'}); };
+  });
+};
+NetClient.prototype.send = function(obj){ if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(obj)); };
+NetClient.prototype.handle = function(m){
+  var self = this;
+  if (m.t === 'created'){ this.code = m.code; this.role = 'host'; this.seed = m.seed; this.onEvent(m); }
+  else if (m.t === 'joined'){ this.role = 'guest'; this.seed = m.seed; this.foeTeam = m.hostTeam; this.onEvent(m); }
+  else if (m.t === 'guest-joined'){ this.foeTeam = m.guestTeam; this.onEvent(m); this.beginBattle(); }
+  else if (m.t === 'move'){ this.foeMove = m.move; this.tryResolve(); }
+  else if (m.t === 'error'){ this.onEvent(m); }
+  else if (m.t === 'peer-left'){ this.onEvent(m); }
+};
+NetClient.prototype.host = function(team){
+  this.myTeam = team;
+  this.send({t:'create', team:team.map(serializeMon)});
+};
+NetClient.prototype.join = function(code, team){
+  this.myTeam = team; this.code = code.toUpperCase();
+  this.send({t:'join', code:this.code, team:team.map(serializeMon)});
+};
+NetClient.prototype.beginBattle = function(){
+  var self = this;
+  var rng = mulberry32(this.seed);
+  /* teams crossed the wire as snapshots — rebuild full instances so both
+     clients resolve the battle identically from the shared seed.
+     myTeam is already full instances (deep-copied from the local save);
+     foeTeam arrived as snapshots and needs rebuilding. */
+  var myTeam = this.myTeam;
+  var foeTeam = this.foeTeam.map(deserializeMon);
+  var bt = startBattle(myTeam, foeTeam, {kind:'versus', nameA:this.role==='host'?'You (Host)':'You (Guest)', nameB:'Online Rival', net:this, rng:rng, seed:this.seed,
+    onWin:function(){ showDlg('wren', 'Online versus decided! Room closed.'); },
+    onLose:function(){}});
+  battleUI.net = this;
+  msg('ONLINE VERSUS — room ' + this.code + ' · seeded RNG ' + this.seed + ' · choose a move!');
+};
+NetClient.prototype.sendMove = function(moveId){
+  this.pendingMove = moveId;
+  this.send({t:'move', move:moveId});
+  this.tryResolve();
+};
+NetClient.prototype.tryResolve = function(){
+  var bt = currentBattle;
+  if (!bt || !this.pendingMove || !this.foeMove || bt.over) return;
+  var mA = this.role==='host' ? this.pendingMove : this.foeMove;
+  var mB = this.role==='host' ? this.foeMove : this.pendingMove;
+  this.pendingMove = null; this.foeMove = null;
+  var self = this;
+  setTimeout(function(){ finishTurn(bt, mA, mB); if (!bt.over){ battleUI.turnLock = false; renderBattle(); } }, 300);
+};
+function serializeMon(m){
+  return {species:m.species, level:m.level, xp:m.xp, moves:m.moves.map(function(s){ return s.id; })};
+}
+function deserializeMon(d){
+  var m = makeMon(d.species, d.level);
+  m.xp = d.xp || 0;
+  /* snapshots carry move ids (strings); local copies carry {id,pp} objects — accept both */
+  m.moves = d.moves.map(function(s){ return (typeof s === 'string') ? {id:s, pp:16} : {id:s.id, pp:(s.pp || 16)}; });
+  return m;
+}
+function showOnline(){
+  showScreen('screenOnline');
+  $('onlineBox').innerHTML = '';
+  $('relayHost').textContent = location.host || 'localhost:3200';
+}
+function onlineHost(){
+  var team = (S.party.length ? S.party : DRAFT_POOL.slice(0,3).map(function(id){ return makeMon(id, 15); })).slice(0,3).map(function(m){ return JSON.parse(JSON.stringify(m)); });
+  net = new NetClient();
+  net.onEvent = function(m){
+    var box = $('onlineBox');
+    if (m.t === 'created'){ box.innerHTML = '<div class="sub">ROOM OPEN — share this code:</div><div class="roomcode">'+m.code+'</div><div class="sub">Waiting for a guest to join… (room expires after 10 minutes idle)</div>'; }
+    else if (m.t === 'guest-joined'){ box.innerHTML = '<div class="sub">Guest joined! Battle starting…</div>'; }
+    else if (m.t === 'error'){ box.innerHTML = '<div class="sub" style="color:#ff3860">'+m.error+'</div>'; }
+  };
+  net.connect().then(function(){ net.host(team); $('onlineBox').innerHTML = '<div class="sub">Creating room…</div>'; })
+    .catch(function(){ $('onlineBox').innerHTML = '<div class="sub" style="color:#ff3860">Relay unreachable — is the arcade server running? Room-code play is LIVE for LAN/local server only.</div>'; });
+}
+function onlineJoinUI(){
+  var box = $('onlineBox');
+  box.innerHTML = '<div class="sub">Enter the 4-letter room code:</div><input class="txt" id="joinCode" maxlength="4" placeholder="ABCD" /><button class="bigbtn" id="joinGo">Join Room</button>';
+  $('joinGo').onclick = function(){
+    var code = ($('joinCode').value || '').trim().toUpperCase();
+    if (code.length !== 4){ box.insertAdjacentHTML('beforeend', '<div class="sub" style="color:#ff3860">Code is 4 letters.</div>'); return; }
+    var team = (S.party.length ? S.party : DRAFT_POOL.slice(0,3).map(function(id){ return makeMon(id, 15); })).slice(0,3).map(function(m){ return JSON.parse(JSON.stringify(m)); });
+    net = new NetClient();
+    net.onEvent = function(m){
+      if (m.t === 'joined'){ box.innerHTML = '<div class="sub">Joined room '+code+'! Battle starting…</div>'; net.beginBattle(); }
+      else if (m.t === 'error'){ box.innerHTML = '<div class="sub" style="color:#ff3860">'+m.error+'</div>'; }
+    };
+    net.connect().then(function(){ net.join(code, team); })
+      .catch(function(){ box.innerHTML = '<div class="sub" style="color:#ff3860">Relay unreachable.</div>'; });
+  };
+}
+
+/* ---------------- MAIN LOOP / INPUT / SHELL ---------------- */
+var lastT = 0, rafId = null;
+function loop(ts){
+  var dt = Math.min(0.05, (ts - lastT)/1000 || 0.016); lastT = ts; clockT += dt;
+  if (!paused){
+    if (mode === 'explore' && !classicView && exploreScene) exploreTick(dt);
+    else if (mode === 'explore' && classicView){ stepFpCam(dt); renderExploreHud(); drawClassic(); }
+    else if (mode === 'battle' && arenaScene) arenaTick(dt, null);
+  }
+  rafId = requestAnimationFrame(loop);
+}
+function bindKeys(){
+  document.addEventListener('keydown', function(e){
+    var k = (e.key||'').toLowerCase();
+    if (k === ' ') { e.preventDefault(); if ($('cutPanel').style.display === 'block') advanceCut(); else if ($('dlg').style.display === 'block') advanceDlg(); return; }
+    if (k === 'f'){ toggleFullscreen(); return; }
+    if (k === 'escape'){ if (isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ return; } if ($('cutPanel').style.display === 'block'){ endCutscene(); return; } if ($('dlg').style.display === 'block'){ hideDlg(); return; } togglePause(); return; }
+    if (k === 'p'){ togglePause(); return; }
+    if (k === 'c' && mode === 'explore'){ classicView = !classicView; var e2 = $('explore2d'); if (e2) e2.style.display = classicView ? 'block' : 'none'; return; }
+    if (k === 'e' && mode === 'explore' && $('dlg').style.display !== 'block'){ talkTo(nearestNPC()); return; }
+    keys[k] = true;
+    if (['arrowup','arrowdown','arrowleft','arrowright'].indexOf(k) >= 0) e.preventDefault();
+  });
+  document.addEventListener('keyup', function(e){ keys[(e.key||'').toLowerCase()] = false; });
+  var game = $('game');
+  var dragging = false, lx = 0, ly = 0;
+  game.addEventListener('pointerdown', function(e){ dragging = true; lx = e.clientX; ly = e.clientY; });
+  game.addEventListener('pointermove', function(e){ if (!dragging || mode !== 'explore') return; player.yaw -= (e.clientX - lx)*0.005; lx = e.clientX; ly = e.clientY; });
+  game.addEventListener('pointerup', function(){ dragging = false; });
+  game.addEventListener('click', function(){ if ($('cutPanel').style.display === 'block') advanceCut(); else if ($('dlg').style.display === 'block') advanceDlg(); });
+  window.addEventListener('resize', sizeRenderer);
+}
+function togglePause(){
+  if (mode === 'menu') return;
+  paused = !paused;
+  $('pauseOverlay').style.display = paused ? 'block' : 'none';
+}
+/* ---------------- fullscreen (FULLSCREEN standard): the shell — stage on
+   desktop, the whole handheld console on phones — goes true fullscreen via
+   the Fullscreen API. F toggles, the button toggles, Esc exits (browser)
+   before it can pause. Label follows the real fullscreen state. ---- */
+var fsShell = document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function updateFsBtn(){ var b = document.getElementById('btnFs');
+  if (b) b.innerHTML = isFullscreen() ? '✕ Exit Fullscreen<small>Esc / F — back to the page</small>' : '⛶ Fullscreen<small>F — stage fills the screen</small>'; }
+function toggleFullscreen(){
+  if (isFullscreen()){ if (document.exitFullscreen) document.exitFullscreen(); else if (document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if (fsShell){ if (fsShell.requestFullscreen) fsShell.requestFullscreen(); else if (fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+  updateFsBtn();
+}
+if (document.addEventListener) document.addEventListener('fullscreenchange', updateFsBtn);
+function bindShell(){
+  var isTouch = ('ontouchstart' in window) || (navigator && navigator.maxTouchPoints > 0);
+  if (isTouch) document.body.classList.add('touch');
+  document.querySelectorAll('#shellDeck .dpad button').forEach(function(b){
+    var d = b.getAttribute('data-d');
+    var map = {up:'w', down:'s', left:'a', right:'d'};
+    b.addEventListener('pointerdown', function(){ keys[map[d]] = true; });
+    b.addEventListener('pointerup', function(){ keys[map[d]] = false; });
+    b.addEventListener('pointerleave', function(){ keys[map[d]] = false; });
+  });
+  $('btnA').addEventListener('click', function(){
+    if ($('cutPanel').style.display === 'block') advanceCut();
+    else if ($('dlg').style.display === 'block') advanceDlg();
+    else if (mode === 'explore') talkTo(nearestNPC());
+  });
+  $('btnB').addEventListener('click', function(){ if (mode === 'battle' && currentBattle && currentBattle.kind === 'wild') $('btnRun').click(); else if (mode !== 'menu') showScreen('screenMenu'); });
+  $('startBtn').addEventListener('click', togglePause);
+  $('selectBtn').addEventListener('click', function(){ if (mode === 'explore'){ classicView = !classicView; var e2 = $('explore2d'); if (e2) e2.style.display = classicView ? 'block' : 'none'; } });
+}
+function bindUI(){
+  $('btnStory').onclick = function(){ stopWatch(); startStory(); };
+  $('btnContinue').onclick = function(){ stopWatch(); if (S.party.length) enterExplore(); else startStory(); };
+  $('btnWatch').onclick = function(){ startWatch(); };
+  $('btnVersus').onclick = function(){ stopWatch(); showVersus(); };
+  $('btnOnline').onclick = function(){ stopWatch(); showOnline(); };
+  $('btnRoster').onclick = function(){ showRoster(); };
+  $('btnHow').onclick = function(){ showScreen('screenHow'); };
+  $('btnRosterBack').onclick = function(){ showScreen('screenMenu'); };
+  $('btnVersusBack').onclick = function(){ showScreen('screenMenu'); };
+  $('btnOnlineBack').onclick = function(){ showScreen('screenMenu'); };
+  $('btnHowBack').onclick = function(){ showScreen('screenMenu'); };
+  $('btnHost').onclick = onlineHost;
+  $('btnJoinShow').onclick = onlineJoinUI;
+  $('mStory').onclick = function(){ stopWatch(); if (S.party.length) enterExplore(); else startStory(); };
+  $('mWatch').onclick = function(){ startWatch(); };
+  $('mVersus').onclick = function(){ stopWatch(); showVersus(); };
+  $('mOnline').onclick = function(){ stopWatch(); showOnline(); };
+  $('mRoster').onclick = function(){ showRoster(); };
+  $('btnFs').onclick = function(){ toggleFullscreen(); };
+  $('btnOrb').onclick = function(){ throwOrb(S.orbs > 0 ? 'snare' : 'lux'); };
+  $('btnRun').onclick = function(){
+    var bt = currentBattle; if(!bt || bt.kind !== 'wild') return;
+    if (Math.random() < 0.8){ logLine('You got away safely!'); currentBattle = null; enterExplore(); }
+    else { logLine('Couldn\'t escape!'); var fm = botPickMove(bt,'b','ORBIT'); battleUI.turnLock = true; setTimeout(function(){ finishTurn(bt, null, fm); }, 300); }
+  };
+  $('pauseSave').onclick = function(){ msg(saveGame() ? 'Game saved.' : 'Save failed — browser storage blocked.'); };
+  $('pauseLoad').onclick = function(){ if (loadGame()){ togglePause(); enterExplore(); msg('Save loaded.'); } else msg('No save found.'); };
+  $('pauseResume').onclick = togglePause;
+  $('pauseQuit').onclick = function(){ togglePause(); stopWatch(); currentBattle = null; showScreen('screenMenu'); refreshMenu(); };
+}
+function refreshMenu(){
+  var has = S.party.length > 0;
+  $('btnContinue').disabled = !has;
+  $('continueSub').textContent = has ? ('Story: ' + (STORY[S.story] ? STORY[S.story].title : 'Done') + ' · Party: ' + S.party.map(function(m){ return monName(m)+' Lv'+m.level; }).join(', ')) : 'No save found yet';
+  $('menuSaveLine').textContent = has ? ('Save: ' + S.caught + ' caught · ' + S.wins + ' wins · ' + S.orbs + ' orbs') : '';
+}
+
+/* ---------------- BOOT ---------------- */
+function boot(){
+  try { loadGame(); } catch(e){}
+  bindUI(); bindKeys(); bindShell(); refreshMenu();
+  var q = {};
+  try { (location.search || '').slice(1).split('&').forEach(function(p){ var kv = p.split('='); if (kv[0]) q[kv[0]] = decodeURIComponent(kv[1]||''); }); } catch(e){}
+  if (q.auto === 'watch'){ startWatch(); }
+  else if (q.scene === 'battle'){
+    var t1 = [makeMon('cindercub', 8), makeMon('sproutle', 7)];
+    var t2 = [makeMon('zappit', 8)];
+    S.party = t1; S.orbs = 5;
+    startBattle(t1, t2, {kind:'wild', nameB:'Wild Zappit'});
+  }
+  else if (q.scene === 'cutscene'){
+    playCutscene([{who:'wren', person:'wren', creature:'cinderwisp', txt:'It sleeps again — and this time, it dreams of sunlight. Look: the grove is lighting back up, one Spark at a time.', bg1:'#0a2a1a', bg2:'#02080a'}], function(){});
+  }
+  else if (q.scene === 'roster'){ S.seen = {cindercub:1, sproutle:1, bubblip:1, zappit:1, embermane:1, cinderwisp:1}; S.party = [makeMon('embermane', 16)]; showRoster(); }
+  else if (q.scene === 'explore'){ S.party = [makeMon('cindercub', 8)]; S.story = 2; enterExplore(); }
+  if (typeof requestAnimationFrame === 'function') rafId = requestAnimationFrame(loop);
+}
+window.__wildspark = {
+  version:1, S:S, SPECIES:SPECIES, MOVES:MOVES, TYPES:TYPES, CHART:CHART, STORY:STORY,
+  makeMon:makeMon, calcDamage:calcDamage, catchChance:catchChance, gainXp:gainXp,
+  newBattle:newBattle, resolveTurn:resolveTurn, botPickMove:botPickMove, effectiveness:effectiveness,
+  finishTurn:finishTurn, playerChooseMove:playerChooseMove, throwOrb:throwOrb,
+  get wsAgentId(){ return wsAgentId; }, get wsTraces(){ return wsTraces; },
+  get wsBout(){ return wsBout; }, get wsRecorded(){ return wsRecorded; },
+  saveGame:saveGame, loadGame:loadGame, startBattle:startBattle, startWatch:startWatch,
+  startStory:startStory, showStarterPick:showStarterPick, advanceCut:advanceCut,
+  endCutscene:endCutscene, advanceDlg:advanceDlg, enterExplore:enterExplore,
+  watchStep:watchStep, triggerWild:triggerWild, showRoster:showRoster,
+  get state(){ return {mode:mode, battle:currentBattle, watch:watchState, save:S, gfxOK:gfxOK, classicView:classicView, player:player, paused:paused}; },
+  get gfxOK(){ return gfxOK; },
+  get fpCam(){ return fpCam; },
+  get arenaCam(){ return arenaCam; },
+  fpLock: computeFpLock,
+  battleLock: computeBattleLock,
+  compassText: compassText,
+  snapFpCam: snapFpCam,
+  togglePause: togglePause,
+  toggleFullscreen: toggleFullscreen,
+  isFullscreen: isFullscreen,
+  get fs(){ return isFullscreen(); },
+  stopWatch: stopWatch,
+  debugKey: function(k, down){ keys[k] = !!down; },
+  debugYaw: function(y){ player.yaw = y; },
+  debugMoveTo: function(x, z){ player.x = x; player.z = z; },
+  serializeMon:serializeMon, deserializeMon:deserializeMon, NetClient:NetClient,
+  drawCreature:drawCreature, drawPerson:drawPerson
+};
+try { boot(); } catch(e){ if (typeof console !== 'undefined' && console.error) console.error('wildspark boot:', e); }
+</script>
+</body>
+</html>

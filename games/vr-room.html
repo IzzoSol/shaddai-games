@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ARCADE IN YOUR ROOM · Shaddai Arcade</title>
+<style>
+  :root{ --em:#2fe6a8; --gold:#ffd257; --ink:#e8fff5; --dim:#8fb8a6; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#05080a; color:var(--ink);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif; }
+  header{ display:flex; align-items:center; gap:14px; padding:10px 16px;
+    border-bottom:1px solid rgba(47,230,168,.25); background:#070d0b; flex-wrap:wrap; }
+  header h1{ font-size:20px; margin:0; letter-spacing:2px; }
+  header h1 .vr{ color:var(--em); }
+  header .sub{ color:var(--dim); font-size:11px; letter-spacing:3px; }
+  header a.back{ margin-left:auto; color:var(--em); text-decoration:none; font-size:12px;
+    letter-spacing:2px; border:1px solid rgba(47,230,168,.4); padding:6px 12px; border-radius:4px; }
+
+  /* ---- AR hero (the product) ---- */
+  #arHero{ margin:14px 16px 0; padding:18px 18px 14px; border:1px solid rgba(47,230,168,.45);
+    border-radius:10px; background:linear-gradient(160deg, rgba(47,230,168,.10), rgba(47,230,168,.02) 55%, rgba(255,210,87,.05)); }
+  #arHero h2{ margin:0 0 8px; font-size:clamp(24px, 5.2vw, 38px); letter-spacing:1px; line-height:1.15; }
+  #arHero h2 .em{ color:var(--em); }
+  #arHero p.lede{ margin:0 0 10px; font-size:15px; line-height:1.6; max-width:62ch; }
+  #arHero p.lede b{ color:var(--em); }
+  #arHero ol.steps{ margin:0 0 14px; padding-left:20px; font-size:13.5px; line-height:1.65; color:var(--ink); }
+  #arHero ol.steps b{ color:var(--gold); }
+  #arSlot{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .ar-btn{ font-family:inherit; font-size:17px; letter-spacing:1.2px; cursor:pointer;
+    color:#04120a; background:var(--em); border:0; border-radius:7px; padding:15px 24px; font-weight:800;
+    box-shadow:0 0 22px rgba(47,230,168,.35); }
+  .ar-btn.is-soon{ background:#1a2420; color:#5f7a6e; cursor:not-allowed; font-weight:700; box-shadow:none; }
+  #vrSlot{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .vr-btn{ font-family:inherit; font-size:13px; letter-spacing:1.2px; cursor:pointer;
+    color:var(--em); background:transparent; border:1px solid rgba(47,230,168,.5); border-radius:6px; padding:9px 16px; font-weight:700; }
+  .vr-btn.is-soon{ background:#1a2420; color:#5f7a6e; border-color:#1a2420; cursor:not-allowed; font-weight:600; }
+  .vr-note{ font-size:12.5px; color:var(--dim); }
+  #xrNote{ margin:12px 0 0; font-size:12.5px; color:var(--dim); line-height:1.55; }
+
+  #info{ margin:12px 16px 0; padding:10px 14px; border:1px solid rgba(255,210,87,.35);
+    background:rgba(255,210,87,.06); border-radius:6px; font-size:13px; line-height:1.55; color:#ffe9b0; }
+  #info b{ color:var(--gold); }
+
+  /* ---- layout preview (NOT the AR experience) ---- */
+  #previewSection{ margin:22px 16px 0; }
+  #previewSection h2{ margin:0 0 6px; font-size:16px; letter-spacing:2.5px; color:var(--ink); }
+  #previewSection h2 .tag{ color:var(--gold); }
+  #previewSection p{ margin:0 0 10px; font-size:13px; line-height:1.6; color:var(--dim); max-width:78ch; }
+  #previewSection p b{ color:var(--ink); }
+  #stageWrap{ position:relative; border:1px solid rgba(47,230,168,.3);
+    border-radius:8px; overflow:hidden; background:#000; height:min(62vh,560px); }
+  #stageWrap canvas{ display:block; position:relative; z-index:1; }
+  #feeds{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  #feeds iframe{ position:absolute; left:0; top:0; width:480px; height:360px; border:0; opacity:.02; }
+  #caption{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:8px 14px; font-size:13px;
+    letter-spacing:1px; color:var(--ink); background:linear-gradient(transparent, rgba(0,0,0,.75)); }
+  #caption b{ color:var(--em); }
+  #status{ margin:10px 16px 0; font-size:12.5px; color:var(--dim); line-height:1.6; }
+  #chips{ display:flex; gap:8px; flex-wrap:wrap; margin:10px 16px 18px; }
+  .chip{ font-size:12px; letter-spacing:1px; padding:6px 12px; border-radius:20px; cursor:pointer;
+    border:1px solid rgba(47,230,168,.4); color:var(--ink); background:#0a1512; font-family:inherit; }
+  .chip.live{ border-color:var(--em); }
+  .chip.focused{ background:var(--em); color:#04120a; font-weight:700; }
+  .chip .dot{ color:var(--em); }
+  .chip.focused .dot{ color:#04120a; }
+  #glFallback{ display:none; margin:12px 16px; padding:14px; border:1px solid #a33; border-radius:6px; color:#fbb; font-size:14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>THE ARCADE, <span class="vr">IN YOUR ROOM</span></h1>
+  <span class="sub">SHADDAI ARCADE · AR PLACEMENT · SIM</span>
+  <a class="back" href="../arcade.html">← ARCADE</a>
+</header>
+
+<section id="arHero">
+  <h2>Put the arcade <span class="em">in your room.</span></h2>
+  <p class="lede">This is augmented reality, not a screen trick: on a capable device the eight
+    cabinets stand in <b>your actual room</b>, at real size — on your floor, against your wall,
+    lit by your light. You place them, you walk around them, you tap a cabinet screen to poke
+    the game it is running.</p>
+  <ol class="steps">
+    <li><b>Aim</b> your device at a clear patch of floor (or a big desk) and tap <b>ENTER AR</b>.</li>
+    <li><b>Place</b> — move the glowing reticle to where the arc should stand, then tap (select) to set it down on that real surface. A soft shadow settles under it so it sits <i>on</i> the floor, not above it.</li>
+    <li><b>Move it</b> — squeeze a controller (or squeeze gesture) to pick the arc back up, then tap again to set it down somewhere else.</li>
+  </ol>
+  <div id="arSlot"></div>
+  <div id="vrSlot"></div>
+  <p id="xrNote">Checking WebXR support…</p>
+</section>
+
+<div id="info">
+  <b>AR / VR · SIM — not yet device-verified.</b> This page is built on the arcade XR Engine.
+  No headset or AR phone has run it yet, so every immersive surface is labelled SIM until it
+  has genuinely stood in a real room on real hardware. <b>Platforms:</b> iOS Safari does not
+  support WebXR — AR/VR target the Quest Browser and Chrome on Android; iPhone keeps the flat
+  games. And where a device cannot genuinely place cabinets in your room, the AR button stays
+  <b>ROOM — SOON</b> instead of faking a view.
+</div>
+
+<section id="previewSection">
+  <h2>LAYOUT PREVIEW <span class="tag">— ON A SCREEN, NOT IN YOUR ROOM</span></h2>
+  <p>The 3D view below is a <b>flat preview on this screen</b>. It is <b>not</b> the AR
+    experience and it is not a room — it only shows how the eight cabinets arrange in their
+    arc, so you know what you will be placing. Drag to look around, scroll to zoom, click a
+    cabinet screen to poke it. The real thing stands on your own floor.</p>
+  <div id="stageWrap">
+    <div id="feeds"></div>
+    <div id="caption">LAYOUT PREVIEW — the cabinet arc as it will stand in your room, shown on a screen.</div>
+  </div>
+  <div id="glFallback">The 3D layout preview needs WebGL, which this browser did not provide. The flat games all still work — head back to the arcade.</div>
+  <p id="status">Loading cabinets…</p>
+  <div id="chips"></div>
+</section>
+
+<script src="../vendor/three.min.js"></script>
+<script src="../vr-kit/xr-session.js"></script>
+<script src="../vr-kit/xr-placement.js"></script>
+<script src="../vr-kit/xr-cabinet.js"></script>
+<script src="../vr-kit/xr-input.js"></script>
+<script src="../games/xr-engine.js"></script>
+<script>
+'use strict';
+/*
+ * ARCADE IN YOUR ROOM — AR-first wiring for the XR Engine
+ * (public/games/xr-engine.js).
+ *
+ * The product is AR: XREngine.enter({mode:'ar'}) anchors the cabinet
+ * arc by hit-test to a REAL surface in the user's room at real scale,
+ * with the engine's contact shadow under it. Reticle → select places;
+ * squeeze re-enters move mode; select confirms. Where AR cannot
+ * genuinely do that, the button is a disabled ROOM — SOON marker —
+ * never a fake AR view.
+ *
+ * The desktop 3D view on this page is a LAYOUT PREVIEW only: it shows
+ * how the cabinets arrange before you place them. It is not a room
+ * and is never presented as the AR experience. During an AR session
+ * the preview's set dressing (floor disc, backdrop, background) is
+ * hidden so nothing fake stands in the user's real space.
+ *
+ * SIM: no device has run this. Desktop preview + live cabinet feeds
+ * are the verified surfaces; AR/VR sessions are labelled SIM.
+ *
+ * Screens: the six 2D canvas games stream LIVE into their cabinets
+ * (each game runs in a hidden iframe in WATCH mode and its own canvas
+ * becomes the cabinet texture — the games needed no changes). The two
+ * native-3D games (divefall, wildspark) show their cover art: a WebGL
+ * canvas without preserveDrawingBuffer cannot feed a texture
+ * reliably, and a fake feed would break the honesty rule.
+ */
+var GAMES = [
+  { id: 'contention',   title: 'CONTENTION' },
+  { id: 'ghostline',    title: 'GHOSTLINE' },
+  { id: 'skylance',     title: 'SKYLANCE' },
+  { id: 'swarmstand',   title: 'SWARMSTAND' },
+  { id: 'capsule-clash',title: 'CAPSULE CLASH' },
+  { id: 'divefall',     title: 'DIVEFALL',  native3d: true },
+  { id: 'wildspark',    title: 'WILDSPARK', native3d: true },
+  { id: 'skyshield',    title: 'SKYSHIELD' }
+];
+
+var statusEl = document.getElementById('status');
+var captionEl = document.getElementById('caption');
+var wrap = document.getElementById('stageWrap');
+var feedsEl = document.getElementById('feeds');
+var chipsEl = document.getElementById('chips');
+
+function setStatus(t) { statusEl.textContent = t; }
+
+/* ---- cover / title-card canvas (the screen before a feed arrives) ---- */
+function makeScreenCanvas(game) {
+  var c = document.createElement('canvas');
+  c.width = 480; c.height = 360;
+  var g = c.getContext('2d');
+  function titleCard() {
+    g.fillStyle = '#06110c'; g.fillRect(0, 0, 480, 360);
+    g.strokeStyle = '#2fe6a8'; g.lineWidth = 4; g.strokeRect(10, 10, 460, 340);
+    g.fillStyle = '#2fe6a8'; g.font = 'bold 34px system-ui, sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(game.title, 240, 168);
+    g.fillStyle = '#8fb8a6'; g.font = '15px system-ui, sans-serif';
+    g.fillText(game.native3d ? 'COVER — PLAY IT FLAT OR IN FP' : 'LOADING LIVE FEED…', 240, 208);
+  }
+  titleCard();
+  var img = new Image();
+  img.onload = function () {
+    var s = Math.max(480 / img.width, 360 / img.height);
+    var w = img.width * s, h = img.height * s;
+    g.drawImage(img, (480 - w) / 2, (360 - h) / 2, w, h);
+    if (game._cabinet) game._cabinet.markDirty();
+  };
+  img.src = '../assets/games/covers/' + game.id + '.png';
+  return c;
+}
+
+/* ---- preview-only set dressing textures (hidden during AR) ---- */
+function makeFloorTexture() {
+  var c = document.createElement('canvas');
+  c.width = 1024; c.height = 1024;
+  var g = c.getContext('2d');
+  var cx = 512, cy = 512, r, a, t, i;
+  var base = g.createRadialGradient(cx, cy, 40, cx, cy, 512);
+  base.addColorStop(0, '#0d2018');
+  base.addColorStop(0.55, '#08130d');
+  base.addColorStop(0.85, '#040806');
+  base.addColorStop(1, '#030604');
+  g.fillStyle = base; g.fillRect(0, 0, 1024, 1024);
+  // stone speckle
+  for (i = 0; i < 5200; i++) {
+    var sx = (i * 733) % 1024, sy = (i * 389) % 1024;
+    g.fillStyle = i % 3 ? 'rgba(120,200,165,0.05)' : 'rgba(0,0,0,0.16)';
+    g.fillRect(sx, sy, 2, 2);
+  }
+  // fine concentric rings
+  for (r = 496; r > 30; r -= 27) {
+    g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2);
+    g.strokeStyle = 'rgba(47,230,168,' + (0.04 + (496 - r) / 496 * 0.10).toFixed(3) + ')';
+    g.lineWidth = 2; g.stroke();
+  }
+  // radial spokes
+  for (a = 0; a < 36; a++) {
+    t = a / 36 * Math.PI * 2;
+    g.beginPath();
+    g.moveTo(cx + Math.cos(t) * 84, cy + Math.sin(t) * 84);
+    g.lineTo(cx + Math.cos(t) * 492, cy + Math.sin(t) * 492);
+    g.strokeStyle = 'rgba(47,230,168,0.045)'; g.lineWidth = 1.5; g.stroke();
+  }
+  // gold ring at the cabinet radius + a thin emerald companion
+  g.beginPath(); g.arc(cx, cy, 352, 0, Math.PI * 2);
+  g.strokeStyle = 'rgba(255,210,87,0.5)'; g.lineWidth = 5; g.stroke();
+  g.beginPath(); g.arc(cx, cy, 366, 0, Math.PI * 2);
+  g.strokeStyle = 'rgba(47,230,168,0.28)'; g.lineWidth = 2; g.stroke();
+  // centre medallion: concentric diamonds
+  function dia(rad, style, w) {
+    g.beginPath();
+    g.moveTo(cx, cy - rad); g.lineTo(cx + rad, cy); g.lineTo(cx, cy + rad); g.lineTo(cx - rad, cy);
+    g.closePath(); g.strokeStyle = style; g.lineWidth = w; g.stroke();
+  }
+  dia(64, 'rgba(255,210,87,0.55)', 3);
+  dia(46, 'rgba(47,230,168,0.6)', 3);
+  dia(26, 'rgba(255,210,87,0.7)', 2);
+  g.fillStyle = 'rgba(255,210,87,0.85)';
+  g.beginPath(); g.arc(cx, cy, 7, 0, Math.PI * 2); g.fill();
+  return c;
+}
+function makeBackdropTexture() {
+  var c = document.createElement('canvas');
+  c.width = 1024; c.height = 256;
+  var g = c.getContext('2d');
+  var gr = g.createLinearGradient(0, 0, 0, 256);
+  gr.addColorStop(0, '#0a2417');
+  gr.addColorStop(0.45, '#06120c');
+  gr.addColorStop(1, '#020403');
+  g.fillStyle = gr; g.fillRect(0, 0, 1024, 256);
+  // distant tower silhouettes along the lower band + lit windows
+  var seed = 7;
+  function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var x = -10;
+  while (x < 1024) {
+    var tw = 26 + rnd() * 54;
+    var th = 52 + rnd() * 96;
+    g.fillStyle = 'rgba(2,6,4,0.88)';
+    g.fillRect(x, 256 - th, tw, th);
+    for (var wy = 256 - th + 8; wy < 246; wy += 11) {
+      for (var wx = x + 5; wx < x + tw - 6; wx += 9) {
+        if (rnd() > 0.62) {
+          g.fillStyle = rnd() > 0.4 ? 'rgba(47,230,168,0.5)' : 'rgba(255,210,87,0.55)';
+          g.fillRect(wx, wy, 3, 4);
+        }
+      }
+    }
+    x += tw + 4 + rnd() * 16;
+  }
+  // horizon glow line
+  var hg = g.createLinearGradient(0, 236, 0, 256);
+  hg.addColorStop(0, 'rgba(47,230,168,0)');
+  hg.addColorStop(1, 'rgba(47,230,168,0.20)');
+  g.fillStyle = hg; g.fillRect(0, 236, 1024, 20);
+  return c;
+}
+
+function boot() {
+  if (!window.THREE || !window.XREngine || !window.ShaddaiXR) {
+    document.getElementById('glFallback').style.display = 'block';
+    setStatus('Preview libraries did not load — the flat games still work from the arcade.');
+    return;
+  }
+
+  XREngine.ensureKit().then(function () {
+    var renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (e) {
+      document.getElementById('glFallback').style.display = 'block';
+      setStatus('WebGL unavailable here — the flat games still work from the arcade.');
+      return;
+    }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    if (renderer.outputEncoding !== undefined && THREE.sRGBEncoding !== undefined) {
+      renderer.outputEncoding = THREE.sRGBEncoding;
+    }
+    if (renderer.shadowMap) {
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+    wrap.insertBefore(renderer.domElement, captionEl);
+
+    var BG_COLOR = new THREE.Color(0x050a08);
+    var scene = new THREE.Scene();
+    scene.background = BG_COLOR;
+    scene.fog = new THREE.Fog(0x050a08, 11, 24);
+    scene.add(new THREE.AmbientLight(0x9db8ab, 0.5));
+    var key = new THREE.DirectionalLight(0xffffff, 1.05);
+    key.position.set(2.5, 4.5, 3);
+    key.castShadow = true;
+    if (key.shadow) {
+      key.shadow.mapSize.set(1024, 1024);
+      key.shadow.camera.left = -4.6; key.shadow.camera.right = 4.6;
+      key.shadow.camera.top = 4.6; key.shadow.camera.bottom = -4.6;
+      key.shadow.camera.far = 14;
+      key.shadow.bias = -0.0006;
+    }
+    scene.add(key);
+    var rim = new THREE.DirectionalLight(0x1fbfae, 0.55);
+    rim.position.set(-1.5, 2.4, -4);
+    scene.add(rim);
+    var glow = new THREE.PointLight(0x2fe6a8, 0.9, 9);
+    glow.position.set(0, 1.6, 0.6);
+    scene.add(glow);
+    var warm = new THREE.PointLight(0xffd257, 0.5, 12);
+    warm.position.set(-3.2, 2.6, -2.2);
+    scene.add(warm);
+
+    /* Preview set dressing — a labelled stage for the flat preview.
+       Hidden wholesale during AR so nothing fake stands in the
+       user's real room. */
+    var dressing = new THREE.Group();
+    dressing.name = 'layout-preview-dressing';
+    scene.add(dressing);
+    var floorTex = new THREE.CanvasTexture(makeFloorTexture());
+    var floor = new THREE.Mesh(
+      new THREE.CircleGeometry(4.4, 64),
+      new THREE.MeshStandardMaterial({ map: floorTex, color: 0xffffff, roughness: 0.46, metalness: 0.32 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    dressing.add(floor);
+    // soft emerald light pool under the arc
+    var pool = new THREE.Mesh(
+      new THREE.CircleGeometry(2.6, 40),
+      new THREE.MeshBasicMaterial({ color: 0x2fe6a8, transparent: true, opacity: 0.04,
+        blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    pool.rotation.x = -Math.PI / 2;
+    pool.position.y = 0.004;
+    dressing.add(pool);
+    var ring = new THREE.Mesh(
+      new THREE.RingGeometry(3.02, 3.1, 64),
+      new THREE.MeshBasicMaterial({ color: 0x2fe6a8, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.005;
+    dressing.add(ring);
+    // drifting dust motes for depth (preview dressing only)
+    var dustGeo = new THREE.BufferGeometry();
+    var dustPos = [], dustCol = [];
+    var dseed = 13;
+    function drnd() { dseed = (dseed * 16807) % 2147483647; return dseed / 2147483647; }
+    for (var di = 0; di < 260; di++) {
+      var da = drnd() * Math.PI * 2, dr = 0.6 + drnd() * 7.4;
+      dustPos.push(Math.cos(da) * dr, 0.15 + drnd() * 4.3, Math.sin(da) * dr);
+      if (drnd() > 0.42) dustCol.push(0.18, 0.90, 0.66); else dustCol.push(1.0, 0.82, 0.34);
+    }
+    dustGeo.setAttribute('position', new THREE.Float32BufferAttribute(dustPos, 3));
+    dustGeo.setAttribute('color', new THREE.Float32BufferAttribute(dustCol, 3));
+    var dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+      size: 0.045, vertexColors: true, transparent: true, opacity: 0.55,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+    dressing.add(dust);
+    dressing.userData.dust = dust;
+    var bdTex = new THREE.CanvasTexture(makeBackdropTexture());
+    if (THREE.RepeatWrapping !== undefined) { bdTex.wrapS = THREE.RepeatWrapping; bdTex.repeat.x = 2; }
+    var backdrop = new THREE.Mesh(
+      new THREE.CylinderGeometry(9.5, 9.5, 9, 40, 1, true),
+      new THREE.MeshBasicMaterial({ map: bdTex, side: THREE.BackSide })
+    );
+    backdrop.position.y = 3.1;
+    dressing.add(backdrop);
+
+    var camera = new THREE.PerspectiveCamera(62, 1.6, 0.05, 100);
+
+    /* Cabinets in an arc, screens fed by cover canvases for now. */
+    var roomGroup = new THREE.Group();
+    scene.add(roomGroup);
+    var defs = GAMES.map(function (game) {
+      game._screen = makeScreenCanvas(game);
+      return { name: game.id, canvas: game._screen, refreshHz: 12 };
+    });
+    var cabinets = XREngine.createCabinetRow(THREE, defs, { radius: 3.1, arcDeg: 128 });
+    cabinets.forEach(function (cab, i) {
+      GAMES[i]._cabinet = cab;
+      cab.group.traverse(function (o) { if (o.isMesh) o.castShadow = true; });
+      roomGroup.add(cab.group);
+    });
+
+    /* Stage adapter so XREngine.enter() can place the whole arc in
+       the user's room (AR) or around them (VR). */
+    var roomStage = {
+      group: roomGroup,
+      cabinet: null,
+      update: function (t) { cabinets.forEach(function (c) { c.update(t); }); },
+      setScale: function (s) {
+        var c = XREngine.clampScale(s);
+        roomGroup.scale.set(c, c, c);
+        return c;
+      },
+      getScale: function () { return roomGroup.scale.x; }
+    };
+
+    /* ---- desktop orbit for the layout preview (drag + wheel; idle drift) ---- */
+    var yaw = 0, pitch = 0.22, dist = 4.15, dragging = false, idle = 0, px = 0, py = 0;
+    var el = renderer.domElement;
+    el.style.touchAction = 'none';
+    el.addEventListener('pointerdown', function (e) { dragging = true; px = e.clientX; py = e.clientY; idle = 0; });
+    window.addEventListener('pointerup', function () { dragging = false; });
+    window.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      yaw -= (e.clientX - px) * 0.005;
+      pitch = Math.max(0.05, Math.min(1.1, pitch + (e.clientY - py) * 0.004));
+      px = e.clientX; py = e.clientY;
+    });
+    el.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      dist = Math.max(2.2, Math.min(8, dist + e.deltaY * 0.004));
+    }, { passive: false });
+
+    function frame(t) {
+      if (!dragging) { idle += 1; if (idle > 240) yaw += 0.0009; }
+      if (dressing.userData.dust) dressing.userData.dust.rotation.y += 0.0006;
+      var cx = Math.sin(yaw) * Math.cos(pitch) * dist;
+      var cz = Math.cos(yaw) * Math.cos(pitch) * dist;
+      var cy = 1.05 + Math.sin(pitch) * dist;
+      camera.position.set(cx, cy, cz);
+      camera.lookAt(0, 1.0, 0);
+      cabinets.forEach(function (c) { c.update(t); });
+      renderer.render(scene, camera);
+    }
+    function resize() {
+      var w = wrap.clientWidth, h = wrap.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    renderer.setAnimationLoop(frame);
+
+    /* ---- focus + picking (preview) ---- */
+    var focused = -1;
+    function focus(i, label) {
+      focused = i;
+      cabinets.forEach(function (c, j) { c.setRefreshHz(j === i ? 30 : 10); });
+      captionEl.innerHTML = '<b>' + GAMES[i].title + '</b> — ' + label;
+      Array.prototype.forEach.call(chipsEl.children, function (chip, j) {
+        chip.className = 'chip' + (GAMES[j]._live ? ' live' : '') + (j === i ? ' focused' : '');
+      });
+    }
+    GAMES.forEach(function (game, i) {
+      var chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.innerHTML = '<span class="dot">●</span> ' + game.title;
+      chip.addEventListener('click', function () {
+        focus(i, game._live ? 'streaming live on its cabinet.' : 'cover card — feed pending or native 3D.');
+      });
+      chipsEl.appendChild(chip);
+    });
+    if (window.ShaddaiXR.cabinet.bindMousePick) {
+      ShaddaiXR.cabinet.bindMousePick(THREE, renderer.domElement, camera, cabinets, function (hit) {
+        var idx = cabinets.indexOf(hit.cabinet);
+        if (idx < 0) return;
+        if (hit.screenUV && hit.cabinet.getCanvas()) {
+          ShaddaiXR.cabinet.forwardTapToCanvas(hit.cabinet.getCanvas(), hit.screenUV);
+          focus(idx, 'screen poked — the game felt that tap.');
+        } else {
+          focus(idx, GAMES[idx]._live ? 'streaming live on its cabinet.' : 'cover card — feed pending or native 3D.');
+        }
+      });
+    }
+
+    /* ---- live feeds: hidden iframes in WATCH mode ---- */
+    var liveCount = 0;
+    var total2d = GAMES.filter(function (g) { return !g.native3d; }).length;
+    GAMES.forEach(function (game) {
+      if (game.native3d) return;
+      var ifr = document.createElement('iframe');
+      ifr.src = '../games/' + game.id + '.html?auto=watch';
+      ifr.setAttribute('aria-hidden', 'true');
+      feedsEl.appendChild(ifr);
+      game._iframe = ifr;
+    });
+    var feedTimer = setInterval(function () {
+      var pending = 0;
+      GAMES.forEach(function (game, i) {
+        if (game.native3d || game._live) return;
+        pending++;
+        try {
+          var doc = game._iframe.contentDocument;
+          var cvs = doc && doc.querySelector('canvas');
+          if (cvs && cvs.width > 0) {
+            game._cabinet.setCanvas(cvs);
+            game._live = true;
+            liveCount++;
+            var chip = chipsEl.children[i];
+            if (chip) chip.className = 'chip live' + (focused === i ? ' focused' : '');
+          }
+        } catch (e) { /* not ready yet */ }
+      });
+      setStatus('Cabinet feeds: ' + liveCount + ' of ' + total2d + ' two-dimensional games streaming live · ' +
+        'divefall + wildspark show cover art (native 3D) · AR/VR modes are SIM until device-verified.');
+      if (!pending) clearInterval(feedTimer);
+    }, 700);
+    setTimeout(function () { clearInterval(feedTimer); }, 30000);
+
+    /* ---- XR entry: AR is the hero, VR secondary — both gated
+       honestly through the engine (detect + buttonPlan + enter). ---- */
+    var roomGame = { id: 'vr-room', title: 'ARCADE IN YOUR ROOM' };
+    var arSlot = document.getElementById('arSlot');
+    var vrSlot = document.getElementById('vrSlot');
+    var xrNote = document.getElementById('xrNote');
+    var dressingHidden = false;
+
+    function enterMode(mode) {
+      var isAR = mode === 'ar';
+      /* The full arc is ~5.6 m across at scale 1 — too big for a
+         room. For AR, shrink it to the engine's scale floor (0.35×,
+         ≈2 m wide) so it genuinely fits a floor or large desk;
+         restored for the preview when the session ends. */
+      if (isAR) roomStage.setScale(XREngine.SCALE_MIN);
+      XREngine.enter({
+        mode: mode, game: roomGame,
+        renderer: renderer, scene: scene, camera: camera, stage: roomStage,
+        onFrame: function (t) {
+          if (isAR && !dressingHidden) {
+            /* Passthrough honesty: in AR the ONLY things in the
+               user's room are the cabinets — hide the preview's
+               fake floor, backdrop and background colour. */
+            dressingHidden = true;
+            dressing.visible = false;
+            scene.background = null;
+            renderer.setClearColor(0x000000, 0);
+          }
+          cabinets.forEach(function (c) { c.update(t); });
+        },
+        onEnd: function () {
+          dressingHidden = false;
+          dressing.visible = true;
+          scene.background = BG_COLOR;
+          renderer.setClearColor(0x000000, 1);
+          roomGroup.position.set(0, 0, 0);
+          roomGroup.rotation.set(0, 0, 0);
+          roomStage.setScale(1);
+          renderer.setAnimationLoop(frame);
+        }
+      }).then(function (h) {
+        if (!h.ok) {
+          roomStage.setScale(1);
+          setStatus('Could not start ' + mode.toUpperCase() + ': ' + h.reason +
+            ' (SIM — the flat games and the layout preview still work.)');
+        }
+      });
+    }
+
+    function renderXRButtons(support) {
+      var plan = XREngine.buttonPlan(support || {});
+      var byMode = {};
+      plan.forEach(function (item) { byMode[item.mode] = item; });
+      xrNote.textContent = (support && support.message)
+        ? support.message
+        : 'Checking WebXR support…';
+
+      arSlot.innerHTML = '';
+      var arBtn = document.createElement('button');
+      arBtn.type = 'button';
+      if (byMode.ar && byMode.ar.enabled) {
+        arBtn.className = 'ar-btn';
+        arBtn.textContent = 'ENTER AR — PUT THE ARCADE IN YOUR ROOM (SIM)';
+        arBtn.addEventListener('click', function () { enterMode('ar'); });
+      } else {
+        arBtn.className = 'ar-btn is-soon';
+        arBtn.textContent = 'ROOM — SOON';
+        arBtn.disabled = true;
+        arBtn.title = (support && support.reason) ||
+          'AR is not supported on this device yet — no fake view is offered instead.';
+      }
+      arSlot.appendChild(arBtn);
+      var arHint = document.createElement('span');
+      arHint.className = 'vr-note';
+      arHint.textContent = byMode.ar && byMode.ar.enabled
+        ? 'Aim at your floor, tap to place the arc at real size.'
+        : 'AR needs a device that can genuinely place the cabinets in your room (Quest Browser or Chrome on Android). This device cannot — so no fake view, just SOON.';
+      arSlot.appendChild(arHint);
+
+      vrSlot.innerHTML = '';
+      var vrBtn = document.createElement('button');
+      vrBtn.type = 'button';
+      if (byMode.vr && byMode.vr.enabled) {
+        vrBtn.className = 'vr-btn';
+        vrBtn.textContent = 'ENTER VR (SIM)';
+        vrBtn.addEventListener('click', function () { enterMode('vr'); });
+      } else {
+        vrBtn.className = 'vr-btn is-soon';
+        vrBtn.textContent = 'ROOM — SOON';
+        vrBtn.disabled = true;
+        vrBtn.title = (support && support.reason) || 'VR is not supported on this device yet';
+      }
+      vrSlot.appendChild(vrBtn);
+      var vrHint = document.createElement('span');
+      vrHint.className = 'vr-note';
+      vrHint.textContent = 'Or step inside the arc in VR instead — same cabinets, virtual space.';
+      vrSlot.appendChild(vrHint);
+    }
+
+    renderXRButtons(null);
+    XREngine.detect().then(renderXRButtons);
+  });
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+</script>
+</body>
+</html>

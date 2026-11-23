@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WORDCLASH — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#070a12;--panel:#0e1420;--border:rgba(255,215,94,.25);--gold:#ffd75e;--green:#00ff88;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#f5edd8;--dim:#a89a7a}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(255,215,94,.09),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(7,10,18,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--gold)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--gold);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:800px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(255,215,94,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:140px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--gold);box-shadow:0 0 16px rgba(255,215,94,.35);color:#fff}
+  .mbtn:disabled{opacity:.45;cursor:default}
+  .mbtn.danger{border-color:rgba(255,56,96,.5)}
+  .mbtn.go{border-color:rgba(0,255,136,.55)}
+  .oppRow{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .opp{flex:1;min-width:100px;padding:8px 4px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .opp small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:9px;margin-top:3px;text-transform:none}
+  .opp.active{border-color:var(--green);box-shadow:0 0 12px rgba(0,255,136,.3);color:#fff}
+  #log{border:1px solid var(--border);background:var(--panel);padding:8px 12px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text);min-height:34px;line-height:1.7;word-wrap:break-word}
+  #log .mn{color:var(--dim)}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:12px}
+  .roombadge{display:inline-block;border:1px dashed rgba(255,215,94,.5);color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:11px;padding:3px 9px;border-radius:999px;letter-spacing:1px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(255,215,94,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#141005,#05080a);box-shadow:0 0 34px rgba(255,215,94,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#ffd75e}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#141005;border:1px solid rgba(255,215,94,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#ffd75e;color:#140f00}
+  .dpad{position:relative;width:132px;height:132px;touch-action:none}
+  .dpad button{position:absolute;width:44px;height:44px;font-size:16px;padding:0}
+  .dpad .up{left:44px;top:0}.dpad .down{left:44px;top:88px}
+  .dpad .left{left:0;top:44px}.dpad .right{left:88px;top:44px}
+  .dpad .mid{position:absolute;left:44px;top:44px;width:44px;height:44px;background:#141005;border-color:rgba(255,215,94,.2);font-size:9px;color:#a89a7a;pointer-events:none;display:flex;align-items:center;justify-content:center;text-align:center}
+  .abtns{display:flex;flex-direction:column;gap:10px;align-items:center;padding-top:8px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:16px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#141005}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(7,10,18,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#0e1420;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .dpad{width:120px;height:120px}.dpad button{width:40px;height:40px}
+    .dpad .up{left:40px;top:0}.dpad .down{left:40px;top:80px}
+    .dpad .left{left:0;top:40px}.dpad .right{left:80px;top:40px}
+    .dpad .mid{left:40px;top:40px;width:40px;height:40px}
+    .abtns button{width:52px;height:52px}.shell-pills{padding-top:28px}
+  }
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*760/880));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*760/880))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(calc(100vw - 16px),calc((100vh - 190px)*760/880))}
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>WORD<span>CLASH</span></h1><span class="tag">Word-tile battle · Fallible Engine · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="760" height="880"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The board waits. The words do not.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad" id="dpad">
+        <button class="up" id="dUp" title="Up">▲</button>
+        <button class="left" id="dLeft" title="Left">◀</button>
+        <div class="mid">CURSOR</div>
+        <button class="right" id="dRight" title="Right">▶</button>
+        <button class="down" id="dDown" title="Down">▼</button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — commit play">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button id="btnA" title="A — place / pick tile">A</button>
+        <button class="b" id="btnB" title="B — next rack tile">B</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">Words are weapons. Spend them well.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ Play<small>1P — you are Gold, vs a council bot</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>bot vs bot — they bluff, challenge, and tilt</small></button>
+    <button class="mbtn" id="btn2P">👥 2P local<small>hot-seat — Gold vs Violet</small></button>
+    <button class="mbtn" id="btnFP">🎥 Rack view<small>V — camera low over your rack</small></button>
+  </div>
+  <div class="oppRow" id="oppRow">
+    <button class="opp active" data-opp="QUILL">QUILL<small>knows the weird words</small></button>
+    <button class="opp" data-opp="ZEROX">ZEROX<small>gambles · bluffs · challenges</small></button>
+    <button class="opp" data-opp="TURTLE">TURTLE<small>safe · short · steady</small></button>
+  </div>
+  <div class="row" id="challengeRow" style="display:none">
+    <button class="mbtn danger" id="btnChallenge">⚠ Challenge<small>call the bluff — wrong call costs 10</small></button>
+    <button class="mbtn go" id="btnAccept">✓ Accept<small>let the play stand</small></button>
+  </div>
+  <div class="row">
+    <button class="mbtn go" id="btnCommit">⌨ Commit play<small>C — score it, then the challenge window</small></button>
+    <button class="mbtn" id="btnClear">✕ Clear draft<small>X — tiles back to your rack</small></button>
+    <button class="mbtn" id="btnSwap">⇄ Swap tiles<small>trade marked rack tiles for bag tiles</small></button>
+    <button class="mbtn" id="btnPass">➡ Pass<small>skip your turn</small></button>
+  </div>
+  <div class="row">
+    <button class="mbtn" id="btnAR">🥽 AR — place board<small>put the board on your table · SIM until device-verified</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+    <button class="mbtn" id="btnMute">🔊 Sound<small>M — mute</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — board fills the screen</small></button>
+  </div>
+  <div id="log"><span class="mn">No plays yet — Gold to play. First word must cover the ★.</span></div>
+  <div class="help" style="margin-top:10px">
+    <b>WORDCLASH</b> — crossword tile battle on <b>our own 15×15 board</b> with our own bonus map and our own tile distribution (100 tiles). The word list is the public-domain <b>ENABLE</b> list (168,548 words, 2–15 letters). First word must cover the ★ centre. Every play forms a main word plus any cross words — and <b>nothing is checked until the challenge</b>: a play stands unless the opponent calls it. Bluff a word that is not in the list and you score — unless you are caught: a caught bluff loses the play and costs 10. A wrong challenge costs the challenger 10.<br/>
+    <b>Controls:</b> <span class="k">click a rack tile</span>, then <span class="k">click a board square</span> to place it · <span class="k">click a placed tile</span> to take it back · <span class="k">1–7</span> pick a rack tile · <span class="k">arrows / WASD</span> move the cursor, <span class="k">ENTER / SPACE</span> place · <span class="k">C</span> commit · <span class="k">X</span> clear draft · <span class="k">V</span> rack-level camera · <span class="k">P</span> pause (save / load in the menu) · <span class="k">R</span> restart · <span class="k">M</span> mute.<br/>
+    ⛶ <b>Fullscreen (F):</b> the shell fills the screen — Esc exits first, P still pauses.<br/>
+    <b>BOTS DO WORDPLAY BATTLES:</b> WATCH is bot-vs-bot on the Fallible Engine — <b>QUILL</b> knows the weird words and almost never bluffs, <b>ZEROX</b> gambles on bluffs and wild challenges, <b>TURTLE</b> plays safe short words. Every decision is recorded as a trace. <span class="roombadge">ROOM — SOON</span> the in-world room view ships only when it genuinely reads as a board sitting on your real table; until a real device verifies it, flat + rack view are the verified modes and AR is SIM.<br/>
+    📱 <b>Handheld shell:</b> D-pad moves the cursor, <span class="k">A</span> places the selected rack tile, <span class="k">B</span> cycles rack tiles, <span class="k">SELECT</span> commits, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit). A saved game is a state string in localStorage.<br/>
+    <b>Clean-room:</b> crossword tile-play mechanics only — no borrowed name, board, tile distribution or art. Word list: ENABLE (public domain).
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script src="xr-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   WORDCLASH — original word-tile battle for the Shaddai Arcade.
+   Clean-room: crossword tile-play MECHANICS only. Our own 15x15 bonus map,
+   our own 100-tile distribution, our own board art, our own bot characters.
+   No borrowed name, board layout, tile distribution or art.
+   Word list: ENABLE (public domain) — fetched once from
+   /assets/games/wordclash/enable.txt (168,548 words, 2-15 letters, source:
+   the ENABLE list as published at norvig.com/ngrams/enable1.txt, public
+   domain). An embedded fallback list keeps the game playable offline.
+   Bots play through the Fallible Engine (agent-engine.js): vocabulary depth
+   per personality, bluffs, challenges, traces. AR placement goes through the
+   shared XR engine (xr-engine.js) — SIM until a real device verifies it;
+   flat + rack-level FP are the verified core.
+   ========================================================================== */
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var XE=(typeof window!=='undefined' && window.XREngine) || null;
+function $(id){ return document.getElementById(id); }
+var cv=$('cv'), ctx=cv?cv.getContext('2d'):null;
+var W=760, H=880, N=15, CENTER=7;
+
+/* ---------- seeded RNG (game logic is deterministic under a seed) ---------- */
+var _seed=12345;
+function rng(){ _seed|=0; _seed=_seed+0x6D2B79F5|0; var t=Math.imul(_seed^_seed>>>15,1|_seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }
+function setSeed(s){ _seed=(s|0)||1; }
+
+/* ---------- letter values + our own 100-tile distribution ---------- */
+var VALUES={A:1,B:4,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:2,V:4,W:4,X:8,Y:4,Z:10,'?':0};
+var BAG_SPEC=[['A',9],['B',2],['C',3],['D',4],['E',10],['F',2],['G',3],['H',2],['I',8],['J',1],['K',1],['L',4],['M',3],['N',6],['O',7],['P',3],['Q',1],['R',6],['S',5],['T',6],['U',4],['V',2],['W',2],['X',1],['Y',2],['Z',1],['?',2]];
+function bagTotal(){ var t=0,i; for(i=0;i<BAG_SPEC.length;i++) t+=BAG_SPEC[i][1]; return t; }
+
+/* ---------- our own bonus map: base cells mirrored by the dihedral group ---------- */
+var BONUS_BASE={ TW:[[1,1],[3,7]], DW:[[2,2],[5,5],[7,7]], TL:[[0,4],[4,0]], DL:[[1,5],[4,4],[6,6]] };
+var BONUS=new Array(N*N).fill(null);
+(function buildBonus(){
+  var kinds=['TW','DW','TL','DL'], k, cells, i, r, c, tr;
+  function put(r,c,kind){ var key=r*N+c; if(BONUS[key] && BONUS[key]!==kind) throw new Error('bonus collision '+r+','+c); BONUS[key]=kind; }
+  for(k=0;k<kinds.length;k++){
+    cells=BONUS_BASE[kinds[k]];
+    for(i=0;i<cells.length;i++){
+      r=cells[i][0]; c=cells[i][1];
+      tr=[[r,c],[r,N-1-c],[N-1-r,c],[N-1-r,N-1-c],[c,r],[c,N-1-r],[N-1-c,r],[N-1-c,N-1-r]];
+      for(var j=0;j<tr.length;j++) put(tr[j][0],tr[j][1],kinds[k]);
+    }
+  }
+})();
+function bonusCounts(){ var out={TW:0,DW:0,TL:0,DL:0},i; for(i=0;i<BONUS.length;i++) if(BONUS[i]) out[BONUS[i]]++; return out; }
+
+/* ---------- word list: ENABLE (public domain) + embedded fallback ---------- */
+var WORDS=new Set(), CAND=[], WORD_COUNT=0, WORDS_READY=false;
+var FALLBACK='AA AB AD AE AG AH AI AL AM AN AR AS AT AW AX AY BA BE BI BO BY DA DE DO ED EF EH EL EM EN ER ES ET EX FA GO HA HE HI HO ID IF IN IS IT JO LA LI LO MA ME MI MM MO MU MY NA NE NO NU OD OE OF OH OI OK OM ON OP OR OS OW OX OY PA PE PI PO QI RE SH SI SO TA TI TO UH UM UN UP US UT WE WO XI XU YA YE YO ZA ABLE ACID AGED ALSO AREA ARMY AUNT BABY BACK BALL BAND BANK BARN BASE BATH BEAM BEAN BEAR BEAT BECK BEEN BEER BELL BELT BEND BENT BEST BILL BIRD BITE BLOW BLUE BOAT BODY BOLD BOLT BOMB BOND BONE BOOK BOOM BOOT BORE BORN BOSS BOTH BOUT BOWL BULB BULK BULL BUMP BURN BUSH BUSY BYTE CAGE CAKE CALL CALM CAME CAMP CANE CANT CAPE CARD CARE CARS CART CASE CASH CAST CAVE CELL CENT CHAIR CHALK CHAMP CHAT CHEAP CHECK CHEEK CHEER CHEST CHIEF CHILD CHILL CHIN CHIP CHOP CITY CLAW CLAY CLEAN CLEAR CLIMB CLIP CLOCK CLOSE CLOTH CLOUD CLUB COACH COAL COAST COAT CODE COIN COLD COLE COME COMIC COOK COOL COPE COPY CORD CORE CORK CORN COST COVE CRAB CREW CRY CUB CUP CURE CURL CURVE CUT DAILY DAME DANCE DARE DARK DARN DART DATE DAWN DEAD DEAL DEAR DEATH DEBUT DEED DEEP DEER DELAY DEMO DEN DEPT DESK DICE DIE DIED DIET DIG DIM DINE DIRT DISC DISH DIVE DOCK DOG DOLL DOME DONE DOOR DOSE DOT DOVE DOWN DRAG DRAW DREAM DRESS DRIED DRIFT DRILL DRINK DRIVE DROP DRUM DRY DUCK DUDE DUE DULL DUMP DUST DUTY EACH EAGER EAGLE EAR EARLY EARN EARTH EASE EAST EASY EAT EATEN ECHO EDGE EDIT EGG EIGHT EITHER ELBOW ELDER ELECT ELEMENT ELEVEN ELITE ELSE EMBER EMPTY END ENEMY ENERGY ENGINE ENJOY ENOUGH ENTER ENTRY EQUAL EQUIP ERA ERROR ESCAPE ESSAY ESTATE EVEN EVER EVERY EXACT EXAM EXCEL EXCEPT EXCHANGE EXCUSE EXERCISE EXIST EXIT EXPECT EXPERT EXPLAIN EXPLORE EXPORT EXPRESS EXTEND EXTRA EYE FACE FACT FACTOR FAIL FAIR FALL FAMILY FAMOUS FAN FAR FARM FAST FAT FATE FATHER FAULT FEAR FEAST FED FEE FEED FEEL FEET FELL FELLOW FELT FENCE FEW FIELD FIERCE FIGHT FIGURE FILE FILL FILM FINAL FIND FINE FINGER FINISH FIRE FIRM FIRST FISH FIT FIX FLAG FLAME FLASH FLAT FLEET FLESH FLIGHT FLOAT FLOOD FLOOR FLOW FLOWER FLUID FLY FOCUS FOG FOLD FOLK FOLLOW FOOD FOOL FOOT FOR FORCE FORD FOREST FORGET FORK FORM FORT FORTY FORUM FOUND FOUR FRAME FREE FREEDOM FREEZE FRESH FRIDAY FRIEND FROG FROM FRONT FROST FRUIT FUEL FULL FUN FUND FUNNY GAIN GAME GAP GARDEN GAS GATE GATHER GAVE GAZE GEAR GEM GENERAL GENTLE GET GHOST GIANT GIFT GIRL GIVE GLAD GLASS GLEE GLOBAL GLORY GLOVE GOAL GOAT GOD GOLD GOLF GONE GOOD GOT GOVERN GRAB GRADE GRAIN GRAND GRANT GRAPE GRAPH GRASS GRAVE GRAY GREAT GREEN GREET GRID GRIEF GRILL GRIN GRIP GROW GROWTH GUARD GUESS GUEST GUIDE GUILD GUILT GUN GUT GUY HABIT HAIR HALF HALL HAND HANDLE HANG HAPPY HARD HARM HAT HATE HAVE HAWK HAZE HEAD HEAL HEALTH HEAR HEARD HEART HEAT HEAVY HEDGE HEEL HEIGHT HELD HELL HELLO HELP HENCE HER HERD HERE HERO HERS HIDE HIGH HILL HINT HIP HIRE HIS HISTORY HIT HOBBY HOLD HOLE HOLIDAY HOLLOW HOLY HOME HONEST HONEY HONOR HOOK HOPE HORN HORSE HOST HOT HOTEL HOUR HOUSE HUGE HUMAN HUMOR HUNT HURRY HURT HUSH ICE ICON IDEA IDEAL IDLE IF ILL IMAGE IMAGINE IMPACT IMPLY IMPORT IMPOSE INCH INCOME INDEX INDIA INDOOR INFANT INFO INK INNER INPUT INSECT INSIDE INSIST INSULT INTACT INTAKE INTENT INTRO INVENT INVEST INVITE IRON ISLAND ISSUE ITEM ITS ITSELF JACKET JAIL JAM JANUARY JAZZ JEAN JELLY JERK JET JEWEL JOB JOIN JOINT JOKE JOLLY JUMP JUNE JUNGLE JUNIOR JURY JUST KEEN KEEP KEPT KEY KICK KID KILL KIND KING KISS KIT KITE KNEE KNEW KNIFE KNIGHT KNOCK KNOWN LABEL LABOR LACK LADDER LADY LAKE LAMP LAND LANE LAP LARGE LAST LATE LAUGH LAUNCH LAW LAWN LAYER LAZY LEAD LEAF LEAGUE LEAK LEAN LEARN LEAST LEATHER LEAVE LED LEFT LEG LEGAL LEMON LEND LENT LESS LESSON LET LEVEL LEVER LICK LID LIE LIFE LIFT LIGHT LIKE LIKELY LIME LIMIT LINE LINK LION LIP LIQUID LIST LIT LITTLE LIVE LOAD LOAN LOCAL LOCK LOG LONE LONG LOOK LOON LOOP LOOSE LORD LOSE LOSS LOST LOT LOUD LOVE LOW LUCK LUMP LUNCH LUNG MACHINE MAD MAGIC MAID MAIL MAIN MAJOR MAKE MALE MALL MANY MAP MARCH MARK MARRY MARSH MART MASK MASS MAST MATCH MATE MATH MATTER MAY MAYBE MAYOR MEAL MEAN MEANT MEAT MEDAL MEDIA MEET MELT MEMBER MEMORY MEND MENU MERCY MERE MERIT MESS METAL METER METHOD MIDDLE MIGHT MILD MILE MILK MILL MIND MINE MINOR MINT MINUS MISS MIST MIX MODE MODEL MODEST MOIST MOLD MOM MONEY MONTH MOOD MOON MORAL MORE MORN MOST MOTEL MOTHER MOTION MOTOR MOUNT MOUSE MOUTH MOVE MOVIE MUCH MUD MUG MULE MULE MUMMY MURAL MUSIC MUST MUTT MYTH NAIL NAME NAP NATION NATIVE NATURE NEAR NEAT NECK NEED NEGLECT NEIGHBOR NEITHER NERVE NEST NET NEVER NEW NEWS NEXT NICE NICK NIGHT NINE NOBLE NODE NOISE NONE NOON NOR NORM NORTH NOSE NOTE NOTICE NOTION NOVEL NOW NUDE NULL NUMBER NURSE NUT OAK OAR OATH OBJECT OBLIGE OBTAIN OCEAN ODD OF OFF OFFER OFTEN OIL OLD ONCE ONE ONLY ONTO OPEN OPERA OR ORAL ORBIT ORDER ORGAN ORIGIN OTHER OUGHT OUR OUT OUTER OVEN OVER OWE OWL OWN OX PACE PACK PACT PAD PAGE PAIN PAINT PAIR PALE PALM PAN PANE PANEL PANIC PAPER PARK PART PARTY PASS PAST PASTE PATH PATIENT PATTERN PAUSE PAY PEACE PEAK PEANUT PEAR PECK PEEL PEER PEG PEN PENCE PENCIL PEOPLE PEPPER PER PERFECT PERFORM PERIOD PERMIT PERSON PET PHASE PHONE PHOTO PHRASE PIANO PICK PICNIC PIECE PIG PILE PILL PILOT PIN PINE PINK PINT PIPE PIT PITY PLACE PLAIN PLAN PLANE PLANT PLATE PLAY PLEA PLEAD PLEAse PLEASE PLEDGE PLENTY PLOT PLOW PLUCK PLUG PLUM PLUS POCKET POEM POET POINT POISE POLE POLICE POLICY POLISH POLITE POLL POND POOL POOR POPE POPPY PORK PORT POSE POST POT POUND POUR POWDER POWER PRAISE PRAY PRESS PRICE PRIDE PRIEST PRIME PRINT PRIOR PRIZE PROOF PROUD PROVE PULL PULSE PUMP PUNCH PURE PURPLE PURPOSE PURSE PUSH PUT QUALITY QUEEN QUEST QUICK QUIET QUILT QUIT QUITE QUOTE RACE RACK RADIO RAGE RAIL RAIN RAISE RALLY RAM RANG RANGE RANK RAPID RARE RATE RATHER RATIO RAW RAY REACH READ READY REAL REALM REAR REASON REBEL RECALL RECENT RECKON RECORD RED REED REEF REEL REFER REFUSE REGARD REGION REGRET REGULAR REIGN REIN RELAX RELAY RELEASE RELIEF REMAIN REMARK REMEDY REMIND REMOTE REMOVE RENT REPAIR REPEAT REPEL REPORT RESCUE RESIST RESORT REST RESULT RETAIN RETIRE RETURN REVEAL REWARD RIB RICE RICH RIDE RIDGE RIFLE RIGHT RIGID RING RIOT RIPE RISE RISK RIVAL RIVER ROAD ROAR ROB ROCK ROCKET ROLE ROLL ROOF ROOM ROOT ROPE ROSE ROT ROUGH ROUND ROUTE ROW ROYAL RUB RUDE RUG RUIN RULE RUN RURAL RUSH RUST SAD SAFE SAGA SAGE SAID SAIL SAINT SAKE SALE SALT SAME SAMPLE SAND SANE SANK SAP SAT SAVE SAY SCALE SCAN SCAR SCARE SCENE SCENT SCHEME SCHOOL SCIENCE SCOPE SCORE SCOUT SCRAP SCREAM SCREEN SCREW SCRIPT SEA SEAL SEAM SEARCH SEASON SEAT SECOND SECRET SECTOR SECURE SEED SEEK SEEM SEEN SEGMENT SEIZE SELECT SELF SELL SEMI SEND SENSE SENT SERIES SERVE SET SETTLE SEVEN SEVER SEW SHADE SHADOW SHAFT SHAKE SHALE SHALL SHAME SHAPE SHARE SHARP SHAVE SHE SHEEP SHEER SHEET SHELF SHELL SHIELD SHIFT SHINE SHIP SHIRT SHOCK SHOE SHONE SHOP SHORE SHORT SHOT SHOULD SHOUT SHOW SHRUG SHUT SHY SICK SIDE SIEGE SIGHT SIGN SIGNAL SILENT SILK SILLY SILVER SIMILAR SIMPLE SINCE SING SINGLE SINK SIR SISTER SIT SITE SITUATE SIX SIZE SKI SKILL SKIN SKIRT SKY SLAB SLACK SLAM SLAP SLATE SLAVE SLEEP SLEET SLEPT SLICE SLICK SLIDE SLIGHT SLIM SLIP SLOPE SLOW SLY SMALL SMART SMASH SMELL SMILE SMOKE SMOOTH SNACK SNAKE SNAP SNARE SNOW SOAK SOAP SOAR SOBER SOCK SODA SOFT SOIL SOLAR SOLD SOLE SOLID SOLVE SOME SON SONG SOON SORE SORT SOUL SOUND SOUP SOURCE SOUTH SPACE SPADE SPAN SPARE SPARK SPEAK SPEAR SPECIAL SPEED SPELL SPEND SPENT SPHERE SPICE SPILL SPIN SPIRIT SPIT SPLIT SPOKE SPOON SPORT SPOT SPRAY SPREAD SPRING SQUARE STACK STAFF STAGE STAIN STAIR STAKE STAMP STAND STAR STARE START STATE STATION STAY STEAK STEAL STEAM STEEL STEEP STEER STEM STEP STICK STIFF STILL STING STIR STOCK STONE STOOD STOOL STOOP STOP STORE STORM STORY STOVE STRAIGHT STRAND STRANGE STRAW STREAM STREET STRESS STRETCH STRICT STRIKE STRING STRIP STRONG STRUCK STRUT STUB STUCK STUDY STUFF STUMBLE STYLE SUBJECT SUBMIT SUBTLE SUBURB SUCH SUDDEN SUE SUFFER SUGAR SUIT SUITE SUM SUMMER SUN SUNNY SUPER SUPPLY SURE SURGE SURVEY SURVIVE SWAMP SWEAR SWEAT SWEEP SWEET SWELL SWIFT SWIM SWING SWITCH SWORD SYMBOL TABLE TACK TAIL TAKE TALE TALK TALL TAME TANK TAP TAPE TARGET TASK TASTE TAX TEA TEACH TEAM TEAR TEASE TECH TEETH TELL TEMPER TEMPLE TEN TEND TENNIS TENT TERM TERRIBLE TEST TEXT THAN THANK THAT THE THEIR THEM THEME THEN THEORY THERE THESE THEY THICK THIEF THIN THING THINK THIRD THIS THORN THOSE THOUGH THOUGHT THOUSAND THREAT THREE THREW THRILL THROAT THRONE THROW THUMB THUS TICK TIDE TIE TIGHT TILE TILL TIME TIN TINT TINY TIP TIRE TITLE TOAST TODAY TOE TOGETHER TOILET TOKEN TOLD TOLL TOMB TONE TONGUE TONIGHT TOO TOOL TOOTH TOPIC TOP TOTAL TOUCH TOUGH TOUR TOWARD TOWEL TOWER TOWN TOY TRACE TRACK TRADE TRAIL TRAIN TRAIT TRAP TRAVEL TRAY TREAD TREAT TREE TREND TRIAL TRIBE TRICK TRIED TRIM TRIP TROOP TRUCK TRUE TRULY TRUNK TRUST TRUTH TRY TUBE TUCK TUESDAY TUNE TUNNEL TURN TUTOR TWELVE TWENTY TWICE TWIN TWIST TYPE UGLY ULTIMATE UNCLE UNDER UNDO UNIFORM UNION UNIT UNITE UNITY UNIVERSE UNLESS UNTIL UPON UPPER UPSET URBAN URGE USE USED USEFUL USUAL UTTER VACANT VAGUE VAIN VALLEY VALUE VALVE VAN VAST VAULT VEHICLE VENDOR VENT VERB VERIFY VERSE VERSION VERY VEST VETERAN VIA VICTIM VICTOR VIDEO VIEW VILLAGE VINE VINTAGE VIOLIN VIRTUE VISION VISIT VITAL VIVID VOCAL VOICE VOLUME VOTE VOYAGE WADE WAGE WAIT WAKE WALK WALL WANDER WANT WAR WARM WARN WASH WASTE WATCH WATER WAVE WAY WEAK WEALTH WEAPON WEAR WEATHER WEAVE WEB WED WEEK WEEP WEIGH WEIRD WELCOME WELD WELL WENT WERE WEST WET WHALE WHAT WHEAT WHEEL WHEN WHERE WHICH WHILE WHIM WHIP WHITE WHO WHOLE WHY WIDE WIDTH WIFE WILD WILL WIN WIND WINDOW WINE WING WINNER WINTER WIPE WIRE WISDOM WISE WISH WITH WITHIN WITHOUT WITNESS WOLF WOMAN WOMEN WON WONDER WOOD WOOL WORD WORK WORLD WORRY WORTH WOUND WRAP WRECK WRIST WRITE WRITER WRONG YARD YEAR YELLOW YES YET YIELD YOGA YOUNG YOUTH ZERO ZONE ZOO';
+var FALLBACK_WORDS=FALLBACK.split(' ');
+function countsOf(letters){ var c=new Array(26).fill(0),i; for(i=0;i<letters.length;i++){ var k=letters[i].charCodeAt(0)-65; if(k>=0&&k<26) c[k]++; } return c; }
+function loadWordsFromText(txt){
+  WORDS=new Set(); CAND=[]; WORD_COUNT=0;
+  var lines=String(txt).split(/\s+/), i, w;
+  for(i=0;i<lines.length;i++){
+    w=lines[i].trim().toUpperCase();
+    if(w.length<2||w.length>15) continue;
+    if(!/^[A-Z]+$/.test(w)) continue;
+    if(WORDS.has(w)) continue;
+    WORDS.add(w); WORD_COUNT++;
+    if(w.length<=7) CAND.push({w:w, counts:countsOf(w.split('')), val:wordValue(w)});
+  }
+  WORDS_READY=true;
+}
+function wordValue(w){ var s=0,i; for(i=0;i<w.length;i++) s+=VALUES[w[i]]||0; return s; }
+function hashWord(w){ var h=0,i; for(i=0;i<w.length;i++) h=(h*31+w.charCodeAt(i))>>>0; return h%100; }
+loadWordsFromText(FALLBACK_WORDS.join('\n'));
+if(typeof fetch!=='undefined'){
+  fetch('../assets/games/wordclash/enable.txt').then(function(r){ return r.text(); }).then(function(t){
+    loadWordsFromText(t);
+    setMsg('Word list loaded: '+WORD_COUNT.toLocaleString()+' ENABLE words.');
+  }).catch(function(){ setMsg('Offline word list ('+WORD_COUNT+' words) — full ENABLE list loads when online.'); });
+}
+
+/* ---------- state ---------- */
+var BOTS={
+  QUILL:  {vocab:0.98, bluff:0.02, chSusp:0.90, chBluff:0.02, color:'#b78cff', dark:'#2a1a4a', rim:'#e8dcff', desc:'knows the weird words'},
+  ZEROX:  {vocab:0.65, bluff:0.22, chSusp:0.60, chBluff:0.12, color:'#ff3860', dark:'#3a0a16', rim:'#ffd75e', desc:'gambles · bluffs · challenges'},
+  TURTLE: {vocab:0.75, bluff:0.05, chSusp:0.70, chBluff:0.03, color:'#00ff88', dark:'#0a2a1a', rim:'#c8ffe8', desc:'safe · short · steady'}
+};
+function newBag(){
+  var bag=[], i, j;
+  for(i=0;i<BAG_SPEC.length;i++) for(j=0;j<BAG_SPEC[i][1];j++) bag.push({ch:BAG_SPEC[i][0], blank:BAG_SPEC[i][0]==='?'});
+  for(i=bag.length-1;i>0;i--){ j=Math.floor(rng()*(i+1)); var t=bag[i]; bag[i]=bag[j]; bag[j]=t; }
+  return bag;
+}
+function mkPlayer(name, botId){ return {name:name, botId:botId||null, rack:[], score:0, agent:null, traces:[]}; }
+var state={
+  mode:'solo', phase:'menu', turn:0, board:new Array(N*N).fill(null),
+  players:[mkPlayer('YOU',null), mkPlayer('QUILL','QUILL')],
+  bag:[], pendingPlay:null, draft:[], selRack:-1, cursor:{r:7,c:7},
+  passCount:0, scoreless:0, moveLog:[], turnCount:0, winner:null,
+  botId:'QUILL', fp:false, muted:false, paused:false, botTimer:0, challengeTimer:0,
+  hi:0, frame:0, motes:[], challengeBy:-1, lastScore:0
+};
+function setupBots(){
+  state.players[1].botId=state.botId; state.players[1].name=state.botId;
+  if(FE){
+    try{ state.players[0].agent=null; state.players[1].agent=FE.loadAgent(state.botId); }catch(e){ state.players[1].agent=null; }
+  }
+}
+function drawTiles(p, n){
+  while(p.rack.length<n && state.bag.length){ p.rack.push(state.bag.pop()); }
+  while(p.rack.length<n) p.rack.push(null);
+}
+function startGame(mode){
+  var keepHi=state.hi, keepMuted=state.muted, keepBot=state.botId;
+  state.mode=mode; state.phase='playing'; state.turn=0;
+  state.board=new Array(N*N).fill(null);
+  state.bag=newBag();
+  state.players=[mkPlayer('YOU',null), mkPlayer(keepBot,keepBot)];
+  if(mode==='watch'){
+    var order=['QUILL','ZEROX','TURTLE'];
+    var b2=order[(order.indexOf(keepBot)+1)%order.length];
+    state.players=[mkPlayer(keepBot,keepBot), mkPlayer(b2,b2)];
+  } else if(mode==='2p'){
+    state.players=[mkPlayer('GOLD',null), mkPlayer('VIOLET',null)];
+  }
+  state.players[0].agent=null; state.players[1].agent=null;
+  if(FE){
+    try{
+      if(state.players[0].botId) state.players[0].agent=FE.loadAgent(state.players[0].botId);
+      if(state.players[1].botId) state.players[1].agent=FE.loadAgent(state.players[1].botId);
+    }catch(e){}
+  }
+  drawTiles(state.players[0],7); drawTiles(state.players[1],7);
+  state.pendingPlay=null; state.draft=[]; state.selRack=-1; state.cursor={r:7,c:7};
+  state.passCount=0; state.scoreless=0; state.moveLog=[]; state.turnCount=0; state.winner=null;
+  state.botId=keepBot; state.fp=false; state.paused=false; state.botTimer=0; state.challengeTimer=0;
+  state.hi=keepHi; state.muted=keepMuted; state.challengeBy=-1;
+  markModeButtons();
+  setMsg(mode==='watch' ? ('WATCH — '+state.players[0].name+' vs '+state.players[1].name+'. They bluff, challenge, and tilt.')
+    : mode==='2p' ? 'GOLD to play. First word must cover the ★.'
+    : 'You are GOLD. First word must cover the ★ — '+state.botId+' is watching.');
+  renderLog();
+}
+function setMsg(t){ var m=$('msg'); if(m) m.textContent=t; }
+function renderLog(){
+  var el=$('log'); if(!el) return;
+  if(!state.moveLog.length){ el.innerHTML='<span class="mn">No plays yet — Gold to play. First word must cover the ★.</span>'; return; }
+  el.textContent=state.moveLog.slice(-8).join('  ·  ');
+}
+function curPlayer(){ return state.players[state.turn]; }
+function otherPlayer(){ return state.players[1-state.turn]; }
+function sideName(i){ return state.players[i].name; }
+
+/* ================= board helpers ================= */
+function cellIdx(r,c){ return r*N+c; }
+function inBounds(r,c){ return r>=0&&r<N&&c>=0&&c<N; }
+function boardAt(r,c){ return inBounds(r,c)? state.board[cellIdx(r,c)] : null; }
+function boardEmpty(){ for(var i=0;i<state.board.length;i++) if(state.board[i]) return false; return true; }
+function letterAt(r,c,draft){
+  var b=boardAt(r,c);
+  if(b) return b.ch;
+  if(draft) for(var i=0;i<draft.length;i++) if(draft[i].r===r&&draft[i].c===c) return draft[i].ch;
+  return null;
+}
+/* run of letters through (r,c) along dir, reading the board + a draft */
+function runAt(r,c,dir,draft){
+  var dr=dir==='V'?1:0, dc=dir==='H'?1:0, cells=[], rr=r, cc=c;
+  while(inBounds(rr-dr,cc-dc) && letterAt(rr-dr,cc-dc,draft)){ rr-=dr; cc-=dc; }
+  var sr=rr, sc=cc, word='';
+  while(inBounds(rr,cc) && letterAt(rr,cc,draft)){ word+=letterAt(rr,cc,draft); cells.push({r:rr,c:cc}); rr+=dr; cc+=dc; }
+  return {word:word, cells:cells, r:sr, c:sc, dir:dir};
+}
+/* validate a draft placement: line, contiguity, connection, centre on first move */
+function validateDraft(draft){
+  if(!draft.length) return {ok:false, reason:'No tiles placed.'};
+  var i, r0=draft[0].r, c0=draft[0].c, sameRow=true, sameCol=true;
+  for(i=1;i<draft.length;i++){ if(draft[i].r!==r0) sameRow=false; if(draft[i].c!==c0) sameCol=false; }
+  if(!sameRow && !sameCol) return {ok:false, reason:'Tiles must sit in one row or column.'};
+  var dir=sameRow?'H':'V';
+  var cells=draft.slice().sort(function(a,b){ return dir==='H'? a.c-b.c : a.r-b.r; });
+  for(i=0;i<cells.length;i++){
+    if(boardAt(cells[i].r,cells[i].c)) return {ok:false, reason:'A square is already taken.'};
+  }
+  var lo=dir==='H'? cells[0].c : cells[0].r, hi=dir==='H'? cells[cells.length-1].c : cells[cells.length-1].r;
+  for(i=lo;i<=hi;i++){
+    var rr=dir==='H'? r0 : i, cc=dir==='H'? i : c0;
+    if(!letterAt(rr,cc,draft)) return {ok:false, reason:'Tiles must touch — no gaps in the word.'};
+  }
+  var empty=boardEmpty();
+  var connected=false;
+  for(i=0;i<draft.length;i++){
+    var d=draft[i];
+    if(boardAt(d.r-1,d.c)||boardAt(d.r+1,d.c)||boardAt(d.r,d.c-1)||boardAt(d.r,d.c+1)) connected=true;
+  }
+  if(empty){
+    var covers=false;
+    for(i=lo;i<=hi;i++){ var rr2=dir==='H'? r0 : i, cc2=dir==='H'? i : c0; if(rr2===CENTER&&cc2===CENTER) covers=true; }
+    if(!covers) return {ok:false, reason:'First word must cover the ★ centre.'};
+    connected=true;
+  }
+  if(!connected) return {ok:false, reason:'The word must connect to the board.'};
+  return {ok:true, dir:dir};
+}
+/* all words formed by a draft: main word + cross words (len>=2) */
+function formedWords(draft){
+  var v=validateDraft(draft);
+  if(!v.ok) return {ok:false, reason:v.reason, words:[]};
+  var words=[], i, run, seen={};
+  function addRun(r,c,dir,isMain){
+    var rn=runAt(r,c,dir,draft);
+    if(rn.word.length>=2){
+      var key=rn.r+','+rn.c+','+rn.dir;
+      if(!seen[key]){ seen[key]=1; words.push({word:rn.word, cells:rn.cells, dir:rn.dir, main:!!isMain}); }
+    }
+    return rn;
+  }
+  if(draft.length===1){
+    var rh=runAt(draft[0].r,draft[0].c,'H',draft);
+    var rv=runAt(draft[0].r,draft[0].c,'V',draft);
+    if(rh.word.length>=2) words.push({word:rh.word, cells:rh.cells, dir:'H', main:rh.word.length>=rv.word.length});
+    if(rv.word.length>=2) words.push({word:rv.word, cells:rv.cells, dir:'V', main:rv.word.length>rh.word.length});
+  } else {
+    var main=addRun(draft[0].r,draft[0].c,v.dir,true);
+    for(i=0;i<draft.length;i++){
+      var crossDir=v.dir==='H'?'V':'H';
+      var cr=runAt(draft[i].r,draft[i].c,crossDir,draft);
+      if(cr.word.length>=2){
+        var key=cr.r+','+cr.c+','+cr.dir;
+        if(!seen[key]){ seen[key]=1; words.push({word:cr.word, cells:cr.cells, dir:cr.dir, main:false}); }
+      }
+    }
+  }
+  if(!words.length) return {ok:false, reason:'That places no word — it must touch a letter.', words:[]};
+  return {ok:true, dir:v.dir, words:words};
+}
+/* score a validated play: letter bonuses on new tiles only, word bonuses under new tiles */
+function scorePlay(draft, words){
+  var isNew={};
+  draft.forEach(function(d){ isNew[d.r+','+d.c]=d; });
+  var total=0, i, j;
+  for(i=0;i<words.length;i++){
+    var w=words[i], sum=0, mult=1;
+    for(j=0;j<w.cells.length;j++){
+      var cell=w.cells[j], key=cell.r+','+cell.c, t=boardAt(cell.r,cell.c);
+      var ch=t? t.ch : (isNew[key]? isNew[key].ch : null);
+      var blank=t? t.blank : (isNew[key]? isNew[key].blank : false);
+      var val=blank? 0 : (VALUES[ch]||0);
+      if(isNew[key]){
+        var b=BONUS[cellIdx(cell.r,cell.c)];
+        if(b==='TL') val*=3; else if(b==='DL') val*=2;
+        if(b==='TW') mult*=3; else if(b==='DW') mult*=2;
+      }
+      sum+=val;
+    }
+    total+=sum*mult;
+  }
+  var bingo=draft.length===7;
+  if(bingo) total+=50;
+  return {score:total, bingo:bingo};
+}
+/* place draft tiles on the board as pending */
+function placePending(draft){
+  draft.forEach(function(d){ state.board[cellIdx(d.r,d.c)]={ch:d.ch, blank:!!d.blank, pending:true}; });
+}
+function clearPending(){
+  for(var i=0;i<state.board.length;i++) if(state.board[i] && state.board[i].pending) state.board[i]=null;
+}
+function commitPlay(playerIdx, draft){
+  if(state.phase!=='playing') return {ok:false, reason:'Not in play.'};
+  if(playerIdx!==state.turn) return {ok:false, reason:'Not your turn.'};
+  var fw=formedWords(draft);
+  if(!fw.ok) return {ok:false, reason:fw.reason};
+  var sc=scorePlay(draft, fw.words);
+  var p=state.players[playerIdx];
+  var usedTiles=[];
+  draft.forEach(function(d){ usedTiles.push(d.tile || p.rack[d.rackIdx]); p.rack[d.rackIdx]=null; });
+  p.rack=p.rack.filter(function(t){ return t!==null; });
+  placePending(draft);
+  state.pendingPlay={by:playerIdx, draft:draft, words:fw.words, score:sc.score, bingo:sc.bingo, rackTiles:usedTiles};
+  state.phase='challenge'; state.challengeTimer=0; state.challengeBy=1-playerIdx; state.draft=[]; state.selRack=-1;
+  var mainWord=fw.words.filter(function(w){return w.main;})[0] || fw.words[0];
+  setMsg(sideName(playerIdx)+' played '+mainWord.word+' ('+sc.score+') — '+sideName(1-playerIdx)+' may CHALLENGE or ACCEPT.');
+  sfx('place');
+  markChallengeButtons();
+  return {ok:true, words:fw.words, score:sc.score, bingo:sc.bingo, main:mainWord.word};
+}
+/* challenge resolution: challengerIdx challenges (true) or accepts (false) */
+function resolveChallenge(challengerIdx, doChallenge){
+  var pp=state.pendingPlay;
+  if(!pp || state.phase!=='challenge') return {ok:false, reason:'No play to challenge.'};
+  var words=pp.words.map(function(w){ return w.word; });
+  if(doChallenge){
+    var bad=null;
+    for(var i=0;i<words.length;i++) if(!WORDS.has(words[i])){ bad=words[i]; break; }
+    if(bad){
+      /* caught bluff: play removed, tiles back, bluffer -10 */
+      clearPending();
+      var bluffer=state.players[pp.by];
+      pp.rackTiles.forEach(function(t){ bluffer.rack.push(t); });
+      bluffer.score-=10;
+      state.moveLog.push(sideName(pp.by)+' bluffed '+words.join('/')+' — CAUGHT ('+bad+'), -10');
+      setMsg('CAUGHT! '+bad+' is not in the list. Play removed, '+sideName(pp.by)+' -10.');
+      sfx('caught');
+      state.scoreless++;
+      state.pendingPlay=null; state.phase='playing'; state.turn=challengerIdx; state.turnCount++;
+      markChallengeButtons(); renderLog(); checkEnd();
+      return {ok:true, caught:true, bad:bad};
+    }
+    /* wrong challenge: challenger -10, play stands */
+    var ch=state.players[challengerIdx];
+    ch.score-=10;
+    state.moveLog.push(sideName(challengerIdx)+' challenged '+words.join('/')+' — WRONG, -10');
+    setMsg('Wrong challenge — every word checks out. '+sideName(challengerIdx)+' -10.');
+    sfx('wrong');
+    acceptPlay();
+    return {ok:true, caught:false};
+  }
+  acceptPlay();
+  return {ok:true, caught:false};
+}
+function acceptPlay(){
+  var pp=state.pendingPlay;
+  if(!pp) return;
+  var p=state.players[pp.by];
+  for(var i=0;i<state.board.length;i++) if(state.board[i] && state.board[i].pending) state.board[i].pending=false;
+  p.score+=pp.score;
+  state.lastScore=pp.score;
+  drawTiles(p,7);
+  var mainWord=pp.words.filter(function(w){return w.main;})[0] || pp.words[0];
+  state.moveLog.push(sideName(pp.by)+': '+mainWord.word+' +'+pp.score+(pp.bingo?' (BINGO +50)':'')+'  ['+p.score+'–'+state.players[1-pp.by].score+']');
+  setMsg(sideName(pp.by)+' scored '+pp.score+' with '+mainWord.word+(pp.bingo?' — BINGO!':'')+'.');
+  sfx('score');
+  state.scoreless=pp.score>0? 0 : state.scoreless+1;
+  state.pendingPlay=null; state.phase='playing'; state.turn=1-pp.by; state.turnCount++;
+  state.botTimer=0;
+  markChallengeButtons(); renderLog(); checkEnd();
+}
+function passTurn(playerIdx){
+  if(state.phase!=='playing' || playerIdx!==state.turn) return false;
+  state.passCount++; state.scoreless++; state.turnCount++;
+  state.moveLog.push(sideName(playerIdx)+' passes.');
+  setMsg(sideName(playerIdx)+' passes.');
+  state.turn=1-playerIdx; state.botTimer=0; renderLog(); checkEnd();
+  return true;
+}
+function swapTiles(playerIdx, rackIdxs){
+  if(state.phase!=='playing' || playerIdx!==state.turn) return {ok:false, reason:'Not your turn.'};
+  var p=state.players[playerIdx];
+  if(!rackIdxs.length) return {ok:false, reason:'Mark rack tiles to swap first.'};
+  if(state.bag.length<rackIdxs.length) return {ok:false, reason:'Not enough tiles left in the bag.'};
+  var out=[];
+  rackIdxs.forEach(function(i){ if(p.rack[i]){ out.push(p.rack[i]); p.rack[i]=null; } });
+  p.rack=p.rack.filter(function(t){ return t!==null; });
+  state.bag=state.bag.concat(out);
+  for(var i=state.bag.length-1;i>0;i--){ var j=Math.floor(rng()*(i+1)); var t=state.bag[i]; state.bag[i]=state.bag[j]; state.bag[j]=t; }
+  drawTiles(p,7);
+  state.scoreless++; state.turnCount++;
+  state.moveLog.push(sideName(playerIdx)+' swaps '+out.length+' tile'+(out.length>1?'s':'')+'.');
+  setMsg(sideName(playerIdx)+' swaps '+out.length+' tile'+(out.length>1?'s':'')+'.');
+  state.turn=1-playerIdx; state.botTimer=0; renderLog(); checkEnd();
+  return {ok:true, n:out.length};
+}
+function checkEnd(){
+  if(state.phase==='over') return;
+  var over=false, reason='';
+  if(state.scoreless>=6){ over=true; reason='six scoreless turns'; }
+  if(state.turnCount>=150){ over=true; reason='turn limit'; }
+  var bagOut=state.bag.length===0;
+  var someoneOut=state.players[0].rack.length===0 || state.players[1].rack.length===0;
+  if(bagOut && someoneOut){ over=true; reason='bag empty, a rack is out'; }
+  if(!over) return;
+  var p0=state.players[0], p1=state.players[1];
+  if(reason==='bag empty, a rack is out'){
+    var outIdx=p0.rack.length===0?0:1;
+    var opp=state.players[1-outIdx];
+    var left=opp.rack.reduce(function(s,t){ return s+(t.blank?0:(VALUES[t.ch]||0)); },0);
+    state.players[outIdx].score+=left;
+    opp.score-=left;
+    state.moveLog.push(sideName(outIdx)+' goes out — +'+left+' from '+sideName(1-outIdx)+'’s rack.');
+  }
+  state.phase='over';
+  state.winner=p0.score===p1.score? null : (p0.score>p1.score?0:1);
+  var msg=state.winner===null? 'DRAW — '+p0.score+' all. ('+reason+')'
+    : sideName(state.winner)+' WINS '+state.players[state.winner].score+'–'+state.players[1-state.winner].score+'. ('+reason+')';
+  setMsg(msg);
+  state.moveLog.push(msg);
+  if(state.winner!==null && state.mode!=='watch' && state.winner===0){ state.hi++; try{ localStorage.setItem('wordclash.hi', String(state.hi)); }catch(e){} }
+  recordGameResult();
+  sfx(state.winner===0?'win':'draw');
+  renderLog();
+}
+function recordGameResult(){
+  if(state.mode==='watch'){
+    try{
+      if(FE && state.players[0].agent && state.players[1].agent){
+        var out0=state.winner===null?'draw':state.winner===0?'win':'loss';
+        FE.recordMatch(state.players[0].agent, state.players[1].agent, 'wordclash', out0, state.players[0].traces, state.players[1].traces);
+      }
+    }catch(e){}
+  } else if(state.mode==='solo'){
+    try{
+      if(FE && state.players[1].agent){
+        var outB=state.winner===null?'draw':state.winner===1?'win':'loss';
+        FE.recordResult(state.players[1].agent, 'wordclash', 'human', outB, state.players[1].traces);
+      }
+    }catch(e){}
+  }
+}
+/* ---------- debug hooks used by tests ---------- */
+function debugSetRack(playerIdx, letters){
+  var p=state.players[playerIdx];
+  p.rack=letters.map(function(ch){ return {ch:ch, blank:ch==='?'}; });
+}
+function debugSetBoard(cells){
+  cells.forEach(function(c){ state.board[cellIdx(c.r,c.c)]={ch:c.ch, blank:!!c.blank, pending:false}; });
+}
+function buildPlacements(word, r, c, dir, playerIdx){
+  var p=state.players[playerIdx];
+  var rackAvail=p.rack.map(function(t,i){ return t? {ch:t.ch, blank:t.blank, idx:i} : null; }).filter(Boolean);
+  var placements=[];
+  for(var k=0;k<word.length;k++){
+    var rr=dir==='H'? r : r+k, cc=dir==='H'? c+k : c;
+    if(!inBounds(rr,cc)) return null;
+    var b=boardAt(rr,cc);
+    var letter=word[k];
+    if(b){ if(b.ch!==letter) return null; continue; }
+    var found=-1;
+    for(var j=0;j<rackAvail.length;j++) if(rackAvail[j].ch===letter){ found=j; break; }
+    if(found<0){
+      for(j=0;j<rackAvail.length;j++) if(rackAvail[j].blank){ found=j; break; }
+    }
+    if(found<0) return null;
+    var tile=rackAvail.splice(found,1)[0];
+    placements.push({r:rr, c:cc, ch:letter, rackIdx:tile.idx, blank:tile.blank});
+  }
+  if(!placements.length) return null;
+  return placements;
+}
+function debugPlaceWord(word, r, c, dir, playerIdx){
+  var pl=buildPlacements(word, r, c, dir, playerIdx);
+  if(!pl) return {ok:false, reason:'Cannot build that word from the rack/board.'};
+  return commitPlay(playerIdx, pl);
+}
+
+/* ================= bots: Fallible Engine wordplay ================= */
+function knowsWord(botId, w){
+  /* a bot's vocabulary is a subset of the real list: a word outside ENABLE
+     is unknown to every bot (that is what makes a bluff detectable). */
+  if(!WORDS.has(w)) return false;
+  return hashWord(w) < Math.round(BOTS[botId].vocab*100);
+}
+function vocabOf(botId){ return BOTS[botId].vocab; }
+function computeAnchors(){
+  if(boardEmpty()) return [{r:CENTER,c:CENTER}];
+  var out=[], seen={}, r, c;
+  for(r=0;r<N;r++) for(c=0;c<N;c++){
+    if(boardAt(r,c)) continue;
+    if(boardAt(r-1,c)||boardAt(r+1,c)||boardAt(r,c-1)||boardAt(r,c+1)){
+      var k=r+','+c; if(!seen[k]){ seen[k]=1; out.push({r:r,c:c}); }
+    }
+  }
+  return out;
+}
+function candidatePlays(p){
+  var rack=p.rack.filter(Boolean);
+  var rackCounts=countsOf(rack.map(function(t){ return t.ch; }));
+  var rackSet={}, hasBlank=false, ri;
+  for(ri=0;ri<rack.length;ri++){ rackSet[rack[ri].ch]=1; if(rack[ri].blank) hasBlank=true; }
+  var kept=[], i, j;
+  for(i=0;i<CAND.length;i++){
+    var cw=CAND[i], miss=0;
+    for(j=0;j<26;j++){ var d=cw.counts[j]-rackCounts[j]; if(d>0){ miss+=d; if(miss>2) break; } }
+    if(miss<=2) kept.push({w:cw.w, counts:cw.counts, val:cw.val, miss:miss});
+  }
+  /* fully rack-formable words first (miss 0), then board-assisted, then by value —
+     otherwise the value sort fills the cap with exotic words that can never
+     place on an empty board and the bot finds nothing. */
+  kept.sort(function(a,b){ return (a.miss-b.miss) || (b.val-a.val); });
+  if(kept.length>400) kept=kept.slice(0,400);
+  var anchors=computeAnchors();
+  var out=[], seenPl={}, a, dir, off;
+  for(a=0;a<anchors.length;a++){
+    var an=anchors[a];
+    for(var di=0;di<2;di++){
+      dir=di===0?'H':'V';
+      for(i=0;i<kept.length;i++){
+        var w=kept[i].w;
+        for(off=0;off<w.length;off++){
+          /* the anchor cell is empty, so the word's letter there must come
+             from the rack (or a blank) — skip everything else cheaply. */
+          if(!rackSet[w[off]] && !hasBlank) continue;
+          var sr=dir==='H'? an.r : an.r-off, sc=dir==='H'? an.c-off : an.c;
+          var cand=tryPlaceWord(w, sr, sc, dir, p);
+          if(!cand) continue;
+          if(seenPl[cand.key]) continue; seenPl[cand.key]=1;
+          out.push(cand);
+        }
+      }
+    }
+  }
+  out.sort(function(x,y){ return y.score-x.score; });
+  var top=out.slice(0,100);
+  for(i=100;i<out.length && top.length<130;i++){ if(rng()<0.1) top.push(out[i]); }
+  return top;
+}
+/* words formed by a placement, assuming geometry already valid (bot path) —
+   skips the re-validation that formedWords does, so the bot's search stays fast */
+function wordsForPlacements(draft, dir){
+  var words=[], i, seen={};
+  function addRun(r,c,d,isMain){
+    var rn=runAt(r,c,d,draft);
+    if(rn.word.length>=2){
+      var key=rn.r+','+rn.c+','+rn.dir;
+      if(!seen[key]){ seen[key]=1; words.push({word:rn.word, cells:rn.cells, dir:rn.dir, main:!!isMain}); }
+    }
+    return rn;
+  }
+  if(draft.length===1){
+    var rh=runAt(draft[0].r,draft[0].c,'H',draft);
+    var rv=runAt(draft[0].r,draft[0].c,'V',draft);
+    if(rh.word.length>=2) words.push({word:rh.word, cells:rh.cells, dir:'H', main:rh.word.length>=rv.word.length});
+    if(rv.word.length>=2) words.push({word:rv.word, cells:rv.cells, dir:'V', main:rv.word.length>rh.word.length});
+  } else {
+    addRun(draft[0].r,draft[0].c,dir,true);
+    for(i=0;i<draft.length;i++){
+      var cr=runAt(draft[i].r,draft[i].c,dir==='H'?'V':'H',draft);
+      if(cr.word.length>=2){
+        var key=cr.r+','+cr.c+','+cr.dir;
+        if(!seen[key]){ seen[key]=1; words.push({word:cr.word, cells:cr.cells, dir:cr.dir, main:false}); }
+      }
+    }
+  }
+  if(!words.length) return {ok:false, words:[]};
+  return {ok:true, words:words};
+}
+function tryPlaceWord(word, sr, sc, dir, p){
+  var rackAvail=p.rack.map(function(t,i){ return t? {ch:t.ch, blank:t.blank, idx:i} : null; }).filter(Boolean);
+  var placements=[], boardUsed=0, k;
+  for(k=0;k<word.length;k++){
+    var rr=dir==='H'? sr : sr+k, cc=dir==='H'? sc+k : sc;
+    if(rr<0||rr>=N||cc<0||cc>=N) return null;
+    var b=state.board[rr*N+cc];
+    if(b){ if(b.ch!==word[k]) return null; boardUsed++; continue; }
+    var found=-1;
+    for(var j=0;j<rackAvail.length;j++) if(rackAvail[j].ch===word[k]){ found=j; break; }
+    if(found<0) for(j=0;j<rackAvail.length;j++) if(rackAvail[j].blank){ found=j; break; }
+    if(found<0) return null;
+    var tile=rackAvail.splice(found,1)[0];
+    placements.push({r:rr, c:cc, ch:word[k], rackIdx:tile.idx, blank:tile.blank});
+  }
+  if(!placements.length) return null;
+  /* span must be closed: no board letter immediately before/after the word */
+  var er=dir==='H'? sr : sr+word.length-1, ec=dir==='H'? sc+word.length-1 : sc;
+  var br=dir==='H'? sr : sr-1, bc=dir==='H'? sc-1 : sc;
+  var ar=dir==='H'? er : er+1, ac=dir==='H'? ec+1 : ec;
+  if(br>=0&&br<N&&bc>=0&&bc<N && state.board[br*N+bc]) return null;
+  if(ar>=0&&ar<N&&ac>=0&&ac<N && state.board[ar*N+ac]) return null;
+  var fw=wordsForPlacements(placements, dir);
+  if(!fw.ok) return null;
+  for(var m=0;m<fw.words.length;m++) if(!WORDS.has(fw.words[m].word)) return null;
+  var sc2=scorePlay(placements, fw.words);
+  var main=fw.words.filter(function(w){ return w.main; })[0] || fw.words[0];
+  var tag='safe';
+  if(sc2.bingo) tag='bingo'; else if(sc2.score>=40) tag='big'; else if(main.word.length>=6) tag='long';
+  else if(boardUsed>0) tag='hook'; else if(sc2.score<20) tag='safe'; else tag='mid';
+  return {word:main.word, placements:placements, words:fw.words, score:sc2.score, bingo:sc2.bingo,
+    tag:tag, boardUsed:boardUsed, key:word+'@'+sr+','+sc+dir};
+}
+function botChoose(cands, p){
+  var botId=p.botId, style=BOTS[botId];
+  var opts=cands.map(function(c,idx){
+    var s=c.score;
+    if(botId==='QUILL') s+=c.word.length*3 + wordValue(c.word)*0.3;
+    else if(botId==='ZEROX') s+=c.score*0.15;
+    else if(botId==='TURTLE') s+=(c.score<25?15:0) - c.word.length*2;
+    return {key:String(idx), score:s, tag:c.tag};
+  });
+  if(FE && p.agent){
+    try{
+      var res=FE.decide(p.agent, 'wordclash', opts, {timePressure:0});
+      var idx=parseInt(res.pick.key,10);
+      p.traces.push(res.trace);
+      return cands[idx];
+    }catch(e){}
+  }
+  var best=0, bs=-Infinity;
+  for(var i=0;i<opts.length;i++){ var v=opts[i].score + rng()*8; if(v>bs){ bs=v; best=i; } }
+  return cands[best];
+}
+function maybeBluff(chosen, p){
+  var botId=p.botId, prob=BOTS[botId].bluff;
+  if(rng()>=prob) return chosen;
+  var tries=0;
+  while(tries<8){
+    tries++;
+    var pl=chosen.placements[Math.floor(rng()*chosen.placements.length)];
+    if(!pl) return chosen;
+    /* only mutate a tile with no perpendicular neighbours (no cross word) */
+    var perp=chosen.words.some(function(w){ return !w.main && w.cells.some(function(c){ return c.r===pl.r&&c.c===pl.c; }); });
+    if(perp) continue;
+    var rackLetters=p.rack.filter(Boolean).map(function(t){ return t.ch; });
+    var alt=rackLetters[Math.floor(rng()*rackLetters.length)];
+    if(!alt || alt===pl.ch) continue;
+    var consumed={};
+    chosen.placements.forEach(function(q){ consumed[q.rackIdx]=1; });
+    var altIdx=-1;
+    for(var ai=0;ai<p.rack.length;ai++){
+      if(p.rack[ai] && !consumed[ai] && (p.rack[ai].ch===alt || p.rack[ai].blank)){ altIdx=ai; break; }
+    }
+    if(altIdx<0) continue;
+    var mutated=chosen.word.split('');
+    var pos=chosen.placements.indexOf(pl);
+    var mainCells=chosen.words.filter(function(w){ return w.main; })[0].cells;
+    var mi=-1;
+    for(var k=0;k<mainCells.length;k++) if(mainCells[k].r===pl.r&&mainCells[k].c===pl.c) mi=k;
+    if(mi<0) continue;
+    mutated[mi]=alt;
+    var newWord=mutated.join('');
+    if(WORDS.has(newWord)) continue;
+    var fw=formedWords(chosen.placements.map(function(q){
+      return q===pl? {r:q.r,c:q.c,ch:alt,rackIdx:q.rackIdx,blank:q.blank} : q;
+    }));
+    if(!fw.ok) continue;
+    var crossOk=true;
+    for(var m=0;m<fw.words.length;m++){ if(!fw.words[m].main && !WORDS.has(fw.words[m].word)) crossOk=false; }
+    if(!crossOk) continue;
+    var newPlacements=chosen.placements.map(function(q){
+      return q===pl? {r:q.r,c:q.c,ch:alt,rackIdx:altIdx,blank:q.blank} : q;
+    });
+    var sc=scorePlay(newPlacements, fw.words);
+    return {word:newWord, placements:newPlacements, words:fw.words, score:sc.score, bingo:sc.bingo,
+      tag:'bluff', boardUsed:chosen.boardUsed, key:chosen.key+'-bluff', bluff:true};
+  }
+  return chosen;
+}
+function decideChallenge(botId, words){
+  var style=BOTS[botId], susp=false;
+  for(var i=0;i<words.length;i++) if(!knowsWord(botId, words[i])) susp=true;
+  if(susp) return rng() < style.chSusp;
+  return rng() < style.chBluff;
+}
+function botTurn(){
+  if(state.phase!=='playing' || state.paused) return false;
+  var p=curPlayer();
+  if(!p.botId) return false;
+  var cands=candidatePlays(p);
+  if(!cands.length){ passTurn(state.turn); return true; }
+  var chosen=botChoose(cands, p);
+  if(!chosen){ passTurn(state.turn); return true; }
+  chosen=maybeBluff(chosen, p);
+  var res=commitPlay(state.turn, chosen.placements);
+  if(!res.ok){ passTurn(state.turn); return true; }
+  var opp=otherPlayer();
+  if(opp.botId){
+    /* bot-vs-bot (WATCH): the opposing bot challenges on the spot */
+    var doChallenge=decideChallenge(opp.botId, res.words.map(function(w){ return w.word; }));
+    resolveChallenge(1-state.pendingPlay.by, doChallenge);
+  }
+  /* human opponent (solo): the challenge window stays open — the loop
+     handles the human's CHALLENGE / ACCEPT buttons and the auto-accept timer */
+  return true;
+}
+function watchStep(){
+  if(state.phase!=='playing') return false;
+  if(!curPlayer().botId) return false;
+  return botTurn();
+}
+function debugStepWatch(n){
+  var done=0;
+  for(var i=0;i<n;i++){
+    if(state.phase!=='playing') break;
+    if(!curPlayer().botId) break;
+    if(!watchStep()) break;
+    done++;
+  }
+  return done;
+}
+function debugBluffProbe(botId, cand){
+  var p={botId:botId, rack:state.players[0].rack};
+  var out=maybeBluff(cand, p);
+  return out;
+}
+
+/* ================= rendering ================= */
+var BOARD={ox:80, oy:86, cell:40};
+function rr(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r);
+  c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath();
+}
+function cellRect(r,c){
+  if(!state.fp) return {x:BOARD.ox+c*BOARD.cell, y:BOARD.oy+r*BOARD.cell, w:BOARD.cell, h:BOARD.cell};
+  var top=150+540*Math.pow(r/N,1.45), bot=150+540*Math.pow((r+1)/N,1.45);
+  var s=0.55+0.45*(r+1)/N, halfW=300*s;
+  var w=2*halfW/N;
+  return {x:380-halfW+c*w, y:top, w:w, h:bot-top};
+}
+function initMotes(){
+  state.motes=[];
+  var letters='WORDCLASHQUIZJAZZ';
+  for(var i=0;i<16;i++) state.motes.push({x:20+rng()*720, y:rng()*880, vy:0.12+rng()*0.25, vx:(rng()-0.5)*0.2,
+    ch:letters[Math.floor(rng()*letters.length)], a:0.05+rng()*0.10, s:12+rng()*14});
+}
+function drawBackground(){
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a1420'); g.addColorStop(0.45,'#0a1a16'); g.addColorStop(1,'#070a12');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* stars */
+  ctx.fillStyle='#e8dcff';
+  for(var i=0;i<70;i++){
+    var sx=(i*97)%W, sy=(i*57)%180;
+    ctx.globalAlpha=0.25+((i*13)%10)/30;
+    ctx.fillRect(sx,sy,1.6,1.6);
+  }
+  ctx.globalAlpha=1;
+  /* aurora ribbons */
+  for(var k=0;k<2;k++){
+    ctx.beginPath();
+    for(var x=0;x<=W;x+=20){
+      var y=60+k*36+16*Math.sin(x/110+k*2+state.frame*0.004);
+      if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    for(x=W;x>=0;x-=20){ ctx.lineTo(x, 60+k*36+16*Math.sin(x/110+k*2+state.frame*0.004)+22); }
+    ctx.closePath();
+    ctx.fillStyle=k===0?'rgba(0,255,136,0.07)':'rgba(255,215,94,0.05)';
+    ctx.fill();
+  }
+  /* skyline silhouettes */
+  ctx.fillStyle='rgba(0,42,28,0.85)';
+  for(var b=0;b<14;b++){
+    var bx=b*56+((b*37)%14), bw=30+((b*53)%22), bh=20+((b*29)%44);
+    ctx.fillRect(bx, 96-bh, bw, bh);
+    ctx.fillStyle='rgba(255,215,94,0.35)';
+    for(var wy=0;wy<2;wy++) for(var wx=0;wx<2;wx++) if((b+wx+wy)%3===0) ctx.fillRect(bx+6+wx*11, 96-bh+6+wy*11, 3, 4);
+    ctx.fillStyle='rgba(0,42,28,0.85)';
+  }
+  /* floor glow */
+  var fg=ctx.createRadialGradient(380,760,40,380,760,420);
+  fg.addColorStop(0,'rgba(0,255,136,0.10)'); fg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=fg; ctx.fillRect(0,560,W,320);
+  /* drifting letter motes */
+  ctx.font='16px "Share Tech Mono", monospace';
+  for(var m=0;m<state.motes.length;m++){
+    var mo=state.motes[m];
+    ctx.globalAlpha=mo.a;
+    ctx.fillStyle='#ffd75e';
+    ctx.fillText(mo.ch, mo.x, mo.y);
+  }
+  ctx.globalAlpha=1;
+}
+var BONUS_FILL={TW:'#5a3a08', DW:'#0d3a24', TL:'#0a2a3a', DL:'#241a3a'};
+var BONUS_TEXT={TW:'3W', DW:'2W', TL:'3L', DL:'2L'};
+var BONUS_GLOW={TW:'rgba(255,215,94,0.5)', DW:'rgba(0,255,136,0.45)', TL:'rgba(53,224,255,0.45)', DL:'rgba(183,140,255,0.45)'};
+/* pure-visual helper: shade a #rrggbb colour by amt (-1..1) */
+function shadeHex(hex, amt){
+  var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=((n>>8)&255), b=n&255;
+  if(amt>=0){ r=Math.round(r+(255-r)*amt); g=Math.round(g+(255-g)*amt); b=Math.round(b+(255-b)*amt); }
+  else { r=Math.round(r*(1+amt)); g=Math.round(g*(1+amt)); b=Math.round(b*(1+amt)); }
+  return 'rgb('+r+','+g+','+b+')';
+}
+function drawTile(x,y,w,h,ch,val,pending,selected){
+  /* TRUE SPRITE STACK (character sweep 2026-11-22): five extruded slices
+     stepping down in dark arcane bronze give every letter tile real volume
+     and a contact shadow — the stack wraps AROUND the glyph; the lit top
+     face and the letter itself stay exactly as crisp and readable as ever. */
+  ctx.fillStyle='rgba(0,0,0,0.5)';
+  ctx.beginPath(); ctx.ellipse(x+w/2, y+h+2.5, w*0.46, 3.2, 0, 0, Math.PI*2); ctx.fill();
+  var sliceCols=['#171006','#241806','#33220c','#472f12','#5d3f18'];
+  for(var k=5;k>=1;k--){
+    ctx.fillStyle=sliceCols[5-k];
+    rr(ctx,x+1.5,y+1.5+k*1.35,w-3,h-3,6); ctx.fill();
+    if(k===5){ /* colour seam glowing on the lowest slice edge */
+      ctx.strokeStyle=pending? 'rgba(255,215,94,0.55)' : 'rgba(255,215,94,0.22)'; ctx.lineWidth=1;
+      rr(ctx,x+1.5,y+1.5+k*1.35,w-3,h-3,6); ctx.stroke();
+    }
+  }
+  var g=ctx.createLinearGradient(x,y,x,y+h);
+  g.addColorStop(0,'#fff8dc'); g.addColorStop(0.5,'#f3e2a4'); g.addColorStop(1,'#d3ae62');
+  ctx.fillStyle=g;
+  rr(ctx,x+1.5,y+1.5,w-3,h-3,6); ctx.fill();
+  ctx.strokeStyle=pending? 'rgba(255,215,94,0.95)' : 'rgba(120,90,20,0.65)';
+  ctx.lineWidth=pending? 2.5 : 1;
+  rr(ctx,x+1.5,y+1.5,w-3,h-3,6); ctx.stroke();
+  /* bevel: dark inner line along bottom/right of the top face */
+  ctx.strokeStyle='rgba(101,72,18,0.55)'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(x+w-3.5,y+6); ctx.lineTo(x+w-3.5,y+h-6); ctx.lineTo(x+6,y+h-3.5); ctx.stroke();
+  /* dramatic rim light on the top edge (pulses on pending tiles) */
+  ctx.strokeStyle=pending? 'rgba(255,240,190,'+(0.75+0.25*Math.sin(state.frame*0.15))+')' : 'rgba(255,255,255,0.8)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(x+6,y+3); ctx.lineTo(x+w-6,y+3); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.4)';
+  ctx.beginPath(); ctx.moveTo(x+3,y+6); ctx.lineTo(x+3,y+h-8); ctx.stroke();
+  /* corner rivets — arcane-tech fasteners on the tile face */
+  ctx.fillStyle='rgba(101,72,18,0.6)';
+  [[x+5.5,y+5.5],[x+w-5.5,y+5.5]].forEach(function(pt){ ctx.beginPath(); ctx.arc(pt[0],pt[1],1.1,0,Math.PI*2); ctx.fill(); });
+  /* engraved glyph: one light emboss pass, then the crisp dark letter on top */
+  ctx.fillStyle='rgba(255,252,235,0.5)';
+  ctx.font='bold '+Math.round(h*0.52)+'px Rajdhani, sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(ch, x+w/2, y+h/2+2.2);
+  ctx.fillStyle='#241a08';
+  ctx.fillText(ch, x+w/2, y+h/2+1);
+  ctx.font='bold '+Math.round(h*0.22)+'px "Share Tech Mono", monospace';
+  ctx.textAlign='right'; ctx.textBaseline='bottom';
+  ctx.fillText(String(val), x+w-4, y+h-3);
+  if(selected){
+    ctx.strokeStyle='#00ff88'; ctx.lineWidth=2.5;
+    rr(ctx,x,y,w,h,7); ctx.stroke();
+  }
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
+function drawBoard(){
+  var r,c;
+  /* table frame */
+  ctx.fillStyle='#1a1206';
+  rr(ctx, BOARD.ox-14, BOARD.oy-14, 628, 628, 10); ctx.fill();
+  ctx.strokeStyle='rgba(255,215,94,0.55)'; ctx.lineWidth=2;
+  rr(ctx, BOARD.ox-14, BOARD.oy-14, 628, 628, 10); ctx.stroke();
+  ctx.strokeStyle='rgba(255,215,94,0.15)'; ctx.lineWidth=6;
+  rr(ctx, BOARD.ox-20, BOARD.oy-20, 640, 640, 12); ctx.stroke();
+  for(r=0;r<N;r++) for(c=0;c<N;c++){
+    var rc=cellRect(r,c), b=BONUS[cellIdx(r,c)];
+    ctx.fillStyle=b? BONUS_FILL[b] : ((r+c)%2===0? '#12241c' : '#0e1d17');
+    ctx.fillRect(rc.x+0.5, rc.y+0.5, rc.w-1, rc.h-1);
+    if(b){
+      ctx.strokeStyle=BONUS_GLOW[b]; ctx.lineWidth=1;
+      ctx.strokeRect(rc.x+1.5, rc.y+1.5, rc.w-3, rc.h-3);
+      ctx.fillStyle=BONUS_GLOW[b];
+      ctx.font='bold '+Math.max(8,Math.round(rc.h*0.26))+'px "Share Tech Mono", monospace';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(BONUS_TEXT[b], rc.x+rc.w/2, rc.y+rc.h/2);
+    }
+    if(r===CENTER&&c===CENTER&&!boardAt(r,c)){
+      ctx.fillStyle='rgba(255,215,94,0.8)';
+      ctx.font=Math.round(rc.h*0.5)+'px sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('★', rc.x+rc.w/2, rc.y+rc.h/2+1);
+    }
+    var t=boardAt(r,c);
+    if(t) drawTile(rc.x+2, rc.y+2, rc.w-4, rc.h-4, t.ch, t.blank?0:(VALUES[t.ch]||0), !!t.pending, false);
+  }
+  /* cursor */
+  if(state.phase==='playing'){
+    var cur=cellRect(state.cursor.r, state.cursor.c);
+    ctx.strokeStyle='rgba(0,255,136,0.9)'; ctx.lineWidth=2;
+    ctx.strokeRect(cur.x+1, cur.y+1, cur.w-2, cur.h-2);
+  }
+  /* draft tiles sit on the board as pending already; draw the ghost outline for the next placement */
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
+function drawRack(){
+  var p=curPlayer();
+  var trayY=state.fp? 780 : 716, tileW=state.fp? 56 : 46, tileH=state.fp? 62 : 52;
+  ctx.fillStyle='rgba(14,20,32,0.9)';
+  rr(ctx, 60, trayY-8, 640, tileH+22, 10); ctx.fill();
+  ctx.strokeStyle='rgba(255,215,94,0.3)'; ctx.lineWidth=1.5;
+  rr(ctx, 60, trayY-8, 640, tileH+22, 10); ctx.stroke();
+  ctx.fillStyle='#a89a7a';
+  ctx.font='11px "Share Tech Mono", monospace';
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  var rackHint=state.phase==='challenge'? 'CHALLENGE WINDOW — tiles are on the board'
+    : p.botId? p.name+' is thinking…'
+    : sideName(state.turn)+'’s RACK — click a tile, then a square';
+  ctx.fillText(rackHint, 74, trayY+tileH+2);
+  var x0=380-((7*tileW+6*8)/2);
+  for(var i=0;i<7;i++){
+    var t=p.rack[i];
+    var x=x0+i*(tileW+8), y=trayY;
+    if(!t){
+      ctx.strokeStyle='rgba(168,154,122,0.25)';
+      rr(ctx,x,y,tileW,tileH,6); ctx.stroke();
+      continue;
+    }
+    var sel=(state.selRack===i);
+    var swapMark=state.swapMarks && state.swapMarks.indexOf(i)>=0;
+    drawTile(x, sel? y-8 : y, tileW, tileH, t.ch, t.blank?0:(VALUES[t.ch]||0), false, sel);
+    if(swapMark){
+      ctx.strokeStyle='#ff3860'; ctx.lineWidth=2.5;
+      rr(ctx,x,y,tileW,tileH,7); ctx.stroke();
+      ctx.fillStyle='#ff3860'; ctx.font='bold 11px "Share Tech Mono", monospace';
+      ctx.textAlign='center'; ctx.fillText('SWAP', x+tileW/2, y+tileH+10);
+    }
+  }
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
+function drawPortrait(x, y, r, botId){
+  var col=botId==='YOU'? {color:'#00ff88', dark:'#0a2a1a', rim:'#c8ffe8'} : BOTS[botId];
+  if(!col) col={color:'#ffd75e', dark:'#2a1a4a', rim:'#e8dcff'};
+  /* TRUE SPRITE-STACK BUST (character sweep 2026-11-22): sleek arcane-tech
+     duelists, built the contention way — silhouette slices extruded down in
+     the bot's dark shade, baked 3-tone helm (dark core -> mid -> lit rim),
+     glowing visor instead of a face, per-bot gear. Idle breathing sway. */
+  var breathe=Math.sin(state.frame*0.06 + x*0.013)*r*0.045;
+  var hy=y-r*0.10+breathe, shY=y+r*0.52+breathe*0.5, baseY=y+r*1.08;
+  /* ground / contact shadow + colour glow pool */
+  ctx.fillStyle='rgba(0,0,0,.45)';
+  ctx.beginPath(); ctx.ellipse(x,baseY+3,r*0.95,r*0.20,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=col.color; ctx.globalAlpha=0.16+0.04*Math.sin(state.frame*0.08+x*0.02);
+  ctx.beginPath(); ctx.ellipse(x,baseY+3,r*1.05,r*0.24,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  function chestPath(off){
+    ctx.beginPath();
+    ctx.moveTo(x-r*0.98, baseY+off);
+    ctx.lineTo(x-r*0.66, shY+off);
+    ctx.quadraticCurveTo(x, shY-r*0.16+off, x+r*0.66, shY+off);
+    ctx.lineTo(x+r*0.98, baseY+off);
+    ctx.closePath();
+  }
+  /* chest silhouette slices: dark core stepping down */
+  for(var k=3;k>=1;k--){ ctx.fillStyle=shadeHex(col.dark, -0.25+k*0.06); chestPath(k*1.9); ctx.fill(); }
+  /* chest plate: 3-tone baked shading */
+  var cg=ctx.createLinearGradient(x,shY,x,baseY);
+  cg.addColorStop(0, shadeHex(col.color,0.18)); cg.addColorStop(0.45, shadeHex(col.color,-0.28)); cg.addColorStop(1, shadeHex(col.dark,-0.3));
+  ctx.fillStyle=cg; chestPath(0); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.55)'; ctx.lineWidth=1.4; chestPath(0); ctx.stroke();
+  /* plate seams */
+  ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1.1;
+  ctx.beginPath(); ctx.moveTo(x-r*0.55, shY+r*0.22); ctx.lineTo(x-r*0.42, baseY-r*0.06); ctx.moveTo(x+r*0.55, shY+r*0.22); ctx.lineTo(x+r*0.42, baseY-r*0.06); ctx.stroke();
+  /* shoulder pads: stacked discs with rim arc */
+  [-1,1].forEach(function(s){
+    var px=x+s*r*0.82, py=shY+r*0.10;
+    for(var k=2;k>=1;k--){ ctx.fillStyle=shadeHex(col.dark,-0.2); ctx.beginPath(); ctx.arc(px,py+k*1.6,r*0.30,0,Math.PI*2); ctx.fill(); }
+    var pg=ctx.createLinearGradient(px-r*0.3,py-r*0.3,px+r*0.3,py+r*0.3);
+    pg.addColorStop(0, shadeHex(col.color,0.3)); pg.addColorStop(1, shadeHex(col.color,-0.5));
+    ctx.fillStyle=pg; ctx.beginPath(); ctx.arc(px,py,r*0.30,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=1.2; ctx.stroke();
+    ctx.strokeStyle=col.rim; ctx.globalAlpha=0.8; ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.arc(px,py,r*0.30-1.5,Math.PI*1.05,Math.PI*1.7); ctx.stroke(); ctx.globalAlpha=1;
+  });
+  /* chest core: glowing rune in the bot's colour */
+  ctx.fillStyle=col.color; ctx.beginPath(); ctx.arc(x, y+r*0.72, r*0.13, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.arc(x, y+r*0.72, r*0.05, 0, Math.PI*2); ctx.fill();
+  /* neck */
+  ctx.fillStyle='#07090f'; ctx.fillRect(x-r*0.16, hy+r*0.55, r*0.32, r*0.30);
+  ctx.strokeStyle=col.color; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(x-r*0.07, hy+r*0.60); ctx.lineTo(x-r*0.07, hy+r*0.80); ctx.moveTo(x+r*0.07, hy+r*0.60); ctx.lineTo(x+r*0.07, hy+r*0.80); ctx.stroke();
+  /* per-bot back gear (behind the helm) */
+  if(botId==='QUILL'){
+    var sw=Math.sin(state.frame*0.09+x)*r*0.06;
+    ctx.strokeStyle=shadeHex(col.color,-0.45); ctx.lineWidth=r*0.20; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x+r*0.30, hy-r*0.55); ctx.quadraticCurveTo(x+r*0.95, hy-r*1.05+sw, x+r*0.62, hy-r*1.38+sw); ctx.stroke();
+    ctx.strokeStyle='#e8dcff'; ctx.lineWidth=r*0.11;
+    ctx.beginPath(); ctx.moveTo(x+r*0.30, hy-r*0.55); ctx.quadraticCurveTo(x+r*0.95, hy-r*1.05+sw, x+r*0.62, hy-r*1.38+sw); ctx.stroke();
+    ctx.lineCap='butt';
+  } else if(botId==='TURTLE'){
+    ctx.strokeStyle=shadeHex(col.color,-0.55); ctx.lineWidth=r*0.17;
+    ctx.beginPath(); ctx.arc(x, hy+r*0.05, r*1.02, Math.PI*1.08, Math.PI*1.92); ctx.stroke();
+    ctx.strokeStyle=shadeHex(col.color,-0.3); ctx.lineWidth=r*0.10;
+    ctx.beginPath(); ctx.arc(x, hy+r*0.05, r*1.16, Math.PI*1.15, Math.PI*1.85); ctx.stroke();
+  }
+  /* helm silhouette slices: extruded dark core with colour seam */
+  for(var k=3;k>=1;k--){
+    ctx.fillStyle=shadeHex(col.dark,-0.3+k*0.05);
+    ctx.beginPath(); ctx.arc(x,hy+k*1.7,r,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle=col.color; ctx.globalAlpha=0.35; ctx.lineWidth=1.1;
+    ctx.beginPath(); ctx.arc(x,hy+k*1.7,r-0.6,Math.PI*0.15,Math.PI*0.85); ctx.stroke(); ctx.globalAlpha=1;
+  }
+  /* helm dome: dark metal 3-tone */
+  var hg=ctx.createLinearGradient(x-r,hy-r,x+r,hy+r);
+  hg.addColorStop(0,'#39424f'); hg.addColorStop(0.5, shadeHex(col.dark,0.25)); hg.addColorStop(1,'#04060a');
+  ctx.fillStyle=hg;
+  ctx.beginPath(); ctx.arc(x, hy, r, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle=col.color; ctx.lineWidth=2; ctx.stroke();
+  /* dramatic rim light: lit arc top-left in the bot's rim colour */
+  ctx.strokeStyle=col.rim; ctx.lineWidth=2.4;
+  ctx.beginPath(); ctx.arc(x, hy, r-1.2, -Math.PI*0.78, Math.PI*0.05); ctx.stroke();
+  ctx.strokeStyle='rgba(0,0,0,0.55)'; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.arc(x, hy, r-1.2, Math.PI*0.25, Math.PI*0.9); ctx.stroke();
+  /* ear discs */
+  [-1,1].forEach(function(s){
+    ctx.fillStyle=shadeHex(col.color,-0.25);
+    ctx.beginPath(); ctx.arc(x+s*(r-1), hy+r*0.05, r*0.17, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(x+s*(r-1), hy+r*0.05, r*0.17-1, Math.PI*1.1, Math.PI*1.6); ctx.stroke();
+  });
+  /* visors + headgear per duelist — glowing optics, no faces */
+  if(botId==='QUILL'){
+    /* angled violet slit visor + glowing optic */
+    ctx.fillStyle=shadeHex(col.color,-0.62);
+    ctx.beginPath(); ctx.moveTo(x-r*0.72, hy-r*0.20); ctx.lineTo(x+r*0.72, hy-r*0.34); ctx.lineTo(x+r*0.72, hy+r*0.02); ctx.lineTo(x-r*0.72, hy+r*0.16); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=col.rim; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(x-r*0.66, hy-r*0.22); ctx.lineTo(x+r*0.66, hy-r*0.35); ctx.stroke();
+    ctx.fillStyle=col.rim; ctx.beginPath(); ctx.arc(x+r*0.10, hy-r*0.10, r*0.075, 0, Math.PI*2); ctx.fill();
+    /* brow crest */
+    ctx.fillStyle=shadeHex(col.color,-0.15);
+    ctx.beginPath(); ctx.moveTo(x-r*0.5, hy-r*0.72); ctx.lineTo(x, hy-r*1.02); ctx.lineTo(x+r*0.5, hy-r*0.72); ctx.lineTo(x, hy-r*0.82); ctx.closePath(); ctx.fill();
+  } else if(botId==='ZEROX'){
+    /* crimson wide visor with twin optics + gold notch */
+    ctx.fillStyle='#160409';
+    rr(ctx, x-r*0.74, hy-r*0.30, r*1.48, r*0.42, r*0.18); ctx.fill();
+    ctx.fillStyle=col.color;
+    rr(ctx, x-r*0.66, hy-r*0.22, r*1.32, r*0.15, r*0.07); ctx.fill();
+    ctx.fillStyle='#ffd75e'; ctx.fillRect(x-r*0.05, hy-r*0.30, r*0.10, r*0.42);
+    ctx.fillStyle='#ffe9ec';
+    ctx.beginPath(); ctx.arc(x-r*0.34, hy-r*0.145, r*0.05, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+r*0.34, hy-r*0.145, r*0.05, 0, Math.PI*2); ctx.fill();
+    /* mohawk fin plates */
+    ctx.fillStyle=shadeHex(col.color,-0.3);
+    [-0.42,0,0.42].forEach(function(o,i){
+      ctx.beginPath(); ctx.moveTo(x+o*r-r*0.13, hy-r*0.88); ctx.lineTo(x+o*r, hy-r*(1.14-i*0.07)); ctx.lineTo(x+o*r+r*0.13, hy-r*0.88); ctx.closePath(); ctx.fill();
+    });
+    /* gold ear stud */
+    ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(x+r*0.97, hy+r*0.22, r*0.08, 0, Math.PI*2); ctx.fill();
+  } else if(botId==='TURTLE'){
+    /* emerald dome visor with twin round optics */
+    ctx.fillStyle=shadeHex(col.color,-0.6);
+    ctx.beginPath(); ctx.ellipse(x, hy-r*0.05, r*0.78, r*0.42, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle=col.rim; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.ellipse(x, hy-r*0.05, r*0.78, r*0.42, 0, Math.PI*1.1, Math.PI*1.6); ctx.stroke();
+    ctx.fillStyle=col.rim;
+    ctx.beginPath(); ctx.arc(x-r*0.30, hy-r*0.08, r*0.10, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+r*0.30, hy-r*0.08, r*0.10, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(4,20,12,0.85)';
+    ctx.beginPath(); ctx.arc(x-r*0.30, hy-r*0.08, r*0.045, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+r*0.30, hy-r*0.08, r*0.045, 0, Math.PI*2); ctx.fill();
+  } else {
+    /* YOU — emerald T-slit visor + gold crest gem */
+    ctx.fillStyle=shadeHex(col.color,-0.62);
+    ctx.fillRect(x-r*0.72, hy-r*0.26, r*1.44, r*0.30);
+    ctx.fillRect(x-r*0.10, hy-r*0.26, r*0.20, r*0.62);
+    ctx.fillStyle=col.rim;
+    ctx.fillRect(x-r*0.62, hy-r*0.19, r*1.24, r*0.09);
+    ctx.fillStyle='#ffd75e';
+    ctx.beginPath(); ctx.moveTo(x, hy-r*1.0); ctx.lineTo(x+r*0.11, hy-r*0.78); ctx.lineTo(x, hy-r*0.58); ctx.lineTo(x-r*0.11, hy-r*0.78); ctx.closePath(); ctx.fill();
+  }
+  /* chin plate */
+  ctx.fillStyle=shadeHex(col.color,-0.42);
+  ctx.beginPath(); ctx.moveTo(x-r*0.34, hy+r*0.52); ctx.lineTo(x+r*0.34, hy+r*0.52); ctx.lineTo(x+r*0.20, hy+r*0.80); ctx.lineTo(x-r*0.20, hy+r*0.80); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x-r*0.30, hy+r*0.56); ctx.lineTo(x+r*0.30, hy+r*0.56); ctx.stroke();
+}
+function drawHUD(){
+  var p0=state.players[0], p1=state.players[1];
+  function panel(x, p, alignRight){
+    ctx.fillStyle='rgba(14,20,32,0.92)';
+    rr(ctx, x, 10, 250, 58, 8); ctx.fill();
+    ctx.strokeStyle=state.turn===state.players.indexOf(p)? 'rgba(0,255,136,0.7)' : 'rgba(255,215,94,0.25)';
+    ctx.lineWidth=state.turn===state.players.indexOf(p)? 2 : 1;
+    rr(ctx, x, 10, 250, 58, 8); ctx.stroke();
+    var px=alignRight? x+222 : x+28;
+    drawPortrait(px, 39, 22, p.botId || 'YOU');
+    ctx.fillStyle='#fff';
+    ctx.font='bold 15px Orbitron, sans-serif';
+    ctx.textAlign=alignRight? 'right' : 'left';
+    ctx.fillText(p.name, alignRight? x+188 : x+58, 32);
+    ctx.fillStyle='#ffd75e';
+    ctx.font='bold 20px "Share Tech Mono", monospace';
+    ctx.fillText(String(p.score), alignRight? x+188 : x+58, 56);
+    ctx.fillStyle='#a89a7a';
+    ctx.font='10px "Share Tech Mono", monospace';
+    ctx.textAlign=alignRight? 'left' : 'right';
+    ctx.fillText('rack '+p.rack.filter(Boolean).length, alignRight? x+10 : x+240, 26);
+    ctx.textAlign='left';
+  }
+  panel(14, p0, false);
+  panel(496, p1, true);
+  ctx.fillStyle='#a89a7a';
+  ctx.font='11px "Share Tech Mono", monospace';
+  ctx.textAlign='center';
+  ctx.fillText('BAG '+state.bag.length, 380, 30);
+  ctx.fillText('TURN '+state.turnCount, 380, 48);
+  ctx.fillStyle=state.fp? '#35e0ff' : '#ffd75e';
+  ctx.font='bold 11px Orbitron, sans-serif';
+  ctx.fillText(state.fp? 'RACK VIEW' : 'TOP VIEW', 380, 64);
+  if(state.phase==='challenge' && state.pendingPlay){
+    ctx.fillStyle='rgba(255,56,96,0.12)';
+    rr(ctx, 14, 74, 732, 8, 4); ctx.fill();
+  }
+  ctx.textAlign='left';
+}
+function render(){
+  if(!ctx) return;
+  drawBackground();
+  drawHUD();
+  drawBoard();
+  drawRack();
+  if(state.phase==='over' && state.winner!==null){
+    ctx.fillStyle='rgba(7,10,18,0.72)';
+    ctx.fillRect(0, 300, W, 90);
+    ctx.fillStyle='#ffd75e';
+    ctx.font='bold 30px Orbitron, sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(sideName(state.winner)+' WINS', 380, 340);
+    ctx.fillStyle='#f5edd8';
+    ctx.font='16px "Share Tech Mono", monospace';
+    ctx.fillText(state.players[0].score+' – '+state.players[1].score+'  ·  R to play again', 380, 370);
+    ctx.textAlign='left';
+  } else if(state.phase==='over'){
+    ctx.fillStyle='rgba(7,10,18,0.72)';
+    ctx.fillRect(0, 300, W, 90);
+    ctx.fillStyle='#ffd75e';
+    ctx.font='bold 30px Orbitron, sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('DRAW '+state.players[0].score+' – '+state.players[1].score, 380, 340);
+    ctx.textAlign='left';
+  }
+}
+
+/* ================= input ================= */
+function bind(id, fn){ var el=$(id); if(el) el.addEventListener('click', fn); }
+function markModeButtons(){
+  [['btnSolo','solo'],['btnWatch','watch'],['btn2P','2p']].forEach(function(pair){
+    var el=$(pair[0]); if(el) el.classList.toggle('active', state.mode===pair[1] && state.phase!=='menu');
+  });
+  var fp=$( 'btnFP'); if(fp) fp.classList.toggle('active', state.fp);
+  var mu=$('btnMute'); if(mu) mu.textContent=state.muted?'🔇 Muted':'🔊 Sound';
+  document.querySelectorAll('.opp').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-opp')===state.botId);
+  });
+}
+function markChallengeButtons(){
+  var row=$('challengeRow');
+  if(!row) return;
+  var show=state.phase==='challenge' && state.challengeBy>=0 && !state.players[state.challengeBy].botId;
+  row.style.display=show? 'flex' : 'none';
+}
+function moveCursor(dr, dc){
+  state.cursor.r=Math.max(0, Math.min(N-1, state.cursor.r+dr));
+  state.cursor.c=Math.max(0, Math.min(N-1, state.cursor.c+dc));
+}
+function cycleRack(){
+  var p=curPlayer();
+  var next=(state.selRack+1)%7;
+  for(var k=0;k<7;k++){ var i=(next+k)%7; if(p.rack[i]){ state.selRack=i; return; } }
+  state.selRack=-1;
+}
+function pressA(){
+  if(state.phase!=='playing') return;
+  var p=curPlayer();
+  if(p.botId) return;
+  var r=state.cursor.r, c=state.cursor.c;
+  /* on a draft tile: take it back */
+  for(var i=0;i<state.draft.length;i++){
+    if(state.draft[i].r===r && state.draft[i].c===c){
+      var d=state.draft.splice(i,1)[0];
+      p.rack[d.rackIdx]=d.tile;
+      state.selRack=-1; return;
+    }
+  }
+  if(boardAt(r,c)) return;
+  if(state.selRack<0 || !p.rack[state.selRack]){ cycleRack(); if(state.selRack<0) return; }
+  var t=p.rack[state.selRack];
+  state.draft.push({r:r, c:c, ch:t.ch, rackIdx:state.selRack, blank:t.blank, tile:t});
+  p.rack[state.selRack]=null;
+  state.selRack=-1;
+  sfx('place');
+}
+function commitDraft(){
+  if(state.phase!=='playing') return;
+  var p=curPlayer();
+  if(p.botId) return;
+  if(!state.draft.length){ setMsg('Place tiles on the board first — click a rack tile, then a square.'); return; }
+  var draft=state.draft.map(function(d){ return {r:d.r, c:d.c, ch:d.ch, rackIdx:d.rackIdx, blank:d.blank}; });
+  var res=commitPlay(state.turn, draft);
+  if(!res.ok){
+    /* return the tiles to the rack on a geometry failure */
+    draft.forEach(function(d){ p.rack[d.rackIdx]=d.tile || {ch:d.ch, blank:d.blank}; });
+    state.draft=[];
+    setMsg(res.reason);
+    sfx('error');
+  }
+}
+function clearDraft(){
+  var p=curPlayer();
+  state.draft.forEach(function(d){ p.rack[d.rackIdx]=d.tile || {ch:d.ch, blank:d.blank}; });
+  state.draft=[]; state.selRack=-1;
+}
+function rackTileAt(px, py){
+  var p=curPlayer();
+  var trayY=state.fp? 780 : 716, tileW=state.fp? 56 : 46, tileH=state.fp? 62 : 52;
+  var x0=380-((7*tileW+6*8)/2);
+  for(var i=0;i<7;i++){
+    var x=x0+i*(tileW+8), y=trayY;
+    if(px>=x && px<=x+tileW && py>=y-8 && py<=y+tileH) return i;
+  }
+  return -1;
+}
+function boardCellAt(px, py){
+  for(var r=0;r<N;r++) for(var c=0;c<N;c++){
+    var rc=cellRect(r,c);
+    if(px>=rc.x && px<=rc.x+rc.w && py>=rc.y && py<=rc.y+rc.h) return {r:r, c:c};
+  }
+  return null;
+}
+function canvasPos(e){
+  var rect=cv.getBoundingClientRect();
+  return {x:(e.clientX-rect.left)*(W/rect.width), y:(e.clientY-rect.top)*(H/rect.height)};
+}
+function onCanvasClick(e){
+  if(state.phase!=='playing') return;
+  var p=curPlayer();
+  if(p.botId) return;
+  var pos=canvasPos(e);
+  var ri=rackTileAt(pos.x, pos.y);
+  if(ri>=0){
+    if(e.shiftKey){
+      if(!state.swapMarks) state.swapMarks=[];
+      var k=state.swapMarks.indexOf(ri);
+      if(k>=0) state.swapMarks.splice(k,1); else state.swapMarks.push(ri);
+      return;
+    }
+    state.selRack=(state.selRack===ri)? -1 : ri;
+    return;
+  }
+  var cell=boardCellAt(pos.x, pos.y);
+  if(cell){
+    state.cursor={r:cell.r, c:cell.c};
+    pressA();
+  }
+}
+if(cv) cv.addEventListener('click', onCanvasClick);
+
+/* ================= save / load ================= */
+function serialize(){
+  var boardStr='';
+  for(var i=0;i<state.board.length;i++){
+    var t=state.board[i];
+    boardStr+=t? (t.blank? t.ch.toLowerCase() : t.ch) : '.';
+  }
+  function rackStr(p){ return p.rack.map(function(t){ return t? (t.blank?'?':t.ch) : '-'; }).join(''); }
+  return JSON.stringify({v:1, mode:state.mode, turn:state.turn,
+    board:boardStr, bag:state.bag.map(function(t){ return t.ch; }).join(''),
+    racks:[rackStr(state.players[0]), rackStr(state.players[1])],
+    scores:[state.players[0].score, state.players[1].score],
+    names:[state.players[0].name, state.players[1].name],
+    botIds:[state.players[0].botId, state.players[1].botId],
+    scoreless:state.scoreless, turnCount:state.turnCount,
+    moveLog:state.moveLog.slice(-8), botId:state.botId, hi:state.hi});
+}
+function deserialize(str){
+  try{
+    var d=JSON.parse(str);
+    if(d.v!==1) return false;
+    startGame(d.mode||'solo');
+    state.board=new Array(N*N).fill(null);
+    for(var i=0;i<d.board.length && i<N*N;i++){
+      var ch=d.board[i];
+      if(ch!=='.'){
+        var blank=ch>='a'&&ch<='z';
+        state.board[i]={ch:ch.toUpperCase(), blank:blank, pending:false};
+      }
+    }
+    state.bag=d.bag.split('').map(function(ch){ return {ch:ch, blank:ch==='?'}; });
+    for(var p=0;p<2;p++){
+      state.players[p].rack=d.racks[p].split('').map(function(ch){
+        if(ch==='-') return null;
+        return {ch:ch==='?'?'?':ch, blank:ch==='?'};
+      });
+      state.players[p].score=d.scores[p];
+      state.players[p].name=d.names[p];
+      state.players[p].botId=d.botIds[p];
+    }
+    state.turn=d.turn; state.scoreless=d.scoreless; state.turnCount=d.turnCount;
+    state.moveLog=d.moveLog||[]; state.botId=d.botId||'QUILL'; state.hi=d.hi||0;
+    setupBots();
+    state.phase='playing'; state.pendingPlay=null; state.draft=[]; state.selRack=-1;
+    markModeButtons(); renderLog();
+    setMsg('State loaded — '+sideName(state.turn)+' to play.');
+    return true;
+  }catch(e){ return false; }
+}
+function saveState(){
+  try{ localStorage.setItem('wordclash.save', serialize()); setMsg('State saved.'); return true; }
+  catch(e){ setMsg('Save failed.'); return false; }
+}
+function loadState(){
+  try{
+    var s=localStorage.getItem('wordclash.save');
+    if(!s){ setMsg('No saved state.'); return false; }
+    if(deserialize(s)) return true;
+    setMsg('Saved state is unreadable.');
+    return false;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+function togglePause(){
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay');
+  if(ov) ov.style.display=state.paused? 'flex' : 'none';
+  setMsg(state.paused? 'Paused.' : 'Back to the board.');
+}
+
+/* ================= sound ================= */
+var AC=null;
+function sfx(kind){
+  if(state.muted) return;
+  try{
+    if(typeof AudioContext==='undefined' && typeof webkitAudioContext==='undefined') return;
+    if(!AC) AC=new (AudioContext||webkitAudioContext)();
+    var t=AC.currentTime, o=AC.createOscillator(), g=AC.createGain();
+    var freq={place:660, score:880, caught:220, wrong:330, win:990, draw:440, error:160}[kind]||520;
+    o.type=(kind==='caught'||kind==='error')?'square':'sine';
+    o.frequency.setValueAtTime(freq,t);
+    if(kind==='score'||kind==='win'){ o.frequency.setValueAtTime(freq,t); o.frequency.exponentialRampToValueAtTime(freq*1.5,t+0.12); }
+    g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.15);
+  }catch(e){}
+}
+
+/* ================= XR hook: the shared engine, SIM-labelled ================= */
+function enterAR(){
+  if(!XE || typeof XE.enter!=='function'){
+    setMsg('XR engine not loaded — flat + rack view (V) are the verified modes. (SIM)');
+    return;
+  }
+  try{
+    var p=XE.enter({id:'wordclash', title:'WORDCLASH', canvas:cv,
+      input:{left:false,right:false,up:false,down:false,a:false,b:false,start:false}});
+    if(p && typeof p.then==='function'){
+      p.then(function(){ setMsg('XR session ended — back to the flat board. (SIM)'); })
+       .catch(function(){ setMsg('No WebXR on this device — flat + rack view are the verified modes. (SIM)'); });
+    } else {
+      setMsg('XR request sent — if no headset answers, flat + rack view are the verified modes. (SIM)');
+    }
+  }catch(e){
+    setMsg('XR unavailable here — flat + rack view (V) are the verified modes. (SIM)');
+  }
+}
+
+/* ---------- fullscreen ----------
+   The shell (stage on desktop, whole handheld console on phones) goes true
+   fullscreen via the Fullscreen API: button + F key toggle, Esc exits
+   before it can pause. Label follows the real fullscreen state. */
+var fsShell=$('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ var b=$('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — board fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+
+/* ================= buttons + keys ================= */
+bind('btnSolo', function(){ startGame('solo'); });
+bind('btnWatch', function(){ startGame('watch'); });
+bind('btn2P', function(){ startGame('2p'); });
+bind('btnFP', function(){ state.fp=!state.fp; markModeButtons(); });
+bind('btnAR', enterAR);
+bind('btnPause', togglePause);
+bind('btnMute', function(){ state.muted=!state.muted; markModeButtons(); setMsg(state.muted?'Muted.':'Sound on.'); });
+bind('btnFs', toggleFullscreen);
+bind('btnCommit', commitDraft);
+bind('btnClear', clearDraft);
+bind('btnSwap', function(){
+  if(state.phase!=='playing') return;
+  var p=curPlayer();
+  if(p.botId) return;
+  var marks=(state.swapMarks&&state.swapMarks.length)? state.swapMarks.slice() : (state.selRack>=0? [state.selRack] : []);
+  if(!marks.length){ setMsg('Pick a rack tile first (click it), then SWAP. Shift-click marks more.'); return; }
+  var res=swapTiles(state.turn, marks);
+  if(res.ok){ state.swapMarks=[]; state.selRack=-1; } else setMsg(res.reason);
+});
+bind('btnPass', function(){ if(state.phase==='playing' && !curPlayer().botId) passTurn(state.turn); });
+bind('btnChallenge', function(){ if(state.phase==='challenge') resolveChallenge(state.challengeBy, true); });
+bind('btnAccept', function(){ if(state.phase==='challenge') resolveChallenge(state.challengeBy, false); });
+bind('resumeBtn', togglePause);
+bind('saveBtn', saveState);
+bind('loadBtn', loadState);
+bind('restartBtn', function(){ togglePause(); startGame(state.mode); });
+bind('quitArcadeBtn', function(){ window.location.href='../arcade.html'; });
+bind('startBtn', togglePause);
+bind('selectBtn', commitDraft);
+bind('btnA', pressA);
+bind('btnB', cycleRack);
+bind('dUp', function(){ moveCursor(-1,0); });
+bind('dDown', function(){ moveCursor(1,0); });
+bind('dLeft', function(){ moveCursor(0,-1); });
+bind('dRight', function(){ moveCursor(0,1); });
+document.querySelectorAll('.opp').forEach(function(b){
+  b.addEventListener('click', function(){
+    state.botId=b.getAttribute('data-opp');
+    setupBots();
+    state.players[1].name=state.botId;
+    markModeButtons();
+    setMsg('Opponent set: '+state.botId+' — '+BOTS[state.botId].desc+'. Press ▶ Play to start.');
+  });
+});
+document.addEventListener('keydown', function(e){
+  var k=e.key;
+  if(k==='ArrowUp'||k==='w'||k==='W'){ moveCursor(-1,0); e.preventDefault(); }
+  else if(k==='ArrowDown'||k==='s'||k==='S'){ moveCursor(1,0); e.preventDefault(); }
+  else if(k==='ArrowLeft'||k==='a'||k==='A'){ moveCursor(0,-1); e.preventDefault(); }
+  else if(k==='ArrowRight'||k==='d'||k==='D'){ moveCursor(0,1); e.preventDefault(); }
+  else if(k==='Enter'||k===' '){ pressA(); e.preventDefault(); }
+  else if(k==='f'||k==='F'){ toggleFullscreen(); }
+  else if(k==='Escape' && isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ }
+  else if(k==='c'||k==='C'){ commitDraft(); }
+  else if(k==='x'||k==='X'){ clearDraft(); }
+  else if(k==='v'||k==='V'){ state.fp=!state.fp; markModeButtons(); }
+  else if(k==='b'||k==='B'){ cycleRack(); }
+  else if(k==='p'||k==='P'){ togglePause(); }
+  else if(k==='r'||k==='R'){ startGame(state.mode); }
+  else if(k==='m'||k==='M'){ state.muted=!state.muted; markModeButtons(); setMsg(state.muted?'Muted.':'Sound on.'); }
+  else if(k>='1'&&k<='7'){
+    var p=curPlayer();
+    var idx=parseInt(k,10)-1;
+    if(p.rack[idx]) state.selRack=idx;
+  }
+});
+
+/* ================= main loop ================= */
+function loop(){
+  state.frame++;
+  for(var m=0;m<state.motes.length;m++){
+    var mo=state.motes[m];
+    mo.y-=mo.vy; mo.x+=mo.vx;
+    if(mo.y<-10){ mo.y=H+10; mo.x=20+rng()*720; }
+    if(mo.x<-10) mo.x=W+10; if(mo.x>W+10) mo.x=-10;
+  }
+  if(state.phase==='playing' && !state.paused && curPlayer().botId){
+    state.botTimer++;
+    if(state.botTimer>30){ state.botTimer=0; botTurn(); }
+  }
+  if(state.phase==='challenge' && !state.paused && state.pendingPlay){
+    state.challengeTimer++;
+    var challenger=state.players[state.challengeBy];
+    if(challenger.botId){
+      if(state.challengeTimer>30){
+        resolveChallenge(state.challengeBy, decideChallenge(challenger.botId, state.pendingPlay.words.map(function(w){ return w.word; })));
+      }
+    } else if(state.challengeTimer>360){
+      resolveChallenge(state.challengeBy, false);
+    }
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+(function init(){
+  initMotes();
+  var touch=false;
+  try{
+    var q=new URLSearchParams(location.search);
+    touch=q.get('touch')==='1';
+    if(typeof window!=='undefined' && window.ontouchstart!==undefined && ('ontouchstart' in window)) touch=true;
+  }catch(e){}
+  if(touch && document.body) document.body.classList.add('touch');
+  try{ var saved=localStorage.getItem('wordclash.hi'); if(saved) state.hi=parseInt(saved,10)||0; }catch(e){}
+  setupBots();
+  markModeButtons();
+  render();
+  try{
+    var q2=new URLSearchParams(location.search);
+    var auto=q2.get('auto');
+    if(auto==='play') startGame('solo');
+    else if(auto==='watch') startGame('watch');
+    else if(auto==='2p') startGame('2p');
+  }catch(e){}
+  requestAnimationFrame(loop);
+})();
+window.__wordclash={
+  state:state, BONUS:BONUS, VALUES:VALUES, BAG_SPEC:BAG_SPEC, BOTS:BOTS,
+  words:function(){ return WORDS; }, wordCount:function(){ return WORD_COUNT; },
+  wordsReady:function(){ return WORDS_READY; },
+  loadWordsFromText:loadWordsFromText, hasWord:function(w){ return WORDS.has(w); },
+  bonusCounts:bonusCounts, bagTotal:bagTotal,
+  startGame:startGame, commitPlay:commitPlay, resolveChallenge:resolveChallenge,
+  acceptPlay:acceptPlay, passTurn:passTurn, swapTiles:swapTiles,
+  formedWords:formedWords, scorePlay:scorePlay, validateDraft:validateDraft,
+  candidatePlays:candidatePlays, botChoose:botChoose, maybeBluff:maybeBluff,
+  decideChallenge:decideChallenge, knowsWord:knowsWord, vocabOf:vocabOf,
+  botTurn:botTurn, watchStep:watchStep, debugStepWatch:debugStepWatch,
+  debugPlaceWord:debugPlaceWord, debugSetRack:debugSetRack, debugSetBoard:debugSetBoard,
+  debugBluffProbe:debugBluffProbe,
+  debugToggleFP:function(){ state.fp=!state.fp; markModeButtons(); return state.fp; },
+  debugCursor:function(r,c){ state.cursor={r:r,c:c}; },
+  debugSelectRack:function(i){ state.selRack=i; },
+  debugPressA:pressA, debugCommit:commitDraft, debugClear:clearDraft,
+  debugPass:function(){ return passTurn(state.turn); },
+  debugSwap:function(idxs){ return swapTiles(state.turn, idxs); },
+  debugBotMove:function(){ state.botTimer=0; return botTurn(); },
+  serialize:serialize, deserialize:deserialize, saveState:saveState, loadState:loadState,
+  togglePause:togglePause, setSeed:setSeed,
+  toggleFullscreen:toggleFullscreen, isFullscreen:isFullscreen,
+  get fs(){ return isFullscreen(); },
+  setBot:function(id){ state.botId=id; setupBots(); state.players[1].name=id; markModeButtons(); }
+};
+</script>
+</body>
+</html>

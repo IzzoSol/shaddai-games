@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SKYLANCE — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#04060a;--panel:#080b12;--border:rgba(120,150,200,.16);--cyan:#00f0ff;--green:#00ff88;--gold:#ffd75e;--red:#ff3860;--text:#c6d2e4;--dim:#5d6b82}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,200,255,.09),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(6,9,14,.9);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--cyan)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--cyan);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,200,255,.10)}
+  canvas{display:block;width:100%;height:auto}
+  /* ---- fullscreen (FULLSCREEN standard): the shell — stage on desktop, the
+     whole handheld console on phones — fills the screen, stage keeps its
+     960:576 aspect. Esc exits (browser) before it can pause. ---- */
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*960/576));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*960/576))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(100vw,calc((100vh - 190px)*960/576))}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,240,255,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--cyan);font-size:12px}
+  /* ---- handheld shell (MOBILE PLAY standard, same as Ghostline/Contention):
+     Original emerald/dark console frame — screen inside the shell, D-PAD left,
+     A/B right, START/SELECT pills below the screen. Never overlaps gameplay. ---- */
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #stageWrap{border-radius:10px;overflow:hidden;border:1px solid rgba(0,255,136,.25)}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:0}
+  .dpad button{font-size:15px;padding:0}
+  .dpad .dp-u{grid-area:1/2}.dpad .dp-l{grid-area:2/1}.dpad .dp-c{grid-area:2/2;background:#0a1210;border:1px solid rgba(0,255,136,.2)}
+  .dpad .dp-r{grid-area:2/3}.dpad .dp-d{grid-area:3/2}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  .ab-cluster{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .ab-row{display:flex;gap:14px;align-items:flex-end}
+  .ab{width:58px;height:58px;border-radius:50%;font-size:19px;font-weight:900}
+  .ab-a{background:#00ff88!important;color:#04120a!important;border-color:#00ff88!important}
+  .ab-b{background:#ff3860!important;border-color:#ff3860!important}
+  .ab-sub{display:flex;gap:6px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
+  .ab-sub span{width:58px;text-align:center}
+  #pauseOverlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(4,6,10,.85);backdrop-filter:blur(2px);z-index:10}
+  #pauseOverlay h2{font-size:30px;color:#fff;letter-spacing:6px;text-shadow:0 0 22px rgba(0,240,255,.7);font-family:'Orbitron',sans-serif;margin:0}
+  #pauseOverlay .sub{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:2px}
+  #pauseOverlay .pbtn{min-width:240px;padding:12px 18px;background:var(--panel);border:1px solid var(--border);color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;text-transform:uppercase}
+  #pauseOverlay .pbtn:hover{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,240,255,.35)}
+  @media (max-width:560px){
+    .topbar{flex-wrap:wrap;gap:8px;padding:10px 12px}
+    .topbar h1{font-size:17px}
+    .topbar .tag{display:none}
+    .wrap{padding:12px 8px 40px}
+    .mbtn{min-width:100px;font-size:11px;padding:10px 6px}
+    .help{font-size:13px;padding:10px 12px}
+    #msg{font-size:12px}
+    .dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+    .ab{width:52px;height:52px}
+    .ab-sub span{width:52px}
+    .shell-pills{padding-top:28px}
+    #pauseOverlay .pbtn{min-width:210px;padding:11px 14px;font-size:12px}
+    #pauseOverlay{gap:7px;justify-content:flex-start;padding:10px 0;overflow-y:auto}
+    #pauseOverlay h2{font-size:18px;letter-spacing:4px}
+    #pauseOverlay .sub{display:none}
+    #pauseOverlay .pbtn{min-width:200px;padding:7px 12px;font-size:11px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,240,255}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>SKY<span>LANCE</span></h1>
+  <div class="tag">Shaddai Arcade · Flap Duel · Original IP</div>
+  <div class="spacer"></div>
+  <a class="back" href="../arcade.html">← Arcade</a>
+</div>
+<div class="wrap">
+  <div id="shell">
+  <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+  <div id="stageWrap"><canvas id="cv" width="960" height="576"></canvas>
+    <div id="pauseOverlay">
+      <h2>⏸ PAUSED</h2>
+      <div class="sub">ESC / P TO RESUME</div>
+      <button class="pbtn" id="resumeBtn">▶ Resume</button>
+      <button class="pbtn" id="saveBtn">💾 Save State</button>
+      <button class="pbtn" id="loadBtn">📂 Load State</button>
+      <button class="pbtn" id="restartBtn">↺ Restart</button>
+      <button class="pbtn" id="quitArcadeBtn">✕ Quit to Arcade</button>
+    </div>
+  </div>
+  <div id="shellDeck">
+    <div class="dpad">
+      <button class="dp-u" data-k="up" aria-label="Up">▲</button>
+      <button class="dp-l" data-k="left" aria-label="Left">◀</button>
+      <span class="dp-c"></span>
+      <button class="dp-r" data-k="right" aria-label="Right">▶</button>
+      <button class="dp-d" data-k="down" aria-label="Down">▼</button>
+    </div>
+    <div class="shell-pills">
+      <button id="selectBtn" title="Select — rider cam on/off">SELECT</button>
+      <button id="startBtn" title="Start — open menu">START</button>
+    </div>
+    <div class="ab-cluster">
+      <div class="ab-row"><button class="ab ab-b" data-k="dive" title="B — dive">B</button><button class="ab ab-a" data-k="flap" title="A — flap">A</button></div>
+      <div class="ab-sub"><span>DIVE</span><span>FLAP</span></div>
+    </div>
+  </div>
+  </div>
+  <div id="msg">Flap to fly. The HIGHER lance wins — burst them, grab the core before it hatches back stronger.</div>
+  <div class="row">
+    <button class="mbtn" id="btnPlay">▶ 1P Waves<small>you vs rising rider waves</small></button>
+    <button class="mbtn" id="btnDuel">⚔️ 2P Duel<small>local — first to 3 rounds</small></button>
+    <button class="mbtn" id="btnWatch">🤖 Watch · Bot vs Bot<small>two personalities duel</small></button>
+    <button class="mbtn" id="btnCam">🎥 Rider Cam<small>V — zoom to your rider</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>Esc / P</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — stage fills the screen</small></button>
+  </div>
+  <div class="help">
+    <b>Flap</b> <span class="k">W / ↑ / SPACE / tap A</span> — tap in rhythm to climb, don't hold · <b>Steer</b> <span class="k">A / D or ← / →</span> · <b>Dive</b> <span class="k">S / ↓ / B</span> drops you fast onto a ledge or a rival · <b>Rider Cam</b> <span class="k">V</span> zooms to your rider · <b>Pause</b> <span class="k">P / ESC</span> · <b>Restart</b> <span class="k">R</span><br/>
+    <b>The duel:</b> when two riders collide, the <b>higher lance wins</b> — the loser bursts into a falling <b>core</b>. Touch the core to bank it (+150); leave it and it <b>hatches back stronger</b>. Equal height? Both bounce off. The glowing floor is <b>the Maw</b> — touch it and you're gone, no core. Stall too long and <b>the GALE</b> — a storm-wyrm — sweeps the arena hunting the slow. Fly off a side and you wrap around to the other.<br/>
+    <b>2P Duel:</b> P1 <span class="k">A/D + W flap + S dive</span> · P2 <span class="k">←/→ + ↑ flap + ↓ dive</span> — first to 3 rounds. A round is won by a Maw kill or by bursting a rival and banking their core.<br/>
+    🤖 <b>Watch:</b> two personality bots duel — <b>VEX</b> dives hard, <b>ORBIT</b> waits and counters, <b>HALO</b> camps the ledges, <b>NOVA</b> flies erratic. They miss, mistime and stall on purpose — never frame-perfect. The camera follows the duel, name plates show each bot's style, and the feed (top right) logs bursts, banks and rounds.<br/>
+    🎮 <b>Gamepad:</b> stick / D-pad steer · <b>A / X</b> flap · <b>B</b> dive · <b>START</b> pause<span id="padStatus"></span><br/>
+    📱 <b>Handheld shell:</b> on phones the game sits in its own console: D-pad steers, <span class="k">A</span> flaps, <span class="k">B</span> dives, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit), <span class="k">SELECT</span> toggles Rider Cam.<br/>
+    🎬 <b>Intro:</b> a short comic plays before every match — <span class="k">SPACE / click</span> advances, <span class="k">ESC</span> skips the story (START skips it on the handheld shell).<br/>
+    💬 <b>Dialogue:</b> LOOM and the riders talk in the typewriter box at the bottom of the screen — speaker name + portrait chip; new calls queue up and play in order.<br/>
+    ⛶ <b>Fullscreen:</b> <span class="k">F</span> or the Fullscreen button — the stage (on phones, the whole handheld shell) fills the screen; <span class="k">Esc</span> exits fullscreen.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+"use strict";
+/* SKYLANCE — original flap-flight lance duels for Shaddai Arcade.
+   Clean-room: behaviour informed by the documented flap-duel formula
+   (tiered ledges over a hazard floor, higher-lance-wins collisions,
+   falling cores with a hatch timer, a timed sky-terror for stalling).
+   No code, names, art or assets copied from any existing game — every
+   rider, ledge and line of code here is original. See
+   reference-repos/REFERENCE_INDEX.md (Joust entry is SPEC-ONLY). */
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const W=960, H=576, FLOOR_Y=528, GRAV=0.22, FLAP_VY=-5.4, FLAP_CD=14;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+/* deterministic hash for background dressing — same sky every run, no flicker */
+const hs=i=>{ const x=Math.sin(i*127.1+311.7)*43758.5453; return x-Math.floor(x); };
+const irnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+/* Tiered ledges over the Maw (hazard floor). */
+const LEDGES=[
+ {x:360,y:128,w:240,h:14},
+ {x:56, y:252,w:280,h:14},
+ {x:624,y:252,w:280,h:14},
+ {x:140,y:392,w:260,h:14},
+ {x:560,y:392,w:260,h:14},
+];
+/* Bot personalities — distinct, imperfect play styles. */
+const PERSONAS={
+ VEX:  {flap:0.95,aggr:1.0, err:0.08,dive:0.60,hover:50, speed:1.00,style:'dives hard, hunts height'},
+ ORBIT:{flap:0.70,aggr:0.55,err:0.12,dive:0.25,hover:95, speed:0.90,style:'patient — waits, then counters'},
+ HALO: {flap:0.60,aggr:0.40,err:0.15,dive:0.20,hover:125,speed:0.85,style:'camps the ledges, ambushes up'},
+ NOVA: {flap:0.80,aggr:0.80,err:0.30,dive:0.50,hover:70, speed:1.05,style:'erratic — mistimes, surprises'},
+};
+const PERSONA_NAMES=Object.keys(PERSONAS);
+const BOT_COLORS={VEX:'#ff3860',ORBIT:'#ffd75e',HALO:'#b26bff',NOVA:'#ff9d3d'};
+
+/* ---------------- FALLIBLE ENGINE (E29) ----------------
+   WATCH duels run on the Fallible Engine: the two council agents choose
+   each rider's moves via FE.decide (scored from the same heuristic
+   quantities botInput already used) and the duel is recorded with
+   FE.recordMatch. The pilot persona (VEX/ORBIT/HALO/NOVA) still sets the
+   heuristic scores and the name plates — the council agent is the recorded
+   identity, rotating two at a time through all 8. Waves and 2P-duel modes
+   never call the engine. If the engine file fails to load, FE is null and
+   botInput runs its built-in logic exactly as before. A rider hatched back
+   from a core has no council agent and also falls back to built-in logic. */
+var FE=(typeof window!=='undefined'&&window.FallibleEngine)||null;
+var FE_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var feWatchIdx=0, feAgentA=null, feAgentB=null, feTracesA=[], feTracesB=[], feRecorded=false;
+/* E35 REPAIR (rotation frozen): feWatchIdx persists in localStorage, seeded on
+   load and saved on advance — same pattern as irongrid/sigil-storm. Before
+   this fix it reset to 0 on every load, so every ?auto=watch restarted at
+   ASIMOV vs SHADDAI. The cursor advances only when the engine is present;
+   a PERSONAS fallback load never consumes it. */
+try{ feWatchIdx=JSON.parse(localStorage.getItem('skylance.feWatchIdx')||'0')||0; if(!isFinite(feWatchIdx)||feWatchIdx<0) feWatchIdx=0; }catch(e){ feWatchIdx=0; }
+function feSaveWatchIdx(){ try{ localStorage.setItem('skylance.feWatchIdx', JSON.stringify(feWatchIdx)); }catch(e){} }
+function feSetupWatch(){
+  feAgentA=null; feAgentB=null; feTracesA=[]; feTracesB=[]; feRecorded=false;
+  var aId=FE_IDS[feWatchIdx%FE_IDS.length], bId=FE_IDS[(feWatchIdx+1)%FE_IDS.length];
+  if(FE){ feWatchIdx+=2; feSaveWatchIdx(); } /* engine present: consume the pair; no engine -> cursor unchanged, fallback never consumes it */
+  try{ if(FE){ feAgentA=FE.loadAgent(aId); feAgentB=FE.loadAgent(bId); } }catch(e){ feAgentA=null; feAgentB=null; }
+}
+function feRecordWatch(){
+  if(mode!=='watch'||feRecorded) return;
+  feRecorded=true;
+  try{ if(FE&&feAgentA&&feAgentB){
+    FE.recordMatch(feAgentA,feAgentB,'skylance',p1Wins>=3?'win':'loss',feTracesA,feTracesB);
+  } }catch(e){}
+}
+
+let frame=0, animT=0, /* animT: LIFE clock — advances only while unpaused, drives twinkle/drift/motes/fog */
+    phase='ready', /* ready|play|roundEnd|over */ mode='waves', /* waves|duel|watch */
+    cutscene=null, /* cutscene: {kind,p1,p2,panels,idx,shown,t} while the intro comic plays, else null */
+    paused=false, score=0, lives=3, wave=0, roundNum=1, roundT=0, waveT=0,
+    terrorAt=45*60, terror=null, terrorReturn=0, banner='', bannerT=0,
+    riders=[], cores=[], dlg=null, dlgQueue=[], /* SHARED DIALOGUE BOX (dim 7): one line on screen (dlg) + FIFO queue; see say()/drawDialogue() */
+    camMode='wide', /* wide|rider */
+    particles=[], rings=[], shake=0, hitStop=0, /* L3 LIGHT & JUICE: transient burst particles + rings, screen shake, hit-stop freeze */
+    watchFeed=[], watchCamOn=false, /* AGENT MODES (dim 4): WATCH score feed + camera flag — transient, never saved */
+    p1Wins=0, p2Wins=0, watchRematchT=0, flapBuf=0, diveHeld=false;
+
+/* ---------------- SHARED DIALOGUE BOX (dim 7) ----------------
+   One shared dialogue style across the arcade — seeded from the cutscene
+   caption bar (same 1 char/frame typewriter): a bottom text box with the
+   speaker's name + a portrait chip (mini head with the speaker's kit
+   headgear, same look as in-game), queued lines playing in order.
+   say(who,text) is the only call site API — every existing radio call
+   works unchanged. The box is presentation only: the world keeps running
+   while a line types; lines are transient and never saved. This block is
+   the reusable snippet — inline it into each game file (single-file
+   standalone) and adapt only dlgColor()/drawDlgPortrait() to that game's
+   cast. LOOM = radio operator (gold), GALE = storm-wyrm (red), rider
+   names resolve through BOT_COLORS / KITS. */
+function dlgColor(who){
+ if(who==='LOOM') return '#ffd75e';
+ if(who==='GALE') return '#ff3860';
+ if(BOT_COLORS[who]) return BOT_COLORS[who];
+ if(who==='AERIS') return '#00f0ff';
+ if(who==='SHADE') return '#b26bff';
+ if(who==='RIVAL') return '#ff9d3d';
+ return '#c6d2e4';
+}
+function say(who,text){ dlgQueue.push({who,text}); if(dlgQueue.length>3)dlgQueue.shift(); if(!dlg) dlgStart(); }
+function dlgStart(){
+ const next=dlgQueue.shift(); if(!next) return;
+ dlg={who:next.who,color:dlgColor(next.who),text:next.text,shown:0,hold:60*2.5}; /* hold ~2.5s after the line finishes typing */
+}
+function stepDialogue(){
+ if(phase==='cutscene') return; /* the intro comic has its own typewriter */
+ if(!dlg){ if(dlgQueue.length) dlgStart(); return; }
+ if(dlg.shown<dlg.text.length){ dlg.shown=Math.min(dlg.text.length,dlg.shown+1); return; } /* 1 char/frame, same as the cutscene */
+ if(dlg.hold>0){ dlg.hold--; return; }
+ dlg=null; if(dlgQueue.length) dlgStart();
+}
+
+/* ---------------- AGENT MODES (dim 4): WATCH presentation ----------------
+   The bots already duel on their own (Fallible Engine personalities, imperfect
+   on purpose). This pass polishes how the duel READS to a spectator:
+   (a) a watch camera that follows the action (see draw()),
+   (b) name plates under the HUD — each bot's name, its personality style,
+       a portrait chip and round pips in its colour,
+   (c) a score feed (top right) logging bursts, banks, hatches, the GALE
+       and round results. Presentation only — no gameplay-logic change;
+   the feed is transient and never saved. */
+function watchLog(text,color){
+ if(mode!=='watch') return;
+ watchFeed.push({text,color,t:frame});
+ if(watchFeed.length>4) watchFeed.shift();
+}
+function watchFocus(){
+ const alive=riders.filter(r=>r.alive);
+ if(alive.length>=2) return {x:(alive[0].x+alive[1].x)/2, y:(alive[0].y+alive[1].y)/2};
+ if(alive.length===1){
+   const c=cores[0];
+   if(c) return {x:(alive[0].x+c.x)/2, y:(alive[0].y+c.y)/2};
+   return {x:alive[0].x, y:alive[0].y};
+ }
+ return {x:W/2, y:H/2};
+}
+function drawWatchPlate(r,left){
+ const x= left? 12 : W-312, y=38, w=300, h=34;
+ ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(x,y,w,h);
+ ctx.fillStyle=r.color; ctx.fillRect(left?x:x+w-4,y,4,h); /* colour edge */
+ /* portrait chip, shrunk from the shared dialogue portrait */
+ ctx.save(); ctx.translate(left?x+22:x+w-22, y+h/2); ctx.scale(0.55,0.55);
+ drawDlgPortrait(r.name,r.color,0,0); ctx.restore();
+ /* round pips — filled = rounds won */
+ for(let i=0;i<3;i++){
+   const px= left? x+w-16-i*15 : x+16+i*15;
+   ctx.fillStyle= i<(left?p1Wins:p2Wins)? r.color : 'rgba(255,255,255,0.25)';
+   ctx.beginPath(); ctx.arc(px,y+11,4,0,7); ctx.fill();
+ }
+ const style=(PERSONAS[r.persona]||{}).style||'';
+ ctx.textAlign= left?'left':'right';
+ ctx.fillStyle=r.color; ctx.font='bold 13px "Share Tech Mono"';
+ ctx.fillText(r.name, left?x+40:x+w-40, y+15);
+ ctx.fillStyle='#c6d2e4'; ctx.font='10px "Share Tech Mono"';
+ ctx.fillText(style, left?x+40:x+w-40, y+28);
+ ctx.textAlign='center';
+}
+function drawWatchHud(){
+ drawWatchPlate(riders[0],true);
+ drawWatchPlate(riders[1],false);
+ /* score feed — newest at the bottom, older lines fade (never below 0.45
+    while the match runs; the log caps at 4). A dark backing panel keeps
+    the lines readable over the moon and the riders — the first pass drew
+    them bare and the gold match line washed out on the moon disc. */
+ if(watchFeed.length){
+   ctx.fillStyle='rgba(0,0,0,0.45)';
+   ctx.fillRect(W-12-268, 80, 268, watchFeed.length*15+8);
+ }
+ ctx.textAlign='right'; ctx.font='11px "Share Tech Mono"';
+ for(let i=0;i<watchFeed.length;i++){
+   const f=watchFeed[i];
+   const a=clamp(1-(frame-f.t)/(60*6),0.45,1);
+   ctx.fillStyle=hexA(f.color,a);
+   ctx.fillText('▸ '+f.text, W-12, 88+i*15);
+ }
+ ctx.textAlign='center';
+}
+function drawDlgPortrait(who,color,cx,cy){
+ /* portrait chip: dark disc + speaker-colour ring, mini head inside */
+ ctx.fillStyle='#060a08'; ctx.beginPath(); ctx.arc(cx,cy,20,0,7); ctx.fill();
+ ctx.strokeStyle=hexA(color,0.7); ctx.lineWidth=2;
+ ctx.beginPath(); ctx.arc(cx,cy,20,0,7); ctx.stroke();
+ const kit=KITS[who] || (who==='AERIS'?KITS.AERIS : who==='RIVAL'?KITS.NOVA : who==='SHADE'?KITS.HALO : null);
+ if(who==='LOOM'){
+   /* radio operator: headset band + mic boom + glowing eyes */
+   ctx.fillStyle='#0a1410'; ctx.beginPath(); ctx.arc(cx,cy+1,12,0,7); ctx.fill();
+   ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2.5;
+   ctx.beginPath(); ctx.arc(cx,cy+1,12,Math.PI*1.05,Math.PI*1.95); ctx.stroke();
+   ctx.fillStyle='#ffd75e'; ctx.fillRect(cx-13,cy-2,3,7); ctx.fillRect(cx+10,cy-2,3,7);
+   ctx.strokeStyle='#ffd75e'; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.moveTo(cx+11,cy+4); ctx.lineTo(cx+4,cy+10); ctx.stroke();
+   ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(cx+3,cy+10,2,0,7); ctx.fill();
+   ctx.fillStyle='#fff'; ctx.shadowColor='#fff'; ctx.shadowBlur=4;
+   ctx.beginPath(); ctx.arc(cx-4,cy,1.8,0,7); ctx.fill();
+   ctx.beginPath(); ctx.arc(cx+3,cy,1.8,0,7); ctx.fill(); ctx.shadowBlur=0;
+ } else if(who==='GALE'){
+   /* storm-wyrm head: jagged red mane + two storm eyes */
+   ctx.fillStyle='#ff3860';
+   ctx.beginPath(); ctx.moveTo(cx-12,cy+8);
+   ctx.lineTo(cx-14,cy-6); ctx.lineTo(cx-6,cy-10); ctx.lineTo(cx-2,cy-14);
+   ctx.lineTo(cx+4,cy-10); ctx.lineTo(cx+12,cy-12); ctx.lineTo(cx+10,cy+2); ctx.lineTo(cx+13,cy+8);
+   ctx.closePath(); ctx.fill();
+   ctx.fillStyle='#04120a'; ctx.beginPath(); ctx.arc(cx,cy+2,9,0,7); ctx.fill();
+   ctx.fillStyle='#fff'; ctx.shadowColor='#ffd75e'; ctx.shadowBlur=6;
+   ctx.beginPath(); ctx.arc(cx-3,cy+1,2,0,7); ctx.fill();
+   ctx.beginPath(); ctx.arc(cx+4,cy+1,2,0,7); ctx.fill(); ctx.shadowBlur=0;
+ } else if(kit){
+   /* rider bust, matching the CHAR2 in-flight stack: pauldron slices at the
+      chip base, helm dome extruded in dark slices under the rim-lit crown */
+   ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,19,0,7); ctx.clip();
+   ctx.fillStyle=shade(color,-0.6); ctx.beginPath(); ctx.arc(cx-9,cy+19,7,0,7); ctx.fill();
+   ctx.fillStyle=shade(color,-0.3); ctx.beginPath(); ctx.arc(cx-9,cy+17.5,6.4,0,7); ctx.fill();
+   ctx.fillStyle=shade(color,-0.55); ctx.beginPath(); ctx.arc(cx+10,cy+19,6.4,0,7); ctx.fill();
+   ctx.fillStyle='#0d1a14'; ctx.beginPath(); ctx.moveTo(cx-7,cy+20); ctx.lineTo(cx-5,cy+9); ctx.lineTo(cx+5,cy+9); ctx.lineTo(cx+7,cy+20); ctx.closePath(); ctx.fill();
+   ctx.fillStyle=shade(color,0.12); ctx.fillRect(cx-3.5,cy+11,7,5);
+   ctx.restore();
+   ctx.fillStyle='#010302'; ctx.beginPath(); ctx.arc(cx,cy+3.4,11,0,7); ctx.fill();
+   ctx.fillStyle='#060d0a'; ctx.beginPath(); ctx.arc(cx,cy+2.2,11,0,7); ctx.fill();
+   ctx.fillStyle='#0d1a14'; ctx.beginPath(); ctx.arc(cx,cy+1,11,0,7); ctx.fill();
+   ctx.strokeStyle=shade(color,-0.3); ctx.lineWidth=2; ctx.stroke();
+   ctx.strokeStyle=shade(color,0.8); ctx.lineWidth=1.6; ctx.shadowColor=color; ctx.shadowBlur=5;
+   ctx.beginPath(); ctx.arc(cx,cy+1,11,Math.PI*1.08,Math.PI*1.72); ctx.stroke(); ctx.shadowBlur=0;
+   ctx.fillStyle=shade(color,-0.5); ctx.fillRect(cx-10,cy+6.5,14,2); /* jaw guard */
+   ctx.fillStyle=color; ctx.fillRect(cx-11,cy-1,15,4.5); /* visor band */
+   ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.fillRect(cx-11,cy-1,15,1.2);
+   ctx.fillStyle='#fff'; ctx.shadowColor='#fff'; ctx.shadowBlur=5;
+   ctx.beginPath(); ctx.arc(cx-5,cy+1,2,0,7); ctx.fill();
+   ctx.beginPath(); ctx.arc(cx+1,cy+1,2,0,7); ctx.fill(); ctx.shadowBlur=0;
+   ctx.save(); ctx.translate(0,2); ctx.fillStyle=shade(color,-0.55); /* headgear extrusion slice */
+   if(kit.helm==='crest'){ ctx.beginPath(); ctx.moveTo(cx-10,cy-8); ctx.lineTo(cx+1,cy-15); ctx.lineTo(cx,cy-7); ctx.closePath(); ctx.fill(); }
+   else if(kit.helm==='horns'){ ctx.beginPath(); ctx.moveTo(cx-11,cy-7); ctx.lineTo(cx-15,cy-17); ctx.lineTo(cx-6,cy-9); ctx.closePath(); ctx.fill();
+     ctx.beginPath(); ctx.moveTo(cx+6,cy-8); ctx.lineTo(cx+11,cy-17); ctx.lineTo(cx+8,cy-7); ctx.closePath(); ctx.fill(); }
+   else if(kit.helm==='mohawk'){ for(let i=0;i<3;i++){ ctx.beginPath();
+     ctx.moveTo(cx-9+i*6,cy-8); ctx.lineTo(cx-6+i*6,cy-16); ctx.lineTo(cx-3+i*6,cy-8); ctx.closePath(); ctx.fill(); } }
+   ctx.restore();
+   ctx.fillStyle=color;
+   if(kit.helm==='crest'){ ctx.beginPath(); ctx.moveTo(cx-10,cy-8); ctx.lineTo(cx+1,cy-15); ctx.lineTo(cx,cy-7); ctx.closePath(); ctx.fill(); }
+   else if(kit.helm==='horns'){ ctx.beginPath(); ctx.moveTo(cx-11,cy-7); ctx.lineTo(cx-15,cy-17); ctx.lineTo(cx-6,cy-9); ctx.closePath(); ctx.fill();
+     ctx.beginPath(); ctx.moveTo(cx+6,cy-8); ctx.lineTo(cx+11,cy-17); ctx.lineTo(cx+8,cy-7); ctx.closePath(); ctx.fill(); }
+   else if(kit.helm==='halo'){ ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2;
+     ctx.beginPath(); ctx.ellipse(cx,cy-13,10,3.5,0,0,7); ctx.stroke(); }
+   else if(kit.helm==='mohawk'){ for(let i=0;i<3;i++){ ctx.beginPath();
+     ctx.moveTo(cx-9+i*6,cy-8); ctx.lineTo(cx-6+i*6,cy-16); ctx.lineTo(cx-3+i*6,cy-8); ctx.closePath(); ctx.fill(); } }
+ } else {
+   /* unknown speaker: plain coloured head */
+   ctx.fillStyle='#0a1410'; ctx.beginPath(); ctx.arc(cx,cy+1,11,0,7); ctx.fill();
+   ctx.strokeStyle=color; ctx.lineWidth=2; ctx.stroke();
+   ctx.fillStyle='#fff';
+   ctx.beginPath(); ctx.arc(cx-4,cy,2,0,7); ctx.fill();
+   ctx.beginPath(); ctx.arc(cx+3,cy,2,0,7); ctx.fill();
+ }
+}
+function drawDialogue(){
+ if(!dlg) return;
+ const bx=90, by=H-72, bw=W-180, bh=60, col=dlg.color;
+ ctx.fillStyle='rgba(2,10,8,.92)'; ctx.fillRect(bx,by,bw,bh);
+ ctx.strokeStyle=hexA(col,0.55); ctx.lineWidth=1; ctx.strokeRect(bx,by,bw,bh);
+ ctx.fillStyle=hexA(col,0.8); ctx.fillRect(bx,by,bw,2); /* speaker-colour top accent */
+ drawDlgPortrait(dlg.who,col,bx+30,by+30);
+ ctx.textAlign='left';
+ ctx.fillStyle=col; ctx.font='bold 12px "Share Tech Mono"';
+ const typing=dlg.shown<dlg.text.length;
+ ctx.fillText((dlg.who==='LOOM'?'📻 ':'')+dlg.who+(typing&&(Math.floor(frame/15)%2===0)?' ▸':''), bx+60, by+20);
+ if(dlgQueue.length>0){ ctx.textAlign='right'; ctx.fillStyle='rgba(198,210,228,.7)';
+   ctx.font='11px "Share Tech Mono"'; ctx.fillText('+'+dlgQueue.length+' MORE', bx+bw-12, by+20); ctx.textAlign='left'; }
+ ctx.fillStyle='#dff'; ctx.font='12px "Share Tech Mono"';
+ wrapText(dlg.text.slice(0,dlg.shown), bx+60, by+38, bw-76, 15);
+}
+function showPauseOverlay(on){ const ov=document.getElementById('pauseOverlay'); if(ov&&ov.style) ov.style.display=on?'flex':'none'; }
+function togglePause(){
+ if(phase!=='play'&&phase!=='roundEnd') return;
+ paused=!paused;
+ showPauseOverlay(paused);
+ document.getElementById('msg').textContent= paused? '⏸ PAUSED — Esc/P resume · R restart · Q quit to arcade' : 'Sky live. Tap flap in rhythm — higher lance wins.';
+}
+function mkRider(name,color,x,y,isBot,persona,skill){
+ return {name,color,x,y,vx:0,vy:0,r:14,dir:1,grounded:false,flapCD:0,alive:true,
+  isBot:!!isBot, persona:persona||null, skill:skill||0.8, invuln:0, duelCD:0,
+  thinkT:0, think:{left:false,right:false,flap:false,dive:false}, wins:0, hatched:0};
+}
+const SPAWNS=[{x:120,y:210},{x:840,y:210},{x:480,y:330},{x:240,y:90},{x:720,y:90}];
+function pickPersona(exclude){ const pool=PERSONA_NAMES.filter(n=>n!==exclude); return pool[irnd(0,pool.length-1)]; }
+
+function startWaves(){
+ mode='waves'; score=0; lives=3; wave=0; cores=[]; terror=null; p1Wins=0; p2Wins=0;
+ watchFeed=[]; /* a fresh mode starts with a fresh (empty) watch feed */
+ riders=[mkRider('AERIS','#00f0ff',480,90,false,null,1)];
+ nextWave(); phase='play';
+ say('LOOM','AERIS, the sky is yours. Flap in rhythm, stay above them.');
+}
+function nextWave(){
+ wave++; waveT=0; terror=null; terrorReturn=0;
+ terrorAt=45*60; /* the GALE arrives if the wave drags past 45s */
+ const n=Math.min(2+Math.ceil(wave/2),5);
+ const skill=Math.min(0.55+0.09*wave,1.2);
+ for(let i=0;i<n;i++){
+   const s=SPAWNS[i%SPAWNS.length];
+   const pn=pickPersona(i>0? riders[riders.length-1].persona : null);
+   riders.push(mkRider(pn,BOT_COLORS[pn], s.x, s.y+irnd(-20,20), true, pn, skill));
+ }
+ banner='WAVE '+wave+' — '+n+' RIDER'+(n>1?'S':''); bannerT=60*2;
+ say('LOOM','Wave '+wave+' — '+n+' rider'+(n>1?'s':'')+' in the sky. Higher lance wins.');
+}
+function startDuel(m, p1n, p2n){
+ mode=m; score=0; lives=3; roundNum=1; p1Wins=0; p2Wins=0; cores=[]; terror=null;
+ const p1name= m==='watch'? (p1n||pickPersona(null)) : 'AERIS';
+ const p2name= m==='watch'? (p2n||pickPersona(p1name)) : (m==='duel'?'RIVAL':'VEX');
+ const p1c= m==='watch'? BOT_COLORS[p1name] : '#00f0ff';
+ const p2c= m==='watch'? BOT_COLORS[p2name] : (m==='duel'?'#ff9d3d':BOT_COLORS[p2name]);
+ riders=[
+   mkRider(p1name,p1c,300,90, m==='watch', m==='watch'?p1name:null, 0.9),
+   mkRider(p2name,p2c,660,90, m==='watch'||m==='waves', m==='watch'?p2name:(m==='duel'?null:'VEX'), 0.9),
+ ];
+ if(m==='watch'){ feSetupWatch(); riders[0].feAgent=feAgentA; riders[1].feAgent=feAgentB; }
+ if(m==='duel'){ riders[1].isBot=false; }
+ roundT=0; terrorAt=60*60; banner=(m==='watch'?'WATCH — ':'DUEL — ')+p1name+' vs '+p2name; bannerT=60*2;
+ phase='play';
+ if(m==='watch'){ watchFeed=[]; watchLog(p1name+' vs '+p2name+' — first to 3 rounds','#ffd75e'); }
+ say('LOOM',(m==='watch'?'Watch closely. ':'')+p1name+' vs '+p2name+' — first to 3 rounds. Higher lance wins.');
+}
+function reset(){ if(mode==='waves') startWaves(); else startDuel(mode); }
+
+/* ---------------- CUTSCENES / INTRO (dim 6): a short skippable comic before
+   every match — 3 panels, original council-bot story beats, SPACE / click to
+   advance, ESC to skip. The world stays frozen while the intro plays
+   (phase 'cutscene'); startWaves/startDuel/?auto= still start directly, so
+   restarts and automation skip the story. Drawing only — no gameplay change. */
+function buildPanels(kind,p1,p2){
+ const aeris={name:'AERIS',color:'#00f0ff',persona:null};
+ const rival={name:'RIVAL',color:'#ff9d3d',persona:'NOVA'};
+ const vex={name:'VEX',color:'#ff3860',persona:'VEX'};
+ const at=(r,x,y,dir,grounded)=>({name:r.name,color:r.color,persona:r.persona,x,y,dir,grounded:!!grounded});
+ const bot=n=>({name:n,color:BOT_COLORS[n],persona:n});
+ if(kind==='waves') return [
+  {scene:'skyline',title:'THE SKY IS BROKEN',text:'The old sky-temple fell. Its riders scattered — and the Maw opened below, hungry for wings.'},
+  {scene:'rider',title:'AERIS TAKES WING',text:'AERIS, last lance of the council, climbs into the dusk. LOOM watches from the radio dark.',riders:[at(aeris,480,316,1,true)]},
+  {scene:'clash',title:'THE RULE OF THE SKY',text:'Higher lance wins. Burst them, bank the core — leave it and it hatches back stronger.',riders:[at(aeris,400,250,1),at(vex,560,250,-1)]},
+ ];
+ if(kind==='duel') return [
+  {scene:'duo',title:'A CHALLENGE IN THE DUSK',text:'RIVAL rides in from the far isles. No words — only lances.',riders:[at(aeris,400,316,1,true),at(rival,560,316,-1,true)]},
+  {scene:'maw',title:'FIRST TO THREE',text:'Three rounds. One sky. The Maw keeps what falls.'},
+  {scene:'rider',title:'FLY.',text:'Flap in rhythm. Higher lance wins. The GALE hunts the slow.',riders:[at(aeris,480,316,1,true)]},
+ ];
+ /* watch */
+ return [
+  {scene:'duo',title:'TWO PERSONALITIES, ONE SKY',text:p1+' vs '+p2+' — two bots climb into the dusk. Neither flies perfect. That is the point.',riders:[at(bot(p1),400,316,1,true),at(bot(p2),560,316,-1,true)]},
+  {scene:'clash',title:'WATCH THE LANCES',text:'One dives hard. One waits. One camps the ledges. One surprises. Who reads the sky best?',riders:[at(bot(p1),400,250,1),at(bot(p2),560,250,-1)]},
+  {scene:'gale',title:'THE GALE IS COMING',text:'Stall too long and the storm-wyrm sweeps the arena. Sit back. Watch. Learn the sky.'},
+ ];
+}
+function beginMatch(kind){
+ if(phase==='cutscene') return; /* already in an intro — finish it first */
+ if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); /* SPACE must advance the intro, not re-click the mode button */
+ mode=kind; paused=false; showPauseOverlay(false);
+ const p1= kind==='watch'? pickPersona(null) : null;
+ const p2= kind==='watch'? pickPersona(p1) : null;
+ cutscene={kind,p1,p2,panels:buildPanels(kind,p1,p2),idx:0,shown:0,t:0};
+ phase='cutscene';
+ refreshModeBtns();
+ document.getElementById('msg').textContent='🎬 Intro — SPACE / click advances · ESC skips the story.';
+}
+function cutAdvance(){
+ if(!cutscene) return;
+ const P=cutscene.panels[cutscene.idx];
+ if(cutscene.shown<P.text.length){ cutscene.shown=P.text.length; return; } /* first press completes the line */
+ if(cutscene.idx<cutscene.panels.length-1){ cutscene.idx++; cutscene.shown=0; cutscene.t=0; }
+ else finishCutscene();
+}
+function cutSkip(){ finishCutscene(); }
+function finishCutscene(){
+ if(!cutscene) return;
+ const k=cutscene.kind, p1=cutscene.p1, p2=cutscene.p2;
+ cutscene=null;
+ if(k==='waves'){ startWaves(); document.getElementById('msg').textContent='Waves live. Tap flap in rhythm — higher lance wins.'; }
+ else { startDuel(k,p1,p2);
+   document.getElementById('msg').textContent= k==='duel'?'Duel live — P1 A/D+W, P2 arrows+↑. First to 3 rounds.':'WATCH: two personality bots duel — first to 3 rounds.'; }
+ refreshModeBtns();
+}
+function drawCutscene(){
+ const P=cutscene.panels[cutscene.idx];
+ /* dusk sky, same palette as the arena */
+ const sky=ctx.createLinearGradient(0,0,0,H);
+ sky.addColorStop(0,'#0a0e2c'); sky.addColorStop(0.45,'#0e2438');
+ sky.addColorStop(0.75,'#15373b'); sky.addColorStop(1,'#3d2416');
+ ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+ for(let i=0;i<90;i++){ const sx=hs(i)*W, sy=hs(i+1000)*300;
+   const tw=0.45+0.55*(0.5+0.5*Math.sin(animT/26+i*1.7));
+   const a=(0.15+hs(i+2000)*0.5)*tw, s=hs(i+3000)>0.8?2:1;
+   ctx.fillStyle='rgba(255,255,255,'+a.toFixed(2)+')'; ctx.fillRect(sx,sy,s,s); }
+ /* the cratered moon, upper right — same as the arena, so the intro reads as the same sky */
+ ctx.fillStyle='rgba(220,235,255,0.05)'; ctx.beginPath(); ctx.arc(822,86,54,0,7); ctx.fill();
+ ctx.fillStyle='rgba(220,235,255,0.08)'; ctx.beginPath(); ctx.arc(822,86,40,0,7); ctx.fill();
+ ctx.fillStyle='#dfe9f5'; ctx.beginPath(); ctx.arc(822,86,30,0,7); ctx.fill();
+ ctx.fillStyle='rgba(160,175,200,0.55)';
+ ctx.beginPath(); ctx.arc(812,78,6,0,7); ctx.fill();
+ ctx.beginPath(); ctx.arc(832,96,4,0,7); ctx.fill();
+ ctx.beginPath(); ctx.arc(826,72,3,0,7); ctx.fill();
+ const fa=clamp(cutscene.t/18,0,1); /* panel fades in over ~18 frames */
+ ctx.save(); ctx.globalAlpha=fa;
+ drawFarSkyline(); drawClouds();
+ if(P.scene==='rider'||P.scene==='duo'){
+   drawLedge({x:300,y:330,w:360,h:14});
+ } else if(P.scene==='maw'){
+   /* the Maw, up close — a basalt ridge band above the caption bar */
+   ctx.fillStyle='#160709'; ctx.fillRect(0,420,W,48);
+   ctx.fillStyle='#0c0407';
+   for(let x=-10;x<W+10;x+=26){ ctx.beginPath(); ctx.moveTo(x,468); ctx.lineTo(x+13,426); ctx.lineTo(x+26,468); ctx.closePath(); ctx.fill(); }
+   ctx.fillStyle='#ff3860'; ctx.shadowColor='#ff3860'; ctx.shadowBlur=20;
+   for(let x=0;x<W;x+=24){ const h=6+Math.sin(frame/7+x/40)*4; ctx.fillRect(x,420,14,h); }
+   ctx.shadowBlur=0;
+   ctx.fillStyle='#ffd75e'; ctx.font='bold 11px "Share Tech Mono"'; ctx.textAlign='center';
+   ctx.fillText('— THE MAW —', W/2, 454);
+   drawCore({x:480,y:360,vy:0,r:10,color:'#ffd75e',hatch:300});
+ } else if(P.scene==='gale'){
+   drawTerror({x:480,y:250,dir:1,t:frame});
+ }
+ if(P.riders) for(const spec of P.riders){
+   const r=mkRider(spec.name,spec.color,spec.x,spec.y,true,spec.persona,0.9);
+   r.dir=spec.dir; r.grounded=spec.grounded; r.vy=0; r.vx=0;
+   drawRider(r);
+ }
+ if(P.scene==='clash'){ /* a lance-spark starburst where the two riders meet */
+   ctx.save(); ctx.translate(480,250); ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+   ctx.shadowColor='#ffd75e'; ctx.shadowBlur=14;
+   for(let i=0;i<8;i++){ const a=i*Math.PI/4, r0=6, r1=14+((i%2)*6);
+     ctx.beginPath(); ctx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0); ctx.lineTo(Math.cos(a)*r1,Math.sin(a)*r1); ctx.stroke(); }
+   ctx.restore();
+ }
+ ctx.restore();
+ /* comic frame */
+ ctx.strokeStyle='rgba(255,215,94,.55)'; ctx.lineWidth=2; ctx.strokeRect(10,10,W-20,H-20);
+ ctx.strokeStyle='rgba(0,240,255,.25)'; ctx.lineWidth=1; ctx.strokeRect(14,14,W-28,H-28);
+ /* panel chip + kind label */
+ ctx.textAlign='left'; ctx.fillStyle='#ffd75e'; ctx.font='bold 11px "Share Tech Mono"';
+ ctx.fillText('PANEL '+(cutscene.idx+1)+'/'+cutscene.panels.length, 26, 34);
+ ctx.textAlign='right'; ctx.fillStyle='rgba(198,210,228,.8)';
+ ctx.fillText('SKYLANCE · INTRO — '+cutscene.kind.toUpperCase(), W-26, 34);
+ /* caption bar: title + typewriter text + advance hint on the title line */
+ ctx.fillStyle='rgba(2,10,8,.92)'; ctx.fillRect(60,H-108,W-120,84);
+ ctx.strokeStyle='rgba(255,215,94,.5)'; ctx.lineWidth=1; ctx.strokeRect(60,H-108,W-120,84);
+ ctx.textAlign='left'; ctx.fillStyle='#ffd75e'; ctx.font='900 15px Orbitron';
+ ctx.fillText(P.title, 76, H-82);
+ ctx.textAlign='right'; ctx.fillStyle='rgba(198,210,228,.75)'; ctx.font='11px "Share Tech Mono"';
+ ctx.fillText('SPACE / CLICK — NEXT' + (cutscene.shown<P.text.length?' · (COMPLETES LINE)':'') + ' · ESC — SKIP', W-76, H-82);
+ ctx.textAlign='left'; ctx.fillStyle='#dff'; ctx.font='13px "Share Tech Mono"';
+ wrapText(P.text.slice(0,cutscene.shown), 76, H-58, W-152, 16);
+}
+
+/* ---------------- physics ---------------- */
+function collideLedges(r,prevY){
+ r.grounded=false;
+ for(const L of LEDGES){
+   const within=r.x>L.x-6 && r.x<L.x+L.w+6;
+   if(r.vy>=0 && within && prevY+r.r<=L.y+1 && r.y+r.r>=L.y && r.y+r.r<=L.y+24){
+     r.y=L.y-r.r; r.vy=0; r.grounded=true;
+   } else if(r.vy<0 && within && prevY-r.r>=L.y+L.h-1 && r.y-r.r<=L.y+L.h){
+     r.y=L.y+L.h+r.r; r.vy=1.2;
+   } else if(r.y+r.r>L.y+2 && r.y-r.r<L.y+L.h-2){
+     if(r.x+r.r>L.x && r.x<L.x+L.w/2 && r.vx>0) r.x=L.x-r.r;
+     else if(r.x-r.r<L.x+L.w && r.x>L.x+L.w/2 && r.vx<0) r.x=L.x+L.w+r.r;
+   }
+ }
+}
+function stepRider(r,inp){
+ if(!r.alive) return;
+ r.flapCD=Math.max(0,r.flapCD-1); r.duelCD=Math.max(0,r.duelCD-1); r.invuln=Math.max(0,r.invuln-1);
+ const accel=r.grounded?0.40:0.28, maxVx=(r.grounded?4.0:3.4)*(r.skill||1);
+ if(inp.left){ r.vx-=accel; r.dir=-1; }
+ if(inp.right){ r.vx+=accel; r.dir=1; }
+ r.vx=clamp(r.vx,-maxVx,maxVx);
+ if(inp.flap && r.flapCD<=0){ r.vy=FLAP_VY; r.flapCD=FLAP_CD; r.grounded=false; }
+ if(inp.dive){ r.vy=Math.min(r.vy+0.9,8); }
+ r.vy=Math.min(r.vy+GRAV,7.5);
+ const prevY=r.y;
+ r.x+=r.vx; r.y+=r.vy;
+ if(r.x<-16) r.x=W+16; if(r.x>W+16) r.x=-16; /* side wrap */
+ if(r.y<72){ r.y=72; r.vy=Math.max(r.vy,0.5); } /* ceiling: keep the whole rider (wings/headgear ~40px above centre) below the HUD strip and on screen */
+ collideLedges(r,prevY);
+ if(!r.grounded) r.vy=Math.min(r.vy,7.5);
+ /* the Maw — hazard floor, no core, no second chance */
+ if(r.y+r.r>FLOOR_Y){ killRider(r,'maw'); }
+}
+function spawnCore(from){
+ cores.push({x:from.x,y:from.y,vy:-2,r:10,owner:from.name,fromBot:from.isBot,
+   hatch:60*8,hatched:from.hatched,skill:from.skill,persona:from.persona,color:from.color,grounded:false,
+   grace:25}); /* a fresh core pops clear and cannot be banked for 25 frames — the winner must chase it down */
+}
+/* ---------------- L3 LIGHT & JUICE: burst particles, rings, shake, hit-stop ----------------
+   Visual only — particles/rings/shake never affect collision, scores or AI, and are
+   never saved. They freeze while paused (stepParticles runs only from the live loop). */
+function hexA(hex,a){ const n=parseInt(hex.slice(1),16);
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
+function groundBelow(r){ /* nearest ledge top under the rider, else the Maw floor */
+  let g=FLOOR_Y;
+  for(const L of LEDGES){ if(r.x>L.x-4 && r.x<L.x+L.w+4 && L.y>=r.y-2 && L.y<g) g=L.y; }
+  return g;
+}
+function spawnBurst(x,y,color,n,pow){
+  for(let i=0;i<n;i++){
+    const feather=Math.random()<0.35;
+    particles.push({x,y,vx:(Math.random()-0.5)*pow,vy:-Math.random()*pow*0.7-1,
+      life:26+Math.random()*22,max:48,size:2+Math.random()*3.5,color,
+      kind:feather?'feather':'spark',rot:Math.random()*6.28,vrot:(Math.random()-0.5)*0.3});
+  }
+}
+function spawnRing(x,y,color,maxR){ rings.push({x,y,r:6,maxR,life:26,max:26,color}); }
+function stepParticles(){
+  if(shake>0) shake=Math.max(0,shake-0.55);
+  for(let i=particles.length-1;i>=0;i--){ const p=particles[i];
+    p.life--; if(p.life<=0){ particles.splice(i,1); continue; }
+    p.vy+= p.kind==='feather'?0.05:0.14; p.vx*=0.985;
+    p.x+=p.vx; p.y+=p.vy; p.rot+=p.vrot;
+    if(p.y>FLOOR_Y-2){ p.y=FLOOR_Y-2; p.vy*=-0.4; p.vx*=0.7; } }
+  for(let i=rings.length-1;i>=0;i--){ const rg=rings[i];
+    rg.life--; rg.r+=(rg.maxR-6)/26; if(rg.life<=0) rings.splice(i,1); }
+}
+function drawParticles(){
+  for(const p of particles){ const a=clamp(p.life/p.max,0,1);
+    ctx.globalAlpha=a;
+    if(p.kind==='feather'){ ctx.fillStyle=p.color; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillRect(-4,-1.5,8,3); ctx.restore(); }
+    else { ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=8;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,7); ctx.fill(); ctx.shadowBlur=0; } }
+  ctx.globalAlpha=1;
+  for(const rg of rings){ const a=clamp(rg.life/rg.max,0,1);
+    ctx.strokeStyle=hexA(rg.color,0.8*a); ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(rg.x,rg.y,rg.r,0,7); ctx.stroke(); }
+}
+function killRider(r,cause){
+ if(!r.alive) return;
+ r.alive=false; r.vx=0; r.vy=0;
+ /* L3 LIGHT & JUICE: the burst — sparks + feathers in the loser's colours, a ring,
+    a shake and a 5-frame hit-stop on a duel burst (fighting-game beat, visual only). */
+ if(cause==='duel'){ spawnBurst(r.x,r.y,r.color,26,5.5); spawnRing(r.x,r.y,r.color,64); shake=Math.max(shake,7); hitStop=5; }
+ else if(cause==='maw'){ spawnBurst(r.x,r.y,'#ff5a1f',18,4.5); spawnRing(r.x,r.y,'#ff3860',48); shake=Math.max(shake,5); }
+ else if(cause==='terror'){ spawnBurst(r.x,r.y,'#ffd75e',20,5); spawnRing(r.x,r.y,'#ff3860',56); shake=Math.max(shake,6); }
+ if(cause==='duel'){ spawnCore(r); }
+ if(mode==='waves'){
+   if(r===riders[0]){ lives--; say('LOOM', cause==='maw'?'The Maw took AERIS. ':'AERIS burst — '+(lives>0?'back in the sky.':'that was the last wing.'));
+     if(lives<=0){ phase='over'; say('LOOM','Sky down. Final score '+score+'. Press R to fly again.'); }
+     else { r.respawnT=60; } }
+   else { score+=100; }
+ } else if(cause!=='duel'){ /* duel/watch: a duel burst spawns a core — the round is
+   decided only when that core is banked (see stepCores). A Maw/terror kill
+   is a round point right away. */
+   const other=riders.find(o=>o!==r);
+   if(other && other.alive){ other.wins++; if(other===riders[0])p1Wins++; else p2Wins++;
+     say('LOOM',r.name+(cause==='maw'?' fed the Maw. ':' caught the GALE. ')+other.name+' takes the round.');
+     if(mode==='watch') watchLog(r.name+(cause==='maw'?' fed the Maw — ':' caught by the GALE — ')+other.name+' takes the round','#ff3860');
+     endRound(other); }
+   else { banner='DOUBLE DOWN — ROUND REPLAY'; bannerT=90; resetRoundPositions(); }
+ }
+}
+function endRound(winner){
+ phase='roundEnd'; bannerT=60*2;
+ banner=winner.name+' TAKES ROUND '+roundNum+'  ·  '+p1Wins+' — '+p2Wins;
+ if(mode==='watch') watchLog(winner.name+' takes round '+roundNum+' · '+p1Wins+'—'+p2Wins,winner.color);
+ if(p1Wins>=3||p2Wins>=3){ banner=(p1Wins>=3?riders[0].name:riders[1].name)+' WINS THE DUEL  ·  '+p1Wins+' — '+p2Wins; phase='over';
+   if(mode==='watch') watchLog(winner.name+' WINS THE DUEL '+p1Wins+'—'+p2Wins,winner.color);
+   feRecordWatch(); /* E29: one canonical match record, both council agents rated */
+   say('LOOM',banner+'. Press R for a rematch.'); }
+ else roundNum++;
+}
+function resetRoundPositions(){
+ cores=[]; terror=null; roundT=0; terrorAt=60*60;
+ riders[0].x=300; riders[0].y=90; riders[0].vx=0; riders[0].vy=0; riders[0].alive=true; riders[0].invuln=90;
+ riders[1].x=660; riders[1].y=90; riders[1].vx=0; riders[1].vy=0; riders[1].alive=true; riders[1].invuln=90;
+}
+function respawnPlayer(){
+ const p=riders[0];
+ p.x=480; p.y=90; p.vx=0; p.vy=0; p.alive=true; p.invuln=120; p.respawnT=0;
+}
+
+/* ---------------- bot AI: personality-driven, imperfect on purpose ---------------- */
+function botInput(r){
+ const p=PERSONAS[r.persona]||PERSONAS.VEX;
+ r.thinkT--;
+ if(r.thinkT<=0){
+   r.thinkT=6;
+   const foes=riders.filter(o=>o!==r&&o.alive);
+   let tx,ty;
+   /* in a duel/watch a rival core wins the round when banked — bots hunt them */
+   const rivalCores= mode!=='waves'? cores.filter(c=>c.owner!==r.name) : [];
+   if(rivalCores.length && Math.random()<0.6){ const c=rivalCores[0]; tx=c.x; ty=c.y; }
+   else if(foes.length){ const f=foes.reduce((a,b)=>Math.hypot(a.x-r.x,a.y-r.y)<Math.hypot(b.x-r.x,b.y-r.y)?a:b);
+     tx=f.x; ty=f.y; }
+   else { tx=r.x; ty=r.y-100; }
+   let dx=tx-r.x; if(dx>W/2)dx-=W; if(dx<-W/2)dx+=W;
+   const hoverY=ty-p.hover*(r.skill||1);
+   const err=Math.random()<p.err; /* imperfect: misjudge this tick */
+   /* E29: in WATCH mode the council agent chooses through the Fallible
+      Engine. The options are scored from the same quantities above
+      (hover height, dive window, steering error, the persona's flap/dive
+      rates); the engine's softmax pick replaces the hand-rolled
+      probability checks, and its per-tag weights learn from the result.
+      The GALE clock is real time pressure for the temperature. Any
+      failure falls through to the built-in logic below — the rider still
+      flies. Waves mode and hatched riders (no feAgent) never enter here. */
+   if(mode==='watch'&&FE&&r.feAgent){
+     try{
+       var flapScore=0.10, diveScore=0.05;
+       if(!err){
+         if(r.y>hoverY+6) flapScore=Math.max(flapScore,p.flap*(r.skill||1));
+         if(r.vy>2.5&&r.y<hoverY+120) flapScore=Math.max(flapScore,p.flap*(r.skill||1));
+         if(r.grounded&&ty<r.y-60) flapScore=Math.max(flapScore,p.flap*(r.skill||1));
+         if(ty>r.y+90) diveScore=Math.max(diveScore,p.dive);
+         if(p===PERSONAS.HALO&&r.grounded&&ty<r.y-40) flapScore=Math.max(flapScore,0.4); /* ledge ambush */
+       } else { flapScore=Math.max(flapScore,0.5); } /* the mistimed flap, as a scored option instead of a coin flip */
+       var chaseScore=Math.abs(dx)>10?0.55:0.15;
+       var steerL=dx<-10, steerR=dx>10;
+       var opts=[
+         {key:'flap-chase',tag:'flap',score:Math.min(1,flapScore+0.25),left:steerL,right:steerR,flap:true,dive:false},
+         {key:'flap-hold',tag:'flap',score:flapScore,left:false,right:false,flap:true,dive:false},
+         {key:'dive-chase',tag:'dive',score:diveScore,left:steerL,right:steerR,flap:false,dive:true},
+         {key:'chase',tag:'chase',score:chaseScore,left:steerL,right:steerR,flap:false,dive:false},
+         {key:'hold',tag:'hold',score:0.30,left:false,right:false,flap:false,dive:false}
+       ];
+       var res=FE.decide(r.feAgent,'skylance',opts,{timePressure:clamp(roundT/terrorAt,0,1)});
+       var pick=(res&&res.pick)||opts[4];
+       r.think.left=!!pick.left; r.think.right=!!pick.right;
+       r.think.flap=!!pick.flap; r.think.dive=!!pick.dive;
+       var arr=(r===riders[0])?feTracesA:feTracesB;
+       if(res&&res.trace) arr.push(res.trace);
+       if(arr.length>4000) arr.splice(0,arr.length-4000);
+       return r.think;
+     }catch(e){ /* fall through to the built-in logic */ }
+   }
+   r.think.left= dx<-10; r.think.right= dx>10;
+   r.think.flap=false; r.think.dive=false;
+   if(!err){
+     if(r.y>hoverY+6 && Math.random()<p.flap*(r.skill||1)) r.think.flap=true;
+     if(r.vy>2.5 && r.y<hoverY+120 && Math.random()<p.flap) r.think.flap=true;
+     if(ty>r.y+90 && Math.random()<p.dive) r.think.dive=true;
+     if(r.grounded && ty<r.y-60 && Math.random()<p.flap) r.think.flap=true; /* take off after prey above */
+   } else if(Math.random()<0.5){ r.think.flap=true; } /* mistimed flap */
+   if(p===PERSONAS.HALO && r.grounded && ty<r.y-40 && Math.random()<0.4) r.think.flap=true; /* ledge ambush */
+ }
+ return r.think;
+}
+
+/* ---------------- input: keyboard, gamepad, touch shell ---------------- */
+const keys={};
+addEventListener('keydown',e=>{
+ if(phase==='cutscene'){ /* intro comic: SPACE/ENTER advances, ESC skips the story */
+   if(e.code==='Escape'){ cutSkip(); }
+   else if(e.code==='Space'||e.code==='Enter'){ cutAdvance(); }
+   else if(e.code==='KeyF'){ toggleFullscreen(); }
+   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+   return; }
+ keys[e.code]=true;
+ if(e.code==='Escape'&&isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ return; }
+ if(e.code==='Escape'||e.code==='KeyP'){ togglePause(); }
+ else if(e.code==='KeyF'){ toggleFullscreen(); }
+ else if(e.code==='KeyR'){ if(phase==='over'||phase==='play'||phase==='roundEnd'){ paused=false; showPauseOverlay(false); reset(); } }
+ else if(e.code==='KeyV'){ camMode=camMode==='wide'?'rider':'wide';
+   document.getElementById('msg').textContent='Rider Cam '+(camMode==='rider'?'ON — riding with '+(riders[0]?riders[0].name:'you'):'OFF — full arena'); }
+ else if(e.code==='KeyQ'&&paused){ location.href='../arcade.html'; }
+ if(e.code==='KeyW'||e.code==='Space') flapBuf=10; /* P1 flap buffer; P2 reads ArrowUp directly so the two never cross-talk */
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); });
+addEventListener('keyup',e=>{ keys[e.code]=false; });
+
+/* ---------------- fullscreen (FULLSCREEN standard): the shell — stage on
+   desktop, the whole handheld console on phones — fills the screen via the
+   Fullscreen API. F toggles, the button toggles, Esc exits (browser) before
+   it can pause. Label follows the real fullscreen state. ---- */
+const fsShell=document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ const b=document.getElementById('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — stage fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+  updateFsBtn();
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+
+const pad={x:0,y:0,flap:false,dive:false,connected:false,id:'',startEdge:false};
+function pollPad(){
+ let gp=null;
+ try{ const pads=(typeof navigator!=='undefined'&&navigator.getGamepads)?navigator.getGamepads():null;
+   if(pads) for(const p of pads){ if(p&&p.connected){ gp=p; break; } } }catch(e){}
+ if(!gp){ if(pad.connected){ pad.connected=false; const st=document.getElementById('padStatus'); if(st) st.textContent=''; }
+   pad.x=0; pad.flap=false; pad.dive=false; return; }
+ if(!pad.connected){ pad.connected=true; pad.id=gp.id||'gamepad';
+   const st=document.getElementById('padStatus'); if(st) st.textContent=' — connected: '+(pad.id||'').slice(0,28); }
+ const dz=v=>Math.abs(v)<0.25?0:v;
+ let ax=dz(gp.axes[0]||0);
+ const b=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
+ if(b(14))ax-=1; if(b(15))ax+=1;
+ pad.x=clamp(ax,-1,1);
+ const fl=b(0)||b(2); if(fl&&!pad.flap) flapBuf=10; pad.flap=fl;
+ pad.dive=b(1)||b(3);
+ const st=b(9); if(st&&!pad.startEdge) togglePause(); pad.startEdge=st;
+}
+addEventListener('gamepadconnected',e=>{ document.getElementById('msg').textContent='🎮 Gamepad connected: '+String(e.gamepad.id||'').slice(0,28)+' — stick steer · A/X flap · B dive · START pause'; });
+
+/* touch: handheld shell — D-pad steers, A flaps, B dives, START pauses, SELECT toggles Rider Cam */
+const touch={left:false,right:false,up:false,down:false,flap:false,dive:false};
+let isTouch=false;
+try{ isTouch=(typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches)||(typeof navigator!=='undefined'&&navigator.maxTouchPoints>0)||new URLSearchParams(location.search).get('touch')==='1'; }catch(e){ isTouch=false; }
+if(isTouch && document.body && document.body.classList) document.body.classList.add('touch');
+function wireShellBtn(b){
+ const k=b.dataset.k; if(!k) return;
+ const down=e=>{ if(e&&e.preventDefault)e.preventDefault();
+   if(k==='flap'){ flapBuf=10; touch.flap=true; }
+   else if(k==='dive'){ touch.dive=true; }
+   else if(k==='up'){ flapBuf=10; touch.up=true; }
+   else if(touch.hasOwnProperty(k)) touch[k]=true; };
+ const up=()=>{ if(k==='flap')touch.flap=false; else if(k==='dive')touch.dive=false; else if(touch.hasOwnProperty(k))touch[k]=false; };
+ b.addEventListener('pointerdown',down);
+ b.addEventListener('pointerup',up); b.addEventListener('pointerleave',up); b.addEventListener('pointercancel',up);
+}
+document.querySelectorAll('#shellDeck button[data-k]').forEach(wireShellBtn);
+/* cutscene: tap/click the canvas to advance the intro (SPACE / ESC on keyboard) */
+cv.addEventListener('pointerdown',()=>{ if(phase==='cutscene') cutAdvance(); });
+const _startBtn=document.getElementById('startBtn'); if(_startBtn) _startBtn.onclick=()=>{ if(phase==='cutscene'){ cutSkip(); return; } togglePause(); };
+const _selectBtn=document.getElementById('selectBtn'); if(_selectBtn) _selectBtn.onclick=()=>{ camMode=camMode==='wide'?'rider':'wide';
+ document.getElementById('msg').textContent='Rider Cam '+(camMode==='rider'?'ON':'OFF'); };
+
+/* ---------------- save / load state (handheld shell START menu) ---------------- */
+const SAVE_KEY='skylance-save-v1';
+function saveState(){
+ if(phase!=='play'&&phase!=='roundEnd') return false;
+ const s={v:1,frame,phase,mode,score,lives,wave,roundNum,roundT,waveT,terrorAt,p1Wins,p2Wins,
+  camMode, banner, bannerT,
+  feA:(mode==='watch'&&feAgentA)?feAgentA.id:null, feB:(mode==='watch'&&feAgentB)?feAgentB.id:null,
+  feWatchIdx:feWatchIdx, /* E35: saved so loadState can resume the pair + rotation */
+  riders:riders.map(r=>({name:r.name,color:r.color,x:r.x,y:r.y,vx:r.vx,vy:r.vy,r:r.r,dir:r.dir,
+   grounded:r.grounded,flapCD:r.flapCD,alive:r.alive,isBot:r.isBot,persona:r.persona,
+   skill:r.skill,invuln:r.invuln,duelCD:r.duelCD,wins:r.wins,hatched:r.hatched,respawnT:r.respawnT||0})),
+  cores:cores.map(c=>({...c}))};
+ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(s)); }catch(e){ return false; }
+ return true;
+}
+function loadState(){
+ let raw=null; try{ raw=localStorage.getItem(SAVE_KEY); }catch(e){}
+ if(!raw) return false;
+ let s; try{ s=JSON.parse(raw); }catch(e){ return false; }
+ if(!s||s.v!==1||!Array.isArray(s.riders)) return false;
+ mode=s.mode; score=s.score; lives=s.lives; wave=s.wave; roundNum=s.roundNum;
+ roundT=s.roundT; waveT=s.waveT; terrorAt=s.terrorAt; p1Wins=s.p1Wins; p2Wins=s.p2Wins;
+ camMode=s.camMode||'wide'; banner=s.banner||''; bannerT=s.bannerT||0;
+ terror=null; frame=s.frame||0; phase=s.phase||'play';
+ riders=s.riders.map(rd=>{ const r=mkRider(rd.name,rd.color,rd.x,rd.y,rd.isBot,rd.persona,rd.skill);
+   return Object.assign(r,rd); });
+ cores=(s.cores||[]).map(c=>({...c}));
+ if(mode==='watch'){
+  /* E35 REPAIR (loadState drops the engine): restore the council agents from
+     the save (FE.loadAgent hydrates Elo/weights from the store) and the
+     rotation cursor, so a loaded WATCH save resumes engine decisions and
+     records exactly one match. Traces restart empty — only post-load
+     decisions are recorded. Old saves without feA/feB leave the riders on
+     built-in persona logic, as before. */
+  feTracesA=[]; feTracesB=[]; feRecorded=false;
+  feAgentA=null; feAgentB=null;
+  if(FE&&s.feA&&s.feB){
+   try{ feAgentA=FE.loadAgent(s.feA); feAgentB=FE.loadAgent(s.feB); }catch(e){ feAgentA=null; feAgentB=null; }
+  }
+  if(typeof s.feWatchIdx==='number'&&isFinite(s.feWatchIdx)&&s.feWatchIdx>=0){ feWatchIdx=s.feWatchIdx; feSaveWatchIdx(); }
+  if(riders.length===2){ riders[0].feAgent=feAgentA; riders[1].feAgent=feAgentB; }
+ }
+ paused=false; showPauseOverlay(false);
+ if(mode==='watch'){ watchFeed=[]; if(riders.length===2) watchLog(riders[0].name+' vs '+riders[1].name+' — state loaded','#ffd75e'); }
+ refreshModeBtns();
+ document.getElementById('msg').textContent='State loaded — wave '+wave+' · score '+score+' · lives '+lives+' · '+p1Wins+'—'+p2Wins;
+ return true;
+}
+const _resumeBtn=document.getElementById('resumeBtn'); if(_resumeBtn) _resumeBtn.onclick=()=>{ if(phase==='play'||phase==='roundEnd'){ paused=false; showPauseOverlay(false); document.getElementById('msg').textContent='Sky live. Tap flap in rhythm — higher lance wins.'; } };
+const _saveBtn=document.getElementById('saveBtn'); if(_saveBtn) _saveBtn.onclick=()=>{ const ok=saveState(); document.getElementById('msg').textContent= ok?'💾 State saved — START menu → Load State brings this exact moment back.':'Save works mid-flight only — press Play first.'; };
+const _loadBtn=document.getElementById('loadBtn'); if(_loadBtn) _loadBtn.onclick=()=>{ const ok=loadState(); if(!ok) document.getElementById('msg').textContent='No saved state yet — save one from the START menu mid-flight first.'; };
+const _restartBtn=document.getElementById('restartBtn'); if(_restartBtn) _restartBtn.onclick=()=>{ paused=false; showPauseOverlay(false); reset(); };
+const _quitArcadeBtn=document.getElementById('quitArcadeBtn'); if(_quitArcadeBtn) _quitArcadeBtn.onclick=()=>{ location.href='../arcade.html'; };
+
+/* ---------------- core (egg) logic + duels + terror ---------------- */
+function stepCores(){
+ for(const c of cores){
+   c.hatch--; c.grace=Math.max(0,(c.grace||0)-1);
+   const prevY=c.y;
+   c.vy=Math.min(c.vy+0.3,6); c.y+=c.vy;
+   collideLedges(c,prevY);
+   if(c.y+c.r>FLOOR_Y){ c.y=FLOOR_Y-c.r; c.vy=-4.5; c.grounded=false; } /* the Maw spits cores back up — they hop until banked or hatched */
+   /* hatch back stronger */
+   if(c.hatch<=0){
+     const idx=cores.indexOf(c); if(idx>=0) cores.splice(idx,1);
+     const skill=Math.min((c.skill||0.8)+0.15,1.4);
+     /* in waves a hatched core returns as a bot (a lost player core comes back
+        as SHADE, a phantom); in a duel it is the same rider, faster. */
+     const isBot= mode==='waves'? true : c.fromBot;
+     const persona= mode==='waves'? (c.persona||pickPersona(null)) : c.persona;
+     const name= (mode==='waves'&&!c.fromBot)? 'SHADE' : c.owner;
+     const color= name==='SHADE'? '#b26bff' : c.color;
+     const nr=mkRider(name,color,c.x,Math.max(60,c.y-40),isBot,persona,skill);
+     nr.hatched=(c.hatched||0)+1; nr.invuln=90;
+     riders.push(nr);
+     spawnBurst(c.x,c.y,c.color,18,4); spawnRing(c.x,c.y,c.color,52); /* L3: hatch bursts */
+     if(mode==='watch') watchLog('core hatched — '+name+' back, FASTER','#ff9d3d');
+     say('LOOM','A core hatched — '+name+' is back, FASTER. Bank cores, don\'t admire them.');
+   }
+ }
+ /* collection: in waves only AERIS banks cores (+150); in a duel/watch either
+    rider can bank a rival core — and that wins the round. */
+ for(let i=cores.length-1;i>=0;i--){ const c=cores[i];
+   if(c.grace>0) continue; /* fresh cores cannot be banked yet */
+   for(const r of riders){ if(!r.alive) continue;
+     if(mode==='waves' && r!==riders[0]) continue;
+     if(Math.hypot(r.x-c.x,r.y-c.y)<r.r+c.r+4){
+       cores.splice(i,1); score+=150;
+       spawnBurst(c.x,c.y,'#ffd75e',14,3.5); spawnRing(c.x,c.y,'#ffd75e',40); /* L3: bank sparkle */
+       if(mode==='waves') say('LOOM', c.owner===r.name?'Core recovered — +150.':'Core banked — +150. The sky pays the quick.');
+       else { if(c.owner!==r.name){ r.wins++; if(r===riders[0])p1Wins++; else p2Wins++;
+           say('LOOM',r.name+' banked '+c.owner+'\'s core — round '+roundNum+' won.');
+           if(mode==='watch') watchLog(r.name+' banks '+c.owner+'\'s core — round '+roundNum,r.color);
+           endRound(r); }
+         else { say('LOOM',r.name+' recovered their own core — +150.');
+           if(mode==='watch') watchLog(r.name+' recovers their own core +150',r.color); } }
+       break; } }
+ }
+}
+function resolveDuels(){
+ for(let i=0;i<riders.length;i++) for(let j=i+1;j<riders.length;j++){
+   const a=riders[i], b=riders[j];
+   if(!a.alive||!b.alive||a.invuln>0||b.invuln>0) continue;
+   if(a.duelCD>0||b.duelCD>0) continue;
+   const d=Math.hypot(a.x-b.x,a.y-b.y);
+   if(d<a.r+b.r-2){
+     const dy=a.y-b.y; /* lance-tip height: smaller y = higher lance */
+     if(Math.abs(dy)<7){ /* equal height — both bounce off */
+       const sgn=a.x<b.x?-1:1;
+       a.vx=-2.2*sgn; b.vx=2.2*sgn; a.vy=-1.5; b.vy=-1.5;
+       a.duelCD=20; b.duelCD=20;
+       say('LOOM','Lances clash — dead even. Both riders bounce clear.');
+     } else {
+       const winner= dy<0? a:b, loser= dy<0? b:a;
+       winner.vy=-2; winner.duelCD=30;
+       say('LOOM',winner.name+' rides HIGH — '+loser.name+' bursts into a core!');
+       killRider(loser,'duel');
+       if(mode==='watch') watchLog(winner.name+' rides HIGH — '+loser.name+' bursts',winner.color);
+     }
+   }
+ }
+}
+function stepTerror(){
+ const limit= mode==='waves'? waveT : roundT;
+ if(!terror && limit>terrorAt){
+   const target= mode==='waves'? riders[0] : (riders[0].alive?riders[0]:riders[1]);
+   terror={x:-60,dir:1,y:clamp((target?target.y:200),90,420),t:0,passes:0};
+   if(mode==='watch') watchLog('⚡ THE GALE sweeps in','#ffd75e');
+   say('LOOM','⚡ THE GALE IS HERE — a storm-wyrm hunts the slow. Move or burst.');
+   banner='⚡ THE GALE ⚡'; bannerT=60*2;
+ }
+ if(terror){
+   terror.t++; terror.x+=terror.dir*4.4;
+   terror.y+=Math.sin(terror.t/18)*1.6;
+   if(terror.x>W+80){ terror.passes++; terror.dir=-1; terror.x=W+80; }
+   if(terror.x<-80){ terror.passes++; terror.dir=1; terror.x=-80; }
+   for(const r of riders){ if(!terror) break; /* killRider can reset the round (double-down) which clears terror mid-loop */
+     if(r.alive&&r.invuln<=0&&Math.hypot(r.x-terror.x,r.y-terror.y)<34){ killRider(r,'terror'); } }
+   /* E29: killRider can reset the round (double-down) which clears terror —
+      guard the read so the GALE's exit check never throws on a null terror. */
+   if(terror&&terror.passes>=2){ terror=null; terrorReturn=30*60;
+     if(mode==='waves') waveT=terrorAt-terrorReturn; else roundT=terrorAt-terrorReturn;
+     say('LOOM','The GALE dives back into the storm — for now. Finish the wave.'); }
+ }
+}
+
+/* ---------------- main step ---------------- */
+function humanInput(idx){
+ if(mode==='duel'&&idx===1){
+   return {left:!!(keys.ArrowLeft), right:!!(keys.ArrowRight),
+     flap: !!(keys.ArrowUp), dive:!!(keys.ArrowDown)};
+ }
+ return {left:!!(keys.KeyA||keys.ArrowLeft||touch.left||pad.x<-0.3),
+   right:!!(keys.KeyD||keys.ArrowRight||touch.right||pad.x>0.3),
+   flap: !!(keys.KeyW||keys.Space||touch.flap||touch.up)||flapBuf>0,
+   dive:!!(keys.KeyS||keys.ArrowDown||touch.dive||pad.dive)};
+}
+function step(){
+ pollPad();
+ if(paused) return;
+ if(phase==='cutscene'){ /* the intro comic plays: typewriter advances, world frozen */
+   if(cutscene){ cutscene.t++;
+     const P=cutscene.panels[cutscene.idx];
+     if(P) cutscene.shown=Math.min(P.text.length,cutscene.shown+1); }
+   return; }
+ if(phase==='over'){
+   if(mode==='watch'){ watchRematchT++;
+     if(watchRematchT>60*4){ watchRematchT=0; startDuel('watch'); } }
+   return;
+ }
+ if(phase!=='play'&&phase!=='roundEnd') return;
+ flapBuf=Math.max(0,flapBuf-1);
+ if(phase==='roundEnd'){ bannerT=Math.max(0,bannerT-1);
+   if(bannerT<=0){ if(p1Wins>=3||p2Wins>=3){ phase='over'; } else { resetRoundPositions(); phase='play'; } }
+   return; }
+ waveT++; roundT++;
+ if(bannerT>0)bannerT--;
+ /* respawn timer (1P) */
+ const p=riders[0];
+ if(mode==='waves'&&!p.alive&&p.respawnT!==undefined){
+   p.respawnT--;
+   if(p.respawnT<=0&&lives>0) respawnPlayer();
+ }
+ for(let i=0;i<riders.length;i++){ const r=riders[i];
+   if(!r.alive) continue;
+   const inp= r.isBot? botInput(r) : humanInput(i);
+   stepRider(r,inp);
+ }
+ resolveDuels();
+ stepCores();
+ stepTerror();
+ /* wave clear: no live enemies and no cores left */
+ if(mode==='waves'&&phase==='play'){
+   const foes=riders.filter(r=>r!==riders[0]&&r.alive);
+   if(foes.length===0&&cores.length===0&&riders[0].alive){
+     score+=500+100*wave;
+     say('LOOM','Wave '+wave+' clear — bonus '+(500+100*wave)+'.');
+     riders=riders.filter(r=>r===riders[0]); nextWave();
+   }
+ }
+}
+
+/* ---------------- drawing ---------------- */
+function drawLedge(L){
+ /* L4 RICHNESS: floating sky-island — textured stone, not a flat slab.
+    Strata + speckle on the tapered underside, sheen + moss + chips on the top slab. */
+ const seed=Math.round(L.x+L.y);
+ ctx.fillStyle='#0a141f';
+ ctx.beginPath(); ctx.moveTo(L.x+4,L.y+L.h); ctx.lineTo(L.x+L.w-4,L.y+L.h);
+ ctx.lineTo(L.x+L.w*0.64,L.y+L.h+24); ctx.lineTo(L.x+L.w*0.36,L.y+L.h+24); ctx.closePath(); ctx.fill();
+ /* rock strata — two seams following the taper, + speckle pitting */
+ ctx.strokeStyle='rgba(120,170,200,.22)'; ctx.lineWidth=1;
+ ctx.beginPath();
+ ctx.moveTo(L.x+10,L.y+L.h+8); ctx.lineTo(L.x+L.w*0.62,L.y+L.h+8);
+ ctx.moveTo(L.x+16,L.y+L.h+15); ctx.lineTo(L.x+L.w*0.58,L.y+L.h+15);
+ ctx.stroke();
+ for(let i=0;i<7;i++){ const px=L.x+12+hs(seed+i*3)*Math.max(20,L.w-24),
+       py=L.y+L.h+4+hs(seed+i*7)*16;
+   ctx.fillStyle='rgba(150,200,230,'+(0.10+hs(seed+i*11)*0.14).toFixed(2)+')';
+   ctx.fillRect(px,py,2,2); }
+ /* hanging root strands + one pebble caught in a strand */
+ ctx.strokeStyle='rgba(0,240,255,.18)'; ctx.lineWidth=1.5;
+ ctx.beginPath();
+ ctx.moveTo(L.x+L.w*0.3,L.y+L.h+2); ctx.lineTo(L.x+L.w*0.3-4,L.y+L.h+18);
+ ctx.moveTo(L.x+L.w*0.7,L.y+L.h+2); ctx.lineTo(L.x+L.w*0.7+4,L.y+L.h+16);
+ ctx.moveTo(L.x+L.w*0.5,L.y+L.h+2); ctx.lineTo(L.x+L.w*0.5+2,L.y+L.h+13);
+ ctx.stroke();
+ ctx.fillStyle='rgba(0,240,255,.35)'; ctx.fillRect(L.x+L.w*0.5,L.y+L.h+13,2,2);
+ /* top slab: sheen gradient, speckle, moss tint at the ends, chipped front edge */
+ const sheen=ctx.createLinearGradient(L.x,L.y,L.x,L.y+L.h);
+ sheen.addColorStop(0,'rgba(200,240,255,0.10)'); sheen.addColorStop(1,'rgba(0,0,0,0.25)');
+ ctx.fillStyle='#0d1a26'; ctx.fillRect(L.x,L.y,L.w,L.h);
+ ctx.fillStyle=sheen; ctx.fillRect(L.x,L.y,L.w,L.h);
+ for(let i=0;i<6;i++){ const px=L.x+8+hs(seed+40+i*5)*Math.max(16,L.w-16);
+   ctx.fillStyle='rgba(180,220,255,'+(0.08+hs(seed+60+i)*0.10).toFixed(2)+')';
+   ctx.fillRect(px,L.y+4+hs(seed+80+i)*6,2,2); }
+ ctx.fillStyle='rgba(0,255,136,0.10)';
+ ctx.fillRect(L.x+2,L.y+L.h-3,18+hs(seed)*20,3);
+ ctx.fillRect(L.x+L.w-20-hs(seed+3)*18,L.y+L.h-3,18+hs(seed+3)*14,3);
+ ctx.fillStyle='#0a141f'; /* chips bitten out of the front lip */
+ ctx.fillRect(L.x+hs(seed+9)*L.w*0.5,L.y+L.h-2,4,2);
+ ctx.fillRect(L.x+L.w*0.6+hs(seed+12)*L.w*0.3,L.y+L.h-2,3,2);
+ ctx.fillStyle='rgba(0,240,255,.55)'; ctx.fillRect(L.x,L.y,L.w,2);
+ ctx.fillStyle='rgba(0,240,255,.14)'; ctx.fillRect(L.x,L.y+2,L.w,2);
+}
+/* --- L1 STRUCTURE background layers (screen space, drawn before the world) --- */
+function drawFarSkyline(){
+ /* ruined skyline along the horizon + floating islets high above */
+ ctx.fillStyle='#0a1622';
+ let x=-20;
+ for(let i=0;i<16;i++){ const w=30+hs(i)*70, h=30+hs(i+50)*90;
+   ctx.fillRect(x,FLOOR_Y-h,w,h);
+   ctx.beginPath(); ctx.moveTo(x,FLOOR_Y-h); ctx.lineTo(x+w*0.5,FLOOR_Y-h-8-hs(i+9)*10); ctx.lineTo(x+w,FLOOR_Y-h); ctx.closePath(); ctx.fill();
+   /* L4 RICHNESS: pale lit edge on the moon-facing side + antenna mast on some towers */
+   ctx.fillStyle='rgba(190,225,255,0.10)'; ctx.fillRect(x+w-2,FLOOR_Y-h,2,h);
+   if(hs(i+41)>0.6){ ctx.strokeStyle='rgba(190,225,255,0.35)'; ctx.lineWidth=1;
+     ctx.beginPath(); ctx.moveTo(x+w*0.5,FLOOR_Y-h-8); ctx.lineTo(x+w*0.5,FLOOR_Y-h-22); ctx.stroke();
+     ctx.fillStyle='rgba(255,120,120,0.7)'; ctx.fillRect(x+w*0.5-1,FLOOR_Y-h-24,2,2); }
+   /* L2 LIFE: lit windows flicker gently, each on its own slow phase */
+   const nw=Math.floor(hs(i+77)*4);
+   for(let k=0;k<nw;k++){
+     const fl=0.28+0.30*(0.5+0.5*Math.sin(animT/47+i*2.3+k*1.7));
+     ctx.fillStyle='rgba(255,190,90,'+fl.toFixed(2)+')';
+     ctx.fillRect(x+6+hs(i*10+k)*Math.max(8,w-12), FLOOR_Y-h+10+hs(i*7+k)*Math.max(8,h-20), 3, 4); }
+   ctx.fillStyle='#0a1622';
+   /* L2 LIFE: blinking red beacon on the taller towers */
+   if(h>80 && hs(i+13)>0.55){
+     const bl=0.35+0.65*(0.5+0.5*Math.sin(animT/22+i*3.1));
+     ctx.fillStyle='rgba(255,56,96,'+bl.toFixed(2)+')';
+     ctx.beginPath(); ctx.arc(x+w*0.5,FLOOR_Y-h-12,2.5,0,7); ctx.fill();
+     ctx.fillStyle='#0a1622'; }
+   x+=w+8+hs(i+33)*30; }
+ /* floating islets drift/bob slowly on the wind */
+ for(let i=0;i<3;i++){ const ix=120+hs(i+500)*720+Math.sin(animT/480+i*2.1)*9,
+       iy=300+hs(i+600)*110+Math.cos(animT/640+i*1.4)*4, iw=40+hs(i+700)*50;
+   ctx.fillStyle='#0b1723';
+   ctx.beginPath(); ctx.moveTo(ix,iy); ctx.lineTo(ix+iw,iy); ctx.lineTo(ix+iw*0.6,iy+16); ctx.lineTo(ix+iw*0.4,iy+16); ctx.closePath(); ctx.fill();
+   /* L4 RICHNESS: rock strata + speckle on the drifting islet */
+   ctx.strokeStyle='rgba(120,170,200,.25)'; ctx.lineWidth=1;
+   ctx.beginPath(); ctx.moveTo(ix+iw*0.15,iy+6); ctx.lineTo(ix+iw*0.85,iy+6); ctx.stroke();
+   ctx.fillStyle='rgba(150,200,230,0.2)'; ctx.fillRect(ix+iw*0.3,iy+9,2,2); ctx.fillRect(ix+iw*0.6,iy+11,2,2);
+   const wl=0.35+0.3*(0.5+0.5*Math.sin(animT/55+i*2.7));
+   ctx.fillStyle='rgba(255,190,90,'+wl.toFixed(2)+')'; ctx.fillRect(ix+iw*0.45,iy-8,3,4); }
+}
+function drawClouds(){
+ /* L2 LIFE: clouds drift on the wind — far banks slow, near banks faster (parallax) */
+ for(let i=0;i<5;i++){ const cw=90+hs(i+950)*130, sp=0.05+hs(i+970)*0.08,
+       span=W+2*cw, cy=90+hs(i+900)*330,
+       cx=((hs(i+800)*W+animT*sp)%span+span)%span-cw;
+   ctx.fillStyle='rgba(170,215,255,0.06)';
+   ctx.beginPath(); ctx.ellipse(cx,cy,cw,16,0,0,7); ctx.fill();
+   ctx.beginPath(); ctx.ellipse(cx+cw*0.4,cy+8,cw*0.6,12,0,0,7); ctx.fill();
+   ctx.beginPath(); ctx.ellipse(cx-cw*0.4,cy+6,cw*0.55,11,0,0,7); ctx.fill(); }
+ /* near layer: darker, lower, faster — slides in front of the skyline */
+ for(let i=0;i<3;i++){ const cw=120+hs(i+1200)*160, sp=0.22+hs(i+1250)*0.12,
+       span=W+2*cw, cy=380+hs(i+1300)*90,
+       cx=((hs(i+1100)*W+animT*sp)%span+span)%span-cw;
+   ctx.fillStyle='rgba(140,190,225,0.09)';
+   ctx.beginPath(); ctx.ellipse(cx,cy,cw,20,0,0,7); ctx.fill();
+   ctx.beginPath(); ctx.ellipse(cx+cw*0.35,cy+9,cw*0.6,14,0,0,7); ctx.fill(); }
+}
+function drawPillars(){
+ /* L4 RICHNESS: broken sky-temple pillars — chipped tops, cracks, rune bands,
+    weathered stone, not flat columns. */
+ for(const px of [8,930]){ const seed=px<100?7:21;
+   ctx.fillStyle='#0b1520'; ctx.fillRect(px,40,22,FLOOR_Y-40);
+   /* chipped, uneven top — the pillar is broken, not cut */
+   ctx.fillStyle='#04060a';
+   ctx.beginPath(); ctx.moveTo(px,40); ctx.lineTo(px+6,48); ctx.lineTo(px+13,42); ctx.lineTo(px+22,40); ctx.closePath(); ctx.fill();
+   ctx.fillStyle='rgba(0,240,255,.35)'; ctx.fillRect(px+(px<100?19:0),40,2,FLOOR_Y-40);
+   /* pale stone edge on the sky-facing side */
+   ctx.fillStyle='rgba(180,220,255,.14)'; ctx.fillRect(px+(px<100?0:20),44,1,FLOOR_Y-48);
+   /* cracks running down the shaft */
+   ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=1;
+   ctx.beginPath();
+   ctx.moveTo(px+6,90); ctx.lineTo(px+10,150); ctx.lineTo(px+7,210);
+   ctx.moveTo(px+16,300); ctx.lineTo(px+13,360); ctx.lineTo(px+17,420);
+   ctx.stroke();
+   /* speckle pitting on the stone */
+   for(let i=0;i<8;i++){ const py=60+hs(seed+i*5)*(FLOOR_Y-100);
+     ctx.fillStyle='rgba(160,200,230,'+(0.06+hs(seed+i*9)*0.10).toFixed(2)+')';
+     ctx.fillRect(px+3+hs(seed+i*13)*14,py,2,2); }
+   /* rune band: a carved glyph row between the breathing dots */
+   ctx.strokeStyle='rgba(0,240,255,.30)'; ctx.lineWidth=1;
+   ctx.strokeRect(px+3,262,16,26);
+   for(let i=0;i<3;i++){ ctx.fillStyle='rgba(0,240,255,.45)';
+     ctx.fillRect(px+6+i*4,268,2,14); }
+   /* L2 LIFE: rune dots breathe */
+   for(let i=0;i<3;i++){
+     const ra=0.25+0.4*(0.5+0.5*Math.sin(animT/38+i*1.9+(px<100?0:2.4)));
+     ctx.fillStyle='rgba(0,240,255,'+ra.toFixed(2)+')';
+     ctx.fillRect(px+8,120+i*140,6,10); }
+   /* base shadow where the pillar meets the dark */
+   ctx.fillStyle='rgba(0,0,0,.4)'; ctx.fillRect(px-2,FLOOR_Y-6,26,6); }
+}
+/* --- L2 LIFE: ambient particles + drifting fog (screen space, drawn over the world, under the HUD) --- */
+function drawMotes(){
+ /* 56 motes: cool sky-dust high up, warm embers rising off the Maw low down */
+ for(let i=0;i<56;i++){
+   const bx=hs(i+4000)*W, by=hs(i+5000)*H,
+         rise=0.12+hs(i+6000)*0.30, sway=Math.sin(animT/52+i*1.3)*7,
+         y=((by-animT*rise)%H+H)%H,
+         x=((bx+sway)%W+W)%W,
+         tw=0.35+0.65*(0.5+0.5*Math.sin(animT/30+i*2.2));
+   const ember=(i%3===0);
+   ctx.fillStyle= ember? 'rgba(255,150,60,'+(0.55*tw).toFixed(2)+')'
+                        : 'rgba(170,220,255,'+(0.45*tw).toFixed(2)+')';
+   const s=ember?3:2.5;
+   ctx.fillRect(x,y,s,s); }
+}
+function drawFog(){
+ /* two wide, faint fog banks sliding slowly across the mid-sky */
+ for(let i=0;i<2;i++){
+   const fw=300+hs(i+7000)*160, span=W+2*fw,
+         fx=((hs(i+7100)*W+animT*(0.10+i*0.05))%span+span)%span-fw,
+         fy=400+i*52+Math.sin(animT/300+i*2)*6;
+   ctx.fillStyle='rgba(170,200,230,0.07)';
+   ctx.beginPath(); ctx.ellipse(fx,fy,fw,24,0,0,7); ctx.fill(); }
+}
+/* --- CHARACTER KITS: one distinct silhouette + headgear per rider (no gameplay change) --- */
+const KITS={
+ AERIS:{wing:'swept', helm:'crest',  fin:'dart',   ring:false},
+ VEX:  {wing:'jagged',helm:'horns',  fin:'spike',  ring:false},
+ ORBIT:{wing:'round', helm:'halo',   fin:'orb',    ring:true},
+ HALO: {wing:'broad', helm:'halo',   fin:'feather',ring:true},
+ NOVA: {wing:'ember', helm:'mohawk', fin:'flame',  ring:false},
+};
+function riderKit(r){ return KITS[r.persona] || (r.name==='AERIS'?KITS.AERIS:KITS.NOVA); }
+/* lighten (f>0) / darken (f<0) a #rrggbb colour — hull shading + rim light */
+function shade(hex,f){
+ const n=parseInt(hex.slice(1),16), r=n>>16, g=(n>>8)&255, b=n&255;
+ const m=v=>Math.max(0,Math.min(255,Math.round(f>=0? v+(255-v)*f : v*(1+f))));
+ return 'rgb('+m(r)+','+m(g)+','+m(b)+')';
+}
+function wingPath(kit,tipX,tipY){
+ ctx.beginPath();
+ if(kit.wing==='jagged'){ /* VEX: notched trailing edge */
+   ctx.moveTo(2,-4); ctx.lineTo(tipX,tipY); ctx.lineTo(tipX+8,tipY+8);
+   ctx.lineTo(tipX+16,tipY+2); ctx.lineTo(-4,-2);
+ } else if(kit.wing==='round'){ /* ORBIT: short rounded wing */
+   ctx.moveTo(4,-3); ctx.quadraticCurveTo(-8,-8-tipY*0.3, tipX,tipY);
+   ctx.quadraticCurveTo(tipX+6,tipY+9, -2,-1);
+ } else if(kit.wing==='broad'){ /* HALO: wide double wing */
+   ctx.moveTo(4,-4); ctx.lineTo(tipX-4,tipY-4); ctx.lineTo(tipX+2,tipY+6); ctx.lineTo(-2,-1);
+   ctx.moveTo(6,-2); ctx.lineTo(tipX+6,tipY+8); ctx.lineTo(tipX+12,tipY+12); ctx.lineTo(2,0);
+ } else if(kit.wing==='ember'){ /* NOVA: flame-notched wing */
+   ctx.moveTo(2,-4); ctx.lineTo(tipX,tipY); ctx.lineTo(tipX+7,tipY+10);
+   ctx.lineTo(tipX+13,tipY+3); ctx.lineTo(tipX+19,tipY+9); ctx.lineTo(-4,-2);
+ } else { /* AERIS swept */
+   ctx.moveTo(4,-4); ctx.lineTo(tipX,tipY); ctx.lineTo(tipX+9,tipY+8); ctx.lineTo(-2,-1);
+ }
+ ctx.closePath();
+}
+function drawWing(kit,far,wa,color){
+ /* CHAR2 SPRITE STACK: the wing is a stack of plate slices stepping DOWN
+    from the lit top plate — dark core at the bottom, mid plate, lit deck —
+    so the wing has extruded thickness instead of one flat cutout. The far
+    wing is the same stack, darker and lower. */
+ const tipX=-14-Math.cos(wa)*16, tipY=-8-Math.sin(wa)*22;
+ if(far){
+   const fs=[[-0.82,4.8],[-0.66,3.2],[-0.48,1.6]];
+   for(const [f,dy] of fs){ ctx.save(); ctx.translate(0,dy); ctx.fillStyle=shade(color,f); wingPath(kit,tipX,tipY); ctx.fill(); ctx.restore(); }
+   return;
+ }
+ const slices=[[-0.62,4.6],[-0.38,3.1],[-0.14,1.6]];
+ for(const [f,dy] of slices){ ctx.save(); ctx.translate(0,dy); ctx.fillStyle=shade(color,f); wingPath(kit,tipX,tipY); ctx.fill(); ctx.restore(); }
+ const g=ctx.createLinearGradient(0,-26,0,0);
+ g.addColorStop(0,shade(color,0.5)); g.addColorStop(1,shade(color,-0.08));
+ ctx.fillStyle=g; wingPath(kit,tipX,tipY); ctx.fill();
+ /* plate seams across the lit deck: two chord lines split the wing into
+    armoured feather-plates, each with a dark seam + pale lower lip */
+ ctx.lineWidth=1;
+ for(const t of [0.38,0.68]){
+   const sx=4+(tipX-4)*t, sy=-4+(tipY+4)*t;
+   ctx.strokeStyle='rgba(0,0,0,0.45)';
+   ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx+7,sy+8); ctx.stroke();
+   ctx.strokeStyle='rgba(255,255,255,0.30)';
+   ctx.beginPath(); ctx.moveTo(sx+1,sy+1); ctx.lineTo(sx+8,sy+9); ctx.stroke();
+ }
+ /* dramatic rim light on the leading edge, in the rider's colour */
+ ctx.strokeStyle=shade(color,0.85); ctx.lineWidth=2; ctx.lineCap='round';
+ ctx.shadowColor=color; ctx.shadowBlur=7;
+ ctx.beginPath(); ctx.moveTo(4,-4); ctx.lineTo(tipX,tipY); ctx.stroke(); ctx.shadowBlur=0;
+ ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1;
+ ctx.beginPath(); ctx.moveTo(-2,-4); ctx.lineTo(tipX+4,tipY+4); ctx.stroke();
+}
+function drawRider(r){
+ const kit=riderKit(r);
+ const bob=r.grounded?0:Math.sin(frame/9+r.x*0.01)*1.5;
+ const tilt=clamp(r.vy*0.025,-0.35,0.4);
+ /* wing beat: big sweep just after a flap, gentle hover shimmer otherwise, folded on a ledge */
+ const flapBoost=(r.flapCD>FLAP_CD-6)? (r.flapCD-(FLAP_CD-6))/6 : 0;
+ let wa=0.55+Math.sin(frame/7+r.x*0.01)*0.12+flapBoost*0.5;
+ if(r.grounded) wa*=0.4;
+ /* L3 LIGHT & JUICE: ground contact shadow + rider-colour light pool on the surface
+    below — drawn in world space (before the rider's own transform), shrinking and
+    fading as the rider climbs away from the surface. */
+ const gy=groundBelow(r), gdist=Math.max(0,gy-(r.y+r.r));
+ const shA=clamp(0.40-gdist*0.0011,0.06,0.40), shW=clamp(22-gdist*0.03,8,22);
+ ctx.fillStyle='rgba(0,0,0,'+shA.toFixed(2)+')';
+ ctx.beginPath(); ctx.ellipse(r.x,gy+3,shW,5,0,0,7); ctx.fill();
+ const pool=ctx.createRadialGradient(r.x,gy,2,r.x,gy,34);
+ pool.addColorStop(0,hexA(r.color,0.10)); pool.addColorStop(1,hexA(r.color,0));
+ ctx.fillStyle=pool; ctx.beginPath(); ctx.arc(r.x,gy,34,0,7); ctx.fill();
+ ctx.save(); ctx.translate(r.x,r.y+bob);
+ if(r.invuln>0 && Math.floor(frame/6)%2===0) ctx.globalAlpha=0.45;
+ ctx.scale(r.dir,1); ctx.rotate(tilt);
+ /* ---- scarf: CHAR2 layered ribbon slices — dark under-ribbon, mid ribbon,
+    lit top ribbon, each offset so the scarf reads as folded cloth ---- */
+ const fl=Math.sin(frame/5+r.x*0.02)*3;
+ const scarfC=kit.scarf||r.color;
+ ctx.lineCap='round';
+ ctx.strokeStyle=shade(scarfC,-0.62); ctx.lineWidth=5.5;
+ ctx.beginPath(); ctx.moveTo(-6,-12.5);
+ ctx.quadraticCurveTo(-16,-12+fl,-27,-8.5+fl*1.6); ctx.stroke();
+ ctx.strokeStyle=shade(scarfC,-0.28); ctx.lineWidth=4;
+ ctx.beginPath(); ctx.moveTo(-6,-14);
+ ctx.quadraticCurveTo(-16,-14+fl,-27,-10+fl*1.6); ctx.stroke();
+ ctx.strokeStyle=shade(scarfC,0.35); ctx.lineWidth=2;
+ ctx.beginPath(); ctx.moveTo(-6,-15.5);
+ ctx.quadraticCurveTo(-15,-15.5+fl,-25,-12+fl*1.6); ctx.stroke();
+ ctx.fillStyle=shade(scarfC,-0.35); ctx.beginPath(); ctx.arc(-6,-13,3.6,0,7); ctx.fill();
+ ctx.fillStyle=r.color; ctx.beginPath(); ctx.arc(-6,-14.5,2.8,0,7); ctx.fill(); /* scarf knot at the neck */
+ /* ---- far wing (dark, behind hull) ---- */
+ drawWing(kit,true,wa,r.color);
+ /* CHAR2 SPRITE STACK: extruded hull slices below the detailed top — five
+    silhouette layers stepping down from mid-tone to a near-black core give
+    the steed real body thickness instead of a flat side-profile cutout,
+    finished by a dark keel blade under the belly. */
+ for(let k=5;k>=1;k--){ ctx.save(); ctx.translate(0,k*1.55);
+   ctx.fillStyle=shade(r.color,-0.86+k*0.11);
+   ctx.beginPath();
+   if(kit.fin==='orb'){ ctx.ellipse(0,2,20,10,0,0,7); }
+   else if(kit.fin==='spike'){ ctx.moveTo(-20,7); ctx.lineTo(-14,-7); ctx.lineTo(6,-9); ctx.lineTo(24,-1); ctx.lineTo(16,7); ctx.lineTo(-4,11); }
+   else { ctx.moveTo(-20,6); ctx.quadraticCurveTo(-22,-4,-8,-8); ctx.quadraticCurveTo(8,-10,22,-2);
+     ctx.quadraticCurveTo(26,2,18,6); ctx.quadraticCurveTo(0,12,-20,6); }
+   ctx.closePath(); ctx.fill(); ctx.restore(); }
+ /* keel blade: the darkest slice, a thin fin under the hull's belly */
+ ctx.fillStyle=shade(r.color,-0.8);
+ ctx.beginPath(); ctx.moveTo(-10,11); ctx.lineTo(8,11); ctx.lineTo(2,16); ctx.lineTo(-5,15); ctx.closePath(); ctx.fill();
+ ctx.strokeStyle=shade(r.color,0.3); ctx.lineWidth=1;
+ ctx.beginPath(); ctx.moveTo(-5,15); ctx.lineTo(2,16); ctx.stroke();
+ /* ---- steed hull: shaded gradient, kit nose ---- */
+ const hull=ctx.createLinearGradient(0,-10,0,12);
+ hull.addColorStop(0,shade(r.color,0.55)); hull.addColorStop(0.45,r.color); hull.addColorStop(1,shade(r.color,-0.55));
+ ctx.fillStyle=hull;
+ ctx.beginPath();
+ if(kit.fin==='orb'){ ctx.ellipse(0,2,20,10,0,0,7); }
+ else if(kit.fin==='spike'){ ctx.moveTo(-20,7); ctx.lineTo(-14,-7); ctx.lineTo(6,-9); ctx.lineTo(24,-1); ctx.lineTo(16,7); ctx.lineTo(-4,11); }
+ else { ctx.moveTo(-20,6); ctx.quadraticCurveTo(-22,-4,-8,-8); ctx.quadraticCurveTo(8,-10,22,-2);
+   ctx.quadraticCurveTo(26,2,18,6); ctx.quadraticCurveTo(0,12,-20,6); }
+ ctx.closePath(); ctx.fill();
+ /* rim light along the hull's top edge, in the rider's colour */
+ ctx.strokeStyle=shade(r.color,0.85); ctx.lineWidth=2; ctx.lineCap='round';
+ ctx.shadowColor=r.color; ctx.shadowBlur=8;
+ ctx.beginPath();
+ if(kit.fin==='orb'){ ctx.ellipse(0,2,20,10,0,Math.PI*1.15,Math.PI*1.9); }
+ else if(kit.fin==='spike'){ ctx.moveTo(-14,-7); ctx.lineTo(6,-9); ctx.lineTo(24,-1); }
+ else { ctx.moveTo(-8,-8); ctx.quadraticCurveTo(8,-10,22,-2); }
+ ctx.stroke(); ctx.shadowBlur=0;
+ /* L4 RICHNESS: hull panel seams + rivets — the steed is built, not moulded */
+ ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1;
+ ctx.beginPath();
+ ctx.moveTo(-6,-8); ctx.quadraticCurveTo(-4,0,-6,10);
+ ctx.moveTo(8,-9); ctx.quadraticCurveTo(10,0,8,10);
+ ctx.stroke();
+ ctx.fillStyle='rgba(255,255,255,0.5)';
+ ctx.fillRect(-14,-2,1.5,1.5); ctx.fillRect(2,-4,1.5,1.5); ctx.fillRect(14,2,1.5,1.5);
+ /* CHAR2 deck plates: two stacked armour plates riding the hull's spine —
+    a dark under-plate offset down, a lit top plate with a centre seam and
+    rivet row, so the deck reads as layered plating, not a painted gradient */
+ ctx.fillStyle=shade(r.color,-0.45);
+ ctx.beginPath(); ctx.moveTo(-13,-6); ctx.quadraticCurveTo(0,-11,15,-5); ctx.lineTo(13,-1); ctx.quadraticCurveTo(0,-6,-11,-2); ctx.closePath(); ctx.fill();
+ ctx.fillStyle=shade(r.color,0.28);
+ ctx.beginPath(); ctx.moveTo(-13,-7.5); ctx.quadraticCurveTo(0,-12.5,15,-6.5); ctx.lineTo(13,-3); ctx.quadraticCurveTo(0,-8,-11,-3.5); ctx.closePath(); ctx.fill();
+ ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=1;
+ ctx.beginPath(); ctx.moveTo(-11,-6); ctx.quadraticCurveTo(0,-10,13,-4.5); ctx.stroke();
+ ctx.fillStyle='rgba(255,255,255,0.65)';
+ ctx.fillRect(-8,-8,1.4,1.4); ctx.fillRect(1,-9.5,1.4,1.4); ctx.fillRect(9,-7,1.4,1.4);
+ /* ---- near wing (bright, over the hull's top) ---- */
+ ctx.save(); ctx.globalAlpha*=0.9; drawWing(kit,false,wa,r.color); ctx.restore();
+ /* ---- tail fin per kit ---- */
+ /* L4 RICHNESS: a second, darker fin layer behind the main fin */
+ ctx.fillStyle=shade(r.color,-0.5);
+ ctx.beginPath(); ctx.moveTo(-16,4); ctx.lineTo(-25,-2); ctx.lineTo(-19,9); ctx.closePath(); ctx.fill();
+ ctx.fillStyle=shade(r.color,-0.25);
+ ctx.beginPath();
+ if(kit.fin==='feather'){ ctx.moveTo(-18,2); ctx.lineTo(-28,-6); ctx.lineTo(-24,4); ctx.lineTo(-30,2); ctx.lineTo(-18,8); }
+ else if(kit.fin==='flame'){ ctx.moveTo(-18,2); ctx.lineTo(-27,-4); ctx.lineTo(-24,2); ctx.lineTo(-29,0); ctx.lineTo(-18,8); }
+ else if(kit.fin==='orb'){ ctx.moveTo(-18,0); ctx.lineTo(-26,-2); ctx.lineTo(-18,7); }
+ else { ctx.moveTo(-18,1); ctx.lineTo(-27,-7); ctx.lineTo(-20,6); }
+ ctx.closePath(); ctx.fill();
+ /* ---- engine glow at the tail (pulsing) ---- */
+ const eg=0.5+0.3*Math.sin(frame/4+r.x*0.01);
+ ctx.save(); ctx.globalAlpha=eg; ctx.fillStyle=r.color; ctx.shadowColor=r.color; ctx.shadowBlur=12;
+ ctx.beginPath(); ctx.arc(-21,3,3.5,0,7); ctx.fill(); ctx.restore();
+ /* L4 RICHNESS: engine nozzle ring + fading exhaust streaks */
+ ctx.strokeStyle=shade(r.color,-0.4); ctx.lineWidth=1.5;
+ ctx.beginPath(); ctx.arc(-21,3,5,0,7); ctx.stroke();
+ const ex=0.35+0.25*Math.sin(frame/5+r.x*0.01);
+ ctx.strokeStyle=hexA(r.color,ex.toFixed(2)); ctx.lineWidth=2; ctx.lineCap='round';
+ ctx.beginPath(); ctx.moveTo(-26,3); ctx.lineTo(-34-Math.sin(frame/6)*3,3+Math.sin(frame/7)*1.5); ctx.stroke();
+ ctx.strokeStyle=hexA(r.color,(ex*0.6).toFixed(2)); ctx.lineWidth=1.5;
+ ctx.beginPath(); ctx.moveTo(-26,6); ctx.lineTo(-32,8); ctx.stroke();
+ /* ---- cockpit canopy: dark glass + glint ---- */
+ ctx.fillStyle='#04120a'; ctx.beginPath(); ctx.ellipse(10,-3,7,4.5,-0.15,0,7); ctx.fill();
+ ctx.fillStyle='rgba(255,255,255,.85)'; ctx.beginPath(); ctx.ellipse(12,-5,2.5,1.5,-0.15,0,7); ctx.fill();
+ /* L4 RICHNESS: canopy frame ring + second glint */
+ ctx.strokeStyle=shade(r.color,0.6); ctx.lineWidth=1;
+ ctx.beginPath(); ctx.ellipse(10,-3,7,4.5,-0.15,0,7); ctx.stroke();
+ ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.ellipse(7,-1,1.2,0.8,-0.15,0,7); ctx.fill();
+ /* ---- halo ring around the steed (ORBIT / HALO) ---- */
+ if(kit.ring){ ctx.strokeStyle='rgba(255,215,94,.8)'; ctx.lineWidth=2;
+   ctx.beginPath(); ctx.ellipse(0,2,26,7,0,0,7); ctx.stroke(); }
+ /* ---- rider: CHAR2 torso stack — the torso silhouette extruded in two
+    dark slices stepping down, then the lit armour on top, a stacked chest
+    plate, and a 3-slice pauldron so the knight reads volumetric ---- */
+ const torsoPath=()=>{ ctx.beginPath(); ctx.moveTo(-9,-8); ctx.quadraticCurveTo(-10,-20,-2,-21);
+   ctx.quadraticCurveTo(6,-20,7,-12); ctx.lineTo(5,-6); ctx.lineTo(-6,-6); ctx.closePath(); };
+ for(const [dy,fc] of [[3.6,'#020403'],[1.8,'#0a1512']]){ ctx.save(); ctx.translate(0,dy); ctx.fillStyle=fc; torsoPath(); ctx.fill(); ctx.restore(); }
+ const torso=ctx.createLinearGradient(0,-22,0,0);
+ torso.addColorStop(0,'#24382f'); torso.addColorStop(0.55,'#12211b'); torso.addColorStop(1,'#060a08');
+ ctx.fillStyle=torso; torsoPath(); ctx.fill();
+ ctx.strokeStyle=r.color; ctx.lineWidth=1.5;
+ ctx.beginPath(); ctx.moveTo(-8,-9); ctx.quadraticCurveTo(-9,-19,-2,-20); ctx.stroke();
+ /* stacked chest plate: dark under-plate + lit top plate in rider colour */
+ ctx.fillStyle=shade(r.color,-0.55);
+ ctx.beginPath(); ctx.moveTo(-5,-18); ctx.lineTo(4,-18); ctx.lineTo(3,-10); ctx.lineTo(-4,-10); ctx.closePath(); ctx.fill();
+ ctx.fillStyle=shade(r.color,0.12);
+ ctx.beginPath(); ctx.moveTo(-5,-19.5); ctx.lineTo(4,-19.5); ctx.lineTo(3,-11.5); ctx.lineTo(-4,-11.5); ctx.closePath(); ctx.fill();
+ ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.arc(-0.5,-15.5,1.3,0,7); ctx.fill();
+ /* pauldron stack: three discs stepping up-left, dark core to lit rim */
+ for(const [ox,oy,rr,fc] of [[1.6,1.8,5.2,shade(r.color,-0.62)],[0.8,0.9,4.9,shade(r.color,-0.32)],[0,0,4.5,shade(r.color,-0.05)]]){
+   ctx.fillStyle=fc; ctx.beginPath(); ctx.arc(-7+ox,-16+oy,rr,0,7); ctx.fill(); }
+ ctx.strokeStyle=shade(r.color,0.6); ctx.lineWidth=1.2;
+ ctx.beginPath(); ctx.arc(-7,-16,4.5,Math.PI*1.05,Math.PI*1.75); ctx.stroke();
+ ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(-8.5,-18,1.2,0,7); ctx.fill();
+ ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1;
+ ctx.beginPath(); ctx.moveTo(-7,-8); ctx.lineTo(6,-8); ctx.stroke();
+ ctx.strokeStyle='#1a2b26'; ctx.lineWidth=4; ctx.lineCap='round';
+ ctx.beginPath(); ctx.moveTo(2,-14); ctx.lineTo(10,-16); ctx.stroke();
+ ctx.fillStyle=r.color; ctx.beginPath(); ctx.arc(10,-16,2.5,0,7); ctx.fill();
+ /* ---- head: CHAR2 helm stack — two dark slices stepping down under the
+    lit helm dome, then the rim-lit crown, visor band and glowing eyes ---- */
+ ctx.fillStyle='#010302'; ctx.beginPath(); ctx.arc(-2,-21.4,9,0,7); ctx.fill();
+ ctx.fillStyle='#060d0a'; ctx.beginPath(); ctx.arc(-2,-22.7,9,0,7); ctx.fill();
+ ctx.fillStyle='#0d1a14'; ctx.beginPath(); ctx.arc(-2,-24,9,0,7); ctx.fill();
+ ctx.strokeStyle=shade(r.color,-0.35); ctx.lineWidth=2; ctx.stroke();
+ ctx.strokeStyle=shade(r.color,0.8); ctx.lineWidth=1.6; ctx.shadowColor=r.color; ctx.shadowBlur=6;
+ ctx.beginPath(); ctx.arc(-2,-24,9,Math.PI*1.08,Math.PI*1.72); ctx.stroke(); ctx.shadowBlur=0;
+ /* jaw guard slice under the visor */
+ ctx.fillStyle=shade(r.color,-0.5); ctx.fillRect(-9,-19.5,13,2.2);
+ ctx.fillStyle=r.color; ctx.fillRect(-9,-26,12,4);
+ ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.fillRect(-9,-26,12,1.2);
+ ctx.fillStyle='#fff'; ctx.shadowColor='#fff'; ctx.shadowBlur=7;
+ ctx.beginPath(); ctx.arc(-6,-24,1.9,0,7); ctx.fill();
+ ctx.beginPath(); ctx.arc(-1,-24,1.9,0,7); ctx.fill();
+ ctx.shadowBlur=0;
+ /* ---- headgear per kit (dark extrusion slice first, lit plate on top) ---- */
+ ctx.save(); ctx.translate(0,2); ctx.fillStyle=shade(r.color,-0.55);
+ if(kit.helm==='crest'){ ctx.beginPath(); ctx.moveTo(-9,-30); ctx.lineTo(2,-36); ctx.lineTo(0,-29); ctx.closePath(); ctx.fill(); }
+ else if(kit.helm==='horns'){ ctx.beginPath(); ctx.moveTo(-10,-29); ctx.lineTo(-14,-38); ctx.lineTo(-6,-31); ctx.closePath(); ctx.fill();
+   ctx.beginPath(); ctx.moveTo(5,-30); ctx.lineTo(9,-38); ctx.lineTo(7,-29); ctx.closePath(); ctx.fill(); }
+ else if(kit.helm==='mohawk'){ for(let i=0;i<3;i++){ ctx.beginPath();
+   ctx.moveTo(-8+i*5,-31); ctx.lineTo(-6+i*5,-38); ctx.lineTo(-3+i*5,-31); ctx.closePath(); ctx.fill(); } }
+ ctx.restore();
+ ctx.fillStyle=r.color;
+ if(kit.helm==='crest'){ ctx.beginPath(); ctx.moveTo(-9,-30); ctx.lineTo(2,-36); ctx.lineTo(0,-29); ctx.closePath(); ctx.fill(); }
+ else if(kit.helm==='horns'){ ctx.beginPath(); ctx.moveTo(-10,-29); ctx.lineTo(-14,-38); ctx.lineTo(-6,-31); ctx.closePath(); ctx.fill();
+   ctx.beginPath(); ctx.moveTo(5,-30); ctx.lineTo(9,-38); ctx.lineTo(7,-29); ctx.closePath(); ctx.fill(); }
+ else if(kit.helm==='halo'){ ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2;
+   ctx.beginPath(); ctx.ellipse(-2,-36,9,3,0,0,7); ctx.stroke(); }
+ else if(kit.helm==='mohawk'){ for(let i=0;i<3;i++){ ctx.beginPath();
+   ctx.moveTo(-8+i*5,-31); ctx.lineTo(-6+i*5,-38); ctx.lineTo(-3+i*5,-31); ctx.closePath(); ctx.fill(); } }
+ /* ---- lance: dark under-slice offset below the glowing shaft, gold tip,
+    rider-colour pennant ---- */
+ ctx.strokeStyle='rgba(0,0,0,0.55)'; ctx.lineWidth=3.5; ctx.lineCap='round';
+ ctx.beginPath(); ctx.moveTo(2,-9.5); ctx.lineTo(18,-29.5); ctx.stroke();
+ ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.shadowColor='#fff'; ctx.shadowBlur=6;
+ ctx.beginPath(); ctx.moveTo(2,-12); ctx.lineTo(18,-32); ctx.stroke(); ctx.shadowBlur=0;
+ ctx.fillStyle='#ffd75e'; ctx.beginPath(); ctx.arc(18,-32,3.5,0,7); ctx.fill();
+ ctx.fillStyle=r.color; ctx.beginPath(); ctx.moveTo(14,-28); ctx.lineTo(6,-24); ctx.lineTo(13,-23); ctx.closePath(); ctx.fill();
+ ctx.restore();
+ /* name tag (screen space) */
+ ctx.fillStyle=r.color; ctx.font='bold 10px "Share Tech Mono"'; ctx.textAlign='center';
+ const ny= (r.y<70? r.y+bob+36 : r.y+bob-38);
+ ctx.fillText(r.name,r.x,ny);
+ if(r.hatched>0){ ctx.fillStyle='#ff3860'; ctx.font='bold 9px "Share Tech Mono"'; ctx.fillText('HATCHED ×'+r.hatched,r.x,ny+(r.y<70?12:-10)); }
+}
+function drawCore(c){
+ const pulse=1+Math.sin(frame/8)*0.12;
+ ctx.save(); ctx.translate(c.x,c.y); ctx.scale(pulse,pulse);
+ /* L3 LIGHT & JUICE: bloom halo around the core so it reads as a live ember, not a flat egg */
+ const halo=ctx.createRadialGradient(0,0,2,0,0,30);
+ halo.addColorStop(0,hexA(c.color,0.45)); halo.addColorStop(1,hexA(c.color,0));
+ ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(0,0,30,0,7); ctx.fill();
+ ctx.fillStyle=c.color; ctx.shadowColor=c.color; ctx.shadowBlur=22;
+ ctx.beginPath(); ctx.ellipse(0,0,10,12,0,0,7); ctx.fill();
+ ctx.shadowBlur=0; ctx.fillStyle='#04120a';
+ ctx.beginPath(); ctx.ellipse(0,-2,5,6,0,0,7); ctx.fill();
+ ctx.restore();
+ const frac=clamp(c.hatch/(60*8),0,1);
+ ctx.fillStyle='rgba(255,255,255,.25)'; ctx.fillRect(c.x-14,c.y-24,28,4);
+ ctx.fillStyle=frac>0.4?'#00ff88':'#ff3860'; ctx.fillRect(c.x-14,c.y-24,28*frac,4);
+}
+function drawTerror(t){
+ ctx.save();
+ /* L3 LIGHT & JUICE: storm halo around the GALE's head — it arrives glowing */
+ const th=ctx.createRadialGradient(t.x,t.y,4,t.x,t.y,60);
+ th.addColorStop(0,'rgba(255,56,96,0.30)'); th.addColorStop(1,'rgba(255,56,96,0)');
+ ctx.fillStyle=th; ctx.beginPath(); ctx.arc(t.x,t.y,60,0,7); ctx.fill();
+ /* CHAR2 stack: the wyrm's body is three layered strokes stepping down —
+    dark core, ember mid, lit gold spine — so it reads as a thick storm-serpent */
+ const wyrm=(dy,w,col,blur)=>{ ctx.strokeStyle=col; ctx.lineWidth=w; ctx.shadowColor='#ff3860'; ctx.shadowBlur=blur;
+   ctx.beginPath();
+   for(let i=0;i<7;i++){ const x=t.x-i*26*t.dir, y=t.y+dy+Math.sin(t.t/10+i)*14;
+     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+   ctx.stroke(); ctx.shadowBlur=0; };
+ wyrm(5,9,'#5c0a1c',0); wyrm(2.5,6.5,'#c21837',0); wyrm(0,4,'#ffd75e',14);
+ /* head stack: dark slice under the ember skull + rim arc */
+ ctx.fillStyle='#5c0a1c'; ctx.beginPath(); ctx.arc(t.x,t.y+3,10.5,0,7); ctx.fill();
+ ctx.fillStyle='#ff3860'; ctx.beginPath(); ctx.arc(t.x,t.y,10,0,7); ctx.fill();
+ ctx.strokeStyle='#ffd75e'; ctx.lineWidth=1.6;
+ ctx.beginPath(); ctx.arc(t.x,t.y,10,Math.PI*1.1,Math.PI*1.7); ctx.stroke();
+ ctx.fillStyle='#fff'; ctx.shadowColor='#ffd75e'; ctx.shadowBlur=6;
+ ctx.beginPath(); ctx.arc(t.x+4*t.dir,t.y-2,3,0,7); ctx.fill(); ctx.shadowBlur=0;
+ ctx.restore();
+ ctx.fillStyle='#ffd75e'; ctx.font='bold 11px "Share Tech Mono"'; ctx.textAlign='center';
+ ctx.fillText('THE GALE',t.x, t.y-24);
+}
+/* --- L3 LIGHT & JUICE: sweeping searchlights + shake wrapper --- */
+function drawBeams(){
+  /* two searchlights sweeping the sky from the ruined skyline — the arena's
+     animated light sources, slow and wide so they never read as gameplay */
+  for(let i=0;i<2;i++){
+    const bx=180+i*600, base=FLOOR_Y-40;
+    const ang=-Math.PI/2+Math.sin(animT/300+i*2.2)*0.55;
+    const len=430, ex=bx+Math.cos(ang)*len, ey=base+Math.sin(ang)*len;
+    const g=ctx.createLinearGradient(bx,base,ex,ey);
+    g.addColorStop(0,'rgba(180,230,255,0.16)'); g.addColorStop(1,'rgba(180,230,255,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.moveTo(bx-4,base); ctx.lineTo(ex-16,ey); ctx.lineTo(ex+16,ey); ctx.lineTo(bx+4,base); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(200,240,255,0.55)'; ctx.beginPath(); ctx.arc(bx,base,3,0,7); ctx.fill();
+  }
+}
+function drawWorldShaken(){ /* screen shake wraps the world only — the HUD stays steady */
+  ctx.save();
+  if(shake>0) ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
+  drawWorld();
+  ctx.restore();
+}
+function draw(){
+ if(phase==='cutscene'&&cutscene){ drawCutscene(); return; }
+ /* --- L1 STRUCTURE: dusk sky gradient (indigo -> teal -> ember horizon) --- */
+ const sky=ctx.createLinearGradient(0,0,0,H);
+ sky.addColorStop(0,'#0a0e2c'); sky.addColorStop(0.45,'#0e2438');
+ sky.addColorStop(0.75,'#15373b'); sky.addColorStop(1,'#3d2416');
+ ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+ /* nebula wash */
+ const neb=ctx.createLinearGradient(0,60,0,320);
+ neb.addColorStop(0,'rgba(120,80,255,0.10)'); neb.addColorStop(0.5,'rgba(0,200,255,0.05)'); neb.addColorStop(1,'rgba(120,80,255,0)');
+ ctx.fillStyle=neb; ctx.fillRect(0,40,W,300);
+ /* moon — layered glow + disc + craters; L2 LIFE: the halo breathes */
+ const mg=0.05+0.025*(0.5+0.5*Math.sin(animT/90));
+ ctx.fillStyle='rgba(220,235,255,'+mg.toFixed(3)+')'; ctx.beginPath(); ctx.arc(822,86,54,0,7); ctx.fill();
+ ctx.fillStyle='rgba(220,235,255,0.08)'; ctx.beginPath(); ctx.arc(822,86,40,0,7); ctx.fill();
+ ctx.fillStyle='#dfe9f5'; ctx.beginPath(); ctx.arc(822,86,30,0,7); ctx.fill();
+ ctx.fillStyle='rgba(160,175,200,0.55)';
+ ctx.beginPath(); ctx.arc(812,78,6,0,7); ctx.fill();
+ ctx.beginPath(); ctx.arc(832,96,4,0,7); ctx.fill();
+ ctx.beginPath(); ctx.arc(826,72,3,0,7); ctx.fill();
+ /* stars — hashed positions, two sizes; L2 LIFE: each star twinkles on its own phase */
+ for(let i=0;i<90;i++){ const sx=hs(i)*W, sy=hs(i+1000)*300;
+   const tw=0.45+0.55*(0.5+0.5*Math.sin(animT/26+i*1.7));
+   const a=(0.15+hs(i+2000)*0.5)*tw, s=hs(i+3000)>0.8?2:1;
+   ctx.fillStyle='rgba(255,255,255,'+a.toFixed(2)+')'; ctx.fillRect(sx,sy,s,s); }
+ /* shooting star — one streak every ~9s, crossing the upper sky */
+ const cyc=Math.floor(animT/540), cycT=animT%540;
+ if(cycT<36){ const p=cycT/36, sx0=140+hs(cyc+9000)*500, sy0=50+hs(cyc+9100)*70;
+   ctx.strokeStyle='rgba(255,255,255,'+(0.85*(1-p)).toFixed(2)+')'; ctx.lineWidth=1.5;
+   ctx.beginPath(); ctx.moveTo(sx0+p*260,sy0+p*110); ctx.lineTo(sx0+p*260-26,sy0+p*110-11); ctx.stroke(); }
+ drawFarSkyline();
+ drawClouds();
+ drawBeams();
+ drawPillars();
+ if(camMode==='rider'&&riders[0]){
+   watchCamOn=false;
+   const f=riders[0];
+   ctx.save();
+   ctx.translate(W/2,H/2); ctx.scale(1.7,1.7);
+   ctx.translate(-clamp(f.x,280,680),-clamp(f.y,170,406));
+   drawWorldShaken();
+   ctx.restore();
+ } else if(mode==='watch'&&phase!=='ready'&&riders.length===2){
+   /* AGENT MODES (dim 4): the WATCH camera — a gentle 1.3x zoom following
+      the midpoint of the duel (or the live rider + the fallen core), so the
+      spectator's eye stays on the action instead of the whole empty sky.
+      Manual Rider Cam still wins when the player toggles it (V / SELECT). */
+   const f=watchFocus(), vw=W/1.3, vh=H/1.3;
+   watchCamOn=true;
+   ctx.save();
+   ctx.translate(W/2,H/2); ctx.scale(1.3,1.3);
+   ctx.translate(-clamp(f.x,vw/2,W-vw/2),-clamp(f.y,vh/2,H-vh/2));
+   drawWorldShaken();
+   ctx.restore();
+ } else { watchCamOn=false; drawWorldShaken(); }
+ /* L2 LIFE: fog banks + ambient motes drift over the world, under the HUD */
+ drawFog(); drawMotes();
+ /* HUD */
+ ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(0,0,W,30);
+ ctx.font='12px "Share Tech Mono"'; ctx.textAlign='left'; ctx.fillStyle='#00f0ff';
+ if(mode==='waves') ctx.fillText('WAVE '+wave+'   SCORE '+score+'   LIVES '+'♥'.repeat(Math.max(0,lives)),12,19);
+ else ctx.fillText((mode==='watch'?'WATCH · ':'DUEL · ')+riders[0].name+' '+p1Wins+' — '+p2Wins+' '+riders[1].name+'   ROUND '+roundNum,12,19);
+ ctx.textAlign='right'; ctx.fillStyle='#ffd75e';
+ const terrorIn=Math.max(0,Math.ceil(((mode==='waves'?terrorAt-waveT:terrorAt-roundT))/60));
+ ctx.fillText(terror?'⚡ GALE IN THE SKY':'GALE IN '+terrorIn+'s', W-12, 19);
+ if(mode==='watch'&&phase!=='ready'&&riders.length===2) drawWatchHud();
+ ctx.textAlign='center';
+ if(bannerT>0){ ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(0,H/2-34,W,52);
+   ctx.fillStyle='#fff'; ctx.font='900 26px Orbitron'; ctx.fillText(banner,W/2,H/2-2); }
+ /* dialogue box (dim 7): speaker name + portrait chip, typewriter text */
+ if(dlg) drawDialogue();
+ if(phase==='over'){ ctx.fillStyle='rgba(0,0,0,.62)'; ctx.fillRect(0,0,W,H);
+   ctx.textAlign='center'; ctx.fillStyle= mode==='waves'?'#ff3860':'#ffd75e'; ctx.font='900 40px Orbitron';
+   ctx.fillText(mode==='waves'?'SKY DOWN':(p1Wins>=3?riders[0].name:riders[1].name)+' WINS', W/2, H/2-8);
+   ctx.fillStyle='#fff'; ctx.font='15px "Share Tech Mono"';
+   ctx.fillText(mode==='waves'?('final score '+score+' · wave '+wave+' · press R to fly again'):'press R for a rematch', W/2, H/2+26); }
+ if(phase==='ready'){ ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(0,0,W,H); ctx.textAlign='center';
+   ctx.fillStyle='#fff'; ctx.font='900 46px Orbitron'; ctx.fillText('SKYLANCE', W/2, H/2-16);
+   ctx.fillStyle='#00f0ff'; ctx.font='15px "Share Tech Mono"'; ctx.fillText('pick a mode — or WATCH two bots duel', W/2, H/2+16); }
+}
+function drawWorld(){
+ for(const L of LEDGES) drawLedge(L);
+ /* the Maw — jagged basalt ridge with ember cracks + glowing teeth */
+ ctx.fillStyle='#160709'; ctx.fillRect(0,FLOOR_Y,W,H-FLOOR_Y);
+ ctx.fillStyle='#0c0407';
+ for(let x=-10;x<W+10;x+=26){ const h=12+hs(x*3+7)*26;
+   ctx.beginPath(); ctx.moveTo(x,H); ctx.lineTo(x+13,FLOOR_Y+6); ctx.lineTo(x+26,H); ctx.closePath(); ctx.fill(); }
+ /* L4 RICHNESS: basalt facets — a pale edge down each ridge triangle so the
+    ridge reads as faceted rock, not a flat silhouette */
+ ctx.strokeStyle='rgba(200,150,170,0.16)'; ctx.lineWidth=1;
+ ctx.beginPath();
+ for(let x=-10;x<W+10;x+=26){ ctx.moveTo(x+13,FLOOR_Y+6); ctx.lineTo(x+26,H); }
+ ctx.stroke();
+ ctx.strokeStyle='rgba(255,120,40,.5)'; ctx.lineWidth=1.5; ctx.shadowColor='#ff5a1f'; ctx.shadowBlur=8;
+ ctx.beginPath();
+ for(let x=0;x<W;x+=52){ const y0=FLOOR_Y+10+hs(x)*22; ctx.moveTo(x,y0); ctx.lineTo(x+18,y0+8+hs(x+1)*10); }
+ ctx.stroke(); ctx.shadowBlur=0;
+ /* L4 RICHNESS: a second, dimmer ember vein set + glowing ember dots in the cracks */
+ ctx.strokeStyle='rgba(255,90,40,0.30)'; ctx.lineWidth=1;
+ ctx.beginPath();
+ for(let x=26;x<W;x+=52){ const y0=FLOOR_Y+16+hs(x+5)*18; ctx.moveTo(x,y0); ctx.lineTo(x+14,y0+6+hs(x+9)*8); }
+ ctx.stroke();
+ for(let x=0;x<W;x+=78){ const ey=FLOOR_Y+12+hs(x+2)*20;
+   ctx.fillStyle='rgba(255,140,60,'+(0.35+0.3*Math.sin(animT/30+x)).toFixed(2)+')';
+   ctx.beginPath(); ctx.arc(x+hs(x+4)*20,ey,1.8,0,7); ctx.fill(); }
+ /* CHAR2 Maw teeth: dark core slice behind, ember tooth, white-hot tip —
+    three stacked layers so the teeth read as solid fangs, not flat bars */
+ ctx.fillStyle='#7a0f28';
+ for(let x=0;x<W;x+=24){ const h=6+Math.sin(frame/7+x/40)*4; ctx.fillRect(x-1.5,FLOOR_Y,17,h+3); }
+ ctx.fillStyle='#ff3860'; ctx.shadowColor='#ff3860'; ctx.shadowBlur=20;
+ for(let x=0;x<W;x+=24){ const h=6+Math.sin(frame/7+x/40)*4; ctx.fillRect(x,FLOOR_Y,14,h); }
+ ctx.shadowBlur=0;
+ ctx.fillStyle='rgba(255,235,220,0.85)';
+ for(let x=0;x<W;x+=24){ const h=6+Math.sin(frame/7+x/40)*4; ctx.fillRect(x,FLOOR_Y,14,Math.min(2.5,h*0.4)); }
+ /* L3 LIGHT & JUICE: the Maw breathes — a pulsing ember glow washing up off the teeth */
+ const mawA=0.14+0.06*(0.5+0.5*Math.sin(animT/40));
+ const mawG=ctx.createLinearGradient(0,FLOOR_Y-26,0,FLOOR_Y+10);
+ mawG.addColorStop(0,'rgba(255,56,96,0)'); mawG.addColorStop(1,'rgba(255,56,96,'+mawA.toFixed(3)+')');
+ ctx.fillStyle=mawG; ctx.fillRect(0,FLOOR_Y-26,W,36);
+ ctx.fillStyle='#ffd75e'; ctx.font='bold 11px "Share Tech Mono"'; ctx.textAlign='center';
+ ctx.fillText('— THE MAW —', W/2, FLOOR_Y+34);
+ for(const c of cores) drawCore(c);
+ if(terror) drawTerror(terror);
+ for(const r of riders) if(r.alive) drawRider(r);
+ drawParticles(); /* L3: bursts and rings read on top of the riders */
+}
+function wrapText(text,x,y,maxW,lh){ const words=text.split(' '); let line='',yy=y;
+ for(const w of words){ const t=line? line+' '+w : w; if(ctx.measureText(t).width>maxW){ ctx.fillText(line,x,yy); line=w; yy+=lh; } else line=t; }
+ ctx.fillText(line,x,yy); }
+function loop(){ /* L3: hit-stop freezes the world (step + animT + particles) for a beat after a duel burst */
+  if(hitStop>0){ hitStop--; draw(); requestAnimationFrame(loop); return; }
+  frame++; if(!paused) animT++; step(); if(!paused){ stepParticles(); stepDialogue(); } draw(); requestAnimationFrame(loop); }
+
+/* ---------------- mode buttons ---------------- */
+function refreshModeBtns(){
+ const set=(id,on)=>{ const el=document.getElementById(id); if(el) el.classList.toggle('active',!!on); };
+ set('btnPlay',mode==='waves'&&phase!=='ready');
+ set('btnDuel',mode==='duel'&&phase!=='ready');
+ set('btnWatch',mode==='watch'&&phase!=='ready');
+ set('btnCam',camMode==='rider');
+}
+document.getElementById('btnPlay').onclick=()=>{ beginMatch('waves'); };
+document.getElementById('btnDuel').onclick=()=>{ beginMatch('duel'); };
+document.getElementById('btnWatch').onclick=()=>{ beginMatch('watch'); };
+document.getElementById('btnCam').onclick=()=>{ camMode=camMode==='wide'?'rider':'wide'; refreshModeBtns();
+ document.getElementById('msg').textContent='Rider Cam '+(camMode==='rider'?'ON — riding with '+(riders[0]?riders[0].name:'you'):'OFF — full arena'); };
+document.getElementById('btnPause').onclick=()=>{ togglePause(); };
+document.getElementById('btnFs').onclick=()=>{ toggleFullscreen(); };
+const q=new URLSearchParams(location.search);
+if(q.get('auto')==='watch'){ startDuel('watch'); }
+if(q.get('auto')==='play'){ startWaves(); }
+if(q.get('auto')==='duel'){ startDuel('duel'); }
+refreshModeBtns();
+window.__skylance={get state(){return {phase,paused,mode,score,lives,wave,roundNum,roundT,waveT,animT,
+  p1Wins,p2Wins,camMode,terror:!!terror,terrorAt,
+  riders:riders.map(r=>({name:r.name,x:Math.round(r.x),y:Math.round(r.y),vy:+r.vy.toFixed(2),alive:r.alive,grounded:r.grounded,persona:r.persona,skill:r.skill,hatched:r.hatched,wins:r.wins})),
+  cores:cores.map(c=>({x:Math.round(c.x),y:Math.round(c.y),hatch:c.hatch,owner:c.owner})),
+  particles:particles.length, rings:rings.length, shake:+shake.toFixed(2), hitStop,
+  watchFeed: watchFeed.map(f=>({text:f.text,color:f.color})), watchCam: watchCamOn,
+  dlg: dlg?{who:dlg.who,color:dlg.color,text:dlg.text,shown:dlg.shown,hold:dlg.hold,queue:dlgQueue.length,queued:dlgQueue.map(q=>q.who)}:null,
+  fs:isFullscreen(),
+  cutscene: cutscene?{kind:cutscene.kind,idx:cutscene.idx,panels:cutscene.panels.length,shown:cutscene.shown,p1:cutscene.p1,p2:cutscene.p2}:null};},
+ reset, startWaves, startDuel, togglePause, saveState, loadState, beginMatch, cutAdvance, cutSkip, say, toggleFullscreen, isFullscreen,
+ debugDlgStep(){ stepDialogue(); }, /* test hook: advance the dialogue clock one frame (used paused, so no game event can inject a line) */
+ debugPlace(i,x,y){ const r=riders[i]; if(r){ r.x=x; r.y=y; r.vx=0; r.vy=0; } },
+ debugKey(code,on){ keys[code]=!!on; if(on&&(code==='KeyW'||code==='Space')) flapBuf=10; },
+ debugSetHatch(v){ if(cores[0]) cores[0].hatch=v; },
+ debugWatchLog(t,c){ watchLog(t,c); }, /* test hook: feed entries without staging a fight */
+ debugTerror(){ terrorAt=0; } };
+loop();
+</script>
+</body>
+</html>

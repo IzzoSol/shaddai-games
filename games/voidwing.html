@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>VOIDWING — Rail Shooter · Shaddai Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--acc:#ff7a1a;--gold:#ffd75e;--emer:#00ff88;--red:#ff3860;--cyan:#35e0ff;--ink:#ffeedd}
+  *{box-sizing:border-box}
+  body{margin:0;background:#05030c;color:var(--ink);font-family:'Share Tech Mono',monospace}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid rgba(255,122,26,.25);background:linear-gradient(90deg,#12060a,#05030c)}
+  .topbar h1{font-family:'Orbitron',sans-serif;font-size:22px;margin:0;letter-spacing:4px;color:var(--acc);text-shadow:0 0 18px rgba(255,122,26,.7)}
+  .topbar h1 span{color:var(--gold)}
+  .tag{font-size:11px;letter-spacing:2px;color:#c8a890}
+  .spacer{flex:1}
+  .back{color:var(--cyan);text-decoration:none;font-size:12px;letter-spacing:1px}
+  .wrap{max-width:1020px;margin:0 auto;padding:14px}
+  #shell{position:relative}
+  canvas{width:100%;height:auto;display:block;border:2px solid rgba(255,122,26,.55);border-radius:14px;background:#02010a;box-shadow:0 0 0 1px rgba(255,215,94,.35),0 0 42px rgba(255,122,26,.28)}
+  .hud{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+  .box{border:1px solid rgba(255,122,26,.35);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.7;background:rgba(20,8,4,.55)}
+  .box b{font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:11px;color:var(--gold)}
+  .bar{height:8px;border-radius:4px;background:#1a0d06;overflow:hidden;margin:2px 0 4px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#ff7a1a,#ffd75e)}
+  .bar.hull i{background:linear-gradient(90deg,#ff3860,#ff7a1a)}
+  .bar.shield i{background:linear-gradient(90deg,#35e0ff,#00ff88)}
+  .btnrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  /* Arcade tile standard: holographic glass, thick emerald rim, one gold accent, per-game tint */
+  .mbtn{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;color:#fff;background:linear-gradient(160deg,rgba(255,122,26,.22),rgba(5,3,12,.6));border:3px solid rgba(0,255,136,.85);border-radius:14px;padding:11px 16px;cursor:pointer;box-shadow:0 0 0 1px rgba(255,215,94,.55),0 0 22px rgba(0,255,136,.22),inset 0 0 18px rgba(255,255,255,.06);text-shadow:0 1px 2px #000}
+  .mbtn small{display:block;font-family:'Share Tech Mono',monospace;font-size:10px;color:#ffd9b0;letter-spacing:0;margin-top:3px}
+  .mbtn:hover{filter:brightness(1.25)}
+  .mbtn.active{outline:2px solid var(--gold);background:linear-gradient(160deg,rgba(255,122,26,.4),rgba(5,3,12,.6))}
+  .mbtn.vr{border-color:rgba(53,224,255,.85)}
+  #msg{margin-top:10px;min-height:20px;font-size:13px;color:#ffe1c2}
+  #feed{margin-top:6px;font-size:11px;color:#b08a70;min-height:34px;line-height:1.5}
+  .help{margin-top:14px;font-size:12px;line-height:1.8;color:#c8a890;border:1px solid rgba(255,122,26,.18);border-radius:10px;padding:12px;background:rgba(20,8,4,.5)}
+  .help b{color:var(--gold)} .k{display:inline-block;border:1px solid #6a4a3a;border-radius:4px;padding:0 6px;background:#140a06;color:#fff}
+  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,1,8,.82);z-index:50}
+  .overlay.open{display:flex}
+  .panel{width:min(92vw,420px);border:3px solid rgba(0,255,136,.85);border-radius:16px;padding:22px;background:linear-gradient(160deg,#160a04,#05030c);box-shadow:0 0 0 1px rgba(255,215,94,.4),0 0 34px rgba(255,122,26,.25)}
+  .panel h2{font-family:'Orbitron',sans-serif;letter-spacing:3px;margin:0 0 6px;color:var(--acc)}
+  .panel p{font-size:12px;color:#c8a890;line-height:1.6}
+  .panel .mbtn{display:block;width:100%;margin-top:10px;text-align:center}
+  #shellDeck{display:none}
+  @media (max-width:640px){
+    .topbar h1{font-size:16px} .tag{display:none}
+    .hud{grid-template-columns:1fr 1fr}
+    body.touch #shell{border:1px solid rgba(255,122,26,.4);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#160a04,#05030c);box-shadow:0 0 34px rgba(255,122,26,.16),inset 0 0 0 1px rgba(255,255,255,.04)}
+    body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--acc)}
+    body.touch #shell .shell-brand .shell-led{color:var(--acc);text-shadow:0 0 8px var(--acc)}
+    body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+    body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#140a06;border:1px solid rgba(255,122,26,.4);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+    body.touch #shellDeck button:active{background:var(--acc);color:#140a06}
+    .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:4px}
+    .dpad button{font-size:16px;border-radius:10px}
+    .dpad .c{visibility:hidden}
+    .abtns{display:flex;gap:10px;align-items:center;padding-top:34px}
+    .abtns button{width:58px;height:58px;border-radius:50%;font-size:18px;font-weight:700}
+    .abtns button.b{width:48px;height:48px;font-size:15px}
+    .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+    .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#140a06}
+  }
+</style>
+</head>
+<body>
+<div class="topbar"><h1>VOID<span>WING</span></h1><span class="tag">Rail Shooter · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI HANDHELD</span><span class="shell-led">● LIVE</span></div>
+    <canvas id="cv" width="960" height="560"></canvas>
+    <div id="shellDeck">
+      <div class="dpad">
+        <span class="c"></span><button id="padUp">▲</button><span class="c"></span>
+        <button id="padLeft">◀</button><span class="c"></span><button id="padRight">▶</button>
+        <span class="c"></span><button id="padDown">▼</button><span class="c"></span>
+      </div>
+      <div class="abtns"><button class="b" id="btnB">B</button><button id="btnA">A</button></div>
+      <div class="shell-pills"><button id="startBtn">START</button><button id="selectBtn">BOOST</button></div>
+    </div>
+  </div>
+  <div class="hud">
+    <div class="box"><b>VOIDWING · REN "EMBER" OKAFOR</b><br>
+      HULL <span id="hull">100</span><div class="bar hull"><i id="hullBar" style="width:100%"></i></div>
+      SHIELD <span id="shield">0</span><div class="bar shield"><i id="shieldBar" style="width:0%"></i></div>
+      CHARGE <span id="charge">—</span></div>
+    <div class="box"><b>MISSION · KESTREL CORRIDOR</b><br>
+      SECTOR <span id="sector">1</span>/3 · <span id="route">ROUTE —</span><br>
+      SCORE <span id="score">0</span> · KILLS <span id="kills">0</span><br>
+      DIST <span id="dist">0</span>m · <span id="bossLine"></span></div>
+    <div class="box"><b>WINGMEN</b><br><span id="wing1">NEXUS — READY</span><br><span id="wing2">TURTLE — READY</span><br><span id="watchName"></span></div>
+  </div>
+  <div class="btnrow">
+    <button class="mbtn active" id="btnSolo">Solo Run<small>REN OKAFOR flies the Corridor</small></button>
+    <button class="mbtn" id="btnWatch">Watch<small>A council pilot flies it · Fallible Engine</small></button>
+    <button class="mbtn" id="btnPause">Pause<small>P / ESC · save &amp; load inside</small></button>
+    <button class="mbtn" id="btnMute">Sound: On<small>M to mute</small></button>
+    <button class="mbtn vr" id="btnVR">Enter VR (SIM)<small>WebXR via the shared XR engine · needs a headset</small></button>
+  </div>
+  <div id="msg">Press SOLO — or WATCH a council pilot fly the Corridor.</div>
+  <div id="feed"></div>
+  <div class="help">
+    🚀 <b>Briefing:</b> Pilot <b>REN "EMBER" OKAFOR</b> threads the <b>KESTREL CORRIDOR</b> in the interceptor <b>VOIDWING</b> — three sectors, two branch gates, one capital ship at the end: <b>THE HOLLOW CROWN</b>. Fly the gates to pick your route: the <b>ION STORM</b> (fast weavers, chain lightning) or the <b>DERELICT RING</b> (turret nests, heavy rock). Hold <span class="k">A</span> / <span class="k">Space</span> to charge a piercing shot, <span class="k">B</span> / <span class="k">X</span> to barrel-roll through fire, <span class="k">Shift</span> / SELECT to boost.<br/>
+    🛩️ <b>Wingmen:</b> <b>NEXUS</b> and <b>TURTLE</b> fly your flanks and shoot what you don't — they can be shot down, and they re-form at the next sector. Their portraits are stacked-slice renders, same as every ship in the game: layered slices, rim light, engine glow — no flat blobs.<br/>
+    🎮 <b>Controls:</b> <span class="k">←</span><span class="k">→</span><span class="k">↑</span><span class="k">↓</span> / <span class="k">W A S D</span> steer · <span class="k">Space</span> / <span class="k">Click</span> fire (hold to charge) · <span class="k">X</span> barrel roll · <span class="k">Shift</span> boost · <span class="k">P</span> pause.<br/>
+    📱 <b>Handheld shell:</b> D-pad steers, <span class="k">A</span> fires (hold to charge), <span class="k">B</span> barrel-rolls, SELECT boosts, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit).<br/>
+    🤖 <b>Watch:</b> a council pilot flies the Corridor on its own — scored options through the Fallible Engine, with a per-pilot skill matrix (aim, nerve, route sense), and it blunders on purpose. Never frame-perfect.<br/>
+    🧪 <b>Clean-room:</b> rail-shooter formula (on-rails flight, branching path, wingman squadron, charge shot, barrel roll — the documented behaviour of the classic rail shooters, SPEC lane: read as design reference, never run or copied); our own code, corridor, ships, pilots, names and story. VR runs through the shared XR engine and is labelled SIM until a headset verifies it in-world.
+  </div>
+</div>
+<div class="overlay" id="pauseOverlay">
+  <div class="panel">
+    <h2 id="pauseTitle">PAUSED</h2>
+    <p id="pauseSub">The Corridor waits. Your run is held exactly where you left it.</p>
+    <button class="mbtn" id="resumeBtn">Resume</button>
+    <button class="mbtn" id="saveBtn">Save state</button>
+    <button class="mbtn" id="loadBtn">Load state</button>
+    <button class="mbtn" id="restartBtn">Restart run</button>
+    <button class="mbtn" id="quitArcadeBtn">Quit to Arcade</button>
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script src="xr-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   VOIDWING — original Star Fox-style rail-shooter slice for the Shaddai Arcade.
+   Clean-room SPEC lane: the rail-shooter formula (on-rails forward flight,
+   branching path gates, wingman squadron, charge shot, barrel roll, boss at
+   the end of the run) written from documented behaviour of the classic rail
+   shooters — read as design reference only, never run or copied. Our own
+   corridor (Kestrel), ships, pilots (REN OKAFOR, wingmen NEXUS + TURTLE),
+   enemy types (DRONE / WEAVER / TURRET / ASTEROID / HOLLOW CROWN), routes
+   (ION STORM / DERELICT RING) and story. Modes: 1P, WATCH council pilot on
+   the Fallible Engine (scored options + per-pilot skill matrix + traces).
+   First-person cockpit is the verified core; VR via the shared XR engine is
+   SIM-labelled. Handheld shell on mobile (D-pad, A fire/charge, B roll).
+   Sprite stacking everywhere: ships + pilot portraits are layered slices
+   with rim light and engine glow, never flat blobs.
+   ========================================================================== */
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var CW=cv.width, CH=cv.height;
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var XE=(typeof window!=='undefined' && window.XREngine) || null;
+var SAVE_KEY='shaddai.voidwing';
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+function clamp(v,a,b){return v<a?a:v>b?b:v;}
+function dist2(ax,ay,bx,by){var dx=ax-bx,dy=ay-by;return dx*dx+dy*dy;}
+
+/* ---------- audio (tiny, guarded) ---------- */
+var AC=null, muted=false;
+function beep(f,d,type,g){ if(muted) return; try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); var o=AC.createOscillator(),gn=AC.createGain(); o.type=type||'square'; o.frequency.value=f; gn.gain.value=g||0.04; o.connect(gn); gn.connect(AC.destination); o.start(); gn.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+(d||0.08)); o.stop(AC.currentTime+(d||0.08)); }catch(e){} }
+function sfx(name){ if(name==='fire') beep(880,0.06,'square',0.03); else if(name==='hit') beep(220,0.08,'sawtooth',0.05); else if(name==='boom') beep(90,0.25,'sawtooth',0.07); else if(name==='pickup') beep(1320,0.1,'sine',0.05); else if(name==='gate') beep(660,0.15,'sine',0.05); else if(name==='roll') beep(440,0.12,'triangle',0.04); else if(name==='warn') beep(180,0.2,'square',0.05); }
+
+/* ---------- state ---------- */
+var SECTOR_LEN=3200, GATE_AT=2000, BOSS_AT=2500;
+var ROUTES={alpha:{name:'ION STORM',mult:1.5,flavor:'fast weavers, chain lightning'},beta:{name:'DERELICT RING',mult:1.25,flavor:'turret nests, heavy rock'}};
+var WINGMEN=[{id:'NEXUS',name:'NEXUS',color:'#35e0ff'},{id:'TURTLE',name:'TURTLE',color:'#00ff88'}];
+var PILOTS=['ZEROX','ORACLE','NEXUS','TURTLE','SHADDAI'];
+var state=null, watchTraces=[], watchBot=null, watchTimer=0, lastT=0, rafId=0;
+function newState(mode,seed){
+  var rng=mulberry32(seed||1);
+  return {mode:mode||'solo', phase:'play', seed:seed||1, rng:rng, time:0,
+    sector:1, route:null, routeName:'—', dist:0, scroll:230,
+    px:0, py:0, pvx:0, pvy:0, bank:0, hull:100, shield:0, score:0, kills:0,
+    charge:0, charging:false, rollT:0, rollCd:0, boostT:0, invulnT:0, fireCd:0,
+    bolts:[], ebolts:[], enemies:[], pickups:[], gates:[], rings:[],
+    wingmen:WINGMEN.map(function(w,i){return {id:w.id,name:w.name,color:w.color,alive:true,hp:40,ox:i===0?-0.62:0.62,oy:0.28,fireT:0.4+i*0.3};}),
+    boss:null, bossSpawned:false, bossDead:false, gateDone:false, gateChoice:null,
+    spawnT:0.6, flashT:0, shake:0, msg:'', killsByType:{}, gatesTaken:0, muted:muted,
+    keys:{}, paused:false, over:false, won:false, watchDone:false};
+}
+function sectorMult(){ return state.route?ROUTES[state.route].mult:1; }
+
+/* ---------- spawning ---------- */
+function spawnEnemy(type,x,y,z){
+  var e={type:type,x:x,y:y,z:z,hp:type==='drone'?20:type==='weaver'?30:type==='turret'?40:type==='asteroid'?60:300,
+    t:0, baseX:x, fireT:1+state.rng()*1.5, vx:0, vy:0, seed:state.rng()*10, dead:false};
+  if(type==='weaver'){ e.vx=(state.rng()-0.5)*0.5; }
+  if(type==='turret'){ e.rock=true; }
+  state.enemies.push(e); return e;
+}
+function spawnPickup(kind,x,y,z){ state.pickups.push({kind:kind,x:x,y:y,z:z,t:0}); }
+function spawnPattern(){
+  var r=state.rng(), s=state.sector, route=state.route;
+  var z=1000+state.rng()*300;
+  if(s===3 && state.dist>BOSS_AT-400 && !state.bossSpawned){ return; }
+  if(r<0.30){ // drone pair
+    spawnEnemy('drone',(state.rng()-0.5)*1.4,(state.rng()-0.5)*1.0,z);
+    spawnEnemy('drone',(state.rng()-0.5)*1.4,(state.rng()-0.5)*1.0,z+60);
+  } else if(r<0.50){ // weaver
+    spawnEnemy('weaver',(state.rng()-0.5)*1.2,(state.rng()-0.5)*0.8,z);
+    if(route==='alpha'||s>=2) spawnEnemy('weaver',(state.rng()-0.5)*1.2,(state.rng()-0.5)*0.8,z+80);
+  } else if(r<0.65){ // asteroid + turret (derelict ring favours this)
+    var ax=(state.rng()-0.5)*1.6, ay=(state.rng()-0.5)*1.0;
+    spawnEnemy('asteroid',ax,ay,z);
+    if(route==='beta'||state.rng()<0.5) spawnEnemy('turret',ax,ay,z-30);
+  } else if(r<0.78){ // asteroid field
+    for(var i=0;i<3;i++) spawnEnemy('asteroid',(state.rng()-0.5)*1.8,(state.rng()-0.5)*1.1,z+i*70);
+  } else if(r<0.88){ // pickup
+    spawnPickup(state.rng()<0.5?'shield':'charge',(state.rng()-0.5)*1.2,(state.rng()-0.5)*0.8,z);
+  } else { // drone trio
+    for(var j=0;j<3;j++) spawnEnemy('drone',(state.rng()-0.5)*1.5,(state.rng()-0.5)*1.0,z+j*50);
+  }
+}
+function spawnGates(){
+  state.gates=[
+    {side:'alpha',x:-0.55,y:0,z:950,taken:false},
+    {side:'beta',x:0.55,y:0,z:950,taken:false}
+  ];
+  setMsg('BRANCH GATE — fly LEFT for the ION STORM, RIGHT for the DERELICT RING.');
+  feed('Branch gate ahead. Left: ION STORM. Right: DERELICT RING.');
+  sfx('warn');
+}
+function spawnBoss(){
+  state.bossSpawned=true;
+  state.boss={type:'boss',x:0,y:0.1,z:1100,hp:300,maxHp:300,t:0,fireT:2,spawnT:3,dead:false};
+  state.enemies.push(state.boss);
+  setMsg('⚠ THE HOLLOW CROWN — capital ship on scope. Kill it to clear the Corridor.');
+  feed('THE HOLLOW CROWN has entered the Corridor.');
+  sfx('warn');
+}
+
+/* ---------- combat ---------- */
+function fireBolt(charged){
+  var b={x:state.px,y:state.py+0.02,z:20,vz:950,dmg:charged?30:10,charged:!!charged,from:'player'};
+  state.bolts.push(b); sfx('fire');
+}
+function playerFire(){
+  if(state.fireCd>0||state.phase!=='play') return;
+  if(state.charge>=1){ fireBolt(true); state.charge=0; state.charging=false; state.fireCd=0.35; }
+  else { fireBolt(false); state.fireCd=0.16; }
+}
+function barrelRoll(){
+  if(state.rollCd>0||state.rollT>0||state.phase!=='play') return;
+  state.rollT=0.55; state.rollCd=1.4; state.invulnT=Math.max(state.invulnT,0.55); sfx('roll');
+  feed('Barrel roll — fire deflected.');
+}
+function damagePlayer(n,src){
+  if(state.invulnT>0||state.rollT>0||state.phase!=='play') return;
+  var absorbed=Math.min(state.shield,n); state.shield-=absorbed; n-=absorbed;
+  state.hull-=n; state.shake=0.35; state.flashT=0.12; state.invulnT=0.5; sfx('boom');
+  feed('Hull hit ('+src+') — hull '+Math.max(0,Math.round(state.hull))+'.');
+  if(state.hull<=0){ state.hull=0; gameOver(false); }
+}
+function killEnemy(e){
+  if(e.dead) return; e.dead=true;
+  var base=e.type==='drone'?100:e.type==='weaver'?150:e.type==='turret'?200:e.type==='asteroid'?50:5000;
+  var pts=Math.round(base*sectorMult());
+  state.score+=pts; state.kills++; state.killsByType[e.type]=(state.killsByType[e.type]||0)+1;
+  if(e.type==='boss'){ state.bossDead=true; state.score+=1000; feed('THE HOLLOW CROWN destroyed. +'+pts+' (+1000 bonus).'); }
+  sfx('boom');
+}
+function gameOver(won){
+  state.phase=won?'win':'gameover'; state.over=true; state.won=won;
+  if(state.mode==='watch') finishWatch(won);
+  setMsg(won?'🏆 CORRIDOR CLEAR — THE HOLLOW CROWN IS DOWN.':'💥 VOIDWING DOWN — the Corridor keeps its dead.');
+  feed(won?'Mission complete. Score '+state.score+'.':'Run over. Score '+state.score+'.');
+}
+function sectorClear(){
+  state.phase='sectorclear';
+  state.score+=Math.round(500*sectorMult());
+  state.wingmen.forEach(function(w){ w.alive=true; w.hp=40; });
+  feed('Sector '+state.sector+' clear. Wingmen re-formed. +'+Math.round(500*sectorMult())+'.');
+  sfx('gate');
+}
+
+/* ---------- step ---------- */
+function step(dt){
+  if(!state||state.paused) return;
+  if(state.phase!=='play'){ state.time+=dt; return; }
+  state.time+=dt;
+  var speed=state.scroll*(state.boostT>0?1.7:1);
+  state.dist+=speed*dt;
+  if(state.boostT>0) state.boostT-=dt;
+  if(state.rollT>0) state.rollT-=dt;
+  if(state.rollCd>0) state.rollCd-=dt;
+  if(state.fireCd>0) state.fireCd-=dt;
+  if(state.invulnT>0) state.invulnT-=dt;
+  if(state.flashT>0) state.flashT-=dt;
+  if(state.shake>0) state.shake-=dt;
+  // charging
+  if(state.charging){ state.charge=Math.min(1,state.charge+dt/0.8); }
+  // steering
+  var k=state.keys, ax=0, ay=0;
+  if(k['arrowleft']||k['a']) ax-=1; if(k['arrowright']||k['d']) ax+=1;
+  if(k['arrowup']||k['w']) ay+=1; if(k['arrowdown']||k['s']) ay-=1;
+  state.pvx+=ax*6*dt; state.pvy+=ay*6*dt;
+  state.pvx*=Math.pow(0.12,dt); state.pvy*=Math.pow(0.12,dt);
+  state.px=clamp(state.px+state.pvx*dt,-1,1);
+  state.py=clamp(state.py+state.pvy*dt,-0.85,0.85);
+  state.bank+=((clamp(state.pvx*0.35,-0.6,0.6))-state.bank)*Math.min(1,dt*8);
+  // auto-fire while holding
+  if(k[' ']||k['mouse']) playerFire();
+  // rings (corridor hoops)
+  if(state.rings.length===0||state.rings[state.rings.length-1].z<200) state.rings.push({z:1200,rot:state.rng()*Math.PI});
+  state.rings.forEach(function(r){ r.z-=speed*dt; });
+  state.rings=state.rings.filter(function(r){ return r.z>-50; });
+  // gates
+  if(!state.gateDone&&state.dist>=GATE_AT&&state.sector<3){ spawnGates(); state.gateDone=true; }
+  state.gates.forEach(function(g){ g.z-=speed*dt; });
+  state.gates.forEach(function(g){
+    if(!g.taken&&g.z<=0&&Math.abs(state.px-g.x)<0.38&&Math.abs(state.py-g.y)<0.42){
+      g.taken=true; state.gateChoice=g.side; state.route=g.side; state.routeName=ROUTES[g.side].name; state.gatesTaken++;
+      state.score+=Math.round(250*ROUTES[g.side].mult);
+      setMsg('ROUTE LOCKED — '+ROUTES[g.side].name+' ('+ROUTES[g.side].flavor+').');
+      feed('Route locked: '+ROUTES[g.side].name+'.');
+      sfx('gate');
+    }
+  });
+  state.gates=state.gates.filter(function(g){ return g.z>-60; });
+  // boss trigger / sector advance
+  if(state.sector===3&&state.dist>=BOSS_AT&&!state.bossSpawned) spawnBoss();
+  if(state.sector<3&&state.dist>=SECTOR_LEN&&!state.boss&&state.gates.length===0){
+    if(!state.route){ state.route=state.px<0?'alpha':'beta'; state.routeName=ROUTES[state.route].name; state.gateChoice=state.route; }
+    sectorClear();
+    return;
+  }
+  if(state.sector===3&&state.bossDead){ gameOver(true); return; }
+  // spawning
+  state.spawnT-=dt;
+  if(state.spawnT<=0&&!(state.sector===3&&state.dist>BOSS_AT-500)){ spawnPattern(); state.spawnT=0.55+state.rng()*0.7; }
+  // enemies
+  state.enemies.forEach(function(e){
+    e.t+=dt; e.z-=speed*dt*(e.type==='asteroid'?0.9:1);
+    if(e.type==='weaver'){ e.x=e.baseX+Math.sin(e.t*2.2+e.seed)*0.45; e.y+=Math.sin(e.t*1.4+e.seed)*0.12*dt; }
+    if(e.type==='drone'){ e.x+=(state.px-e.x)*0.25*dt; e.y+=(state.py-e.y)*0.2*dt; }
+    if(e.type==='boss'){ e.z=Math.max(340,e.z-speed*dt*0.4); e.x=Math.sin(e.t*0.5)*0.55; e.y=0.1+Math.sin(e.t*0.8)*0.2; }
+    if(e.type==='turret'||e.type==='drone'||e.type==='boss'){
+      e.fireT-=dt;
+      if(e.fireT<=0&&e.z>60&&e.z<900){
+        var spread=e.type==='boss'?5:1;
+        for(var i=0;i<spread;i++){
+          var aimErr=(state.rng()-0.5)*0.35;
+          state.ebolts.push({x:e.x+aimErr+(i-2)*0.08,y:e.y+(state.rng()-0.5)*0.1,z:e.z-20,
+            tx:state.px+(state.rng()-0.5)*0.3,ty:state.py+(state.rng()-0.5)*0.3,vz:520,
+            target:state.rng()<0.25?state.wingmen[Math.floor(state.rng()*2)]:null});
+        }
+        e.fireT=e.type==='boss'?1.4:1.6+state.rng();
+      }
+    }
+    if(e.type==='boss'){
+      e.spawnT-=dt;
+      if(e.spawnT<=0&&state.enemies.length<9){ spawnEnemy('drone',e.x+(state.rng()-0.5),e.y,e.z+80); e.spawnT=4; }
+    }
+  });
+  // player bolts
+  state.bolts.forEach(function(b){ b.z+=b.vz*dt; });
+  state.bolts.forEach(function(b){
+    state.enemies.forEach(function(e){
+      if(!e.dead&&Math.abs(b.z-e.z)<42&&Math.abs(b.x-e.x)<0.17&&Math.abs(b.y-e.y)<0.17){
+        e.hp-=b.dmg; b.spent=true; sfx('hit');
+        if(e.hp<=0) killEnemy(e);
+      }
+    });
+  });
+  state.bolts=state.bolts.filter(function(b){ return !b.spent&&b.z<1400; });
+  // enemy bolts
+  state.ebolts.forEach(function(eb){
+    eb.z-=eb.vz*dt;
+    var t=0.03+eb.z*0.00002;
+    eb.x+=(eb.tx-eb.x)*t; eb.y+=(eb.ty-eb.y)*t;
+  });
+  state.ebolts.forEach(function(eb){
+    if(eb.z<=0&&eb.z>-30){
+      if(state.rollT>0){ eb.spent=true; return; }
+      var tgt=eb.target&&eb.target.alive?eb.target:null;
+      if(tgt){
+        if(dist2(eb.x,eb.y,tgt.ox+state.px*0.4,tgt.oy+state.py*0.4)<0.09){
+          tgt.hp-=12; eb.spent=true;
+          if(tgt.hp<=0){ tgt.alive=false; feed(tgt.name+' is DOWN — re-forms next sector.'); }
+        }
+      } else if(dist2(eb.x,eb.y,state.px,state.py)<0.0144){
+        damagePlayer(8,'enemy fire'); eb.spent=true;
+      }
+    }
+  });
+  state.ebolts=state.ebolts.filter(function(eb){ return !eb.spent&&eb.z>-60; });
+  // enemy pass-through / collision
+  state.enemies.forEach(function(e){
+    if(!e.dead&&e.z<=0){
+      if(dist2(e.x,e.y,state.px,state.py)<0.04){
+        damagePlayer(e.type==='asteroid'?22:14,e.type);
+        if(e.type!=='boss') killEnemy(e); else e.z=60;
+      } else if(e.type!=='boss'){ e.dead=true; }
+    }
+  });
+  state.enemies=state.enemies.filter(function(e){ return !e.dead&&e.z>-80; });
+  // pickups
+  state.pickups.forEach(function(p){ p.z-=speed*dt; p.t+=dt;
+    if(p.z<=0&&Math.abs(p.x-state.px)<0.2&&Math.abs(p.y-state.py)<0.2){
+      if(p.kind==='shield'){ state.shield=Math.min(100,state.shield+25); feed('Shield cell +25.'); }
+      else { state.charge=1; feed('Charge cell — shot fully charged.'); }
+      p.taken=true; sfx('pickup');
+    }
+  });
+  state.pickups=state.pickups.filter(function(p){ return !p.taken&&p.z>-60; });
+  // wingmen
+  state.wingmen.forEach(function(w){
+    if(!w.alive) return;
+    w.fireT-=dt;
+    if(w.fireT<=0){
+      var tgt=null, best=1e9;
+      state.enemies.forEach(function(e){ if(!e.dead&&e.z>40&&e.z<best){ best=e.z; tgt=e; } });
+      if(tgt&&state.rng()<0.62){ tgt.hp-=6; if(tgt.hp<=0) killEnemy(tgt); sfx('hit'); }
+      w.fireT=0.55;
+    }
+  });
+  // watch bot
+  if(state.mode==='watch') watchTick(dt);
+  updateHUD();
+}
+
+/* ---------- WATCH pilot (Fallible Engine, per-pilot skill matrix) ---------- */
+var PILOT_MATRIX={
+  ZEROX:{aim:0.85,nerve:0.9,route:0.8}, ORACLE:{aim:0.7,nerve:0.6,route:0.95},
+  NEXUS:{aim:0.8,nerve:0.75,route:0.7}, TURTLE:{aim:0.6,nerve:0.95,route:0.6},
+  SHADDAI:{aim:0.75,nerve:0.8,route:0.85}};
+function startWatch(seed){
+  watchBot=PILOT_MATRIX.ZEROX&&PILOTS[(seed||1)%PILOTS.length]||'ZEROX';
+  watchBot=PILOTS[((seed||1)-1)%PILOTS.length];
+  watchTraces=[];
+  state=newState('watch',seed||7);
+  state.phase='play';
+  setMode('watch');
+  setMsg('WATCH — '+watchBot+' is flying the Corridor on the Fallible Engine.');
+  feed(watchBot+' took the stick. Skill matrix: aim '+PILOT_MATRIX[watchBot].aim+', nerve '+PILOT_MATRIX[watchBot].nerve+', route '+PILOT_MATRIX[watchBot].route+'.');
+  var wn=document.getElementById('watchName'); if(wn) wn.textContent='WATCH: '+watchBot+' · Fallible Engine';
+}
+function finishWatch(won){
+  state.watchDone=true;
+  if(FE){
+    try{
+      var agent=FE.loadAgent(watchBot);
+      var res=FE.decide(agent,'voidwing',[{id:'win',score:won?1:0},{id:'loss',score:won?0:1}],{});
+      watchTraces.push({agent:watchBot,pick:won?'win':'loss',t:+state.time.toFixed(1),trace:res&&res.trace?res.trace:null});
+      FE.recordResult(watchBot,'voidwing',null,won?'win':'loss',{traces:watchTraces,score:state.score,time:+state.time.toFixed(1),kills:state.kills,sector:state.sector});
+    }catch(e){}
+  }
+}
+function watchTick(dt){
+  watchTimer-=dt;
+  if(watchTimer>0) return;
+  watchTimer=0.22;
+  var m=PILOT_MATRIX[watchBot]||PILOT_MATRIX.ZEROX;
+  // nearest threat straight ahead
+  var threat=null, best=1e9;
+  state.enemies.forEach(function(e){ if(!e.dead&&e.z>0&&e.z<500&&e.z<best){ best=e.z; threat=e; } });
+  var nearBolt=null;
+  state.ebolts.forEach(function(eb){ if(eb.z>0&&eb.z<220&&(!nearBolt||eb.z<nearBolt.z)) nearBolt=eb; });
+  var opts=[
+    {id:'fire', score:threat?0.9*m.aim:0.4},
+    {id:'left', score:threat&&threat.x<state.px?0.85:0.2},
+    {id:'right', score:threat&&threat.x>state.px?0.85:0.2},
+    {id:'up', score:threat&&threat.y>state.py?0.7:0.15},
+    {id:'down', score:threat&&threat.y<state.py?0.7:0.15},
+    {id:'roll', score:nearBolt?0.95*m.nerve:0.05},
+    {id:'charge', score:state.boss?0.8:0.3},
+    {id:'boost', score:state.dist>SECTOR_LEN-300?0.7:0.1},
+    {id:'hold', score:0.25}
+  ];
+  // gates: steer toward the route the pilot prefers
+  if(state.gates.length){
+    var pref=m.route>0.75?'alpha':'beta';
+    opts.push({id:pref==='alpha'?'left':'right', score:0.9});
+  }
+  var pick='fire';
+  if(FE){
+    try{
+      var agent=FE.loadAgent(watchBot);
+      var res=FE.decide(agent,'voidwing',opts,{threat:threat?threat.type:null,hull:state.hull,sector:state.sector});
+      if(res&&res.pick) pick=res.pick.id||res.pick;
+      watchTraces.push({agent:watchBot,pick:pick,t:+state.time.toFixed(1),trace:res&&res.trace?res.trace:null});
+    }catch(e){ pick=opts.sort(function(a,b){return b.score-a.score;})[0].id; }
+  } else {
+    pick=opts.sort(function(a,b){return b.score-a.score;})[0].id;
+  }
+  // apply for the next ticks
+  state.keys={};
+  if(pick==='left') state.keys['arrowleft']=true;
+  else if(pick==='right') state.keys['arrowright']=true;
+  else if(pick==='up') state.keys['arrowup']=true;
+  else if(pick==='down') state.keys['arrowdown']=true;
+  if(pick==='fire'||pick==='charge'){ state.keys[' ']=true; if(pick==='charge') state.charging=true; else state.charging=false; }
+  else state.charging=false;
+  if(pick==='roll') barrelRoll();
+  if(pick==='boost') state.boostT=0.5;
+}
+
+/* ---------- rendering: sprite stacking (layered slices, rim light, glow) ---------- */
+var stars=[];
+for(var si=0;si<140;si++) stars.push({x:Math.random()*2-1,y:Math.random()*2-1,z:Math.random(),s:Math.random()<0.12?2.4:1.2});
+function project(x,y,z){
+  var f=420, s=f/(f+z);
+  return {x:CW/2+(x-state.px*0.28)*CW*0.42*s, y:CH/2-(y-state.py*0.22)*CH*0.42*s, s:s};
+}
+function drawStackedShip(g,x,y,z,scale,kind,color){
+  // layered slices: 4 offset passes, decreasing alpha = volume; rim light on top
+  var passes=[[0.10,'rgba(0,0,0,0.55)'],[0.06,'rgba(0,0,0,0.35)'],[0.03,'rgba(255,255,255,0.10)'],[0,color]];
+  for(var i=0;i<passes.length;i++){
+    g.save(); g.translate(x+passes[i][0]*scale*40, y+passes[i][0]*scale*30);
+    g.fillStyle=passes[i][1]; g.strokeStyle=i===3?'rgba(255,255,255,0.85)':'rgba(0,0,0,0)';
+    g.lineWidth=1.2;
+    g.beginPath();
+    if(kind==='player'||kind==='wing'){
+      g.moveTo(0,-26*scale); g.lineTo(20*scale,14*scale); g.lineTo(8*scale,8*scale); g.lineTo(-8*scale,8*scale); g.lineTo(-20*scale,14*scale);
+    } else if(kind==='drone'){
+      g.moveTo(0,-14*scale); g.lineTo(16*scale,10*scale); g.lineTo(0,18*scale); g.lineTo(-16*scale,10*scale);
+    } else if(kind==='weaver'){
+      g.moveTo(0,-20*scale); g.lineTo(22*scale,6*scale); g.lineTo(10*scale,16*scale); g.lineTo(-10*scale,16*scale); g.lineTo(-22*scale,6*scale);
+    } else if(kind==='turret'){
+      g.moveTo(-14*scale,-10*scale); g.lineTo(14*scale,-10*scale); g.lineTo(10*scale,12*scale); g.lineTo(-10*scale,12*scale);
+    } else if(kind==='boss'){
+      g.moveTo(0,-30*scale); g.lineTo(52*scale,-6*scale); g.lineTo(40*scale,22*scale); g.lineTo(-40*scale,22*scale); g.lineTo(-52*scale,-6*scale);
+    }
+    g.closePath(); g.fill(); g.stroke(); g.restore();
+  }
+  // engine glow = ground shadow in space
+  var glow=g.createRadialGradient(x,y+16*scale,2,x,y+16*scale,26*scale);
+  glow.addColorStop(0,'rgba(255,122,26,0.55)'); glow.addColorStop(1,'rgba(255,122,26,0)');
+  g.fillStyle=glow; g.beginPath(); g.arc(x,y+16*scale,26*scale,0,Math.PI*2); g.fill();
+}
+function drawRock(g,x,y,z,scale){
+  var passes=[[0.10,'rgba(0,0,0,0.6)'],[0.05,'rgba(60,40,30,0.9)'],[0,'#7a5a44']];
+  for(var i=0;i<passes.length;i++){
+    g.save(); g.translate(x+passes[i][0]*scale*30,y+passes[i][0]*scale*20);
+    g.fillStyle=passes[i][1]; g.strokeStyle=i===2?'rgba(255,200,150,0.5)':'rgba(0,0,0,0)';
+    g.beginPath();
+    g.moveTo(-18*scale,-8*scale); g.lineTo(-6*scale,-20*scale); g.lineTo(14*scale,-12*scale);
+    g.lineTo(20*scale,6*scale); g.lineTo(4*scale,18*scale); g.lineTo(-14*scale,12*scale);
+    g.closePath(); g.fill(); g.stroke(); g.restore();
+  }
+}
+function drawPortrait(g,x,y,scale,color,initial){
+  // stacked-slice pilot bust: 3 slices + rim light
+  var slices=[{dx:4,dy:3,c:'rgba(0,0,0,0.55)'},{dx:2,dy:1.5,c:'rgba(255,255,255,0.12)'},{dx:0,dy:0,c:color}];
+  slices.forEach(function(s){
+    g.save(); g.translate(x+s.dx*scale,y+s.dy*scale);
+    g.fillStyle=s.c; g.beginPath(); g.arc(0,0,13*scale,0,Math.PI*2); g.fill();
+    g.beginPath(); g.moveTo(-13*scale,12*scale); g.quadraticCurveTo(0,-2*scale,13*scale,12*scale); g.lineTo(13*scale,18*scale); g.lineTo(-13*scale,18*scale); g.closePath(); g.fill();
+    g.restore();
+  });
+  g.fillStyle='#05030c'; g.font='bold '+Math.round(11*scale)+'px Orbitron, monospace'; g.textAlign='center';
+  g.fillText(initial,x,y+4*scale);
+  g.strokeStyle='rgba(255,215,94,0.8)'; g.lineWidth=1;
+  g.beginPath(); g.arc(x,y,14*scale,0,Math.PI*2); g.stroke();
+}
+function render(){
+  var g=ctx;
+  g.clearRect(0,0,CW,CH);
+  if(!state){ return; }
+  var shx=state.shake>0?(state.rng()-0.5)*8:0, shy=state.shake>0?(state.rng()-0.5)*8:0;
+  g.save(); g.translate(shx,shy);
+  // nebula: layered gradient by sector
+  var neb=g.createLinearGradient(0,0,0,CH);
+  if(state.sector===1){ neb.addColorStop(0,'#0a0618'); neb.addColorStop(0.6,'#160818'); neb.addColorStop(1,'#05030c'); }
+  else if(state.sector===2){ neb.addColorStop(0,'#04121c'); neb.addColorStop(0.6,'#0a1428'); neb.addColorStop(1,'#05030c'); }
+  else { neb.addColorStop(0,'#1c0608'); neb.addColorStop(0.6,'#12060f'); neb.addColorStop(1,'#05030c'); }
+  g.fillStyle=neb; g.fillRect(-10,-10,CW+20,CH+20);
+  // stars, 3 parallax layers
+  stars.forEach(function(s){
+    var px=((s.x-state.px*0.12*s.z)*0.5+0.5)*CW, py=((s.y-state.py*0.08*s.z)*0.5+0.5)*CH;
+    g.fillStyle='rgba(255,255,255,'+(0.35+s.z*0.6)+')';
+    g.fillRect(px,py,s.s,s.s);
+  });
+  // corridor rings
+  state.rings.forEach(function(r){
+    var p=project(0,0,r.z);
+    g.strokeStyle='rgba(255,122,26,'+(0.12+p.s*0.5)+')'; g.lineWidth=2+p.s*3;
+    g.beginPath(); g.ellipse(p.x,p.y,150*p.s+40,110*p.s+30,0,0,Math.PI*2); g.stroke();
+    g.strokeStyle='rgba(53,224,255,'+(0.1+p.s*0.4)+')'; g.lineWidth=1;
+    g.beginPath(); g.ellipse(p.x,p.y,150*p.s+44,110*p.s+34,0,0,Math.PI*2); g.stroke();
+  });
+  // gates
+  state.gates.forEach(function(gt){
+    var p=project(gt.x,gt.y,gt.z);
+    g.strokeStyle=gt.side==='alpha'?'#35e0ff':'#ffd75e'; g.lineWidth=3;
+    g.beginPath(); g.arc(p.x,p.y,60*p.s+14,0,Math.PI*2); g.stroke();
+    g.fillStyle=gt.side==='alpha'?'#35e0ff':'#ffd75e'; g.font='bold 13px Orbitron, monospace'; g.textAlign='center';
+    g.fillText(gt.side==='alpha'?'◀ ION STORM':'DERELICT RING ▶',p.x,p.y-(66*p.s+20));
+  });
+  // pickups
+  state.pickups.forEach(function(pk){
+    var p=project(pk.x,pk.y,pk.z);
+    g.save(); g.translate(p.x,p.y+Math.sin(pk.t*4)*4);
+    g.fillStyle=pk.kind==='shield'?'#35e0ff':'#ffd75e';
+    g.beginPath(); g.arc(0,0,10*p.s+4,0,Math.PI*2); g.fill();
+    g.fillStyle='#05030c'; g.font='bold 11px monospace'; g.textAlign='center';
+    g.fillText(pk.kind==='shield'?'S':'C',0,4); g.restore();
+  });
+  // enemies (sorted far → near)
+  var sorted=state.enemies.slice().sort(function(a,b){return b.z-a.z;});
+  sorted.forEach(function(e){
+    if(e.dead) return;
+    var p=project(e.x,e.y,e.z), sc=Math.max(0.25,p.s*1.4);
+    if(e.type==='asteroid'){ drawRock(g,p.x,p.y,e.z,sc); return; }
+    var col=e.type==='drone'?'#ff5a3c':e.type==='weaver'?'#c07bff':e.type==='turret'?'#ffb03c':'#ff2e63';
+    drawStackedShip(g,p.x,p.y,e.z,sc,e.type,col);
+    if(e.hp<(e.type==='boss'?300:e.type==='turret'?40:e.type==='weaver'?30:20)){
+      g.fillStyle='rgba(255,56,96,0.9)'; g.fillRect(p.x-18*sc,p.y-30*sc,36*sc*(e.hp/(e.type==='boss'?300:e.type==='turret'?40:e.type==='weaver'?30:20)),4);
+    }
+    if(e.type==='boss'){
+      g.fillStyle='#ff2e63'; g.font='bold 12px Orbitron, monospace'; g.textAlign='center';
+      g.fillText('THE HOLLOW CROWN',p.x,p.y-44*sc);
+    }
+  });
+  // enemy bolts
+  g.fillStyle='#ff3860';
+  state.ebolts.forEach(function(eb){
+    var p=project(eb.x,eb.y,eb.z);
+    g.beginPath(); g.arc(p.x,p.y,3+p.s*3,0,Math.PI*2); g.fill();
+  });
+  // player bolts
+  state.bolts.forEach(function(b){
+    var p=project(b.x,b.y,b.z);
+    g.strokeStyle=b.charged?'#ffd75e':'#35e0ff'; g.lineWidth=b.charged?4:2.5;
+    g.beginPath(); g.moveTo(p.x,p.y+10); g.lineTo(p.x,p.y-10); g.stroke();
+  });
+  // wingmen
+  state.wingmen.forEach(function(w){
+    if(!w.alive) return;
+    var wx=state.px*0.55+w.ox*0.55, wy=state.py*0.55+w.oy*0.55;
+    var p=project(wx,wy,90);
+    drawStackedShip(g,p.x,p.y,90,0.55,'wing',w.color);
+    g.fillStyle=w.color; g.font='9px Orbitron, monospace'; g.textAlign='center';
+    g.fillText(w.name,p.x,p.y+34);
+  });
+  // player ship (cockpit view: ship from behind, banking, rolling)
+  var pxp=CW/2+state.px*130, pyp=CH*0.72-state.py*90;
+  g.save(); g.translate(pxp,pyp); g.rotate(state.bank+(state.rollT>0?(0.55-state.rollT)*Math.PI*4:0));
+  drawStackedShip(g,0,0,0,1.5,'player','#ff7a1a');
+  g.restore();
+  // charge glow
+  if(state.charge>0.05){
+    g.fillStyle='rgba(255,215,94,'+(state.charge*0.8)+')';
+    g.beginPath(); g.arc(pxp,pyp-40,6+state.charge*14,0,Math.PI*2); g.fill();
+  }
+  // flash
+  if(state.flashT>0){ g.fillStyle='rgba(255,56,96,'+(state.flashT*2)+')'; g.fillRect(-10,-10,CW+20,CH+20); }
+  g.restore();
+  // cockpit frame + sector banner
+  g.strokeStyle='rgba(255,122,26,0.5)'; g.lineWidth=3;
+  g.beginPath(); g.moveTo(0,0); g.lineTo(60,0); g.moveTo(CW-60,0); g.lineTo(CW,0);
+  g.moveTo(0,CH); g.lineTo(60,CH); g.moveTo(CW-60,CH); g.lineTo(CW,CH); g.stroke();
+  g.fillStyle='#ffd75e'; g.font='bold 13px Orbitron, monospace'; g.textAlign='left';
+  g.fillText('SECTOR '+state.sector+' · '+state.routeName,14,24);
+  g.textAlign='right';
+  g.fillText(state.phase==='play'?'':state.phase.toUpperCase(),CW-14,24);
+  if(state.boss){
+    g.fillStyle='#ff2e63'; g.textAlign='center';
+    g.fillText('HOLLOW CROWN '+Math.max(0,Math.round(state.boss.hp))+' / 300',CW/2,44);
+    g.fillStyle='rgba(255,46,99,0.25)'; g.fillRect(CW/2-150,50,300,6);
+    g.fillStyle='#ff2e63'; g.fillRect(CW/2-150,50,300*Math.max(0,state.boss.hp)/300,6);
+  }
+  if(state.phase==='sectorclear'){
+    g.fillStyle='rgba(5,3,12,0.72)'; g.fillRect(0,CH/2-70,CW,140);
+    g.fillStyle='#00ff88'; g.font='bold 26px Orbitron, monospace'; g.textAlign='center';
+    g.fillText('SECTOR '+state.sector+' CLEAR',CW/2,CH/2-18);
+    g.fillStyle='#ffeedd'; g.font='13px Share Tech Mono, monospace';
+    g.fillText('Press ENTER / tap to fly sector '+(state.sector+1)+' — wingmen re-formed.',CW/2,CH/2+14);
+    g.fillText('Score '+state.score+' · Hull '+Math.round(state.hull),CW/2,CH/2+38);
+  }
+  if(state.phase==='gameover'||state.phase==='win'){
+    g.fillStyle='rgba(5,3,12,0.78)'; g.fillRect(0,CH/2-80,CW,160);
+    g.fillStyle=state.phase==='win'?'#00ff88':'#ff3860'; g.font='bold 26px Orbitron, monospace'; g.textAlign='center';
+    g.fillText(state.phase==='win'?'CORRIDOR CLEAR':'VOIDWING DOWN',CW/2,CH/2-24);
+    g.fillStyle='#ffeedd'; g.font='13px Share Tech Mono, monospace';
+    g.fillText('Score '+state.score+' · Kills '+state.kills+' · Sector '+state.sector,CW/2,CH/2+8);
+    g.fillText('Press R to fly again.',CW/2,CH/2+34);
+  }
+  if(state.phase==='menu'){
+    g.fillStyle='rgba(5,3,12,0.7)'; g.fillRect(0,0,CW,CH);
+    g.fillStyle='#ff7a1a'; g.font='bold 40px Orbitron, monospace'; g.textAlign='center';
+    g.fillText('VOIDWING',CW/2,CH/2-60);
+    g.fillStyle='#ffd75e'; g.font='15px Orbitron, monospace';
+    g.fillText('KESTREL CORRIDOR · THREE SECTORS · ONE CAPITAL SHIP',CW/2,CH/2-24);
+    g.fillStyle='#ffeedd'; g.font='13px Share Tech Mono, monospace';
+    g.fillText('REN "EMBER" OKAFOR · wingmen NEXUS + TURTLE · fly the gates, pick your route',CW/2,CH/2+8);
+    g.fillText('Press SOLO or WATCH to launch.',CW/2,CH/2+34);
+  }
+}
+
+/* ---------- HUD / messages ---------- */
+function $(id){ return document.getElementById(id); }
+function setMsg(t){ var m=$('msg'); if(m) m.textContent=t; if(state) state.msg=t; }
+function feed(t){ var f=$('feed'); if(!f) return; f.textContent=t; }
+function updateHUD(){
+  if(!state) return;
+  var set=function(id,v){ var el=$(id); if(el) el.textContent=v; };
+  set('hull',Math.max(0,Math.round(state.hull))); set('shield',Math.round(state.shield));
+  set('charge',state.charging?Math.round(state.charge*100)+'%':(state.charge>=1?'FULL':'—'));
+  set('sector',state.sector); set('route','ROUTE '+state.routeName);
+  set('score',state.score); set('kills',state.kills); set('dist',Math.round(state.dist));
+  var hb=$('hullBar'); if(hb) hb.style.width=Math.max(0,state.hull)+'%';
+  var sb=$('shieldBar'); if(sb) sb.style.width=Math.min(100,state.shield)+'%';
+  set('wing1',state.wingmen[0].alive?('NEXUS — READY · HP '+Math.round(state.wingmen[0].hp)):'NEXUS — DOWN');
+  set('wing2',state.wingmen[1].alive?('TURTLE — READY · HP '+Math.round(state.wingmen[1].hp)):'TURTLE — DOWN');
+  var bl=$('bossLine'); if(bl) bl.textContent=state.boss?('BOSS '+Math.max(0,Math.round(state.boss.hp))+'/300'):'';
+}
+
+/* ---------- save / load ---------- */
+function saveGame(){
+  if(!state) return false;
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify({sector:state.sector,route:state.route,routeName:state.routeName,score:state.score,hull:state.hull,shield:state.shield,kills:state.kills,dist:state.dist,px:state.px,py:state.py,seed:state.seed}));
+    setMsg('Saved — sector '+state.sector+', score '+state.score+'.');
+    return true;
+  }catch(e){ setMsg('Save failed (storage unavailable).'); return false; }
+}
+function loadGame(){
+  try{
+    var raw=localStorage.getItem(SAVE_KEY); if(!raw){ setMsg('No saved run yet.'); return false; }
+    var d=JSON.parse(raw);
+    state=newState(state?state.mode:'solo',d.seed||1);
+    state.sector=d.sector; state.route=d.route; state.routeName=d.routeName||'—';
+    state.score=d.score; state.hull=d.hull; state.shield=d.shield; state.kills=d.kills;
+    state.dist=d.dist; state.px=d.px; state.py=d.py; state.phase='play';
+    setMsg('Loaded — sector '+state.sector+', score '+state.score+'.');
+    return true;
+  }catch(e){ setMsg('Load failed.'); return false; }
+}
+
+/* ---------- pause / mode / VR ---------- */
+function setPaused(p){
+  if(!state) return;
+  state.paused=p;
+  var ov=$('pauseOverlay'); if(ov) ov.classList.toggle('open',p);
+}
+function setMode(mode){
+  var s=$('btnSolo'), w=$('btnWatch');
+  if(s) s.classList.toggle('active',mode==='solo');
+  if(w) w.classList.toggle('active',mode==='watch');
+}
+function enterVR(){
+  if(XE&&XE.enter){ try{ XE.enter('voidwing'); setMsg('VR (SIM) — the shared XR engine is handling the session.'); return; }catch(e){} }
+  setMsg('VR is SIM-labelled: the shared XR engine needs a headset session to go live.');
+}
+function advanceSector(){
+  if(!state||state.phase!=='sectorclear') return;
+  state.sector++; state.dist=0; state.gateDone=false; state.route=null; state.routeName='—';
+  state.enemies=[]; state.ebolts=[]; state.bolts=[]; state.pickups=[]; state.gates=[];
+  state.phase='play';
+  setMsg('SECTOR '+state.sector+' — fly the Corridor.');
+  feed('Sector '+state.sector+'. '+(state.sector===3?'The Hollow Crown waits at the end.':'Branch gate ahead.'));
+}
+function startSolo(seed){
+  watchBot=null; watchTraces=[];
+  state=newState('solo',seed||((Date.now()%100000)+1));
+  state.phase='play'; setMode('solo');
+  var wn=$('watchName'); if(wn) wn.textContent='';
+  setMsg('SOLO RUN — REN OKAFOR is in. Fly the gates, kill the Crown.');
+  feed('REN OKAFOR entered the Kestrel Corridor.');
+}
+
+/* ---------- input ---------- */
+function bindBtn(id,down,up){
+  var el=$(id); if(!el) return;
+  el.addEventListener('pointerdown',function(e){ e.preventDefault(); down(); });
+  if(up){ el.addEventListener('pointerup',function(e){ e.preventDefault(); up(); }); el.addEventListener('pointerleave',up); }
+}
+function holdBtn(id,down,up){ bindBtn(id,down,up); }
+document.addEventListener('keydown',function(e){
+  if(!state) return;
+  var k=e.key.toLowerCase();
+  if(k==='p'||k==='escape'){ if(state.phase==='play'||state.paused){ setPaused(!state.paused); } return; }
+  if(k==='m'){ muted=!muted; var b=$('btnMute'); if(b) b.innerHTML='Sound: '+(muted?'Off':'On')+'<small>M to mute</small>'; return; }
+  if(k==='r'&&(state.phase==='gameover'||state.phase==='win')){ startSolo(); return; }
+  if(k==='enter'&&state.phase==='sectorclear'){ advanceSector(); return; }
+  if(k==='x'){ barrelRoll(); return; }
+  if(k==='shift'){ state.boostT=0.5; return; }
+  if(k===' '){ state.charging=true; e.preventDefault(); }
+  state.keys[k]=true;
+});
+document.addEventListener('keyup',function(e){
+  if(!state) return;
+  var k=e.key.toLowerCase();
+  if(k===' '){ if(state.charging){ playerFire(); } state.charging=false; }
+  state.keys[k]=false;
+});
+cv.addEventListener('mousedown',function(){ if(state){ state.keys['mouse']=true; state.charging=true; } });
+document.addEventListener('mouseup',function(){ if(state){ if(state.charging) playerFire(); state.charging=false; state.keys['mouse']=false; } });
+$('btnSolo').addEventListener('click',function(){ startSolo(); });
+$('btnWatch').addEventListener('click',function(){ startWatch(7); });
+$('btnPause').addEventListener('click',function(){ if(state&&(state.phase==='play'||state.paused)) setPaused(!state.paused); });
+$('btnMute').addEventListener('click',function(){ muted=!muted; $('btnMute').innerHTML='Sound: '+(muted?'Off':'On')+'<small>M to mute</small>'; });
+$('btnVR').addEventListener('click',enterVR);
+$('resumeBtn').addEventListener('click',function(){ setPaused(false); });
+$('saveBtn').addEventListener('click',saveGame);
+$('loadBtn').addEventListener('click',function(){ loadGame(); setPaused(false); });
+$('restartBtn').addEventListener('click',function(){ setPaused(false); startSolo(); });
+$('quitArcadeBtn').addEventListener('click',function(){ window.location.href='../arcade.html'; });
+bindBtn('btnA',function(){ if(state){ state.keys[' ']=true; state.charging=true; } },function(){ if(state){ if(state.charging) playerFire(); state.charging=false; state.keys[' ']=false; } });
+bindBtn('btnB',function(){ barrelRoll(); });
+bindBtn('startBtn',function(){ if(state&&(state.phase==='play'||state.paused)) setPaused(!state.paused); });
+bindBtn('selectBtn',function(){ if(state) state.boostT=0.5; });
+holdBtn('padUp',function(){ if(state) state.keys['arrowup']=true; },function(){ if(state) state.keys['arrowup']=false; });
+holdBtn('padDown',function(){ if(state) state.keys['arrowdown']=true; },function(){ if(state) state.keys['arrowdown']=false; });
+holdBtn('padLeft',function(){ if(state) state.keys['arrowleft']=true; },function(){ if(state) state.keys['arrowleft']=false; });
+holdBtn('padRight',function(){ if(state) state.keys['arrowright']=true; },function(){ if(state) state.keys['arrowright']=false; });
+if(('ontouchstart' in window)||(typeof navigator!=='undefined'&&navigator.maxTouchPoints>0)) document.body.classList.add('touch');
+
+/* ---------- boot + harness API ---------- */
+function frame(t){
+  var dt=Math.min(0.05,((t-lastT)||16)/1000); lastT=t;
+  step(dt); render();
+  rafId=requestAnimationFrame(frame);
+}
+state=newState('solo',1);
+state.phase='menu';
+render(); updateHUD();
+requestAnimationFrame(function(t){ lastT=t; requestAnimationFrame(frame); });
+window.__voidwing={
+  state:function(){ return state; },
+  hasFE:function(){ return !!FE; },
+  hasXE:function(){ return !!XE; },
+  startGame:function(mode,seed){ if(mode==='watch'){ startWatch(seed||7); } else { startSolo(seed||1); } return state; },
+  step:function(dt){ step(dt||0.016); render(); },
+  render:render,
+  fire:function(){ playerFire(); },
+  fireCharged:function(){ state.charge=1; playerFire(); },
+  roll:function(){ barrelRoll(); },
+  boost:function(){ state.boostT=0.5; },
+  spawnEnemy:spawnEnemy,
+  spawnPickup:spawnPickup,
+  spawnBoss:spawnBoss,
+  advanceSector:advanceSector,
+  teleport:function(x,y){ state.px=x; state.py=y; },
+  setKeys:function(k){ state.keys=k; },
+  setDist:function(d){ state.dist=d; },
+  saveGame:saveGame, loadGame:loadGame,
+  watchTraces:function(){ return watchTraces; },
+  watchBot:function(){ return watchBot; },
+  project:project,
+  routes:function(){ return ROUTES; }
+};
+</script>
+</body>
+</html>

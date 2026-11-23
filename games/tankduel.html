@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TANKDUEL — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#0a0f0a;--panel:#101a10;--border:rgba(0,255,136,.22);--gold:#ffd75e;--green:#00ff88;--red:#ff3860;--cyan:#35e0ff;--violet:#b78cff;--text:#e8f5dc;--dim:#8aa893}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(0,255,136,.08),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(10,15,10,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--green)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--green);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(0,255,136,.12)}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.35);color:#fff}
+  .vbtn{min-width:0;flex:1 1 30%;font-size:11px;padding:9px 6px}
+  .vbtn.active{border-color:var(--gold);box-shadow:0 0 16px rgba(255,215,94,.35);color:#fff}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(0,255,136,.35);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#0a1210,#05080a);box-shadow:0 0 34px rgba(0,255,136,.14), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#00ff88}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#101a16;border:1px solid rgba(0,255,136,.35);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:#00ff88;color:#04120a}
+  .stick{position:relative;width:124px;height:124px;border-radius:50%;border:1px solid rgba(0,255,136,.4);background:radial-gradient(circle at 50% 50%,#0d1a12 0%,#060a08 70%);touch-action:none}
+  .stick .knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#2affa0,#0a5c34);border:1px solid rgba(0,255,136,.7);box-shadow:0 0 14px rgba(0,255,136,.35)}
+  .stick .lbl{position:absolute;left:0;right:0;top:-18px;text-align:center;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:#8aa893}
+  .stickR{border-color:rgba(255,215,94,.45);background:radial-gradient(circle at 50% 50%,#1a160a 0%,#0a0806 70%)}
+  .stickR .knob{background:radial-gradient(circle at 35% 30%,#ffe98a,#8a6d1a);border-color:rgba(255,215,94,.7);box-shadow:0 0 14px rgba(255,215,94,.35)}
+  .abtns{display:flex;flex-direction:column;gap:10px;align-items:center;padding-top:8px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:16px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#101a16}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(10,15,10,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#101a10;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .stick{width:108px;height:108px}.stick .knob{width:46px;height:46px;margin:-23px 0 0 -23px}
+    .abtns button{width:52px;height:52px}.shell-pills{padding-top:28px}
+  }
+  /* ---- fullscreen (FULLSCREEN standard): the shell — stage on desktop, the
+     whole handheld console on phones — goes true fullscreen via the
+     Fullscreen API. F toggles, the button toggles, Esc exits. ---- */
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*960/600));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*960/600))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(100vw,calc((100vh - 190px)*960/600))}
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:0,255,136}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>TANK<span>DUEL</span></h1><span class="tag">1v1 maze duels · Ricochet shells · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="960" height="600"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The shells are still warm.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="stick" id="stickL"><span class="lbl">DRIVE</span><div class="knob" id="knobL"></div></div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — toggle periscope view">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button id="btnA" title="A — fire">FIRE</button>
+        <button class="b" id="btnB" title="B — periscope view">B</button>
+      </div>
+      <div class="stick stickR" id="stickR"><span class="lbl">TURRET</span><div class="knob" id="knobR"></div></div>
+    </div>
+  </div>
+  <div id="msg">Two tanks. One maze. Bounce the shot home.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ Duel<small>1P — you are NOVA, vs a bot pilot</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>bot vs bot — NOVA vs VEX</small></button>
+    <button class="mbtn" id="btnDuel">⚔ 2P Duel<small>you (NOVA) vs a friend (VEX) — turrets lock forward</small></button>
+    <button class="mbtn" id="btnFP">🎥 Periscope view<small>V — cockpit camera at your tank</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — stage fills the screen</small></button>
+  </div>
+  <div class="row" id="varRow">
+    <button class="mbtn vbtn active" data-var="open">1 · Open Field<small>1 bounce · open ground</small></button>
+    <button class="mbtn vbtn" data-var="ricochet">2 · Ricochet Run<small>2 bounces · maze arena</small></button>
+    <button class="mbtn vbtn" data-var="guided">3 · Guided Rounds<small>shells steer at the foe</small></button>
+    <button class="mbtn vbtn" data-var="ghost">4 · Ghost Tanks<small>invisible — fire reveals you</small></button>
+    <button class="mbtn vbtn" data-var="double">5 · Double Shot<small>two shells per trigger</small></button>
+    <button class="mbtn vbtn" data-var="speed">6 · Speed Trial<small>fast · 3 bounces · first to 3</small></button>
+  </div>
+  <div class="help">
+    <b>TANKDUEL</b> — Two steel pilots meet in the maze yard: <b style="color:#00ff88">NOVA</b> (emerald, long lance barrel) and <b style="color:#ff3860">VEX</b> (crimson, twin stub barrels). Shells <b>ricochet off the walls</b> — bank a shot around a corner and it still counts. First to <b>5 round wins</b> takes the match (3 in Speed Trial).<br/>
+    <b>Controls:</b> <span class="k">W A S D</span> drive · <span class="k">mouse</span> aims the turret · <span class="k">SPACE / click</span> fire. In 2P, player 2 (VEX) drives with the <span class="k">arrow keys</span> and fires with <span class="k">ENTER</span> — turrets lock forward, so you aim by turning your tank. <span class="k">V</span> switches to <b>periscope view</b> — the camera drops into your cockpit. <span class="k">P</span> pauses (save / load in the menu). Keys <span class="k">1–6</span> pick a variation.<br/>
+    <b>WATCH</b> is a bot duel with distinct styles — <b>NOVA</b> holds her lane and aims true, <b>VEX</b> rushes in close and sprays, <b>ORBIT</b> banks angles off the walls, <b>HALO</b> waits for the perfect shot. They misjudge on purpose — never frame-perfect.<br/>
+    <b>First-person:</b> the periscope view now eases onto your turret with a gold ◈ LOCK readout (target · range · shell flight time), a bearing dial, hull pips and speed lines when you slew fast.<br/>
+    ⛶ <b>Fullscreen:</b> <span class="k">F</span> or the Fullscreen button — the stage (on phones, the whole handheld shell) fills the screen; <span class="k">Esc</span> exits fullscreen.<br/>
+    📱 <b>Handheld shell:</b> twin virtual sticks — left stick drives, right stick aims the turret — <span class="k">FIRE</span> shoots, <span class="k">B</span> toggles periscope view, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit).<br/>
+    <b>Clean-room:</b> Combat formula, our own code, pilots, names and art — no copied assets, names or code.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   TANKDUEL — original 1v1 maze tank duels for the Shaddai Arcade.
+   Clean-room: the Combat FORMULA (two tanks in a maze arena, bouncing
+   shots, round wins, variation picker) re-implemented from documented
+   behaviour in our own code. All pilots, names, art, tuning, arenas and
+   variation rules are original. No reference code or assets were copied,
+   run or moved into this file.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var W=960, H=600, CELL=60, COLS=16, ROWS=10;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+
+/* ---- Fallible Engine wiring (E13, 2026-11-21): in WATCH mode each match
+   is a 1v1 duel — one council agent per pilot, rotating a sliding pair
+   across matches (bout n: AGENTS[n%8] vs AGENTS[(n+1)%8], so 8 bouts give
+   every agent exactly two matches). Every bot think tick goes through
+   FallibleEngine.decide (the game scores hold/rush/reposition/bank/
+   hold-fire options, the engine samples by personality temperature).
+   Engine absent -> the legacy bots in stepBots below, unchanged. A match
+   yields 1 pairwise recordMatch (winner vs loser), so Elo moves at K=24.
+   Solo bot also decides via the engine but records nothing (human games).
+   League page reads per-game Elo generically, so 'tankduel' appears there
+   with no league.html change. ---- */
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var COUNCIL_IDS=['ASIMOV','SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'];
+var SOLO_IDS=[null,'ZEROX'];  /* NOVA is the human */
+var tdAgentIds=[null,null], tdAgents=[null,null];
+var tdTraces=[[],[]], tdRecorded=false, tdBout=0;
+/* E37 REPAIR (rotation frozen): tdBout persists in localStorage, seeded on
+   load and saved on advance — same pattern as castlebreak (E36). Before this
+   fix it reset to 0 on every load, so every fresh ?auto=watch restarted at
+   ASIMOV vs SHADDAI. The cursor advances only when the engine is present; a
+   fallback load never consumes it. */
+try{ tdBout=JSON.parse(localStorage.getItem('tankduel.tdBout')||'0')||0; if(!isFinite(tdBout)||tdBout<0) tdBout=0; }catch(e){ tdBout=0; }
+function tdSaveBout(){ try{ localStorage.setItem('tankduel.tdBout', JSON.stringify(tdBout)); }catch(e){} }
+function tdSetupAgents(mode){
+  var ids;
+  if(mode==='watch'){ ids=[COUNCIL_IDS[tdBout%8], COUNCIL_IDS[(tdBout+1)%8]]; if(FE){ tdBout++; tdSaveBout(); } }
+  else if(mode==='solo'){ ids=SOLO_IDS; }
+  else { ids=[null,null]; }
+  tdAgentIds=FE?ids.slice():[null,null]; /* no engine -> no agents, even as labels */
+  tdAgents=[null,null];
+  tdTraces=[[],[]];
+  tdRecorded=false;
+  if(FE){
+    ids.forEach(function(id,i){
+      if(!id) return;
+      try{ tdAgents[i]=FE.loadAgent(id); }catch(e){ tdAgents[i]=null; }
+    });
+  }
+}
+/* Score this bot's stance options for the engine; tags name the reason the
+   option is attractive, so per-tag learning (E8) builds real strategies.
+   hold keeps the lane and aims true; rush closes on the foe; reposition
+   takes a fresh firing spot; bank aims at a wall reflection point so the
+   shell bounces home without line of sight; hold-fire waits out this
+   think window without shooting. Scores are the GAME's heuristic —
+   personality enters only through the engine's temperature. */
+function tankOptions(t,ti){
+  var foe=state.tanks[1-ti];
+  var los=foe.alive && hasLOS(state.walls,t.x,t.y,foe.x,foe.y);
+  var dist=foe.alive?Math.hypot(foe.x-t.x,foe.y-t.y):999;
+  var aligned=foe.alive?Math.abs(angNorm(Math.atan2(foe.y-t.y,foe.x-t.x)-t.turret))<0.14:false;
+  return [
+    {key:'hold',       tag:'hold',       score:los?0.75:0.25},
+    {key:'rush',       tag:'rush',       score:!los&&dist>300?0.75:(dist>300?0.45:0.15)},
+    {key:'reposition', tag:'reposition', score:los?0.20:0.60},
+    {key:'bank',       tag:'bank',       score:los?0.10:0.70},
+    {key:'hold-fire',  tag:'hold-fire',  score:aligned?0.20:0.55}
+  ];
+}
+/* Apply the engine's stance pick for this think window: waypoint + aim
+   mode + whether the tank may fire until the next think tick. */
+function applyTankStance(t,ti,key){
+  var foe=state.tanks[1-ti];
+  t.stance=key; t.holdFire=(key==='hold-fire');
+  t.aimErr=(Math.random()-0.5)*2*t.bot.err;
+  if(key==='hold'||key==='hold-fire'||key==='bank'){ t.waypoint={x:t.x,y:t.y}; }
+  else if(key==='rush'){
+    t.waypoint=foe.alive?{x:foe.x+(Math.random()-0.5)*180, y:foe.y+(Math.random()-0.5)*180}:randomOpenCell();
+  } else { /* reposition */
+    var wp=randomOpenCell();
+    if(t.bot.style==='banker') wp={x:W/2+(Math.random()-0.5)*200, y:H/2+(Math.random()-0.5)*140};
+    t.waypoint=wp;
+  }
+}
+/* Engine decision tick: returns true when the engine chose this bot's
+   stance, false when the engine is absent (or no agent for this tank)
+   and the legacy logic in stepBots should run instead. */
+function engineBotTick(t,ti){
+  if(!FE||!tdAgents[ti]) return false;
+  var opts=tankOptions(t,ti);
+  var res=FE.decide(tdAgents[ti],'tankduel',opts,{});
+  tdTraces[ti].push(res.trace);
+  applyTankStance(t,ti,res.pick.key);
+  return true;
+}
+/* One WATCH match = one 1v1 duel: a single pairwise recordMatch, winner
+   vs loser, carrying both tanks' match traces. Guarded so a match records
+   exactly once. */
+function recordTankduelMatch(){
+  if(state.mode!=='watch'||tdRecorded) return;
+  tdRecorded=true;
+  if(!FE) return;
+  var a=tdAgents[0], b=tdAgents[1];
+  if(!a||!b||state.winner<0) return;
+  try{ FE.recordMatch(a,b,'tankduel',state.winner===0?'win':'loss',tdTraces[0],tdTraces[1]); }catch(e){}
+}
+
+/* ---------- variations: our own list/names, in the spirit of the original 27 ---------- */
+var VARIATIONS=[
+  {id:'open',     name:'OPEN FIELD',    desc:'1 bounce · open ground',        arena:'open',  bounces:1, guided:false, ghost:false, double:false, tankSpeed:2.2, shellSpeed:7,   winRounds:5},
+  {id:'ricochet', name:'RICOCHET RUN', desc:'2 bounces · maze arena',         arena:'maze',  bounces:2, guided:false, ghost:false, double:false, tankSpeed:2.2, shellSpeed:7,   winRounds:5},
+  {id:'guided',   name:'GUIDED ROUNDS', desc:'shells steer at the foe',        arena:'maze',  bounces:1, guided:true,  ghost:false, double:false, tankSpeed:2.2, shellSpeed:6.5, winRounds:5},
+  {id:'ghost',    name:'GHOST TANKS',   desc:'invisible — fire reveals you',   arena:'maze',  bounces:1, guided:false, ghost:true,  double:false, tankSpeed:2.2, shellSpeed:7,   winRounds:5},
+  {id:'double',   name:'DOUBLE SHOT',   desc:'two shells per trigger',         arena:'open',  bounces:1, guided:false, ghost:false, double:true,  tankSpeed:2.4, shellSpeed:7.5, winRounds:5},
+  {id:'speed',    name:'SPEED TRIAL',   desc:'fast · 3 bounces · first to 3',  arena:'maze',  bounces:3, guided:false, ghost:false, double:false, tankSpeed:3.2, shellSpeed:9,   winRounds:3}
+];
+function variationById(id){
+  for(var i=0;i<VARIATIONS.length;i++) if(VARIATIONS[i].id===id) return VARIATIONS[i];
+  return VARIATIONS[0];
+}
+
+/* ---------- arenas: string maps, 16 cols x 10 rows ---------- */
+var ARENAS={
+  open:[
+    '################',
+    '#..............#',
+    '#..............#',
+    '#...##....##...#',
+    '#..............#',
+    '#..............#',
+    '#...##....##...#',
+    '#..............#',
+    '#..............#',
+    '################'
+  ],
+  maze:[
+    '################',
+    '#......#.......#',
+    '#.####.#.####..#',
+    '#.#....#....#..#',
+    '#.#.####.##.#..#',
+    '#.#......#..#..#',
+    '#.####.###..#..#',
+    '#....#.....##..#',
+    '#.##...#####...#',
+    '################'
+  ]
+};
+function buildWalls(arenaId){
+  var map=ARENAS[arenaId], walls=[];
+  for(var r=0;r<ROWS;r++){
+    var c=0;
+    while(c<COLS){
+      if(map[r][c]==='#'){
+        var c0=c;
+        while(c<COLS && map[r][c]==='#') c++;
+        walls.push({x:c0*CELL, y:r*CELL, w:(c-c0)*CELL, h:CELL});
+      } else c++;
+    }
+  }
+  return walls;
+}
+function cellOpen(arenaId, col, row){
+  return ARENAS[arenaId][row][col]==='.';
+}
+function pointInWall(walls,x,y){
+  for(var i=0;i<walls.length;i++){
+    var w=walls[i];
+    if(x>=w.x && x<w.x+w.w && y>=w.y && y<w.y+w.h) return true;
+  }
+  return false;
+}
+/* circle (tank) vs wall rects — push the circle out along the smallest axis */
+function collideCircle(walls, x, y, r){
+  for(var i=0;i<walls.length;i++){
+    var w=walls[i];
+    var nx=Math.max(w.x, Math.min(x, w.x+w.w));
+    var ny=Math.max(w.y, Math.min(y, w.y+w.h));
+    var dx=x-nx, dy=y-ny, d2=dx*dx+dy*dy;
+    if(d2 < r*r){
+      if(d2===0){ y=w.y-r; continue; }
+      var d=Math.sqrt(d2);
+      x=nx+dx/d*r; y=ny+dy/d*r;
+    }
+  }
+  return {x:x, y:y};
+}
+function hasLOS(walls, x0, y0, x1, y1){
+  var dx=x1-x0, dy=y1-y0, dist=Math.hypot(dx,dy), steps=Math.max(1, Math.floor(dist/6));
+  for(var i=1;i<steps;i++){
+    if(pointInWall(walls, x0+dx*i/steps, y0+dy*i/steps)) return false;
+  }
+  return true;
+}
+
+/* ---------- pilots (original characters) ---------- */
+var PILOTS=[
+  {name:'NOVA',  color:'#00ff88', dark:'#0a2e1e', barrel:'lance', bot:{react:24, err:0.10, speed:1.00, style:'steady',  think:70}},
+  {name:'VEX',   color:'#ff3860', dark:'#33101a', barrel:'twin',  bot:{react:16, err:0.16, speed:1.15, style:'rusher',  think:52}},
+  {name:'ORBIT', color:'#35e0ff', dark:'#0a2436', barrel:'dish',  bot:{react:30, err:0.07, speed:0.95, style:'banker',  think:80}},
+  {name:'HALO',  color:'#ffd75e', dark:'#33270a', barrel:'crown', bot:{react:36, err:0.05, speed:0.90, style:'patient', think:95}}
+];
+function buildTank(def, x, y, angle){
+  return {name:def.name, color:def.color, dark:def.dark, barrel:def.barrel, bot:def.bot,
+    x:x, y:y, angle:angle, turret:angle, r:18, alive:true, wins:0, stance:'hold', holdFire:false,
+    fireCd:0, revealT:0, tread:0, stuck:0, lastX:x, lastY:y,
+    thinkT:0, waypoint:null, aimErr:0, muzzle:0, smoke:[]};
+}
+
+var state;
+function freshState(){
+  return {
+    phase:'title', mode:'solo', variationId:'open', paused:false, fp:false,
+    frame:0, round:1, hi:0, winner:-1, winnerName:'',
+    tanks:[], walls:[], shells:[], particles:[], tracks:[], dust:makeDust(),
+    roundbreakT:0, overT:0, over:false, msg:'', banner:'', bannerT:0, shake:0,
+    watchRounds:0, watchPair:0, keys:{}, mouse:{x:480,y:300},
+    stickL:{x:0,y:0,active:false}, stickR:{x:0,y:0,active:false},
+    aimAngle:0
+  };
+}
+function makeDust(){
+  var d=[]; for(var i=0;i<40;i++) d.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.8+0.5,sp:0.15+Math.random()*0.35,ph:Math.random()*6.28});
+  return d;
+}
+state=freshState();
+try{ var saved=localStorage.getItem('tankduel.hi'); if(saved) state.hi=parseInt(saved,10)||0; }catch(e){}
+
+/* ---------- helpers ---------- */
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function angNorm(a){ while(a>Math.PI) a-=Math.PI*2; while(a<-Math.PI) a+=Math.PI*2; return a; }
+function setMsg(t){ state.msg=t; if(msgEl) msgEl.textContent=t; }
+function setBanner(t){ state.banner=t; state.bannerT=150; }
+function burst(x,y,color,n,sp){
+  for(var i=0;i<(n||10);i++){
+    var a=Math.random()*6.283, v=(sp||2)*(0.4+Math.random()*0.8);
+    state.particles.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:26+Math.random()*22,color:color,r:1.5+Math.random()*2.5,smoke:false});
+  }
+}
+function smokePuff(x,y){
+  state.particles.push({x:x,y:y,vx:(Math.random()-0.5)*0.4,vy:-0.3-Math.random()*0.4,life:50+Math.random()*30,color:'#8a8a92',r:5+Math.random()*5,smoke:true});
+}
+function varOf(){ return variationById(state.variationId); }
+function spawnPoints(){
+  return [{x:1.5*CELL, y:8.5*CELL, angle:-Math.PI/2}, {x:14.5*CELL, y:1.5*CELL, angle:Math.PI/2}];
+}
+
+/* ---------- flow ---------- */
+function setVariation(id){
+  state.variationId=variationById(id).id;
+  var btns=document.querySelectorAll ? document.querySelectorAll('[data-var]') : [];
+  for(var i=0;i<btns.length;i++) btns[i].classList.toggle('active', btns[i].getAttribute('data-var')===state.variationId);
+  if(state.phase==='playing') startGame(state.mode);
+}
+function startGame(mode){
+  var keepHi=state.hi, keepVar=state.variationId, keepPair=state.watchPair, keepRounds=state.watchRounds;
+  state=freshState();
+  state.hi=keepHi; state.variationId=keepVar; state.watchPair=keepPair; state.watchRounds=keepRounds;
+  state.mode=mode||'solo';
+  tdSetupAgents(state.mode);
+  state.phase='playing';
+  state.round=1;
+  state.walls=buildWalls(varOf().arena);
+  var sp=spawnPoints();
+  var pair=state.mode==='watch' ? [PILOTS[(state.watchPair)%4], PILOTS[(state.watchPair+1)%4]] : [PILOTS[0], PILOTS[1]];
+  state.tanks=[buildTank(pair[0], sp[0].x, sp[0].y, sp[0].angle),
+               buildTank(pair[1], sp[1].x, sp[1].y, sp[1].angle)];
+  if(state.mode==='watch') setBanner('WATCH — '+pair[0].name+' vs '+pair[1].name);
+  else if(state.mode==='duel') setBanner('ROUND 1 — '+varOf().name+' · FIRST TO '+varOf().winRounds);
+  else setBanner('ROUND 1 — '+varOf().name+' · FIRST TO '+varOf().winRounds);
+  setMsg(state.mode==='watch' ? 'Watching two bot pilots duel in the maze yard.'
+    : (state.mode==='duel' ? '2P duel — NOVA (WASD + SPACE) vs VEX (arrows + ENTER). Turrets lock forward.'
+    : 'You are NOVA. Drive, aim with the mouse, bank the shell off the walls.'));
+  if($('btnSolo')){ $('btnSolo').classList.toggle('active',state.mode==='solo'); $('btnWatch').classList.toggle('active',state.mode==='watch'); $('btnDuel').classList.toggle('active',state.mode==='duel'); }
+  snapFpCam();
+}
+function serveRound(){
+  var sp=spawnPoints();
+  state.tanks.forEach(function(t,i){
+    t.x=sp[i].x; t.y=sp[i].y; t.angle=sp[i].angle; t.turret=sp[i].angle;
+    t.alive=true; t.fireCd=0; t.revealT=0; t.waypoint=null; t.thinkT=0; t.stance='hold'; t.holdFire=false;
+  });
+  state.shells=[];
+  setBanner('ROUND '+state.round+' — '+varOf().name);
+}
+function roundWin(winnerIdx){
+  var loserIdx=1-winnerIdx;
+  var w=state.tanks[winnerIdx], l=state.tanks[loserIdx];
+  w.wins++;
+  burst(l.x,l.y,l.color,30,3.6);
+  burst(l.x,l.y,'#ffffff',14,2.4);
+  state.shake=14;
+  setBanner(w.name+' TAKES ROUND '+state.round);
+  setMsg(w.name+' scores — '+w.wins+' · '+l.wins+' '+(state.mode==='solo' ? (winnerIdx===0?'Nice shot.':'VEX got you that time.') : ''));
+  if(w.wins>=varOf().winRounds){ endMatch(winnerIdx); return; }
+  state.phase='roundbreak'; state.roundbreakT=110;
+  state.round++;
+}
+function endMatch(winnerIdx){
+  state.phase='over'; state.over=true; state.overT=0;
+  state.winner=winnerIdx;
+  state.winnerName=state.tanks[winnerIdx].name;
+  recordTankduelMatch();
+  if(state.mode==='watch') state.watchRounds++;
+  if(state.mode==='solo' && winnerIdx===0){
+    state.hi++;
+    try{ localStorage.setItem('tankduel.hi', String(state.hi)); }catch(e){}
+  }
+  setBanner(state.winnerName+' TAKES THE MATCH');
+  setMsg(state.winnerName+' wins '+state.tanks[winnerIdx].wins+' · '+state.tanks[1-winnerIdx].wins+'. Matches won: '+state.hi+'. Press R to duel again.');
+}
+function fireShell(t){
+  var v=varOf();
+  if(t.fireCd>0 || !t.alive) return false;
+  t.fireCd=v.double?55:45;
+  t.muzzle=6;
+  t.revealT=40; /* ghost tanks reveal themselves when they fire */
+  var spread=v.double?0.09:0;
+  var shots=spread?[-spread,spread]:[0];
+  shots.forEach(function(off){
+    var a=t.turret+off;
+    state.shells.push({x:t.x+Math.cos(a)*26, y:t.y+Math.sin(a)*26,
+      vx:Math.cos(a)*v.shellSpeed, vy:Math.sin(a)*v.shellSpeed,
+      owner:state.tanks.indexOf(t), bounces:v.bounces, guided:v.guided, life:600, r:4});
+  });
+  burst(t.x+Math.cos(t.turret)*30, t.y+Math.sin(t.turret)*30, '#ffd75e', 4, 1.2);
+  return true;
+}
+
+/* ---------- physics ---------- */
+function driveTank(t, throttle, turn, dt){
+  if(!t.alive) return;
+  var v=varOf();
+  var spd=v.tankSpeed*(t.bot&&t.bot.speed||1);
+  t.angle=angNorm(t.angle + turn*0.055*(throttle<0?-1:1));
+  var nx=t.x+Math.cos(t.angle)*throttle*spd;
+  var ny=t.y+Math.sin(t.angle)*throttle*spd;
+  var res=collideCircle(state.walls, nx, ny, t.r);
+  /* stuck detection: barely moved while trying */
+  if(Math.hypot(res.x-t.x, res.y-t.y) < 0.15 && throttle!==0) t.stuck++;
+  else t.stuck=0;
+  t.x=res.x; t.y=res.y;
+  t.x=clamp(t.x, t.r+2, W-t.r-2); t.y=clamp(t.y, t.r+2, H-t.r-2);
+  t.tread+=Math.abs(throttle)*0.35;
+  if(Math.abs(throttle)>0 && state.frame%6===0){
+    state.tracks.push({x:t.x, y:t.y, angle:t.angle, life:90});
+  }
+}
+function stepShells(){
+  var v=varOf();
+  for(var i=state.shells.length-1;i>=0;i--){
+    var s=state.shells[i];
+    s.life--;
+    if(s.life<=0){ state.shells.splice(i,1); continue; }
+    if(s.guided){
+      var tgt=state.tanks[1-s.owner];
+      if(tgt && tgt.alive){
+        var want=Math.atan2(tgt.y-s.y, tgt.x-s.x);
+        var cur=Math.atan2(s.vy, s.vx);
+        var diff=angNorm(want-cur);
+        var turn=clamp(diff, -0.045, 0.045);
+        var sp=Math.hypot(s.vx, s.vy);
+        var na=cur+turn;
+        s.vx=Math.cos(na)*sp; s.vy=Math.sin(na)*sp;
+      }
+    }
+    /* axis-separated wall bounce: clean ricochets */
+    var nx=s.x+s.vx;
+    if(pointInWall(state.walls, nx, s.y)){
+      s.vx=-s.vx; s.bounces--;
+      burst(s.x, s.y, '#ffd75e', 4, 1.0);
+      if(s.bounces<0){ burst(s.x, s.y, '#ff9d3c', 8, 1.6); state.shells.splice(i,1); continue; }
+    } else s.x=nx;
+    var ny=s.y+s.vy;
+    if(pointInWall(state.walls, s.x, ny)){
+      s.vy=-s.vy; s.bounces--;
+      burst(s.x, s.y, '#ffd75e', 4, 1.0);
+      if(s.bounces<0){ burst(s.x, s.y, '#ff9d3c', 8, 1.6); state.shells.splice(i,1); continue; }
+    } else s.y=ny;
+    /* tank hits */
+    for(var ti=0;ti<state.tanks.length;ti++){
+      if(ti===s.owner) continue;
+      var t=state.tanks[ti];
+      if(!t.alive) continue;
+      if(Math.hypot(s.x-t.x, s.y-t.y) < s.r+t.r){
+        t.alive=false;
+        state.shells.splice(i,1);
+        roundWin(s.owner);
+        return;
+      }
+    }
+  }
+}
+
+/* ---------- bots (imperfect on purpose) ---------- */
+function randomOpenCell(){
+  var v=varOf();
+  for(var tries=0;tries<40;tries++){
+    var c=1+Math.floor(Math.random()*(COLS-2)), r=1+Math.floor(Math.random()*(ROWS-2));
+    if(cellOpen(v.arena, c, r)) return {x:(c+0.5)*CELL, y:(r+0.5)*CELL};
+  }
+  return {x:W/2, y:H/2};
+}
+function stepBots(){
+  state.tanks.forEach(function(t, ti){
+    if(!t.alive) return;
+    var isBot=true;
+    if(state.mode==='solo' && ti===0) isBot=false;
+    if(state.mode==='duel') isBot=false;
+    if(!isBot) return;
+    var bot=t.bot, foe=state.tanks[1-ti];
+    t.thinkT--;
+    if(t.thinkT<=0){
+      t.thinkT=bot.think+Math.floor(Math.random()*20);
+      if(!engineBotTick(t,ti)){
+      var los=foe.alive && hasLOS(state.walls, t.x, t.y, foe.x, foe.y);
+      if(los && bot.style!=='patient'){
+        t.waypoint={x:t.x, y:t.y}; /* hold the lane */
+      } else if(los && bot.style==='patient'){
+        t.waypoint={x:t.x, y:t.y};
+      } else {
+        /* no line of sight: move to a spot near the foe, or the centre */
+        var wp=randomOpenCell();
+        if(bot.style==='rusher' && foe.alive) wp={x:foe.x+(Math.random()-0.5)*180, y:foe.y+(Math.random()-0.5)*180};
+        if(bot.style==='banker') wp={x:W/2+(Math.random()-0.5)*200, y:H/2+(Math.random()-0.5)*140};
+        t.waypoint=wp;
+      }
+      /* aim with error, re-rolled each think */
+      t.aimErr=(Math.random()-0.5)*2*bot.err;
+      }
+    }
+    /* drive toward waypoint */
+    if(t.waypoint){
+      var dx=t.waypoint.x-t.x, dy=t.waypoint.y-t.y, dist=Math.hypot(dx,dy);
+      if(dist>26){
+        var want=Math.atan2(dy,dx);
+        var diff=angNorm(want-t.angle);
+        var turn=clamp(diff,-1,1);
+        var throttle=Math.abs(diff)>1.9 ? -0.7 : 1; /* reverse out if facing away */
+        if(t.stuck>40){ throttle=-1; turn=-turn; } /* unstuck: back up and swing around */
+        driveTank(t, throttle, turn);
+      }
+    }
+    /* turret: track the foe with reaction delay + error */
+    if(foe.alive){
+      var wantT=Math.atan2(foe.y-t.y, foe.x-t.x)+t.aimErr;
+      if(bot.style==='banker' || t.stance==='bank'){
+        /* aim at a wall reflection point: bounce the shot off the nearest wall */
+        var midX=(t.x+foe.x)/2, midY=(t.y+foe.y)/2;
+        wantT=Math.atan2(midY-t.y, midX-t.x)+t.aimErr;
+      }
+      var dT=angNorm(wantT-t.turret);
+      t.turret=angNorm(t.turret+clamp(dT,-0.06,0.06));
+      var aligned=Math.abs(angNorm(Math.atan2(foe.y-t.y, foe.x-t.x)-t.turret))<0.14;
+      var losNow=hasLOS(state.walls, t.x, t.y, foe.x, foe.y);
+      if(t.fireCd>0) t.fireCd--;
+      if(!t.holdFire && aligned && (losNow || bot.style==='banker' || t.stance==='bank') && Math.random()<0.5){
+        if(bot.style==='patient' && Math.random()<0.6) return; /* HALO waits */
+        fireShell(t);
+      }
+    }
+  });
+}
+
+/* ---------- update ---------- */
+function update(){
+  if(!state.paused) state.frame++;
+  if(state.bannerT>0) state.bannerT--;
+  if(state.shake>0) state.shake*=0.88;
+  state.dust.forEach(function(d){ d.y-=d.sp; d.x+=Math.sin(state.frame*0.01+d.ph)*0.25; if(d.y<-4){ d.y=H+4; d.x=Math.random()*W; } });
+  state.particles.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.vy+=p.smoke?-0.01:0.02; p.life--; });
+  state.particles=state.particles.filter(function(p){ return p.life>0; });
+  state.tracks.forEach(function(tr){ tr.life--; });
+  state.tracks=state.tracks.filter(function(tr){ return tr.life>0; });
+  state.tanks.forEach(function(t){ if(t.muzzle>0) t.muzzle--; if(t.revealT>0) t.revealT--; });
+  if(state.paused || state.phase==='title') return;
+  stepFpCam(); /* eased periscope camera — frozen while paused, eases through over/roundbreak */
+  if(state.phase==='over'){
+    state.overT++;
+    if(state.mode==='watch' && state.overT>260){
+      state.watchPair=(state.watchPair+1)%4;
+      startGame('watch');
+    }
+    return;
+  }
+  if(state.phase==='roundbreak'){
+    state.roundbreakT--;
+    if(state.roundbreakT<=0){ state.phase='playing'; serveRound(); }
+    return;
+  }
+  var k=state.keys;
+  /* human tanks */
+  if(state.mode==='solo' || state.mode==='duel'){
+    var p0=state.tanks[0];
+    if(p0.alive){
+      var th=0, tu=0;
+      if(k['w']) th+=1;
+      if(k['s']) th-=1;
+      if(k['a']) tu-=1;
+      if(k['d']) tu+=1;
+      if(state.mode==='solo'){
+        if(k['arrowup']) th+=1;
+        if(k['arrowdown']) th-=1;
+        if(k['arrowleft']) tu-=1;
+        if(k['arrowright']) tu+=1;
+      }
+      if(state.stickL.active){ th+=-state.stickL.y; tu+=state.stickL.x; }
+      th=clamp(th,-1,1); tu=clamp(tu,-1,1);
+      driveTank(p0, th, tu);
+      /* turret: mouse on desktop, right stick on mobile; locked forward in 2P */
+      if(state.mode==='duel'){ p0.turret=p0.angle; }
+      else if(state.stickR.active){
+        p0.turret=Math.atan2(state.stickR.y, state.stickR.x);
+      } else {
+        p0.turret=Math.atan2(state.mouse.y-p0.y, state.mouse.x-p0.x);
+      }
+      if(p0.fireCd>0) p0.fireCd--;
+      if(k[' ']||k['space']) fireShell(p0);
+    }
+  }
+  if(state.mode==='duel'){
+    var p1=state.tanks[1];
+    if(p1.alive){
+      var th2=0, tu2=0;
+      if(k['arrowup']) th2+=1;
+      if(k['arrowdown']) th2-=1;
+      if(k['arrowleft']) tu2-=1;
+      if(k['arrowright']) tu2+=1;
+      driveTank(p1, th2, tu2);
+      p1.turret=p1.angle; /* turrets lock forward in 2P */
+      if(p1.fireCd>0) p1.fireCd--;
+      if(k['enter']) fireShell(p1);
+    }
+  }
+  stepBots();
+  stepShells();
+}
+
+/* ---------- rendering: layered yard ---------- */
+function drawArena(){
+  /* far layer: dusk sky band above the yard + distant mesa silhouettes */
+  var sky=ctx.createLinearGradient(0,0,0,90);
+  sky.addColorStop(0,'#0a0618'); sky.addColorStop(1,'#131a12');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,90);
+  ctx.fillStyle='rgba(255,233,168,.9)';
+  ctx.beginPath(); ctx.arc(856,40,18,0,7); ctx.fill();
+  ctx.fillStyle='#0d120c';
+  ctx.beginPath(); ctx.moveTo(0,90); ctx.lineTo(0,64); ctx.lineTo(90,64); ctx.lineTo(120,48); ctx.lineTo(210,48); ctx.lineTo(240,66); ctx.lineTo(330,66); ctx.lineTo(360,52); ctx.lineTo(470,52); ctx.lineTo(500,70); ctx.lineTo(640,70); ctx.lineTo(680,54); ctx.lineTo(780,54); ctx.lineTo(820,68); ctx.lineTo(960,68); ctx.lineTo(960,90); ctx.closePath(); ctx.fill();
+  /* ground: steel floor plates + seams */
+  var g=ctx.createLinearGradient(0,90,0,H);
+  g.addColorStop(0,'#1a241a'); g.addColorStop(0.5,'#141d14'); g.addColorStop(1,'#101710');
+  ctx.fillStyle=g; ctx.fillRect(0,90,W,H-90);
+  ctx.strokeStyle='rgba(120,160,120,.10)'; ctx.lineWidth=1;
+  for(var gx=60;gx<W;gx+=60){ ctx.beginPath(); ctx.moveTo(gx,90); ctx.lineTo(gx,H); ctx.stroke(); }
+  for(var gy=120;gy<H;gy+=60){ ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+  /* painted lane lines + hazard chevrons along the border */
+  ctx.strokeStyle='rgba(0,255,136,.16)'; ctx.lineWidth=2;
+  ctx.strokeRect(66,96,W-132,H-102);
+  ctx.fillStyle='rgba(255,215,94,.28)';
+  for(var hx=70;hx<W-70;hx+=28){
+    ctx.beginPath(); ctx.moveTo(hx,92); ctx.lineTo(hx+12,92); ctx.lineTo(hx+6,102); ctx.lineTo(hx-6,102); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(hx,H-2); ctx.lineTo(hx+12,H-2); ctx.lineTo(hx+6,H-12); ctx.lineTo(hx-6,H-12); ctx.closePath(); ctx.fill();
+  }
+  /* set dressing: crates + barrels + scorch marks */
+  drawCrate(300,150); drawCrate(660,450); drawBarrel(700,150); drawBarrel(250,450);
+  ctx.fillStyle='rgba(0,0,0,.35)';
+  ctx.beginPath(); ctx.ellipse(480,300,70,26,0.4,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(180,300,44,18,-0.3,0,7); ctx.fill();
+  /* drifting dust */
+  state.dust.forEach(function(d){
+    ctx.globalAlpha=0.35; ctx.fillStyle='#cfe8c0';
+    ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  /* maze walls: shaded steel blocks with top highlight, rivets, glow edge */
+  state.walls.forEach(function(w){
+    var wg=ctx.createLinearGradient(w.x,w.y,w.x,w.y+w.h);
+    wg.addColorStop(0,'#3a4a3a'); wg.addColorStop(0.5,'#232e23'); wg.addColorStop(1,'#161e16');
+    ctx.fillStyle=wg; ctx.fillRect(w.x,w.y,w.w,w.h);
+    ctx.fillStyle='rgba(255,255,255,.14)'; ctx.fillRect(w.x,w.y,w.w,4);
+    ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(w.x,w.y+w.h-4,w.w,4);
+    ctx.strokeStyle='rgba(0,255,136,.28)'; ctx.lineWidth=1.5; ctx.strokeRect(w.x+1,w.y+1,w.w-2,w.h-2);
+    ctx.fillStyle='rgba(255,255,255,.25)';
+    for(var rx=w.x+12;rx<w.x+w.w-6;rx+=36){
+      ctx.beginPath(); ctx.arc(rx,w.y+w.h/2,2,0,7); ctx.fill();
+    }
+  });
+  /* track marks */
+  state.tracks.forEach(function(tr){
+    ctx.save(); ctx.globalAlpha=Math.min(0.3, tr.life/200); ctx.translate(tr.x,tr.y); ctx.rotate(tr.angle);
+    ctx.fillStyle='#000'; ctx.fillRect(-14,-12,28,5); ctx.fillRect(-14,7,28,5);
+    ctx.restore();
+  });
+  ctx.globalAlpha=1;
+}
+function drawCrate(x,y){
+  ctx.fillStyle='#2a2118'; ctx.fillRect(x-16,y-16,32,32);
+  ctx.strokeStyle='rgba(255,179,71,.5)'; ctx.lineWidth=2; ctx.strokeRect(x-16,y-16,32,32);
+  ctx.beginPath(); ctx.moveTo(x-16,y-16); ctx.lineTo(x+16,y+16); ctx.moveTo(x+16,y-16); ctx.lineTo(x-16,y+16); ctx.stroke();
+}
+function drawBarrel(x,y){
+  ctx.fillStyle='#1c2a1c'; ctx.beginPath(); ctx.arc(x,y,13,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(0,255,136,.45)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,13,0,7); ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.2)'; ctx.beginPath(); ctx.arc(x-4,y-4,4,0,7); ctx.fill();
+}
+
+/* ---------- tanks: TRUE SPRITE STACKS (char sweep 2026-11-22) ----------
+   Every tank is built as a layered stack: contact shadow + colour glow
+   pool on the ground, tread/hull silhouette slices extruded down-right
+   in darkening tones, a lit 3-tone top hull (dark core -> mid -> lit,
+   light from above) with camo, skirts, wheels and rim light in the
+   pilot's colour, then a stacked turret dome (4 slices) whose shape,
+   barrel and fittings are distinct per pilot — NOVA's lance + whip
+   antenna, VEX's twin stubs + spike crest + exhausts, ORBIT's radar
+   dish + sensor mast, HALO's crown + heavy plate. Idle engine sway and
+   a recoil kick on fire (t.muzzle) are visual only. The periscope FP
+   view renders through this same function at 2x zoom, so the foe gets
+   the identical stacked treatment, enlarged. Rendering ONLY — no rule,
+   hit, speed or save reads anything drawn here. */
+function mixHex(a,b,f){
+  var pa=parseInt(a.slice(1),16), pb=parseInt(b.slice(1),16);
+  var r=Math.round(((pa>>16)&255)*(1-f)+((pb>>16)&255)*f);
+  var g=Math.round(((pa>>8)&255)*(1-f)+((pb>>8)&255)*f);
+  var bl=Math.round((pa&255)*(1-f)+(pb&255)*f);
+  return 'rgb('+r+','+g+','+bl+')';
+}
+/* per-pilot hull proportions: lance=long+lean, twin=wide brawler,
+   dish=compact round, crown=heavy slab */
+function hullScale(t){
+  if(t.barrel==='lance') return [1.10,0.92];
+  if(t.barrel==='twin')  return [1.00,1.07];
+  if(t.barrel==='dish')  return [0.96,1.00];
+  return [1.05,1.05]; /* crown */
+}
+function hullPath(){
+  ctx.beginPath();
+  ctx.moveTo(-21,-14); ctx.lineTo(13,-14); ctx.lineTo(20,-8); ctx.lineTo(23,-3);
+  ctx.lineTo(23,3); ctx.lineTo(20,8); ctx.lineTo(13,14); ctx.lineTo(-21,14);
+  ctx.lineTo(-24,6); ctx.lineTo(-24,-6); ctx.closePath();
+}
+/* full silhouette (treads + hull) used by every stack slice */
+function tankSilhouette(t){
+  var hs=hullScale(t);
+  ctx.save(); ctx.scale(hs[0],hs[1]);
+  ctx.fillRect(-24,-20,48,40);
+  hullPath(); ctx.fill();
+  ctx.restore();
+}
+/* turret dome silhouette per pilot, in turret-local space */
+function turretShape(t){
+  ctx.beginPath();
+  if(t.barrel==='lance'){ ctx.ellipse(-1,0,13.5,9.5,0,0,7); }
+  else if(t.barrel==='twin'){
+    ctx.moveTo(-11,-9); ctx.lineTo(6,-9); ctx.lineTo(12,-4); ctx.lineTo(12,4);
+    ctx.lineTo(6,9); ctx.lineTo(-11,9); ctx.lineTo(-14,0); ctx.closePath();
+  }
+  else if(t.barrel==='dish'){ ctx.arc(0,0,11.5,0,7); }
+  else { ctx.arc(0,0,12,0,7); }
+}
+function drawTank(t){
+  if(!t.alive) return;
+  var v=varOf();
+  if(v.ghost && t.revealT<=0){
+    /* GHOST TANKS: invisible — only a faint shimmer where the treads stir dust */
+    ctx.save(); ctx.globalAlpha=0.10; ctx.fillStyle='#ffffff';
+    ctx.beginPath(); ctx.arc(t.x,t.y,14,0,7); ctx.fill(); ctx.restore();
+    return;
+  }
+  var core=t.dark, deep=mixHex(t.dark,t.color,0.28), mid=mixHex(t.dark,t.color,0.52),
+      lit=mixHex(t.dark,t.color,0.80), hot=mixHex(t.color,'#ffffff',0.38);
+  var ph=t.x*0.37+t.y*0.53;                              /* stable per-tank phase */
+  var sway=Math.sin(state.frame*0.045+ph)*0.45;          /* idle engine sway */
+  var rec=t.muzzle>0 ? t.muzzle/6 : 0;                   /* recoil kick 1 -> 0 */
+  var hs=hullScale(t);
+  /* ---- ground: contact shadow + breathing colour pool + tread shadow ---- */
+  ctx.fillStyle='rgba(0,0,0,.45)';
+  ctx.beginPath(); ctx.ellipse(t.x+4,t.y+7,29,12,0,0,7); ctx.fill();
+  ctx.save(); ctx.globalAlpha=0.10+0.03*Math.sin(state.frame*0.06+ph);
+  ctx.fillStyle=t.color;
+  ctx.beginPath(); ctx.ellipse(t.x,t.y+5,34,15,0,0,7); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.translate(t.x+2,t.y+3); ctx.rotate(t.angle); ctx.scale(hs[0],hs[1]);
+  ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(-24,-20,48,40); ctx.restore();
+  /* ---- HULL STACK: silhouette slices extruded down-right, dark -> mid ---- */
+  var sliceCols=['rgba(4,7,5,.92)','rgba(6,10,7,.9)',core,deep,mixHex(t.dark,t.color,0.40)];
+  for(var k=5;k>=1;k--){
+    ctx.save(); ctx.translate(t.x+k*1.5,t.y+k*2.1); ctx.rotate(t.angle);
+    ctx.fillStyle=sliceCols[5-k]; tankSilhouette(t);
+    if(k===1){ ctx.strokeStyle=t.color; ctx.globalAlpha=0.30; ctx.lineWidth=1; hullPath(); ctx.stroke(); ctx.globalAlpha=1; }
+    ctx.restore();
+  }
+  /* ---- top hull (lit face) ---- */
+  ctx.save();
+  ctx.translate(t.x,t.y+sway*0.35);
+  ctx.rotate(t.angle);
+  ctx.scale(hs[0],hs[1]);
+  /* treads: dark track beds, road wheels, animated chevrons, top highlight */
+  [-20,11].forEach(function(ty){
+    ctx.fillStyle='#070908'; ctx.fillRect(-24,ty,48,9);
+    ctx.fillStyle='#1c211c';
+    for(var wI=0;wI<4;wI++){ ctx.beginPath(); ctx.arc(-17+wI*11.5,ty+4.5,3.4,0,7); ctx.fill(); }
+    ctx.fillStyle='rgba(255,255,255,.20)';
+    for(var i=0;i<4;i++){
+      var tx=-22+((t.tread*8+i*12)%46);
+      ctx.fillRect(tx,ty+1,4,3);
+    }
+    ctx.fillStyle='rgba(255,255,255,.13)'; ctx.fillRect(-24,ty,48,1.4);
+  });
+  /* hull body: 3-tone radial (lit top-centre -> mid -> dark core edge) */
+  var hg=ctx.createRadialGradient(-5,-6,3, 0,0,30);
+  hg.addColorStop(0,lit); hg.addColorStop(0.55,mid); hg.addColorStop(1,core);
+  ctx.fillStyle=hg; hullPath(); ctx.fill();
+  /* camo blotches, seeded per pilot so each hull wears its own pattern */
+  ctx.save(); hullPath(); ctx.clip();
+  ctx.fillStyle='rgba(0,0,0,.30)';
+  var seed=t.name.charCodeAt(0)*7+t.name.length*13;
+  for(var cI=0;cI<4;cI++){
+    var cx2=-16+((seed*(cI+3))%34), cy2=-10+((seed*(cI+5))%20);
+    ctx.beginPath(); ctx.ellipse(cx2,cy2,6.5,3.6,cI*1.1,0,7); ctx.fill();
+  }
+  ctx.fillStyle='rgba(255,255,255,.10)';
+  ctx.beginPath(); ctx.ellipse(-4,-7,13,5,-0.2,0,7); ctx.fill();   /* top sheen */
+  ctx.restore();
+  /* armour skirts over the treads: mid plate + rim-light top edge */
+  [-15.5,12.5].forEach(function(sy){
+    ctx.fillStyle=deep; ctx.fillRect(-21,sy,40,3.4);
+    ctx.fillStyle=hot; ctx.globalAlpha=0.55; ctx.fillRect(-21,sy,40,1.1); ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(0,0,0,.4)';
+    for(var sI=0;sI<4;sI++) ctx.fillRect(-14+sI*10,sy+0.8,1.2,2);
+  });
+  /* dramatic rim light in the pilot's colour + hot leading edge */
+  ctx.save(); ctx.shadowColor=t.color; ctx.shadowBlur=11;
+  ctx.strokeStyle=t.color; ctx.lineWidth=1.7; hullPath(); ctx.stroke(); ctx.restore();
+  ctx.strokeStyle=hot; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(13,-14); ctx.lineTo(20,-8); ctx.lineTo(23,-3); ctx.lineTo(23,3); ctx.stroke();
+  /* glacis plate seams + rivets + pilot plate */
+  ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=1;
+  ctx.strokeRect(-15,-8.5,21,17);
+  ctx.beginPath(); ctx.moveTo(8,-12); ctx.lineTo(14,-4); ctx.lineTo(14,4); ctx.lineTo(8,12); ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.35)';
+  [[-19,-12],[10,-12],[-19,12],[10,12]].forEach(function(rp){
+    ctx.beginPath(); ctx.arc(rp[0],rp[1],1.3,0,7); ctx.fill();
+  });
+  ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(-11,-6.5,13,13);
+  ctx.fillStyle=hot; ctx.font='bold 10px "Orbitron",sans-serif'; ctx.textAlign='center';
+  ctx.fillText(t.name[0],-4.5,4);
+  ctx.restore();
+  /* ---- TURRET STACK: dome slices stepping up from a shadowed mount ---- */
+  var rcx=t.x-Math.cos(t.turret)*rec*3.5, rcy=t.y-Math.sin(t.turret)*rec*3.5+sway*0.35;
+  ctx.fillStyle='rgba(0,0,0,.5)';
+  ctx.beginPath(); ctx.ellipse(t.x+3,t.y+4.5,13,7,t.turret,0,7); ctx.fill();
+  var domeCols=[core,deep,mid];
+  for(var dI=3;dI>=1;dI--){
+    ctx.save(); ctx.translate(rcx+dI*1.1,rcy+dI*1.5); ctx.rotate(t.turret);
+    ctx.fillStyle=domeCols[3-dI]; turretShape(t); ctx.fill();
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.translate(rcx,rcy);
+  ctx.rotate(t.turret);
+  /* lit dome top: radial 3-tone + rim arc in the pilot's colour */
+  var dg=ctx.createRadialGradient(-3,-4,2, 0,0,15);
+  dg.addColorStop(0,lit); dg.addColorStop(0.6,mid); dg.addColorStop(1,deep);
+  ctx.fillStyle=dg; turretShape(t); ctx.fill();
+  ctx.save(); ctx.shadowColor=t.color; ctx.shadowBlur=9;
+  ctx.strokeStyle=t.color; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(0,0,t.barrel==='lance'?10:11.5,-0.7,1.25); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.28)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(-1,-1,t.barrel==='lance'?8:9.5,Math.PI*1.05,Math.PI*1.55); ctx.stroke();
+  /* hatch + periscope nub */
+  ctx.fillStyle=deep; ctx.beginPath(); ctx.arc(-3.5,0,3.6,0,7); ctx.fill();
+  ctx.fillStyle=hot; ctx.beginPath(); ctx.arc(-4.5,-1.2,1.1,0,7); ctx.fill();
+  /* segmented barrel: mantlet + shaded segments + muzzle brake, per pilot */
+  function barrelSeg(x0,x1,y0,y1,tone){
+    ctx.fillStyle=tone; ctx.fillRect(x0,y0,x1-x0,y1-y0);
+    ctx.fillStyle='rgba(255,255,255,.22)'; ctx.fillRect(x0,y0,x1-x0,1.2);
+    ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(x0,y1-1.2,x1-x0,1.2);
+  }
+  ctx.fillStyle=core; ctx.fillRect(4,-5.5,7,11);                       /* mantlet */
+  ctx.strokeStyle=t.color; ctx.lineWidth=1; ctx.strokeRect(4,-5.5,7,11);
+  var flash=null;
+  if(t.barrel==='lance'){
+    barrelSeg(10,25,-2.6,2.6,deep); barrelSeg(25,37,-2.1,2.1,mid);
+    ctx.fillStyle=core; ctx.fillRect(37,-3.4,6,6.8);                   /* muzzle brake */
+    ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(38.6,-3.4,1.6,6.8); ctx.fillRect(40.8,-3.4,1.6,6.8);
+    ctx.fillStyle=hot; ctx.fillRect(30,-1,5,2);
+    /* whip antenna with a blinking tip light */
+    ctx.strokeStyle=deep; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-8,-6); ctx.lineTo(-13,-17); ctx.stroke();
+    ctx.save(); ctx.globalAlpha=0.55+0.45*Math.sin(state.frame*0.18+ph);
+    ctx.fillStyle=t.color; ctx.beginPath(); ctx.arc(-13,-18,1.8,0,7); ctx.fill(); ctx.restore();
+    flash={x:44,y:0,s:1};
+  } else if(t.barrel==='twin'){
+    [-4.2,4.2].forEach(function(by){
+      barrelSeg(10,21,by-1.9,by+1.9,deep); barrelSeg(21,29,by-1.5,by+1.5,mid);
+      ctx.fillStyle=core; ctx.fillRect(29,by-2.3,4,4.6);
+    });
+    /* spike crest */
+    ctx.fillStyle=t.color;
+    ctx.beginPath(); ctx.moveTo(-7,-9); ctx.lineTo(-2.5,-16.5); ctx.lineTo(2,-9); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-7,9); ctx.lineTo(-2.5,16.5); ctx.lineTo(2,9); ctx.closePath(); ctx.fill();
+    /* rear exhaust stacks */
+    ctx.fillStyle=core; ctx.fillRect(-13.5,-7,3.4,4.5); ctx.fillRect(-13.5,2.5,3.4,4.5);
+    ctx.fillStyle='rgba(255,140,60,.5)'; ctx.fillRect(-13.5,-7,1.4,4.5); ctx.fillRect(-13.5,2.5,1.4,4.5);
+    flash={x:34,y:0,s:0.9};
+  } else if(t.barrel==='dish'){
+    barrelSeg(10,22,-2.2,2.2,deep); barrelSeg(22,30,-1.7,1.7,mid);
+    ctx.fillStyle=hot; ctx.fillRect(28,-1.2,4.5,2.4);
+    /* radar dish: three stacked arcs + a rotating sweep tick */
+    for(var rI=2;rI>=0;rI--){
+      ctx.fillStyle=rI===0?mid:deep;
+      ctx.beginPath(); ctx.arc(-7+rI*0.7,-9-rI*0.9,5.6-rI*0.5,Math.PI*0.95,Math.PI*2.05); ctx.fill();
+    }
+    ctx.strokeStyle=hot; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.arc(-7,-9,5.6,Math.PI*0.95,Math.PI*2.05); ctx.stroke();
+    var sa=state.frame*0.03+ph;
+    ctx.strokeStyle=t.color; ctx.beginPath(); ctx.moveTo(-7,-9);
+    ctx.lineTo(-7+Math.cos(sa)*5,-9+Math.sin(sa)*5); ctx.stroke();
+    /* sensor mast */
+    ctx.strokeStyle=deep; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-9,5); ctx.lineTo(-13,12); ctx.stroke();
+    ctx.fillStyle=t.color; ctx.beginPath(); ctx.arc(-13,13,1.6,0,7); ctx.fill();
+    flash={x:33,y:0,s:0.85};
+  } else { /* crown */
+    barrelSeg(10,24,-2.7,2.7,deep); barrelSeg(24,32,-2.2,2.2,mid);
+    ctx.fillStyle=core; ctx.fillRect(32,-3.2,5,6.4);
+    /* crown ring with jewel studs */
+    ctx.fillStyle=t.color;
+    ctx.beginPath(); ctx.moveTo(-9,-8.5); ctx.lineTo(-9,-14.5); ctx.lineTo(-4.5,-10); ctx.lineTo(0,-15.5);
+    ctx.lineTo(4.5,-10); ctx.lineTo(9,-14.5); ctx.lineTo(9,-8.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=hot;
+    [[-9,-13],[0,-14],[9,-13]].forEach(function(jp){
+      ctx.beginPath(); ctx.arc(jp[0],jp[1],1.4,0,7); ctx.fill();
+    });
+    /* heavy rear plate */
+    ctx.fillStyle=deep; ctx.fillRect(-14,-6,3.6,12);
+    ctx.fillStyle='rgba(255,255,255,.2)'; ctx.fillRect(-14,-6,3.6,1.2);
+    flash={x:38,y:0,s:0.95};
+  }
+  if(t.muzzle>0 && flash){
+    ctx.save(); ctx.globalAlpha=t.muzzle/6;
+    ctx.translate(flash.x,flash.y); ctx.scale(flash.s,flash.s);
+    ctx.fillStyle='#ffd75e';
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(13,-5.5); ctx.lineTo(9,0); ctx.lineTo(13,5.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#fff3c0';
+    ctx.beginPath(); ctx.arc(1,0,2.6,0,7); ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+  /* ghost reveal ring */
+  if(v.ghost && t.revealT>0){
+    ctx.save(); ctx.globalAlpha=t.revealT/40*0.8; ctx.strokeStyle=t.color; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(t.x,t.y,26,0,7); ctx.stroke(); ctx.restore();
+  }
+}
+
+function drawShells(){
+  state.shells.forEach(function(s){
+    /* FP: far shells fade into the depth fog (alpha lerp by distance) */
+    var a=1;
+    if(state.fp && state.tanks[0]){
+      a=clamp(1.15-Math.hypot(s.x-state.tanks[0].x, s.y-state.tanks[0].y)/650, 0.25, 1);
+    }
+    ctx.save(); ctx.globalAlpha=a;
+    ctx.save(); ctx.shadowColor='#ffd75e'; ctx.shadowBlur=12;
+    ctx.fillStyle='#ffe98a';
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle='rgba(255,215,94,.55)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(s.x-s.vx*2.4,s.y-s.vy*2.4); ctx.lineTo(s.x,s.y); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(s.x,s.y,1.8,0,7); ctx.fill();
+    ctx.restore();
+  });
+}
+function drawParticles(){
+  state.particles.forEach(function(p){
+    ctx.globalAlpha=Math.min(1,p.life/40); ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+/* ---------- HUD / title / game-over ---------- */
+function drawHUD(){
+  ctx.fillStyle='rgba(10,15,10,.82)'; ctx.fillRect(0,0,W,34);
+  ctx.textAlign='left'; ctx.font='bold 13px "Orbitron",sans-serif';
+  state.tanks.forEach(function(t,i){
+    var x=14+i*330;
+    ctx.fillStyle=t.color;
+    ctx.beginPath(); ctx.arc(x+6,17,6,0,7); ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.fillText(t.name, x+16, 22);
+    for(var p=0;p<varOf().winRounds;p++){
+      ctx.fillStyle=p<t.wins?t.color:'rgba(255,255,255,.18)';
+      ctx.beginPath(); ctx.arc(x+64+p*14,17,4.5,0,7); ctx.fill();
+    }
+    if(!t.alive){ ctx.fillStyle='#ff3860'; ctx.fillText('✕', x+150, 22); }
+  });
+  ctx.fillStyle='#ffd75e';
+  ctx.fillText(varOf().name, 660, 22);
+  ctx.fillStyle='#8aa893'; ctx.font='12px "Share Tech Mono",monospace';
+  ctx.fillText('ROUND '+Math.max(1,state.round), 820, 22);
+  ctx.fillText('WON '+state.hi, 896, 22);
+  if(state.bannerT>0){
+    ctx.fillStyle='rgba(10,15,10,.62)'; ctx.fillRect(W/2-320,52,640,34);
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 17px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.banner,W/2,76);
+  }
+  if(state.phase==='title'){
+    ctx.fillStyle='rgba(10,15,10,.74)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#fff'; ctx.font='900 56px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText('TANKDUEL',W/2,130);
+    ctx.fillStyle='#00ff88'; ctx.font='600 15px "Orbitron",sans-serif';
+    ctx.fillText('TWO TANKS · ONE MAZE · BANK THE SHOT HOME',W/2,162);
+    /* the two pilots facing off, shell mid-flight between them */
+    var t0={name:'NOVA',color:'#00ff88',dark:'#0a2e1e',barrel:'lance',x:330,y:290,angle:0,turret:0,r:18,alive:true,tread:0,muzzle:0,revealT:0};
+    var t1={name:'VEX',color:'#ff3860',dark:'#33101a',barrel:'twin',x:630,y:290,angle:Math.PI,turret:Math.PI,r:18,alive:true,tread:0,muzzle:0,revealT:0};
+    ctx.save(); ctx.scale(1.5,1.5); ctx.translate(-160,-96);
+    drawTank(t0); drawTank(t1);
+    ctx.restore();
+    ctx.save(); ctx.shadowColor='#ffd75e'; ctx.shadowBlur=14;
+    ctx.fillStyle='#ffe98a'; ctx.beginPath(); ctx.arc(480,290,7,0,7); ctx.fill(); ctx.restore();
+    ctx.strokeStyle='rgba(255,215,94,.6)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(360,290); ctx.lineTo(470,290); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(600,290); ctx.lineTo(490,290); ctx.stroke();
+    ctx.fillStyle='#00ff88'; ctx.font='bold 15px "Orbitron",sans-serif';
+    ctx.fillText('NOVA',330,360); ctx.fillStyle='#ff3860'; ctx.fillText('VEX',630,360);
+    ctx.fillStyle='#c6d8c0'; ctx.font='13px "Rajdhani",sans-serif';
+    ctx.fillText('steady lane-holder',330,380); ctx.fillText('close-range rusher',630,380);
+    ctx.fillStyle='#e8f5dc'; ctx.font='16px "Rajdhani",sans-serif';
+    ctx.fillText('Shells ricochet off the walls — bank one around a corner and it still counts.',W/2,430);
+    ctx.fillStyle='#8aa893'; ctx.font='13px "Share Tech Mono",monospace';
+    ctx.fillText('WASD drive · mouse aims turret · SPACE fire · V periscope · P pause · 1–6 variations',W/2,458);
+    ctx.fillStyle='#00ff88'; ctx.font='bold 14px "Orbitron",sans-serif';
+    ctx.fillText('PICK A VARIATION, THEN CLICK DUEL — OR WATCH TWO BOTS FIGHT IT OUT',W/2,496);
+  }
+  if(state.phase==='over'){
+    ctx.fillStyle='rgba(10,2,6,.62)'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=state.winner>=0?state.tanks[state.winner].color:'#ff3860';
+    ctx.font='900 38px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.winnerName+' TAKES THE MATCH',W/2,260);
+    ctx.fillStyle='#fff'; ctx.font='18px "Orbitron",sans-serif';
+    ctx.fillText(state.tanks.map(function(t){ return t.name+' '+t.wins; }).join('   ·   '),W/2,306);
+    ctx.fillStyle='#8aa893'; ctx.font='14px "Share Tech Mono",monospace';
+    ctx.fillText('Matches won '+state.hi+'  ·  Press R to duel again',W/2,340);
+  }
+}
+/* periscope / cockpit view: camera drops into your tank, turret points up */
+/* FP POLISH (dim 10, 2026-11-22): smooth periscope camera + gauges.
+   fpCam is VISUAL ONLY — it never feeds a rule, a hit or a save. It eases
+   toward the turret (0.12/frame, wrap-aware), punches the zoom while the
+   muzzle flash is up, leans with the turret slew and breathes. Frozen
+   while paused (stepFpCam runs in update() after the pause guard) and
+   snapped on start / load / toggling the view on. */
+var fpCam={rot:0, zoom:2.0, vel:0, lean:0, bob:0};
+var fpLock=null;
+function snapFpCam(){
+  var me=state.tanks[0];
+  if(!me){ fpCam.rot=0; fpCam.zoom=2.0; fpCam.vel=0; fpCam.lean=0; return; }
+  fpCam.rot=-(me.turret+Math.PI/2);
+  fpCam.zoom=2.0; fpCam.vel=0; fpCam.lean=0;
+}
+/* LOCK is a read, never a rule: the foe is locked when the turret is
+   aligned on it (<0.14 rad, the same window the bots use) with line of
+   sight. Returns target + range + shell flight time, or null. */
+function computeFpLock(){
+  var me=state.tanks[0], foe=state.tanks[1];
+  if(!me||!foe||!foe.alive) return null;
+  var want=Math.atan2(foe.y-me.y, foe.x-me.x);
+  if(Math.abs(angNorm(want-me.turret))>=0.14) return null;
+  if(!hasLOS(state.walls, me.x, me.y, foe.x, foe.y)) return null;
+  var range=Math.round(Math.hypot(foe.x-me.x, foe.y-me.y)/10);
+  return {name:foe.name, color:foe.color, range:range, los:true,
+    flight:(range*10/varOf().shellSpeed).toFixed(1)};
+}
+function stepFpCam(){
+  var me=state.tanks[0];
+  if(!me||!state.fp||state.phase==='title'){ fpLock=null; return; }
+  var target=-(me.turret+Math.PI/2);
+  var d=angNorm(target-fpCam.rot);
+  fpCam.rot+=d*0.12;
+  var zoomT=me.muzzle>0?2.12:2.0;
+  fpCam.zoom+=(zoomT-fpCam.zoom)*0.15;
+  fpCam.vel+=(Math.abs(d)*0.12-fpCam.vel)*0.2;
+  var leanT=clamp(d*0.5,-0.06,0.06);
+  fpCam.lean+=(leanT-fpCam.lean)*0.1;
+  fpCam.bob+=0.05;
+  fpLock=computeFpLock();
+}
+/* world -> periscope screen position, using the eased camera */
+function fpToScreen(x,y){
+  var me=state.tanks[0];
+  var dx=x-me.x, dy=y-me.y;
+  var c=Math.cos(fpCam.rot+fpCam.lean), s=Math.sin(fpCam.rot+fpCam.lean);
+  return {x:W/2+fpCam.zoom*(dx*c-dy*s), y:H*0.62+Math.sin(fpCam.bob)*2+fpCam.zoom*(dx*s+dy*c)};
+}
+function drawFP(){
+  var me=state.tanks[0];
+  ctx.fillStyle='#0a0f0a'; ctx.fillRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(W/2,H*0.62+Math.sin(fpCam.bob)*2);
+  ctx.rotate(fpCam.rot+fpCam.lean);
+  ctx.scale(fpCam.zoom,fpCam.zoom);
+  ctx.translate(-me.x,-me.y);
+  drawArena();
+  state.tanks.forEach(function(t){ drawTank(t); });
+  drawShells(); drawParticles();
+  ctx.restore();
+  /* depth fog: the yard falls away from the vanishing point (screen centre) */
+  var fog=ctx.createRadialGradient(W/2,H*0.62, H*0.16, W/2,H*0.62, H*0.85);
+  fog.addColorStop(0,'rgba(10,15,10,0)'); fog.addColorStop(1,'rgba(10,15,10,.55)');
+  ctx.fillStyle=fog; ctx.fillRect(0,0,W,H);
+  /* speed lines: radial streaks that flare with the turret slew */
+  var sla=clamp(fpCam.vel*8,0,0.45);
+  if(sla>0.01){
+    ctx.save(); ctx.strokeStyle='rgba(0,255,136,'+sla.toFixed(3)+')'; ctx.lineWidth=2;
+    for(var i=0;i<18;i++){
+      var a=i/18*Math.PI*2+fpCam.bob*0.02;
+      var r0=110+((i*37)%50), r1=r0+40+fpCam.vel*400;
+      ctx.beginPath();
+      ctx.moveTo(W/2+Math.cos(a)*r0, H/2+Math.sin(a)*r0);
+      ctx.lineTo(W/2+Math.cos(a)*r1, H/2+Math.sin(a)*r1);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* LOCK reticle + aim line on the foe's screen position */
+  var foe=state.tanks[1];
+  if(fpLock && foe){
+    var fp=fpToScreen(foe.x,foe.y);
+    var pulse=0.10+0.06*Math.sin(state.frame*0.1);
+    var lg=ctx.createRadialGradient(fp.x,fp.y,4, fp.x,fp.y,64);
+    lg.addColorStop(0,'rgba(255,215,94,'+pulse.toFixed(3)+')'); lg.addColorStop(1,'rgba(255,215,94,0)');
+    ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(fp.x,fp.y,64,0,7); ctx.fill();
+    /* foe rim-light arc in the foe's colour */
+    ctx.save(); ctx.shadowColor=foe.color; ctx.shadowBlur=12;
+    ctx.strokeStyle=foe.color; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.arc(fp.x,fp.y,30,-0.9,0.9); ctx.stroke();
+    ctx.restore();
+    /* dashed aim line from the crosshair to the lock */
+    ctx.save(); ctx.setLineDash([6,6]); ctx.strokeStyle='rgba(255,215,94,.4)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(W/2,H/2); ctx.lineTo(fp.x,fp.y); ctx.stroke(); ctx.restore();
+    /* gold corner brackets */
+    ctx.strokeStyle='#ffd75e'; ctx.lineWidth=3;
+    var b=46, l=14;
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(sg){
+      ctx.beginPath();
+      ctx.moveTo(fp.x+sg[0]*b, fp.y+sg[1]*b-sg[1]*l);
+      ctx.lineTo(fp.x+sg[0]*b, fp.y+sg[1]*b);
+      ctx.lineTo(fp.x+sg[0]*b-sg[0]*l, fp.y+sg[1]*b);
+      ctx.stroke();
+    });
+    ctx.save(); ctx.shadowColor='#ffd75e'; ctx.shadowBlur=10;
+    ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(fp.x,fp.y,34,0,7); ctx.stroke();
+    ctx.restore();
+  }
+  /* periscope frame: gradient canopy beams + gold rivets + side consoles */
+  var vg=ctx.createLinearGradient(0,0,0,H);
+  vg.addColorStop(0,'rgba(10,15,10,.9)'); vg.addColorStop(0.12,'rgba(10,15,10,0)'); vg.addColorStop(0.88,'rgba(10,15,10,0)'); vg.addColorStop(1,'rgba(10,15,10,.9)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+  [0,W-24].forEach(function(bx){
+    var bg=ctx.createLinearGradient(bx,0,bx+24,0);
+    bg.addColorStop(0,'rgba(26,42,26,.95)'); bg.addColorStop(0.5,'rgba(16,26,16,.9)'); bg.addColorStop(1,'rgba(10,15,10,.95)');
+    ctx.fillStyle=bg; ctx.fillRect(bx,0,24,H);
+    ctx.strokeStyle='rgba(255,215,94,.5)'; ctx.lineWidth=1.5;
+    var ex=bx===0?24:W-24;
+    ctx.beginPath(); ctx.moveTo(ex,0); ctx.lineTo(ex,H); ctx.stroke();
+    ctx.fillStyle='rgba(255,215,94,.75)';
+    for(var ry=30;ry<H;ry+=46){ ctx.beginPath(); ctx.arc(ex,ry,2,0,7); ctx.fill(); }
+    /* side console: panel ticks + a travelling cyan status light */
+    ctx.strokeStyle='rgba(0,255,136,.25)'; ctx.lineWidth=1;
+    for(var ty=60;ty<H-20;ty+=52){ ctx.beginPath(); ctx.moveTo(bx+5,ty); ctx.lineTo(bx+19,ty); ctx.stroke(); }
+    var cy=(state.frame*1.5%(H-40))+20;
+    ctx.save(); ctx.shadowColor='#35e0ff'; ctx.shadowBlur=8;
+    ctx.fillStyle='#35e0ff'; ctx.beginPath(); ctx.arc(bx+12,cy,3.5,0,7); ctx.fill(); ctx.restore();
+  });
+  /* bottom console strip + travelling cyan light */
+  ctx.fillStyle='rgba(16,26,16,.92)'; ctx.fillRect(24,H-12,W-48,12);
+  ctx.strokeStyle='rgba(255,215,94,.4)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(24,H-12); ctx.lineTo(W-24,H-12); ctx.stroke();
+  var cx=(state.frame*2%(W-80))+40;
+  ctx.save(); ctx.shadowColor='#35e0ff'; ctx.shadowBlur=8;
+  ctx.fillStyle='#35e0ff'; ctx.beginPath(); ctx.arc(cx,H-6,3,0,7); ctx.fill(); ctx.restore();
+  /* faint glass glare streak */
+  ctx.save(); ctx.globalAlpha=0.05; ctx.fillStyle='#ffffff';
+  ctx.beginPath(); ctx.moveTo(180,0); ctx.lineTo(300,0); ctx.lineTo(120,H); ctx.lineTo(40,H); ctx.closePath(); ctx.fill(); ctx.restore();
+  /* crosshair — gold while locked */
+  var locked=!!fpLock;
+  ctx.save();
+  if(locked){ ctx.shadowColor='#ffd75e'; ctx.shadowBlur=12; }
+  ctx.strokeStyle=locked?'#ffd75e':'rgba(0,255,136,.8)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W/2-26,H/2); ctx.lineTo(W/2+26,H/2); ctx.moveTo(W/2,H/2-26); ctx.lineTo(W/2,H/2+26); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W/2,H/2,34,0,7); ctx.stroke();
+  ctx.restore();
+  /* gauges: left = hull pips + round · variation; right = LOCK readout */
+  var py=H-108, ph=66;
+  function gaugePanel(x){
+    ctx.fillStyle='rgba(10,15,10,.82)'; ctx.fillRect(x,py,218,ph);
+    ctx.strokeStyle='rgba(0,255,136,.35)'; ctx.lineWidth=1; ctx.strokeRect(x+0.5,py+0.5,218,ph);
+    ctx.fillStyle='rgba(255,215,94,.9)'; ctx.fillRect(x,py,218,2);
+  }
+  gaugePanel(26);
+  ctx.textAlign='left'; ctx.font='bold 11px "Orbitron",sans-serif';
+  ctx.fillStyle='#00ff88'; ctx.fillText('HULL',36,py+18);
+  for(var p=0;p<varOf().winRounds;p++){
+    ctx.fillStyle=p<me.wins?me.color:'rgba(255,255,255,.18)';
+    ctx.beginPath(); ctx.arc(96+p*16,py+14,5,0,7); ctx.fill();
+  }
+  ctx.fillStyle='#e8f5dc'; ctx.font='12px "Share Tech Mono",monospace';
+  ctx.fillText('ROUND '+Math.max(1,state.round)+' · '+varOf().name.toUpperCase(),36,py+40);
+  ctx.fillStyle='#8aa893';
+  ctx.fillText(me.name+' · '+me.wins+' WON',36,py+57);
+  gaugePanel(W-244);
+  ctx.textAlign='left'; ctx.font='bold 11px "Orbitron",sans-serif';
+  if(locked){
+    ctx.fillStyle='#ffd75e'; ctx.fillText('◈ LOCK — '+fpLock.name, W-234, py+18);
+    ctx.fillStyle='#e8f5dc'; ctx.font='12px "Share Tech Mono",monospace';
+    ctx.fillText('RNG '+fpLock.range+'m · TOF '+fpLock.flight+'s · LOS ✓', W-234, py+40);
+  } else {
+    ctx.fillStyle='#8aa893'; ctx.fillText('◈ SEEKING', W-234, py+18);
+    ctx.fillStyle='#e8f5dc'; ctx.font='12px "Share Tech Mono",monospace';
+    ctx.fillText('NO TARGET IN SIGHT', W-234, py+40);
+  }
+  var brg=Math.round(((angNorm(me.turret-me.angle)*180/Math.PI)+360)%360);
+  ctx.fillStyle='#8aa893';
+  ctx.fillText('BRG '+String('000'+brg).slice(-3)+'° · TURRET', W-234, py+57);
+  /* bearing dial: turret bearing relative to the hull, bottom centre */
+  var dcx=W/2, dcy=H-66;
+  ctx.save(); ctx.strokeStyle='rgba(0,255,136,.4)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(dcx,dcy,20,Math.PI,0); ctx.stroke(); ctx.restore();
+  for(var ti=0;ti<=4;ti++){
+    var ta=Math.PI+ti/4*Math.PI;
+    ctx.strokeStyle='rgba(0,255,136,.5)'; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(dcx+Math.cos(ta)*17, dcy+Math.sin(ta)*17);
+    ctx.lineTo(dcx+Math.cos(ta)*20, dcy+Math.sin(ta)*20);
+    ctx.stroke();
+  }
+  var na=Math.PI+((angNorm(me.turret-me.angle)+Math.PI)/(Math.PI*2))*Math.PI;
+  ctx.save(); ctx.shadowColor='#ffd75e'; ctx.shadowBlur=8;
+  ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(dcx,dcy); ctx.lineTo(dcx+Math.cos(na)*17, dcy+Math.sin(na)*17); ctx.stroke(); ctx.restore();
+  ctx.fillStyle='#8aa893'; ctx.font='9px "Share Tech Mono",monospace'; ctx.textAlign='center';
+  ctx.fillText('BRG', dcx, dcy+12);
+  /* bottom readout */
+  var range=foe?Math.round(Math.hypot(foe.x-me.x,foe.y-me.y)/10):0;
+  ctx.fillStyle=locked?'#ffd75e':'#00ff88'; ctx.font='bold 13px "Orbitron",sans-serif'; ctx.textAlign='center';
+  ctx.fillText(locked
+    ? '◈ LOCK '+fpLock.name+' · RNG '+fpLock.range+'m · TOF '+fpLock.flight+'s · V TO EXIT'
+    : 'PERISCOPE · '+me.name+' · RANGE '+range+'m · V TO EXIT', W/2, H-24);
+  drawHUD();
+}
+function render(){
+  ctx.save();
+  if(state.shake>0) ctx.translate((Math.random()-0.5)*state.shake,(Math.random()-0.5)*state.shake);
+  if(state.fp && state.phase!=='title') drawFP();
+  else {
+    drawArena();
+    state.tanks.forEach(function(t){ drawTank(t); });
+    drawShells(); drawParticles(); drawHUD();
+  }
+  ctx.restore();
+}
+
+/* ---------- pause / save / load / views ---------- */
+function togglePause(){
+  if(state.phase==='title'||state.phase==='over') return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+}
+function toggleFP(){
+  state.fp=!state.fp;
+  if(state.fp) snapFpCam();
+  setMsg(state.fp?'Periscope view — your turret points up the screen. V to exit.':'Yard view.');
+}
+function saveState(){
+  if(state.phase==='title') return false;
+  try{
+    localStorage.setItem('tankduel.save', JSON.stringify({
+      v:1, mode:state.mode, variationId:state.variationId, round:state.round, hi:state.hi,
+      /* E37: saved so loadState can resume the duel's agents + rotation */
+      tdAgents:(state.mode==='watch'||state.mode==='solo')?tdAgentIds.slice():[null,null],
+      tdBout:tdBout, tdRecorded:tdRecorded,
+      watchPair:state.watchPair, watchRounds:state.watchRounds,
+      tanks:state.tanks.map(function(t){ return {x:t.x,y:t.y,angle:t.angle,turret:t.turret,wins:t.wins,alive:t.alive}; })
+    }));
+    setMsg('State saved — pick it up any time from the pause menu.');
+    return true;
+  }catch(e){ setMsg('Save failed in this browser.'); return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('tankduel.save');
+    if(!raw){ setMsg('No saved state yet — play a round first.'); return false; }
+    var d=JSON.parse(raw);
+    if(d.v!==1) return false;
+    var keepHi=state.hi;
+    state=freshState();
+    state.mode=d.mode; state.variationId=d.variationId; state.phase='playing';
+    state.round=d.round; state.hi=d.hi||keepHi;
+    /* E37: the loaded duel keeps its pilot pair / watch counters */
+    if(typeof d.watchPair==='number'&&isFinite(d.watchPair)&&d.watchPair>=0) state.watchPair=d.watchPair%4;
+    if(typeof d.watchRounds==='number'&&isFinite(d.watchRounds)&&d.watchRounds>=0) state.watchRounds=d.watchRounds;
+    state.walls=buildWalls(varOf().arena);
+    var sp=spawnPoints();
+    var pair=state.mode==='watch' ? [PILOTS[state.watchPair%4], PILOTS[(state.watchPair+1)%4]] : [PILOTS[0], PILOTS[1]];
+    state.tanks=[buildTank(pair[0], sp[0].x, sp[0].y, sp[0].angle),
+                 buildTank(pair[1], sp[1].x, sp[1].y, sp[1].angle)];
+    d.tanks.forEach(function(dt,i){
+      var t=state.tanks[i];
+      t.x=dt.x; t.y=dt.y; t.angle=dt.angle; t.turret=dt.turret; t.wins=dt.wins; t.alive=dt.alive;
+    });
+    /* E37 REPAIR (loadState dropped the engine): restore the council agents
+       from the save (FE.loadAgent hydrates Elo/weights from the store),
+       the rotation cursor and the recorded flag, so a loaded WATCH save
+       resumes engine decisions and records exactly one match. Traces
+       restart empty — only post-load decisions are recorded, so pre-save
+       traces are never re-recorded. A save taken after the duel already
+       recorded keeps tdRecorded=true, so the loaded duel cannot
+       double-record it. Old saves without tdAgents leave the tanks on
+       legacy bots, as before. */
+    tdTraces=[[],[]];
+    tdRecorded=d.tdRecorded===true;
+    tdAgentIds=[null,null]; tdAgents=[null,null];
+    if(FE&&Array.isArray(d.tdAgents)){
+      tdAgentIds=d.tdAgents.slice();
+      d.tdAgents.forEach(function(id,i){
+        if(!id) return;
+        try{ tdAgents[i]=FE.loadAgent(id); }catch(e){ tdAgents[i]=null; }
+      });
+    }
+    if(typeof d.tdBout==='number'&&isFinite(d.tdBout)&&d.tdBout>=0){ tdBout=d.tdBout; tdSaveBout(); }
+    state.paused=false;
+    var ov=$('pauseOverlay'); if(ov) ov.style.display='none';
+    snapFpCam(); /* loaded lane — the camera lands exactly, no push-in */
+    setMsg('Saved state loaded — round '+state.round+'.');
+    return true;
+  }catch(e){ setMsg('Load failed — save may be from an older build.'); return false; }
+}
+
+/* ---------------- fullscreen (FULLSCREEN standard): the shell — stage on
+   desktop, the whole handheld console on phones — goes true fullscreen via
+   the Fullscreen API. F toggles, the button toggles, Esc exits (browser)
+   before it can pause. Label follows the real fullscreen state. ---- */
+var fsShell=document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ var b=$('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — stage fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+
+/* ---------- input ---------- */
+function keyName(e){ return (e.key||'').toLowerCase(); }
+document.addEventListener('keydown',function(e){
+  var k=keyName(e);
+  state.keys[k]=true;
+  if(k==='f'){ toggleFullscreen(); return; }
+  if(k==='escape' && isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ return; }
+  if(k==='p'||k==='escape'){ togglePause(); e.preventDefault(); }
+  if(k==='r'){ startGame(state.mode); }
+  if(k==='v'){ toggleFP(); }
+  if(k>='1' && k<='6'){ setVariation(VARIATIONS[parseInt(k,10)-1].id); }
+  if(['arrowleft','arrowright','arrowup','arrowdown',' '].indexOf(k)>=0) e.preventDefault();
+});
+document.addEventListener('keyup',function(e){ state.keys[keyName(e)]=false; });
+function canvasPoint(e){
+  var r=cv.getBoundingClientRect();
+  var cx=(e.clientX!==undefined?e.clientX:(e.touches&&e.touches[0]?e.touches[0].clientX:0));
+  var cy=(e.clientY!==undefined?e.clientY:(e.touches&&e.touches[0]?e.touches[0].clientY:0));
+  return {x:(cx-r.left)*(W/r.width), y:(cy-r.top)*(H/r.height)};
+}
+cv.addEventListener('mousemove',function(e){
+  var pt=canvasPoint(e);
+  state.mouse={x:pt.x, y:pt.y};
+});
+cv.addEventListener('mousedown',function(e){
+  if(state.phase==='playing' && (state.mode==='solo')){
+    var pt=canvasPoint(e);
+    state.mouse={x:pt.x, y:pt.y};
+    fireShell(state.tanks[0]);
+  }
+});
+/* twin virtual sticks: left drives, right aims the turret */
+function bindStick(stickId, knobId, which){
+  var pad=$(stickId), knob=$(knobId);
+  if(!pad || !knob) return;
+  function setKnob(dx,dy){
+    var len=Math.hypot(dx,dy), max=34;
+    if(len>max){ dx=dx/len*max; dy=dy/len*max; }
+    knob.style.transform='translate('+dx+'px,'+dy+'px)';
+    state[which]={x:dx/max, y:dy/max, active:true};
+  }
+  function resetKnob(){
+    knob.style.transform='translate(0px,0px)';
+    state[which]={x:0, y:0, active:false};
+  }
+  pad.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    pad.setPointerCapture(e.pointerId);
+    var r=pad.getBoundingClientRect();
+    setKnob(e.clientX-(r.left+r.width/2), e.clientY-(r.top+r.height/2));
+  });
+  pad.addEventListener('pointermove',function(e){
+    if(!state[which].active) return;
+    var r=pad.getBoundingClientRect();
+    setKnob(e.clientX-(r.left+r.width/2), e.clientY-(r.top+r.height/2));
+  });
+  pad.addEventListener('pointerup',resetKnob);
+  pad.addEventListener('pointercancel',resetKnob);
+}
+bindStick('stickL','knobL','stickL');
+bindStick('stickR','knobR','stickR');
+function bindBtn(id,fn){ var b=$(id); if(b) b.addEventListener('click',fn); }
+bindBtn('btnSolo',function(){ startGame('solo'); });
+bindBtn('btnWatch',function(){ startGame('watch'); });
+bindBtn('btnDuel',function(){ startGame('duel'); });
+bindBtn('btnFP',function(){ toggleFP(); });
+bindBtn('btnPause',function(){ togglePause(); });
+bindBtn('btnFs',function(){ toggleFullscreen(); });
+bindBtn('resumeBtn',function(){ togglePause(); });
+bindBtn('saveBtn',function(){ saveState(); });
+bindBtn('loadBtn',function(){ loadState(); });
+bindBtn('restartBtn',function(){ var ov=$('pauseOverlay'); if(ov) ov.style.display='none'; state.paused=false; startGame(state.mode); });
+bindBtn('quitArcadeBtn',function(){ location.href='../arcade.html'; });
+bindBtn('startBtn',function(){ togglePause(); });
+bindBtn('selectBtn',function(){ toggleFP(); });
+bindBtn('btnA',function(){ if(state.phase==='playing' && state.tanks[0]) fireShell(state.tanks[0]); });
+bindBtn('btnB',function(){ toggleFP(); });
+document.querySelectorAll('[data-var]').forEach(function(b){
+  b.addEventListener('click',function(){ setVariation(b.getAttribute('data-var')); });
+});
+
+/* ---------- boot ---------- */
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+if(q.get('auto')==='watch') startGame('watch');
+else if(q.get('auto')==='play') startGame('solo');
+else if(q.get('auto')==='duel') startGame('duel');
+if(q.get('var')) setVariation(q.get('var'));
+
+function loop(){
+  update();
+  try{ render(); }catch(e){ /* headless stub contexts may lack gradients; logic still runs */ }
+  if(typeof requestAnimationFrame!=='function') return;
+  requestAnimationFrame(loop);
+}
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+
+/* test/debug surface — same shape as the other arcade games */
+window.__tankduel={
+  get state(){ return {phase:state.phase,mode:state.mode,variationId:state.variationId,paused:state.paused,fp:state.fp,
+    frame:state.frame, round:state.round,hi:state.hi,winner:state.winner,winnerName:state.winnerName,over:state.over,
+    walls:state.walls.length, watchRounds:state.watchRounds,
+    feAgents:tdAgentIds.slice(), feTraces:tdTraces.map(function(t){ return t.length; }),
+    tdBout:tdBout, tdRecorded:tdRecorded,
+    tanks:state.tanks.map(function(t){ return {name:t.name,x:t.x,y:t.y,angle:t.angle,turret:t.turret,
+      alive:t.alive,wins:t.wins,fireCd:t.fireCd,revealT:t.revealT}; }),
+    shells:state.shells.map(function(s){ return {x:s.x,y:s.y,vx:s.vx,vy:s.vy,bounces:s.bounces,guided:s.guided,owner:s.owner}; }),
+    stickL:state.stickL, stickR:state.stickR, banner:state.banner}; },
+  startGame:startGame, setVariation:setVariation,
+  get fpCam(){ return {rot:fpCam.rot, zoom:fpCam.zoom, vel:fpCam.vel, lean:fpCam.lean}; },
+  get fpLock(){ return fpLock ? {name:fpLock.name, range:fpLock.range, los:fpLock.los, flight:fpLock.flight} : null; },
+  debugPlaceTank:function(i,x,y,angle){ var t=state.tanks[i]; t.x=x; t.y=y; if(angle!==undefined){ t.angle=angle; t.turret=angle; } },
+  debugAim:function(i,angle){ state.tanks[i].turret=angle; },
+  debugFire:function(i){ return fireShell(state.tanks[i]); },
+  debugSpawnShell:function(o){ var s={x:o.x,y:o.y,vx:o.vx,vy:o.vy,owner:o.owner||0,bounces:(o.bounces!==undefined?o.bounces:1),guided:!!o.guided,life:600,r:4}; state.shells.push(s); return s; },
+  debugSetBot:function(i,patch){ var b=state.tanks[i].bot; for(var k in patch) b[k]=patch[k]; },
+  debugStick:function(which,x,y){ state[which]={x:x,y:y,active:true}; },
+  debugKey:function(k,down){ state.keys[k]=!!down; },
+  debugMouse:function(x,y){ state.mouse={x:x,y:y}; },
+  debugSave:saveState, debugLoad:loadState, debugToggleFP:toggleFP, debugTogglePause:togglePause,
+  get fs(){return isFullscreen();},
+  toggleFullscreen:toggleFullscreen,
+  isFullscreen:isFullscreen,
+  debugWalls:function(){ return state.walls; },
+  debugCellOpen:function(c,r){ return cellOpen(varOf().arena,c,r); },
+  debugLOS:function(x0,y0,x1,y1){ return hasLOS(state.walls,x0,y0,x1,y1); }
+};
+</script>
+</body>
+</html>

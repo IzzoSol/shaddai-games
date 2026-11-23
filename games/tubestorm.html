@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TUBESTORM — SHADDAI ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#07060f;--panel:#0d0a1c;--border:rgba(232,121,255,.3);--gold:#ffd75e;--green:#a8ff3e;--magenta:#e879ff;--cyan:#35e0ff;--violet:#b78cff;--text:#efe6ff;--dim:#9a8fc0}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{background:radial-gradient(1000px 500px at 50% -10%,rgba(232,121,255,.09),transparent 60%),var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+  h1,.orb{font-family:'Orbitron',sans-serif;margin:0}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(7,6,15,.92);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+  .topbar h1{font-size:20px;color:#fff;letter-spacing:2px}.topbar h1 span{color:var(--magenta)}
+  .topbar .tag{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+  .topbar .spacer{margin-left:auto}
+  .back{color:var(--magenta);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 13px;border:1px solid var(--border);font-family:'Orbitron',sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:18px 14px 50px}
+  #stageWrap{position:relative;border:1px solid var(--border);background:#000;box-shadow:0 0 44px rgba(232,121,255,.14)}
+  #shell:fullscreen,#shell:-webkit-full-screen{background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;border:0;border-radius:0;box-shadow:none}
+  #shell:fullscreen #stageWrap,#shell:-webkit-full-screen #stageWrap{width:min(100vw,calc(100vh*720/720));margin:0 auto}
+  body.touch #shell:fullscreen,body.touch #shell:-webkit-full-screen{padding:0;justify-content:space-evenly}
+  body.touch #shell:fullscreen #stageWrap,body.touch #shell:-webkit-full-screen #stageWrap{width:min(100vw,calc((100vh - 190px)*720/720))}
+  body.touch #shell:fullscreen #shellDeck,body.touch #shell:-webkit-full-screen #shellDeck{width:min(calc(100vw - 16px),calc((100vh - 190px)*720/720))}
+  canvas{display:block;width:100%;height:auto}
+  #msg{min-height:22px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);margin:10px 0 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .mbtn{flex:1;min-width:150px;padding:11px 8px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  .mbtn small{display:block;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:4px;text-transform:none;letter-spacing:0}
+  .mbtn.active{border-color:var(--magenta);box-shadow:0 0 16px rgba(232,121,255,.4);color:#fff}
+  .mbtn.vr{border-color:rgba(53,224,255,.5)}
+  .mbtn:disabled{opacity:.45;cursor:not-allowed}
+  .help{border:1px solid var(--border);background:var(--panel);padding:12px 16px;font-size:14px;line-height:1.65}
+  .help b{color:#fff}.help .k{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:12px}
+  #shellDeck{display:none}
+  #shell .shell-brand{display:none}
+  body.touch #shell{border:1px solid rgba(232,121,255,.4);border-radius:22px;padding:10px 10px 14px;background:linear-gradient(180deg,#120a1e,#05060a);box-shadow:0 0 34px rgba(232,121,255,.16), inset 0 0 0 1px rgba(255,255,255,.04)}
+  body.touch #shell .shell-brand{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--magenta)}
+  body.touch #shell .shell-brand .shell-led{color:#ff3860;text-shadow:0 0 8px #ff3860}
+  body.touch #shellDeck{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:14px;touch-action:none}
+  body.touch #shellDeck button{font-family:'Orbitron',sans-serif;color:#fff;background:#141024;border:1px solid rgba(232,121,255,.4);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none}
+  body.touch #shellDeck button:active{background:var(--magenta);color:#14041a}
+  .dpad{position:relative;width:132px;height:132px;touch-action:none}
+  .dpad button{position:absolute;width:44px;height:44px;font-size:16px;padding:0}
+  .dpad .up{left:44px;top:0}.dpad .down{left:44px;top:88px}
+  .dpad .left{left:0;top:44px}.dpad .right{left:88px;top:44px}
+  .dpad .mid{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;left:44px;top:44px;width:44px;height:44px;background:#0d0a1c;border-color:rgba(232,121,255,.25);font-size:9px;color:#9a8fc0;pointer-events:none}
+  .abtns{display:flex;flex-direction:column;gap:10px;align-items:center;padding-top:8px}
+  .abtns button{width:58px;height:58px;border-radius:50%;font-size:16px;font-weight:800}
+  .abtns button.b{background:#1a1016;border-color:rgba(255,56,96,.5)}
+  .shell-pills{display:flex;flex-direction:column;gap:10px;padding-top:34px}
+  .shell-pills button{border-radius:999px;padding:8px 12px;font-size:10px;letter-spacing:2px;background:#141024}
+  #pauseOverlay{position:absolute;inset:0;background:rgba(7,6,15,.88);display:none;align-items:center;justify-content:center;z-index:10}
+  #pauseOverlay .card{background:#0d0a1c;border:1px solid var(--border);padding:22px 26px;text-align:center;min-width:280px}
+  #pauseOverlay h2{font-family:'Orbitron',sans-serif;color:#fff;letter-spacing:3px;margin:0 0 6px}
+  #pauseOverlay p{color:var(--dim);font-size:13px;margin:0 0 14px}
+  #pauseOverlay .mbtn{display:block;width:100%;margin:6px 0}
+  @media (max-width:640px){
+    .topbar h1{font-size:15px}.topbar .tag{display:none}
+    .dpad{width:120px;height:120px}.dpad button{width:40px;height:40px}
+    .dpad .up{left:40px;top:0}.dpad .down{left:40px;top:80px}
+    .dpad .left{left:0;top:40px}.dpad .right{left:80px;top:40px}
+    .dpad .mid{left:40px;top:40px;width:40px;height:40px}
+    .abtns button{width:52px;height:52px}.shell-pills{padding-top:28px}
+  }
+</style>
+<style id="glassbtn-style">
+/* GLASSBTN v1 - holographic glass tile buttons (emerald rim, one gold accent, vine corner); per-game tint --gbt */
+:root{--gbt:232,121,255}
+.mbtn,.pbtn,.vbtn,.bigbtn,.btn,.startBtn,.shipbtn,.abtn{
+ position:relative;
+ background:
+  linear-gradient(155deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,rgba(0,0,0,.22) 100%),
+  repeating-linear-gradient(0deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(90deg,rgba(var(--gbt),.055) 0 1px,transparent 1px 7px),
+  linear-gradient(180deg,rgba(var(--gbt),.14),rgba(var(--gbt),.04));
+ background-color:var(--panel);
+ border:2px solid rgba(0,255,136,.62);
+ border-radius:12px;
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(0,255,136,.30),0 0 32px rgba(var(--gbt),.13),inset 0 0 16px rgba(0,255,136,.12),inset 0 1px 0 rgba(255,255,255,.22);
+ text-shadow:0 0 8px rgba(var(--gbt),.35);
+ transition:box-shadow .18s ease,border-color .18s ease,filter .18s ease;
+}
+.mbtn::before,.pbtn::before,.vbtn::before,.bigbtn::before,.btn::before,.startBtn::before,.shipbtn::before,.abtn::before{
+ content:"";position:absolute;top:4px;right:4px;width:13px;height:13px;pointer-events:none;
+ border-top:2px solid var(--gold,#ffd75e);border-right:2px solid var(--gold,#ffd75e);
+ border-top-right-radius:9px;opacity:.95;filter:drop-shadow(0 0 4px rgba(255,215,94,.75));
+}
+.mbtn::after,.pbtn::after,.vbtn::after,.bigbtn::after,.btn::after,.startBtn::after,.shipbtn::after,.abtn::after{
+ content:"";position:absolute;left:5px;bottom:3px;width:21px;height:14px;pointer-events:none;opacity:.8;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M1 13 C7 13 8 5 14 6 C19 7 18 12 22 10' fill='none' stroke='%2300ff88' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M8 9 q-3 -4 -6 -3 q1 4 6 3' fill='%2300c853'/%3E%3Cpath d='M15 6 q0 -4 3 -5 q1 4 -3 5' fill='%2300c853'/%3E%3C/svg%3E") left bottom/contain no-repeat;
+}
+.mbtn:hover,.pbtn:hover,.vbtn:hover,.bigbtn:hover,.btn:hover,.startBtn:hover,.shipbtn:hover,.abtn:hover{
+ border-color:rgba(0,255,136,.98);filter:brightness(1.16);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 26px rgba(0,255,136,.55),0 0 48px rgba(var(--gbt),.22),inset 0 0 22px rgba(0,255,136,.20),inset 0 1px 0 rgba(255,255,255,.3);
+}
+.mbtn.sel,.mbtn.active,.pbtn.sel,.pbtn.active,.vbtn.sel,.bigbtn.sel,.startBtn.sel{
+ border-color:rgba(0,255,136,1);filter:brightness(1.22);
+ box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px rgba(0,255,136,.65),0 0 54px rgba(var(--gbt),.26),inset 0 0 24px rgba(var(--gbt),.28),inset 0 1px 0 rgba(255,255,255,.32);
+}
+.mbtn:active,.pbtn:active,.vbtn:active,.bigbtn:active,.btn:active,.startBtn:active,.shipbtn:active,.abtn:active{filter:brightness(1.3)}
+</style>
+</head>
+<body>
+<div class="topbar"><h1>TUBE<span>STORM</span></h1><span class="tag">Tube shooter · Ride the rim · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="wrap">
+  <div id="shell">
+    <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
+    <div id="stageWrap">
+      <canvas id="cv" width="720" height="720"></canvas>
+      <div id="pauseOverlay"><div class="card">
+        <h2>PAUSED</h2><p id="pauseSub">The storm waits. The climbers do not.</p>
+        <button class="mbtn" id="resumeBtn">Resume</button>
+        <button class="mbtn" id="saveBtn">Save state</button>
+        <button class="mbtn" id="loadBtn">Load state</button>
+        <button class="mbtn" id="restartBtn">Restart</button>
+        <button class="mbtn" id="quitArcadeBtn">Quit to arcade</button>
+      </div></div>
+    </div>
+    <div id="shellDeck">
+      <div class="dpad" id="dpad">
+        <button class="up" id="dUp" title="Up">▲</button>
+        <button class="left" id="dLeft" title="Left — slide rim">◀</button>
+        <div class="mid">SLIDE</div>
+        <button class="right" id="dRight" title="Right — slide rim">▶</button>
+        <button class="down" id="dDown" title="Down">▼</button>
+      </div>
+      <div class="shell-pills">
+        <button id="startBtn" title="Start — open menu">START</button>
+        <button id="selectBtn" title="Select — first-person view">SELECT</button>
+      </div>
+      <div class="abtns">
+        <button id="btnA" title="A — fire">A</button>
+        <button class="b" id="btnB" title="B — Storm Surge (superzapper)">B</button>
+      </div>
+    </div>
+  </div>
+  <div id="msg">Ride the rim. Zap the climbers before they reach you.</div>
+  <div class="row">
+    <button class="mbtn" id="btnSolo">▶ Play<small>1P — you are VEXA, riding the rim</small></button>
+    <button class="mbtn" id="btnWatch">👁 Watch<small>a bot rides the rim — bold or cautious, never perfect</small></button>
+    <button class="mbtn" id="btnFP">🎥 First-person<small>V — down-the-tube cockpit view</small></button>
+    <button class="mbtn" id="btnZap">⚡ Storm Surge<small>B — superzapper, clears the tube</small></button>
+  </div>
+  <div class="row">
+    <button class="mbtn vr" id="btnVR">🥽 Enter VR (SIM)<small>WebXR via the shared XR engine · needs a headset</small></button>
+    <button class="mbtn" id="btnRoom" disabled>🏠 Room — Soon<small>in-world AR ships only when it reads as real</small></button>
+    <button class="mbtn" id="btnPause">⏸ Pause<small>P — menu · save / load</small></button>
+    <button class="mbtn" id="btnFs">⛶ Fullscreen<small>F — tube fills the screen</small></button>
+  </div>
+  <div class="help">
+    <b>TUBESTORM</b> — You are <b style="color:#e879ff">VEXA</b>, a rim-rider guarding the storm-well. Climbers crawl up the lanes of the tube toward your rim — shoot them down the lane before they reach you. <b style="color:#a8ff3e">CRAWLERS</b> climb straight, <b style="color:#b78cff">FLIPPERS</b> hop lanes as they climb, <b style="color:#ff9d3c">SPIKERS</b> leave spikes that eat your shots, <b style="color:#35e0ff">PULSARS</b> split into a fresh crawler when zapped. Clear a tube to ride the next shape — circle, square, triangle, star, hexagon — faster and meaner every time. <b style="color:#ffd75e">STORM SURGE</b> (B) is your panic button: it clears the whole tube, but charges are scarce.<br/>
+    <b>Controls:</b> <span class="k">← → / A D</span> slide the rim · <span class="k">SPACE / click</span> fire · <span class="k">B / SHIFT</span> Storm Surge · <span class="k">V</span> first-person view · <span class="k">P</span> pause (save / load in the menu) · <span class="k">R</span> restart · <span class="k">M</span> mute. Drag on the tube to slide the rider.<br/>
+    <b>Fullscreen:</b> <span class="k">F</span> — the tube fills the screen (Esc exits first).<br/>
+    <b>First-person:</b> the camera eases with the rim — the gold <b style="color:#ffd75e">LOCK</b> bracket marks the climber in your lane, the <b style="color:#35e0ff">THREAT</b> bar shows the nearest climber's depth, and the pips show Storm Surge charges.<br/>
+    <b>WATCH</b> is a personality bot riding the rim — <b>ZEROX</b> chases every climber, <b>TURTLE</b> guards only the danger lanes, <b>NEXUS</b> splits the difference. It scores its options through the Fallible Engine and sometimes lets a flipper through. That is the show.<br/>
+    📱 <b>Handheld shell:</b> D-pad slides the rim, <span class="k">A</span> fires, <span class="k">B</span> Storm Surge, <span class="k">SELECT</span> first-person, <span class="k">START</span> opens the menu (resume / save state / load state / restart / quit).<br/>
+    <b>Clean-room:</b> the tube-shooter formula (ride the rim, shoot down the lanes, climbers / flippers / spikes / superzapper, tube shapes that change per level) re-implemented from the documented behaviour of the 1981 tube shooter in our own code, with original characters, names, tube geometry and art — nothing copied.
+  </div>
+</div>
+<script src="agent-engine.js"></script>
+<script src="xr-engine.js"></script>
+<script>
+'use strict';
+/* ============================================================================
+   TUBESTORM — original tube shooter for the Shaddai Arcade.
+   Clean-room (SPEC lane): the tube-shooter FORMULA — a player riding the
+   rim of a geometric tube, shooting down lanes at enemies that climb
+   toward the rim, flippers that hop lanes, spikes that block shots, a
+   superzapper panic button, and a new tube shape per level — is
+   re-implemented from documented behaviour of the 1981 arcade tube
+   shooter (original source + ROM-verified annotated disassembly, both
+   read as text only; see scan4-atari.md §5) in our own code. No
+   reference code, sprites, names, tube geometry or sounds were copied,
+   run or moved into this file. All characters, tube shapes, scoring and
+   art are ours. Tempest is Atari IP; our game is TUBESTORM.
+   ============================================================================ */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var msgEl=document.getElementById('msg');
+var W=720, H=720, CX=360, CY=352, R_NEAR=302, R_FAR=86;
+var FE=(typeof window!=='undefined' && window.FallibleEngine) || null;
+var XE=(typeof window!=='undefined' && window.XREngine) || null;
+var q=(typeof URLSearchParams!=='undefined' && typeof location!=='undefined')
+  ? new URLSearchParams(location.search) : new URLSearchParams('');
+function $(id){ return document.getElementById(id); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+/* ---------- tube shapes: OUR OWN geometry table, one per level band ---------- */
+var TUBES=[
+  {name:'CIRCLE',  lanes:16, shape:'circle',   quota:10, spawn:78},
+  {name:'SQUARE',  lanes:16, shape:'square',   quota:14, spawn:70},
+  {name:'TRIANGLE',lanes:15, shape:'triangle', quota:17, spawn:64},
+  {name:'STAR',    lanes:16, shape:'star',     quota:20, spawn:58},
+  {name:'HEXAGON', lanes:18, shape:'hex',      quota:24, spawn:52}
+];
+function tubeFor(level){ return TUBES[(level-1)%TUBES.length]; }
+/* regular-polygon radius: r(theta) = cos(pi/n) / cos(theta mod 2pi/n - pi/n) */
+function polyR(theta, n){
+  var seg=2*Math.PI/n;
+  var t=((theta % seg)+seg)%seg - Math.PI/n;
+  var r=Math.cos(Math.PI/n)/Math.max(0.35, Math.cos(t));
+  return clamp(r, 0.55, 1.35);
+}
+function shapeR(theta, shape){
+  if(shape==='circle') return 1;
+  if(shape==='square') return polyR(theta, 4)*0.92;
+  if(shape==='triangle') return polyR(theta, 3)*0.94;
+  if(shape==='hex') return polyR(theta, 6)*0.95;
+  /* star: 8 points, alternating radius */
+  return 0.58+0.42*Math.abs(Math.cos(4*theta));
+}
+function laneAngle(lane, lanes){ return Math.PI/2 + (2*Math.PI*lane)/lanes; }
+/* rim view projection: (lane, depth z) -> screen point. z=0 rim, z=1 far end. */
+function project(lane, z){
+  var t=tubeFor(state.level);
+  var a=laneAngle(lane, t.lanes);
+  var r=shapeR(a, t.shape)*lerp(R_NEAR, R_FAR, z);
+  return {x:CX+Math.cos(a)*r, y:CY+Math.sin(a)*r*0.94, a:a};
+}
+function laneDist(a, b, lanes){
+  var d=Math.abs(a-b)%lanes;
+  return Math.min(d, lanes-d);
+}
+
+/* ---------- enemy definitions: original characters ---------- */
+var ENEMY_DEFS={
+  crawler:{name:'CRAWLER', color:'#a8ff3e', dark:'#1e4a0a', score:100, speed:0.0016, detail:'spikes'},
+  flipper:{name:'FLIPPER', color:'#b78cff', dark:'#241040', score:150, speed:0.0022, detail:'diamond'},
+  spiker: {name:'SPIKER',  color:'#ff9d3c', dark:'#4a2405', score:200, speed:0.0012, detail:'spike'},
+  pulsar: {name:'PULSAR',  color:'#35e0ff', dark:'#0a2a36', score:250, speed:0.0018, detail:'orb'}
+};
+var ENEMY_KEYS=['crawler','flipper','spiker','pulsar'];
+
+/* ---------- state ---------- */
+var state;
+function freshState(){
+  return {
+    phase:'title', mode:'solo', paused:false, fp:false, muted:false,
+    frame:0, level:1, score:0, hi:0, lives:3, zapCharges:2,
+    spawned:0, quota:10, spawnT:60,
+    player:null, enemies:[], shots:[], spikes:[],
+    particles:makeParticles(), stars:makeStars(), clouds:makeClouds(), floaters:[],
+    watchGame:0, watchAgentId:'ZEROX', watchEngineAgent:null, watchTraces:[],
+    watchRecorded:false, banner:'', bannerT:0, shake:0, fpLock:-1, keys:{},
+    moveCd:0, fireCd:0, watchCd:0, readyT:0, dyingT:0, clearT:0, overT:0,
+    lightning:0, dragLane:null
+  };
+}
+function makeParticles(){
+  var d=[]; for(var i=0;i<40;i++) d.push({x:Math.random()*W,y:Math.random()*H,r:0.6+Math.random()*1.7,sp:0.1+Math.random()*0.35,ph:Math.random()*6.28,c:Math.random()<0.5?'232,121,255':'53,224,255'});
+  return d;
+}
+function makeStars(){
+  var d=[]; for(var i=0;i<110;i++) d.push({x:Math.random()*W,y:Math.random()*H,r:0.5+Math.random()*1.4,ph:Math.random()*6.28});
+  return d;
+}
+function makeClouds(){
+  var d=[]; for(var i=0;i<7;i++) d.push({x:Math.random()*W,y:40+Math.random()*180,w:120+Math.random()*160,sp:0.08+Math.random()*0.2});
+  return d;
+}
+state=freshState();
+try{ var saved=localStorage.getItem('tubestorm.hi'); if(saved) state.hi=parseInt(saved,10)||0; }catch(e){}
+
+function setMsg(t){ if(msgEl) msgEl.textContent=t; }
+function setBanner(t){ state.banner=t; state.bannerT=150; }
+function floater(x,y,txt,color){
+  state.floaters.push({x:x,y:y,txt:txt,life:55,color:color||'#ffd75e'});
+}
+function burst(x,y,color,n){
+  for(var i=0;i<(n||10);i++){
+    var a=Math.random()*6.28, sp=1+Math.random()*3;
+    state.particles.push({x:x,y:y,r:1+Math.random()*2,sp:sp,ph:a,c:color,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:30+Math.random()*20});
+  }
+  if(state.particles.length>220) state.particles.splice(0, state.particles.length-220);
+}
+function tubeName(){ return tubeFor(state.level).name; }
+function lanes(){ return tubeFor(state.level).lanes; }
+
+/* ---------- audio: tiny WebAudio blips, no copied sounds ---------- */
+var AC=null;
+function audio(){
+  try{
+    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume();
+    return AC;
+  }catch(e){ return null; }
+}
+function beep(f,d,type,v,when){
+  if(state.muted) return;
+  var ac=audio(); if(!ac) return;
+  try{
+    var o=ac.createOscillator(), g=ac.createGain();
+    o.type=type||'square'; o.frequency.value=f; g.gain.value=v||0.04;
+    var t=ac.currentTime+(when||0);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t); g.gain.exponentialRampToValueAtTime(0.0001, t+d); o.stop(t+d);
+  }catch(e){}
+}
+function sfxFire(){ beep(920,0.06,'square',0.03); beep(1400,0.05,'square',0.02,0.03); }
+function sfxKill(){ beep(520,0.08,'sawtooth',0.05); beep(260,0.12,'sawtooth',0.05,0.06); }
+function sfxZap(){ [880,660,440,330,220].forEach(function(f,i){ beep(f,0.12,'sawtooth',0.05,i*0.06); }); }
+function sfxDeath(){ [440,392,330,262,196].forEach(function(f,i){ beep(f,0.14,'triangle',0.06,i*0.11); }); }
+function sfxClear(){ [523,659,784,1047,1319].forEach(function(f,i){ beep(f,0.12,'square',0.05,i*0.09); }); }
+function sfxRim(){ beep(180,0.2,'sawtooth',0.06); }
+
+/* ---------- spawning ---------- */
+function spawnEnemy(type, lane, z){
+  var t=tubeFor(state.level);
+  var k=type || pickType();
+  var def=ENEMY_DEFS[k];
+  var sp=def.speed*(1+0.06*(state.level-1));
+  state.enemies.push({
+    type:k, name:def.name, color:def.color, dark:def.dark, score:def.score,
+    lane:(lane===undefined ? Math.floor(Math.random()*t.lanes) : lane),
+    z:(z===undefined ? 1 : z),
+    speed:sp, flipT:50+Math.floor(Math.random()*70),
+    spikeMarks:[0.7,0.5,0.3], split:false, atRim:false, hopT:0,
+    bob:Math.random()*6.28, wob:0
+  });
+}
+function pickType(){
+  var r=Math.random();
+  if(r<0.45) return 'crawler';
+  if(r<0.7) return 'flipper';
+  if(r<0.88) return 'spiker';
+  return 'pulsar';
+}
+function startGame(mode){
+  var keepHi=state.hi, keepWatch=state.watchGame, keepMuted=state.muted;
+  state=freshState();
+  state.hi=keepHi; state.watchGame=keepWatch; state.muted=keepMuted;
+  state.mode=mode||'solo';
+  state.level=1;
+  state.quota=tubeFor(1).quota;
+  state.player={lane:0, invulnT:0, bob:0, flame:0};
+  fpCam.lane=0; fpCam.lean=0;
+  if(state.mode==='watch') setupWatchAgent();
+  state.phase='ready'; state.readyT=100;
+  setBanner(state.mode==='watch' ? 'WATCH — '+state.watchAgentId+' RIDES THE RIM' : 'TUBE 1 — '+tubeName());
+  setMsg(state.mode==='watch'
+    ? 'Watching '+state.watchAgentId+' ride the rim — bold, cautious, never perfect.'
+    : 'You are VEXA. Arrows / A D slide the rim, SPACE fires, B is the Storm Surge.');
+  if($('btnSolo')){ $('btnSolo').classList.toggle('active',state.mode==='solo'); $('btnWatch').classList.toggle('active',state.mode==='watch'); }
+}
+var WATCH_IDS=['ZEROX','TURTLE','NEXUS'];
+function setupWatchAgent(){
+  state.watchAgentId=WATCH_IDS[state.watchGame % WATCH_IDS.length];
+  state.watchEngineAgent=null;
+  try{ if(FE) state.watchEngineAgent=FE.loadAgent(state.watchAgentId); }catch(e){ state.watchEngineAgent=null; }
+  state.watchTraces=[];
+  state.watchRecorded=false;
+}
+function levelClear(){
+  state.phase='levelclear'; state.clearT=140;
+  var bonus=500*state.level;
+  state.score+=bonus;
+  floater(CX, CY, 'TUBE CLEAR +'+bonus, '#a8ff3e');
+  setBanner('TUBE '+state.level+' CLEAR  ·  +'+bonus);
+  sfxClear();
+}
+function nextTube(){
+  state.level++;
+  var t=tubeFor(state.level);
+  state.quota=t.quota;
+  state.spawned=0; state.spawnT=70;
+  state.enemies=[]; state.shots=[]; state.spikes=[];
+  state.zapCharges=Math.min(3, state.zapCharges+1);
+  state.player.lane=0; state.player.invulnT=90;
+  state.phase='ready'; state.readyT=100;
+  setBanner('TUBE '+state.level+' — '+t.name+' · '+t.lanes+' LANES');
+  setMsg('Tube '+state.level+': '+t.name+'. '+t.quota+' hostiles inbound — Storm Surge recharged to '+state.zapCharges+'.');
+}
+function die(){
+  state.phase='dying'; state.dyingT=90;
+  state.shake=10;
+  setBanner('RIM BREACH!');
+  sfxDeath();
+}
+function resolveDeath(){
+  state.lives--;
+  if(state.lives<=0){
+    state.phase='over'; state.overT=0;
+    if(state.score>state.hi){
+      state.hi=state.score;
+      try{ localStorage.setItem('tubestorm.hi', String(state.hi)); }catch(e){}
+    }
+    setBanner('GAME OVER — '+state.score);
+    setMsg('Game over. Score '+state.score+'. High '+state.hi+'. Press R to ride again.');
+    recordWatchResult(state.score>=TS_WIN_SCORE);
+    return;
+  }
+  state.enemies=state.enemies.filter(function(e){ return e.z>0.25; });
+  /* TUBE-CLEAR FIX (E18): the clear check previously lived only in the
+     kill paths (killEnemy/stormSurge) — when the LAST enemy died on the
+     rim (rimHit), the tube sat empty forever with the quota met and no
+     clear, soft-locking the game. Same check as the kill paths; the lost
+     life above still stands. */
+  if(state.spawned>=state.quota && state.enemies.length===0){ levelClear(); return; }
+  state.player.lane=0; state.player.invulnT=150;
+  state.phase='ready'; state.readyT=100;
+  setBanner('READY — '+state.lives+' '+(state.lives===1?'RIDER':'RIDERS')+' LEFT');
+}
+/* TS_WIN_SCORE (E18): WATCH win bar, fixed from probe data before the
+   verification batch (probe-e18: 6 bouts, scores 1950–3150, median 2450)
+   — same shape as Divefall DF_WIN_SCORE / Touchdown TD_WIN_SCORE. A
+   WATCH bout is a win when the bot's final score clears the bar; the
+   outcome stays emergent, the bar only draws the line. */
+var TS_WIN_SCORE=2400;
+function recordWatchResult(won){
+  if(state.mode!=='watch' || state.watchRecorded) return;
+  state.watchRecorded=true;
+  try{
+    if(FE && state.watchEngineAgent)
+      FE.recordResult(state.watchEngineAgent, 'tubestorm', null, won?'win':'loss', state.watchTraces);
+  }catch(e){}
+}
+
+/* ---------- player actions ---------- */
+function movePlayer(dir){
+  if(state.phase!=='playing' || state.paused) return;
+  var t=lanes();
+  state.player.lane=(state.player.lane+dir+t)%t;
+  state.moveCd=7;
+}
+function fireShot(){
+  if(state.phase!=='playing' || state.paused) return;
+  if(state.fireCd>0) return;
+  state.fireCd=12;
+  state.shots.push({lane:state.player.lane, z:0.02});
+  sfxFire();
+}
+function stormSurge(){
+  if(state.phase!=='playing' || state.paused) return false;
+  if(state.zapCharges<=0){ setMsg('Storm Surge empty — clear a tube to recharge.'); return false; }
+  state.zapCharges--;
+  var n=state.enemies.length;
+  var gained=0;
+  state.enemies.forEach(function(e){
+    gained+=50;
+    var p=project(e.lane, e.z);
+    burst(p.x, p.y, e.color, 8);
+  });
+  state.score+=gained;
+  state.enemies=[];
+  state.spikes=[];
+  state.shake=12;
+  setBanner('STORM SURGE — '+n+' ZAPPED · +'+gained);
+  setMsg('Storm Surge cleared the tube ('+n+' hostiles, +'+gained+'). '+state.zapCharges+' charge'+(state.zapCharges===1?'':'s')+' left.');
+  sfxZap();
+  if(state.spawned>=state.quota) levelClear();
+  return true;
+}
+
+/* ---------- WATCH bot: a personality rides the rim via the Fallible Engine ---------- */
+var WATCH_STYLE={
+  ZEROX:  {dangerW:0.4, jitter:16, blunder:0.16, tag:'chase'},
+  TURTLE: {dangerW:1.8, jitter:6,  blunder:0.06, tag:'guard'},
+  NEXUS:  {dangerW:1.0, jitter:10, blunder:0.11, tag:'balanced'}
+};
+function watchDecide(){
+  var p=state.player;
+  var style=WATCH_STYLE[state.watchAgentId]||WATCH_STYLE.NEXUS;
+  var t=lanes();
+  var opts=[];
+  var nearDanger=0;
+  for(var m=-1;m<=1;m++){
+    var lane=(p.lane+m+t)%t;
+    var score=0;
+    var danger=0, prey=0, preyZ=9;
+    state.enemies.forEach(function(e){
+      if(e.lane!==lane) return;
+      if(e.z<0.3){ danger=1; nearDanger=1; score-=120*style.dangerW; }
+      else if(e.z<preyZ){ prey=1; preyZ=e.z; score+=60*(1-e.z); }
+    });
+    if(m!==0) score-=6; /* moving costs a little — stay put unless it helps */
+    score+=(Math.random()-0.5)*style.jitter;
+    [0,1].forEach(function(fire){
+      var s2=score+(fire && prey ? 50 : (fire ? -25 : 0));
+      opts.push({key:(m<0?'left':(m>0?'right':'stay'))+(fire?' +fire':''),
+        score:s2/100, tag: danger?'flee':(prey?'hunt':'idle'), move:m, fire:fire});
+    });
+  }
+  var pick=null;
+  if(FE && state.watchEngineAgent){
+    try{
+      var res=FE.decide(state.watchEngineAgent, 'tubestorm', opts,
+        {timePressure: nearDanger?0.7:0});
+      state.watchTraces.push(res.trace);
+      pick=res.pick;
+    }catch(e){ pick=null; }
+  }
+  if(!pick){
+    if(Math.random()<style.blunder){
+      pick=opts[Math.floor(Math.random()*opts.length)];
+    } else {
+      var exps=opts.map(function(o){ return Math.exp(o.score*2); });
+      var sum=0; exps.forEach(function(e){ sum+=e; });
+      var r=Math.random()*sum;
+      for(var k=0;k<opts.length;k++){ r-=exps[k]; if(r<=0){ pick=opts[k]; break; } }
+      if(!pick) pick=opts[opts.length-1];
+    }
+    state.watchTraces.push({t:Date.now(), gameId:'tubestorm', agentId:state.watchAgentId,
+      pick:pick.key, pickTag:pick.tag||null, temperature:0.5, tiltLevel:0, fallback:true});
+  }
+  if(state.watchTraces.length>500) state.watchTraces.splice(0, state.watchTraces.length-500);
+  if(pick.move!==0) movePlayer(pick.move);
+  if(pick.fire) fireShot();
+}
+
+/* ---------- combat ---------- */
+function killEnemy(idx, byShot){
+  var e=state.enemies[idx];
+  var p=project(e.lane, e.z);
+  burst(p.x, p.y, e.color, 12);
+  state.score+=e.score;
+  floater(p.x, p.y, '+'+e.score+' '+e.name, e.color);
+  sfxKill();
+  state.enemies.splice(idx,1);
+  if(e.type==='pulsar' && !e.split){
+    /* PULSAR splits: a fresh crawler hatches in an adjacent lane */
+    var t=lanes();
+    var nl=(e.lane+(Math.random()<0.5?-1:1)+t)%t;
+    spawnEnemy('crawler', nl, clamp(e.z, 0.15, 0.95));
+    var ne=state.enemies[state.enemies.length-1];
+    ne.split=true;
+    setMsg('PULSAR split — a crawler hatched in lane '+nl+'!');
+  }
+  if(state.spawned>=state.quota && state.enemies.length===0) levelClear();
+}
+function updateShots(){
+  for(var i=state.shots.length-1;i>=0;i--){
+    var s=state.shots[i];
+    s.z+=0.035;
+    if(s.z>=1){ state.shots.splice(i,1); continue; }
+    /* spikes eat shots first */
+    var blocked=false;
+    for(var k=0;k<state.spikes.length;k++){
+      var sp=state.spikes[k];
+      if(sp.lane===s.lane && s.z>=sp.z-0.01){
+        var pp=project(sp.lane, sp.z);
+        burst(pp.x, pp.y, '#ff9d3c', 4);
+        blocked=true; break;
+      }
+    }
+    if(blocked){ state.shots.splice(i,1); continue; }
+    /* then enemies in the same lane */
+    for(var j=state.enemies.length-1;j>=0;j--){
+      var e=state.enemies[j];
+      if(e.lane===s.lane && Math.abs(s.z-e.z)<0.045){
+        state.shots.splice(i,1);
+        killEnemy(j, true);
+        break;
+      }
+    }
+  }
+}
+function updateEnemies(){
+  var t=lanes();
+  for(var i=state.enemies.length-1;i>=0;i--){
+    var e=state.enemies[i];
+    e.bob+=0.12;
+    if(e.atRim){
+      e.hopT--;
+      if(e.hopT<=0){
+        e.hopT=100;
+        e.lane=(e.lane+(Math.random()<0.5?-1:1)+t)%t;
+        if(e.lane===state.player.lane && state.player.invulnT<=0){ rimHit(i); return; }
+      }
+      continue;
+    }
+    e.z-=e.speed;
+    if(e.type==='flipper'){
+      e.flipT--;
+      if(e.flipT<=0){
+        e.flipT=60+Math.floor(Math.random()*60);
+        e.lane=(e.lane+(Math.random()<0.5?-1:1)+t)%t;
+      }
+    }
+    if(e.type==='spiker'){
+      while(e.spikeMarks.length && e.z<=e.spikeMarks[0]){
+        var mz=e.spikeMarks.shift();
+        state.spikes.push({lane:e.lane, z:mz});
+      }
+    }
+    if(e.z<=0.02){
+      if(e.lane===state.player.lane){
+        rimHit(i); return;
+      }
+      /* reached the rim in another lane: it lurks there, hopping lanes */
+      e.atRim=true; e.z=0.02; e.hopT=100;
+      sfxRim();
+      setMsg('A '+e.name+' reached the rim in lane '+e.lane+' — it will hop toward you!');
+    }
+  }
+}
+function rimHit(idx){
+  var e=state.enemies[idx];
+  var p=project(e.lane, 0.02);
+  burst(p.x, p.y, '#ff3860', 16);
+  state.enemies.splice(idx,1);
+  if(state.player.invulnT>0) return;
+  die();
+}
+
+/* ---------- update ---------- */
+function update(){
+  if(!state.paused) state.frame++;
+  if(state.bannerT>0) state.bannerT--;
+  if(state.shake>0) state.shake*=0.88;
+  if(state.lightning>0) state.lightning--;
+  if(state.moveCd>0) state.moveCd--;
+  if(state.fireCd>0) state.fireCd--;
+  if(state.player && state.player.invulnT>0) state.player.invulnT--;
+  if(state.player) state.player.bob+=0.1;
+  state.particles.forEach(function(pt){
+    if(pt.vx!==undefined){ pt.x+=pt.vx; pt.y+=pt.vy; pt.vx*=0.94; pt.vy*=0.94; if(pt.life!==undefined) pt.life--; }
+    else { pt.y-=pt.sp; pt.x+=Math.sin(state.frame*0.01+pt.ph)*0.25; if(pt.y<-4){ pt.y=H+4; pt.x=Math.random()*W; } }
+  });
+  state.particles=state.particles.filter(function(pt){ return pt.life===undefined || pt.life>0; });
+  state.clouds.forEach(function(c){ c.x+=c.sp; if(c.x-c.w/2>W) c.x=-c.w/2; });
+  state.floaters.forEach(function(f){ f.y-=0.7; f.life--; });
+  state.floaters=state.floaters.filter(function(f){ return f.life>0; });
+  if(Math.random()<0.002) state.lightning=6;
+  if(state.paused || state.phase==='title') return;
+  /* FP camera easing + streak rush — visual only, frozen while paused */
+  if(state.player){
+    var dl=state.player.lane-fpCam.lane, tl=lanes();
+    if(dl>tl/2) dl-=tl; if(dl<-tl/2) dl+=tl;
+    fpCam.lane+=dl*0.12;
+    fpCam.lean+=(clamp(dl,-1,1)*0.6-fpCam.lean)*0.15;
+  }
+  fpStreaks.forEach(function(st){
+    st.z-=st.sp;
+    if(st.z<0){ st.z=1; st.off=Math.random()*16-8; }
+  });
+  if(state.phase==='ready'){
+    state.readyT--;
+    if(state.readyT<=0){ state.phase='playing'; setBanner('GO!'); }
+    return;
+  }
+  if(state.phase==='dying'){
+    state.dyingT--;
+    if(state.dyingT<=0) resolveDeath();
+    return;
+  }
+  if(state.phase==='levelclear'){
+    state.clearT--;
+    if(state.clearT<=0) nextTube();
+    return;
+  }
+  if(state.phase==='over'){
+    state.overT++;
+    if(state.mode==='watch' && state.overT>220){
+      state.watchGame++;
+      startGame('watch');
+    }
+    return;
+  }
+  if(state.phase!=='playing') return;
+  /* spawn the tube's quota */
+  var tb=tubeFor(state.level);
+  if(state.spawned<state.quota){
+    state.spawnT--;
+    if(state.spawnT<=0){
+      state.spawnT=Math.max(34, tb.spawn - state.level*2);
+      spawnEnemy();
+      state.spawned++;
+    }
+  }
+  /* WATCH bot decides on a cadence; humans hold keys */
+  if(state.mode==='watch'){
+    state.watchCd--;
+    if(state.watchCd<=0){ state.watchCd=14; watchDecide(); }
+  } else {
+    if(state.keys['arrowleft']||state.keys['a']){
+      if(state.moveCd<=0) movePlayer(-1);
+    }
+    if(state.keys['arrowright']||state.keys['d']){
+      if(state.moveCd<=0) movePlayer(1);
+    }
+    if(state.keys[' ']) fireShot();
+  }
+  updateEnemies();
+  if(state.phase!=='playing') return;
+  updateShots();
+  /* Note: tube-clear is decided inside killEnemy() and stormSurge()
+     (the only paths that remove the last enemy while play continues),
+     so no end-of-frame clear check is needed here. */
+}
+
+/* ---------- rendering: layered storm-well ---------- */
+function drawBackdrop(){
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0d0618'); g.addColorStop(0.45,'#0a0616'); g.addColorStop(1,'#04060f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* far layer: starfield */
+  state.stars.forEach(function(s){
+    ctx.globalAlpha=0.3+0.35*Math.sin(state.frame*0.02+s.ph);
+    ctx.fillStyle='#d8ccff';
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  /* storm clouds drifting behind the well, lit by lightning */
+  state.clouds.forEach(function(c){
+    var lg=ctx.createLinearGradient(c.x-c.w/2,0,c.x+c.w/2,0);
+    lg.addColorStop(0,'rgba(60,30,90,0)');
+    lg.addColorStop(0.5,'rgba(60,30,90,'+(0.5+state.lightning*0.04)+')');
+    lg.addColorStop(1,'rgba(60,30,90,0)');
+    ctx.fillStyle=lg;
+    ctx.beginPath(); ctx.ellipse(c.x,c.y,c.w/2,26+Math.sin(c.x*0.01)*6,0,0,7); ctx.fill();
+  });
+  if(state.lightning>0){
+    ctx.strokeStyle='rgba(220,180,255,'+(state.lightning/6*0.7)+')'; ctx.lineWidth=2;
+    ctx.beginPath();
+    var lx=120+((state.frame*37)%520), ly=30;
+    ctx.moveTo(lx,ly);
+    for(var i=0;i<5;i++){ lx+=(Math.random()-0.5)*36; ly+=26; ctx.lineTo(lx,ly); }
+    ctx.stroke();
+  }
+  /* ambient particles */
+  state.particles.forEach(function(pt){
+    if(pt.vx!==undefined) return;
+    ctx.globalAlpha=0.22+0.18*Math.sin(state.frame*0.02+pt.ph);
+    ctx.fillStyle='rgba('+pt.c+',1)';
+    ctx.beginPath(); ctx.arc(pt.x,pt.y,pt.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+function drawTube(){
+  var t=tubeFor(state.level);
+  var n=t.lanes;
+  /* floor: dark well disc + glow at the far end */
+  ctx.save();
+  ctx.shadowColor='#e879ff'; ctx.shadowBlur=34;
+  ctx.fillStyle='rgba(232,121,255,.14)';
+  ctx.beginPath(); ctx.arc(CX,CY,R_FAR*1.15,0,7); ctx.fill();
+  ctx.restore();
+  var fg=ctx.createRadialGradient(CX,CY,R_FAR*0.4,CX,CY,R_NEAR);
+  fg.addColorStop(0,'rgba(53,224,255,.16)');
+  fg.addColorStop(0.55,'rgba(20,10,40,.5)');
+  fg.addColorStop(1,'rgba(5,4,12,.9)');
+  ctx.fillStyle=fg;
+  ctx.beginPath(); ctx.arc(CX,CY,R_NEAR+6,0,7); ctx.fill();
+  /* lane lines: far polygon -> rim polygon */
+  for(var i=0;i<n;i++){
+    var a=laneAngle(i,n);
+    var sr=shapeR(a,t.shape);
+    var fx=CX+Math.cos(a)*sr*R_FAR, fy=CY+Math.sin(a)*sr*R_FAR*0.94;
+    var rx=CX+Math.cos(a)*sr*R_NEAR, ry=CY+Math.sin(a)*sr*R_NEAR*0.94;
+    var isPlayer=(state.player && i===state.player.lane);
+    ctx.strokeStyle=isPlayer?'rgba(232,121,255,.9)':'rgba(140,110,220,.28)';
+    ctx.lineWidth=isPlayer?2.4:1;
+    ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(rx,ry); ctx.stroke();
+    /* lane tick at the rim */
+    ctx.fillStyle=isPlayer?'#e879ff':'rgba(180,150,255,.5)';
+    ctx.beginPath(); ctx.arc(rx,ry,isPlayer?4:2,0,7); ctx.fill();
+  }
+  /* far-end polygon: glowing inner ring */
+  ctx.save(); ctx.shadowColor='#35e0ff'; ctx.shadowBlur=16;
+  ctx.strokeStyle='rgba(53,224,255,.85)'; ctx.lineWidth=2.4;
+  ctx.beginPath();
+  for(var j=0;j<=n;j++){
+    var aa=laneAngle(j%n,n), rr=shapeR(aa,t.shape)*R_FAR;
+    var px=CX+Math.cos(aa)*rr, py=CY+Math.sin(aa)*rr*0.94;
+    if(j===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke(); ctx.restore();
+  /* rim polygon: bright neon edge + top highlight */
+  ctx.save(); ctx.shadowColor='#e879ff'; ctx.shadowBlur=18;
+  ctx.strokeStyle='rgba(232,121,255,.9)'; ctx.lineWidth=3;
+  ctx.beginPath();
+  for(var k=0;k<=n;k++){
+    var bb=laneAngle(k%n,n), r2=shapeR(bb,t.shape)*R_NEAR;
+    var qx=CX+Math.cos(bb)*r2, qy=CY+Math.sin(bb)*r2*0.94;
+    if(k===0) ctx.moveTo(qx,qy); else ctx.lineTo(qx,qy);
+  }
+  ctx.stroke(); ctx.restore();
+  /* mid-ring: the depth gauge, faint */
+  ctx.strokeStyle='rgba(53,224,255,.14)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  for(var m=0;m<=n;m++){
+    var cc=laneAngle(m%n,n), r3=shapeR(cc,t.shape)*lerp(R_NEAR,R_FAR,0.5);
+    var mx=CX+Math.cos(cc)*r3, my=CY+Math.sin(cc)*r3*0.94;
+    if(m===0) ctx.moveTo(mx,my); else ctx.lineTo(mx,my);
+  }
+  ctx.stroke();
+}
+function drawSpikes(){
+  state.spikes.forEach(function(sp){
+    var p=project(sp.lane, sp.z);
+    var s=lerp(14, 5, sp.z);
+    ctx.save(); ctx.translate(p.x,p.y);
+    ctx.save(); ctx.shadowColor='#ff9d3c'; ctx.shadowBlur=10;
+    ctx.fillStyle='#ff9d3c';
+    ctx.beginPath(); ctx.moveTo(0,-s); ctx.lineTo(s*0.7,s*0.7); ctx.lineTo(-s*0.7,s*0.7); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle='#ffd75e';
+    ctx.beginPath(); ctx.arc(0,0,s*0.28,0,7); ctx.fill();
+    ctx.restore();
+  });
+}
+/* ---------------- CHAR2: sprite-stacked enemies + VEXA ----------------
+   Cached stacks per type: silhouette slices extruded down (dark base)
+   -> shaded body -> lit top face with detail + rim. Blitted in both the
+   rim view and the FP view so the cast reads the same in both. */
+function tsShade(hex,f){
+  var n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r=Math.max(0,Math.min(255,Math.round(r*f))); g=Math.max(0,Math.min(255,Math.round(g*f))); b=Math.max(0,Math.min(255,Math.round(b*f)));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function tsStack(painter, pal){
+  var c=document.createElement('canvas'); c.width=128; c.height=128;
+  var g=c.getContext('2d'); if(!g) return c;
+  g.translate(64,64); g.scale(1.5,1.5);
+  for(var i=5;i>=1;i--){
+    var f=0.3+(5-i)*0.08;
+    var sil={ m:tsShade(pal.m,f), d:tsShade(pal.m,f*0.75), l:tsShade(pal.m,f), glow:tsShade(pal.m,f), rim:tsShade(pal.m,f), gold:tsShade(pal.m,f), det:false };
+    g.save(); g.translate(0,i*1.15); painter(g,sil); g.restore();
+  }
+  painter(g,{ m:pal.m, d:pal.d, l:pal.l, glow:pal.glow, rim:pal.rim, gold:pal.gold||pal.m, det:true });
+  return c;
+}
+function tsCrawler(g,P){
+  /* spiked plated dome — barbed, jawed */
+  g.fillStyle=P.d;
+  for(var i=0;i<8;i++){ var a=i/8*6.283+0.4;
+    g.beginPath();
+    g.moveTo(Math.cos(a-0.16)*15,Math.sin(a-0.16)*15); g.lineTo(Math.cos(a)*27,Math.sin(a)*27); g.lineTo(Math.cos(a+0.16)*15,Math.sin(a+0.16)*15);
+    g.closePath(); g.fill(); }
+  g.fillStyle=P.m; g.beginPath(); g.arc(0,0,19,0,7); g.fill();
+  g.fillStyle=P.l; g.beginPath(); g.ellipse(-4,-5,11,8,-0.4,0,7); g.fill();
+  g.fillStyle=P.d; g.beginPath(); g.ellipse(0,10,14,6.5,0,0,7); g.fill();
+  if(P.det){
+    g.strokeStyle=P.d; g.lineWidth=1.4;
+    g.beginPath(); g.arc(0,0,13,0.4,2.7); g.stroke();
+    g.fillStyle='#0a0a12';                                   /* eyes */
+    g.beginPath(); g.ellipse(-7,-2,3,3.8,0,0,7); g.ellipse(7,-2,3,3.8,0,0,7); g.fill();
+    g.fillStyle=P.l;
+    g.beginPath(); g.arc(-7,-3,1.3,0,7); g.arc(7,-3,1.3,0,7); g.fill();
+    g.fillStyle=P.d; g.fillRect(-8,10,16,4);                  /* jaw */
+    g.strokeStyle=P.l; g.lineWidth=1.1;
+    for(var tx=-6;tx<=6;tx+=4){ g.beginPath(); g.moveTo(tx,10); g.lineTo(tx,13); g.stroke(); }
+    g.strokeStyle=P.rim; g.lineWidth=1.6;
+    g.beginPath(); g.arc(0,0,19,-2.4,-0.6); g.stroke();
+  }
+}
+function tsFlipper(g,P){
+  /* faceted void-diamond with a dark core */
+  g.beginPath(); g.moveTo(0,-24); g.lineTo(18,0); g.lineTo(0,24); g.lineTo(-18,0); g.closePath();
+  g.fillStyle=P.m; g.fill();
+  g.beginPath(); g.moveTo(0,-24); g.lineTo(-18,0); g.lineTo(0,24); g.lineTo(0,0); g.closePath();
+  g.fillStyle=P.d; g.fill();
+  g.beginPath(); g.moveTo(0,-24); g.lineTo(18,0); g.lineTo(0,0); g.closePath();
+  g.fillStyle=P.l; g.fill();
+  if(P.det){
+    g.strokeStyle=P.l; g.lineWidth=1.4;
+    g.beginPath(); g.moveTo(0,-13); g.lineTo(10,0); g.lineTo(0,13); g.lineTo(-10,0); g.closePath(); g.stroke();
+    g.fillStyle='#0a0a12'; g.beginPath(); g.arc(0,0,5,0,7); g.fill();
+    g.fillStyle=P.l; g.beginPath(); g.arc(0,0,2,0,7); g.fill();
+    g.strokeStyle=P.rim; g.lineWidth=1.6;
+    g.beginPath(); g.moveTo(0,-24); g.lineTo(18,0); g.stroke();
+  }
+}
+function tsSpiker(g,P){
+  /* barbed arrowhead with a core eye */
+  g.fillStyle=P.d;
+  g.beginPath(); g.moveTo(-13,-2); g.lineTo(-21,6); g.lineTo(-11,9); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(13,-2); g.lineTo(21,6); g.lineTo(11,9); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(0,-25); g.lineTo(15,13); g.lineTo(0,6); g.lineTo(-15,13); g.closePath();
+  g.fillStyle=P.m; g.fill();
+  g.beginPath(); g.moveTo(0,-16); g.lineTo(8,8); g.lineTo(0,3); g.lineTo(-8,8); g.closePath();
+  g.fillStyle=P.l; g.fill();
+  if(P.det){
+    g.fillStyle='#fff'; g.beginPath(); g.arc(0,-5,4.5,0,7); g.fill();
+    g.fillStyle=P.d; g.beginPath(); g.arc(0,-5,2,0,7); g.fill();
+    g.strokeStyle=P.d; g.lineWidth=1.3;
+    g.beginPath(); g.moveTo(0,3); g.lineTo(0,10); g.stroke();
+    g.strokeStyle=P.rim; g.lineWidth=1.6;
+    g.beginPath(); g.moveTo(0,-25); g.lineTo(15,13); g.stroke();
+  }
+}
+function tsPulsar(g,P){
+  /* ringed energy orb, dark core */
+  g.strokeStyle=P.m; g.lineWidth=5;
+  g.beginPath(); g.arc(0,0,20,0,7); g.stroke();
+  g.fillStyle=P.d; g.beginPath(); g.arc(0,0,14,0,7); g.fill();
+  g.fillStyle=P.m; g.beginPath(); g.ellipse(-4,-4,8,7,-0.5,0,7); g.fill();
+  if(P.det){
+    g.fillStyle='#06121a'; g.beginPath(); g.arc(0,0,5.5,0,7); g.fill();
+    g.fillStyle=P.l; g.beginPath(); g.arc(0,0,2.2,0,7); g.fill();
+    g.strokeStyle=P.rim; g.lineWidth=2;
+    for(var q=0;q<4;q++){ var a=q*1.571+0.78;
+      g.beginPath(); g.moveTo(Math.cos(a)*23,Math.sin(a)*23); g.lineTo(Math.cos(a)*27,Math.sin(a)*27); g.stroke(); }
+    g.strokeStyle=P.l; g.lineWidth=1.6;
+    g.beginPath(); g.arc(0,0,20,-2.4,-0.6); g.stroke();
+  }
+}
+function tsVexa(g,P){
+  /* VEXA's claw — layered plate hull, visor, gold crest */
+  g.beginPath();
+  g.moveTo(0,-20); g.lineTo(13,-6); g.lineTo(17,8); g.lineTo(8,14); g.lineTo(-8,14); g.lineTo(-17,8); g.lineTo(-13,-6);
+  g.closePath(); g.fillStyle=P.m; g.fill();
+  g.beginPath();
+  g.moveTo(0,-20); g.lineTo(-13,-6); g.lineTo(-17,8); g.lineTo(-8,14); g.lineTo(0,14);
+  g.closePath(); g.fillStyle=P.d; g.fill();
+  g.beginPath();
+  g.moveTo(0,-20); g.lineTo(8,-4); g.lineTo(5,10); g.lineTo(-5,10); g.lineTo(-8,-4);
+  g.closePath(); g.fillStyle=P.l; g.fill();
+  g.fillStyle=P.gold;                                        /* crest */
+  g.beginPath(); g.moveTo(0,-20); g.lineTo(-4,-27); g.lineTo(0,-23); g.lineTo(4,-27); g.closePath(); g.fill();
+  if(P.det){
+    g.strokeStyle=P.d; g.lineWidth=1.2;                      /* panel seams */
+    g.beginPath(); g.moveTo(-13,-6); g.lineTo(-5,10); g.stroke();
+    g.beginPath(); g.moveTo(13,-6); g.lineTo(5,10); g.stroke();
+    g.fillStyle='#0d0618';                                   /* visor eyes */
+    g.beginPath(); g.ellipse(-5,-4,3,4,0,0,7); g.ellipse(5,-4,3,4,0,0,7); g.fill();
+    g.fillStyle=P.glow;
+    g.beginPath(); g.arc(-5,-5,1.4,0,7); g.arc(5,-5,1.4,0,7); g.fill();
+    g.strokeStyle=P.rim; g.lineWidth=1.8;                    /* rim light */
+    g.beginPath(); g.moveTo(0,-20); g.lineTo(13,-6); g.lineTo(17,8); g.stroke();
+  }
+}
+var TS_SPR=null;
+function tsSprites(){
+  if(TS_SPR) return TS_SPR;
+  function palOf(def){ return { m:def.color, d:def.dark, l:tsShade(def.color,1.35), glow:def.color, rim:def.color }; }
+  TS_SPR={
+    crawler: tsStack(tsCrawler, palOf(ENEMY_DEFS.crawler)),
+    flipper: tsStack(tsFlipper, palOf(ENEMY_DEFS.flipper)),
+    spiker: tsStack(tsSpiker, palOf(ENEMY_DEFS.spiker)),
+    pulsar: tsStack(tsPulsar, palOf(ENEMY_DEFS.pulsar)),
+    vexa: tsStack(tsVexa, { m:'#7a2ea8', d:'#3a1650', l:'#e879ff', glow:'#bff3ff', rim:'#ffbeff', gold:'#ffd75e' })
+  };
+  return TS_SPR;
+}
+
+function drawEnemy(e){
+  var p=project(e.lane, e.z);
+  var s=lerp(17, 7, e.z);
+  var bob=Math.sin(e.bob)*1.5;
+  var spr=tsSprites()[e.type];
+  var B=s*3.9;
+  if(e.type==='pulsar') B*= (0.92+0.1*Math.sin(e.bob*2));
+  ctx.save(); ctx.translate(p.x, p.y+bob);
+  ctx.save(); ctx.shadowColor=e.color; ctx.shadowBlur=14;
+  if(e.type==='flipper') ctx.rotate(Math.sin(e.bob*0.7)*0.45);
+  ctx.drawImage(spr,-B/2,-B/2,B,B);
+  ctx.restore();
+  ctx.restore();
+  if(e.atRim){
+    ctx.fillStyle='#ff3860'; ctx.font='bold 9px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText('RIM!', p.x, p.y-22);
+  }
+}
+
+function drawShots(){
+  state.shots.forEach(function(s){
+    var p0=project(s.lane, Math.max(0, s.z-0.06));
+    var p1=project(s.lane, s.z);
+    ctx.save(); ctx.shadowColor='#ffd75e'; ctx.shadowBlur=10;
+    ctx.strokeStyle='#ffe98a'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.stroke();
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(p1.x,p1.y,3,0,7); ctx.fill();
+    ctx.restore();
+  });
+}
+function drawPlayer(){
+  if(!state.player) return;
+  var p=project(state.player.lane, 0);
+  var a=p.a;
+  /* face outward: rotate so the claw points away from the well centre */
+  var ang=Math.atan2(p.y-CY, p.x-CX);
+  var blink=(state.player.invulnT>0 && Math.floor(state.frame/6)%2===0);
+  ctx.save(); ctx.translate(p.x, p.y);
+  ctx.rotate(ang+Math.PI/2);
+  if(blink) ctx.globalAlpha=0.35;
+  /* thruster flame */
+  var fl=10+Math.sin(state.frame*0.5)*4;
+  ctx.save(); ctx.shadowColor='#ff9d3c'; ctx.shadowBlur=12;
+  ctx.fillStyle='#ff9d3c';
+  ctx.beginPath(); ctx.moveTo(-6,14); ctx.lineTo(0,14+fl); ctx.lineTo(6,14); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  /* CHAR2 sprite-stacked claw hull (VEXA) */
+  ctx.save(); ctx.shadowColor='#e879ff'; ctx.shadowBlur=18;
+  ctx.drawImage(tsSprites().vexa,-32,-34,64,64);
+  ctx.restore();
+  ctx.restore();
+  /* lane beacon */
+  ctx.save(); ctx.globalAlpha=0.5+0.3*Math.sin(state.frame*0.15);
+  ctx.strokeStyle='#e879ff'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(p.x,p.y,26,0,7); ctx.stroke();
+  ctx.restore();
+}
+function drawParticles(){
+  state.particles.forEach(function(pt){
+    if(pt.vx===undefined) return;
+    ctx.globalAlpha=Math.max(0, Math.min(1, (pt.life||0)/25));
+    ctx.fillStyle='#ffd75e';
+    ctx.beginPath(); ctx.arc(pt.x,pt.y,pt.r,0,7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+function drawFloaters(){
+  state.floaters.forEach(function(f){
+    ctx.globalAlpha=Math.min(1,f.life/25);
+    ctx.fillStyle=f.color; ctx.font='bold 12px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(f.txt,f.x,f.y);
+  });
+  ctx.globalAlpha=1;
+}
+function drawHUD(){
+  ctx.fillStyle='rgba(7,6,15,.85)'; ctx.fillRect(0,0,W,32);
+  ctx.textAlign='left'; ctx.font='bold 13px "Orbitron",sans-serif';
+  ctx.fillStyle='#e879ff'; ctx.fillText('SCORE '+state.score, 10, 21);
+  ctx.fillStyle='#ffd75e'; ctx.fillText('HI '+state.hi, 160, 21);
+  ctx.fillStyle='#fff'; ctx.fillText('TUBE '+state.level+' · '+tubeName(), 260, 21);
+  ctx.fillStyle='#35e0ff'; ctx.fillText('HOSTILES '+(state.quota-state.spawned+state.enemies.length), 470, 21);
+  ctx.fillStyle='#ff9d3c'; ctx.fillText('SURGE ×'+state.zapCharges, 610, 21);
+  /* lives as mini claws */
+  for(var i=0;i<state.lives;i++){
+    ctx.fillStyle='#e879ff';
+    ctx.beginPath(); ctx.moveTo(330+i*20, 42); ctx.lineTo(336+i*20, 52); ctx.lineTo(324+i*20, 52); ctx.closePath(); ctx.fill();
+  }
+  if(state.bannerT>0){
+    ctx.fillStyle='rgba(7,6,15,.66)'; ctx.fillRect(W/2-300,56,600,32);
+    ctx.fillStyle='#ffd75e'; ctx.font='bold 16px "Orbitron",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(state.banner,W/2,78);
+  }
+  if(state.mode==='watch'){
+    ctx.fillStyle='#b78cff'; ctx.font='bold 12px "Orbitron",sans-serif'; ctx.textAlign='right';
+    ctx.fillText('WATCH · '+state.watchAgentId+' · TRACES '+state.watchTraces.length, W-10, 50);
+  }
+  if(state.fp){
+    ctx.fillStyle='#35e0ff'; ctx.font='bold 12px "Orbitron",sans-serif'; ctx.textAlign='left';
+    ctx.fillText('FIRST-PERSON · V TO EXIT', 10, 50);
+  }
+}
+
+/* ---------- first-person: down-the-tube cockpit ---------- */
+/* FP CAMERA (visual only — never touches gameplay): the camera eases toward
+   the rider's lane instead of snapping, and leans with the lag, so sliding
+   the rim pans the view smoothly. fpStreaks are rushing light streaks
+   along the rails — pure motion feel, recycled, never saved. */
+var fpCam={lane:0, lean:0};
+var fpStreaks=[];
+function makeStreaks(){
+  var d=[];
+  for(var i=0;i<26;i++) d.push({off:(Math.random()*16-8), z:Math.random(), sp:0.018+Math.random()*0.03, a:0.25+Math.random()*0.4});
+  return d;
+}
+fpStreaks=makeStreaks();
+function fpVP(){
+  /* vanishing point: breathes a little and leans with the camera lag */
+  return {x:360+fpCam.lean*14, y:236+Math.sin(state.frame*0.02)*2};
+}
+function fpPoint(laneOff, z){
+  var VP=fpVP();
+  var rimX=360+laneOff*54, rimY=648;
+  var t=Math.pow(z, 0.72)*0.86;
+  return {x:lerp(rimX, VP.x, t), y:lerp(rimY, VP.y, t)};
+}
+function drawFPCanopy(){
+  /* four diagonal canopy beams: gradient bar + bright inner edge + rivets */
+  var beams=[
+    {x0:0,y0:0,x1:150,y1:180},
+    {x0:W,y0:0,x1:W-150,y1:180},
+    {x0:0,y0:H,x1:170,y1:H-150},
+    {x0:W,y0:H,x1:W-170,y1:H-150}
+  ];
+  beams.forEach(function(b){
+    var g=ctx.createLinearGradient(b.x0,b.y0,b.x1,b.y1);
+    g.addColorStop(0,'rgba(58,22,80,.95)'); g.addColorStop(0.5,'rgba(30,12,48,.9)'); g.addColorStop(1,'rgba(58,22,80,.95)');
+    ctx.strokeStyle=g; ctx.lineWidth=16;
+    ctx.beginPath(); ctx.moveTo(b.x0,b.y0); ctx.lineTo(b.x1,b.y1); ctx.stroke();
+    ctx.strokeStyle='rgba(232,121,255,.85)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(b.x0,b.y0); ctx.lineTo(b.x1,b.y1); ctx.stroke();
+    ctx.fillStyle='rgba(255,215,94,.9)';
+    [0.25,0.5,0.75].forEach(function(f){
+      ctx.beginPath(); ctx.arc(lerp(b.x0,b.x1,f), lerp(b.y0,b.y1,f), 2.4, 0, 7); ctx.fill();
+    });
+  });
+  /* side consoles: dark panels with panel lines + one travelling status light */
+  [0, W-26].forEach(function(x){
+    var pg=ctx.createLinearGradient(x,0,x+26,0);
+    pg.addColorStop(0,'rgba(16,8,32,.92)'); pg.addColorStop(1,'rgba(16,8,32,.55)');
+    ctx.fillStyle=pg; ctx.fillRect(x,150,26,420);
+    ctx.strokeStyle='rgba(232,121,255,.4)'; ctx.lineWidth=1;
+    ctx.strokeRect(x+0.5,150.5,25,419);
+    ctx.fillStyle='rgba(232,121,255,.35)';
+    for(var i=0;i<5;i++){ ctx.fillRect(x+6, 190+i*72, 14, 2); }
+    ctx.fillStyle='#35e0ff';
+    ctx.beginPath(); ctx.arc(x+13, 172+((state.frame*2)%360), 2.5, 0, 7); ctx.fill();
+  });
+  /* glass reflection: one faint diagonal streak, upper left */
+  var rg=ctx.createLinearGradient(0,0,300,300);
+  rg.addColorStop(0,'rgba(255,255,255,.05)'); rg.addColorStop(0.5,'rgba(255,255,255,.015)'); rg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=rg;
+  ctx.beginPath(); ctx.moveTo(60,0); ctx.lineTo(220,0); ctx.lineTo(60,300); ctx.lineTo(0,300); ctx.lineTo(0,120); ctx.closePath(); ctx.fill();
+}
+function drawFPLock(){
+  /* LOCK bracket on the nearest climber in the rider's lane — the shot's
+     target. Purely visual; state.fpLock is the test hook (-1 = no lock). */
+  var lock=null, bestZ=9;
+  state.enemies.forEach(function(e){
+    if(e.lane===state.player.lane && e.z<bestZ){ bestZ=e.z; lock=e; }
+  });
+  state.fpLock=lock?lock.lane:-1;
+  if(!lock) return;
+  var t=lanes(), d=lock.lane-fpCam.lane;
+  if(d>t/2) d-=t; if(d<-t/2) d+=t;
+  var p=fpPoint(d, lock.z);
+  var s=lerp(30,8,lock.z)+10;
+  ctx.save(); ctx.globalAlpha=0.65+0.35*Math.sin(state.frame*0.25);
+  ctx.strokeStyle='#ffd75e'; ctx.lineWidth=2;
+  var c=8;
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(sg){
+    ctx.beginPath();
+    ctx.moveTo(p.x+sg[0]*s, p.y+sg[1]*s - sg[1]*c);
+    ctx.lineTo(p.x+sg[0]*s, p.y+sg[1]*s);
+    ctx.lineTo(p.x+sg[0]*s - sg[0]*c, p.y+sg[1]*s);
+    ctx.stroke();
+  });
+  ctx.fillStyle='#ffd75e'; ctx.font='bold 11px "Orbitron",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('LOCK', p.x, p.y-s-8);
+  ctx.restore();
+}
+function drawFPGauges(){
+  var t=lanes();
+  var near=state.enemies.length? Math.min.apply(null, state.enemies.map(function(e){ return e.z; })) : 1;
+  var depth=(near>=1?0:(1-near));
+  /* left panel: Storm Surge pips + threat depth bar */
+  ctx.fillStyle='rgba(7,6,15,.85)'; ctx.fillRect(18,H-84,176,66);
+  ctx.strokeStyle='rgba(232,121,255,.5)'; ctx.lineWidth=1; ctx.strokeRect(18.5,H-83.5,176,66);
+  ctx.fillStyle='#e879ff'; ctx.fillRect(18,H-84,176,2);
+  ctx.fillStyle='#ff9d3c'; ctx.font='bold 11px "Orbitron",sans-serif'; ctx.textAlign='left';
+  ctx.fillText('STORM SURGE', 28, H-62);
+  for(var i=0;i<3;i++){
+    var cx=34+i*22, cy=H-48;
+    ctx.beginPath(); ctx.arc(cx,cy,6,0,7);
+    if(i<state.zapCharges){
+      ctx.save(); ctx.shadowColor='#ffd75e'; ctx.shadowBlur=8;
+      ctx.fillStyle='#ffd75e'; ctx.fill(); ctx.restore();
+    } else {
+      ctx.strokeStyle='rgba(255,215,94,.35)'; ctx.lineWidth=1.5; ctx.stroke();
+    }
+  }
+  ctx.fillStyle='#35e0ff';
+  ctx.fillText('THREAT', 28, H-30);
+  ctx.fillStyle='rgba(53,224,255,.18)'; ctx.fillRect(80,H-38,78,8);
+  ctx.fillStyle=depth<0.4?'#a8ff3e':(depth<0.75?'#ff9d3c':'#ff3860');
+  ctx.fillRect(80,H-38,78*depth,8);
+  ctx.fillStyle='#fff'; ctx.font='bold 10px "Orbitron",sans-serif'; ctx.textAlign='right';
+  ctx.fillText(Math.round(depth*100)+'%', 186, H-30);
+  ctx.textAlign='left';
+  /* right panel: mini lane ring + lane / score */
+  ctx.fillStyle='rgba(7,6,15,.85)'; ctx.fillRect(W-194,H-84,176,66);
+  ctx.strokeStyle='rgba(232,121,255,.5)'; ctx.lineWidth=1; ctx.strokeRect(W-193.5,H-83.5,176,66);
+  ctx.fillStyle='#e879ff'; ctx.fillRect(W-194,H-84,176,2);
+  var rx=W-194+34, ry=H-84+33;
+  ctx.strokeStyle='rgba(140,110,220,.6)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(rx,ry,15,0,7); ctx.stroke();
+  for(var k=0;k<t;k++){
+    var a=-Math.PI/2 + (2*Math.PI*k)/t;
+    var tx=rx+Math.cos(a)*15, ty=ry+Math.sin(a)*15;
+    if(k===state.player.lane){
+      ctx.save(); ctx.shadowColor='#e879ff'; ctx.shadowBlur=8;
+      ctx.fillStyle='#e879ff'; ctx.beginPath(); ctx.arc(tx,ty,4,0,7); ctx.fill(); ctx.restore();
+    } else {
+      ctx.fillStyle='rgba(180,150,255,.5)';
+      ctx.beginPath(); ctx.arc(tx,ty,1.6,0,7); ctx.fill();
+    }
+  }
+  ctx.fillStyle='#e879ff'; ctx.font='bold 11px "Orbitron",sans-serif'; ctx.textAlign='left';
+  ctx.fillText('LANE '+state.player.lane+' / '+t, rx+26, H-58);
+  ctx.fillStyle='#ffd75e';
+  ctx.fillText('SCORE '+state.score, rx+26, H-38);
+}
+function drawFP(){
+  var t=lanes();
+  /* cockpit sky: deep well gradient + stars */
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#05030c'); g.addColorStop(0.6,'#0d0618'); g.addColorStop(1,'#1a0b2e');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  state.stars.forEach(function(s){
+    ctx.globalAlpha=0.25+0.3*Math.sin(state.frame*0.02+s.ph);
+    ctx.fillStyle='#d8ccff';
+    ctx.beginPath(); ctx.arc(s.x, s.y*0.6, s.r, 0, 7); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  /* tunnel wall wash: side shading so the tube reads as a tunnel, not a flat field */
+  var VP=fpVP();
+  var lw=ctx.createLinearGradient(0,0,190,0);
+  lw.addColorStop(0,'rgba(40,16,70,.5)'); lw.addColorStop(1,'rgba(40,16,70,0)');
+  ctx.fillStyle=lw; ctx.fillRect(0,0,190,H);
+  var rw=ctx.createLinearGradient(W,0,W-190,0);
+  rw.addColorStop(0,'rgba(40,16,70,.5)'); rw.addColorStop(1,'rgba(40,16,70,0)');
+  ctx.fillStyle=rw; ctx.fillRect(W-190,0,190,H);
+  /* depth fog around the vanishing point + pulsing glow at the far end */
+  var pulse=0.10+0.04*Math.sin(state.frame*0.03);
+  var vg=ctx.createRadialGradient(VP.x,VP.y,8,VP.x,VP.y,340);
+  vg.addColorStop(0,'rgba(53,224,255,'+pulse.toFixed(3)+')');
+  vg.addColorStop(0.35,'rgba(53,224,255,.05)');
+  vg.addColorStop(1,'rgba(53,224,255,0)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.shadowColor='#35e0ff'; ctx.shadowBlur=30+10*Math.sin(state.frame*0.04);
+  ctx.fillStyle='rgba(53,224,255,.35)';
+  ctx.beginPath(); ctx.arc(VP.x,VP.y,26,0,7); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='rgba(220,245,255,.9)';
+  ctx.beginPath(); ctx.arc(VP.x,VP.y,7,0,7); ctx.fill();
+  /* lane rails converging on the vanishing point */
+  for(var off=-8;off<=8;off++){
+    var p0=fpPoint(off, 0), p1=fpPoint(off, 1);
+    var isPlayer=(off===0);
+    ctx.strokeStyle=isPlayer?'rgba(232,121,255,.95)':'rgba(140,110,220,.4)';
+    ctx.lineWidth=isPlayer?3:1.2;
+    ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.stroke();
+  }
+  /* depth rings */
+  [0.25,0.5,0.75].forEach(function(z){
+    ctx.strokeStyle='rgba(53,224,255,'+(0.35*(1-z))+')'; ctx.lineWidth=1.2;
+    ctx.beginPath();
+    for(var off2=-8;off2<=8;off2++){
+      var pp=fpPoint(off2, z);
+      if(off2===-8) ctx.moveTo(pp.x,pp.y); else ctx.lineTo(pp.x,pp.y);
+    }
+    ctx.stroke();
+  });
+  /* speed streaks rushing down the rails — the tube feels fast */
+  fpStreaks.forEach(function(st){
+    var sa=fpPoint(st.off, st.z), sb=fpPoint(st.off, Math.max(0, st.z-0.07));
+    ctx.strokeStyle='rgba(232,121,255,'+(st.a*(1-st.z*0.7)).toFixed(3)+')';
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(sb.x,sb.y); ctx.lineTo(sa.x,sa.y); ctx.stroke();
+  });
+  /* enemies + spikes + shots in FP space — far ones fade into the fog.
+     Lane offsets are relative to the eased camera (fpCam.lane), not the
+     snapped rider lane, so the whole scene pans smoothly. */
+  var list=[];
+  state.spikes.forEach(function(sp){
+    var d=sp.lane-fpCam.lane;
+    if(d>t/2) d-=t; if(d<-t/2) d+=t;
+    if(Math.abs(d)<=8) list.push({kind:'spike', d:d, z:sp.z});
+  });
+  state.enemies.forEach(function(e){
+    var d2=e.lane-fpCam.lane;
+    if(d2>t/2) d2-=t; if(d2<-t/2) d2+=t;
+    if(Math.abs(d2)<=8) list.push({kind:'enemy', d:d2, z:e.z, e:e});
+  });
+  list.sort(function(a,b){ return b.z-a.z; });
+  list.forEach(function(it){
+    var p=fpPoint(it.d, it.z);
+    var s=lerp(30, 8, it.z);
+    if(it.kind==='spike'){
+      ctx.save(); ctx.translate(p.x,p.y); ctx.globalAlpha=lerp(1,0.5,it.z);
+      ctx.fillStyle='#ff9d3c';
+      ctx.beginPath(); ctx.moveTo(0,-s); ctx.lineTo(s*0.7,s*0.7); ctx.lineTo(-s*0.7,s*0.7); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    } else {
+      var e=it.e;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.globalAlpha=lerp(1,0.45,it.z);
+      ctx.save(); ctx.shadowColor=e.color; ctx.shadowBlur=16;
+      var spr2=tsSprites()[e.type];
+      var B2=s*3.4*(e.type==='pulsar'?(0.92+0.1*Math.sin(e.bob*2)):1);
+      if(e.type==='flipper') ctx.rotate(Math.sin(e.bob*0.7)*0.45);
+      ctx.drawImage(spr2,-B2/2,-B2/2,B2,B2);
+      ctx.restore();
+          }
+  });
+  state.shots.forEach(function(s){
+    var d3=s.lane-fpCam.lane;
+    if(d3>t/2) d3-=t; if(d3<-t/2) d3+=t;
+    if(Math.abs(d3)>8) return;
+    var q0=fpPoint(d3, Math.max(0,s.z-0.08)), q1=fpPoint(d3, s.z);
+    ctx.save(); ctx.globalAlpha=lerp(1,0.5,s.z); ctx.shadowColor='#ffd75e'; ctx.shadowBlur=10;
+    ctx.strokeStyle='#ffe98a'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(q0.x,q0.y); ctx.lineTo(q1.x,q1.y); ctx.stroke();
+    ctx.restore();
+  });
+  /* vignette: the tube edges fall away into the dark */
+  var vig=ctx.createRadialGradient(360,360,240,360,360,520);
+  vig.addColorStop(0,'rgba(5,3,12,0)'); vig.addColorStop(1,'rgba(5,3,12,.42)');
+  ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
+  /* cockpit frame: gradient canopy beams + rivets + side consoles */
+  drawFPCanopy();
+  /* crosshair: fixed to the screen centre, the camera pans behind it */
+  ctx.save(); ctx.shadowColor='#35e0ff'; ctx.shadowBlur=8;
+  ctx.strokeStyle='rgba(232,121,255,.9)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(360,430,22,0,7); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle='rgba(232,121,255,.9)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(360-34,430); ctx.lineTo(360+34,430);
+  ctx.moveTo(360,430-34); ctx.lineTo(360,430+34); ctx.stroke();
+  /* LOCK bracket on the climber in your lane, if there is one */
+  drawFPLock();
+  /* gauges that read at a glance: surge pips + threat bar, lane ring + score */
+  drawFPGauges();
+  /* engine glow under VEXA's claw */
+  ctx.save(); ctx.globalAlpha=0.18+0.08*Math.sin(state.frame*0.3);
+  ctx.fillStyle='#ff9d3c';
+  ctx.beginPath(); ctx.ellipse(360,692,26,8,0,0,7); ctx.fill();
+  ctx.restore();
+  /* VEXA's claw, bottom-centre, riding the rim */
+  ctx.save(); ctx.translate(360, 668);
+  ctx.save(); ctx.shadowColor='#e879ff'; ctx.shadowBlur=16;
+  ctx.drawImage(tsSprites().vexa,-36,-40,72,72);
+  ctx.restore();
+    ctx.restore();
+}
+function drawTitle(){
+  ctx.fillStyle='rgba(7,6,15,.72)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.font='900 52px "Orbitron",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('TUBESTORM',W/2,110);
+  ctx.fillStyle='#e879ff'; ctx.font='600 14px "Orbitron",sans-serif';
+  ctx.fillText('RIDE THE RIM · ZAP THE CLIMBERS',W/2,142);
+  /* the well, small, with VEXA on the rim */
+  ctx.save(); ctx.translate(W/2, 300); ctx.scale(0.62,0.62); ctx.translate(-CX,-CY);
+  drawTube();
+  var keep=state.player;
+  state.player={lane:0, invulnT:0, bob:0, flame:0};
+  drawPlayer();
+  state.player=keep;
+  ctx.restore();
+  /* the cast */
+  var cast=[
+    {k:'crawler', label:'CRAWLER · climbs straight · 100'},
+    {k:'flipper', label:'FLIPPER · hops lanes · 150'},
+    {k:'spiker', label:'SPIKER · leaves shot-eating spikes · 200'},
+    {k:'pulsar', label:'PULSAR · splits when zapped · 250'}
+  ];
+  for(var i=0;i<4;i++){
+    var def=ENEMY_DEFS[cast[i].k];
+    var cy=470+i*30;
+    ctx.save(); ctx.translate(120, cy);
+    ctx.save(); ctx.shadowColor=def.color; ctx.shadowBlur=12;
+    ctx.fillStyle=def.color;
+    ctx.beginPath(); ctx.arc(0,0,11,0,7); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle='#0a0a12';
+    ctx.beginPath(); ctx.arc(-4,-2,2,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(4,-2,2,0,7); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle=def.color; ctx.font='bold 13px "Orbitron",sans-serif'; ctx.textAlign='left';
+    ctx.fillText(cast[i].label, 150, cy+5);
+  }
+  ctx.fillStyle='#e8f5dc'; ctx.font='16px "Rajdhani",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Five tube shapes. One rider. Clear the well before it swallows you.',W/2,620);
+  ctx.fillStyle='#8aa893'; ctx.font='13px "Share Tech Mono",monospace';
+  ctx.fillText('← → / A D slide · SPACE fire · B Storm Surge · V first-person · P pause · R restart',W/2,650);
+  ctx.fillStyle='#e879ff'; ctx.font='bold 14px "Orbitron",sans-serif';
+  ctx.fillText('CLICK PLAY — OR WATCH A BOT RIDE THE RIM',W/2,688);
+}
+function drawOver(){
+  ctx.fillStyle='rgba(7,2,6,.62)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#ff3860'; ctx.font='900 36px "Orbitron",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('THE WELL WINS',W/2,300);
+  ctx.fillStyle='#fff'; ctx.font='18px "Orbitron",sans-serif';
+  ctx.fillText('SCORE '+state.score+'   ·   HIGH '+state.hi+'   ·   TUBE '+state.level,W/2,344);
+  ctx.fillStyle='#8aa893'; ctx.font='14px "Share Tech Mono",monospace';
+  ctx.fillText('Press R to ride again',W/2,378);
+}
+function render(){
+  ctx.save();
+  if(state.shake>0) ctx.translate((Math.random()-0.5)*state.shake,(Math.random()-0.5)*state.shake);
+  if(state.fp && state.phase!=='title' && state.player){
+    drawFP();
+    drawParticles(); drawFloaters();
+    drawHUD();
+  } else {
+    drawBackdrop();
+    drawTube();
+    drawSpikes();
+    state.enemies.forEach(function(e){ drawEnemy(e); });
+    drawShots();
+    if(state.player) drawPlayer();
+    drawParticles();
+    drawFloaters();
+    drawHUD();
+    if(state.phase==='title') drawTitle();
+    if(state.phase==='over') drawOver();
+  }
+  ctx.restore();
+}
+
+/* ---------- pause / save / load / views ---------- */
+function togglePause(){
+  if(state.phase==='title'||state.phase==='over') return;
+  state.paused=!state.paused;
+  var ov=$('pauseOverlay'); if(ov) ov.style.display=state.paused?'flex':'none';
+}
+function toggleFP(){
+  state.fp=!state.fp;
+  setMsg(state.fp?'First-person — down the tube. V to exit.':'Rim view — the whole well.');
+}
+function toggleMute(){
+  state.muted=!state.muted;
+  setMsg(state.muted?'Muted.':'Sound on.');
+}
+function saveState(){
+  if(state.phase==='title') return false;
+  try{
+    localStorage.setItem('tubestorm.save', JSON.stringify({
+      v:1, mode:state.mode, level:state.level, score:state.score, lives:state.lives,
+      hi:state.hi, zapCharges:state.zapCharges, spawned:state.spawned, quota:state.quota,
+      playerLane:state.player?state.player.lane:0,
+      enemies:state.enemies.map(function(e){
+        return {type:e.type, lane:e.lane, z:e.z, speed:e.speed, flipT:e.flipT,
+          spikeMarks:e.spikeMarks, split:e.split, atRim:e.atRim, hopT:e.hopT};
+      }),
+      shots:state.shots.map(function(s){ return {lane:s.lane, z:s.z}; }),
+      spikes:state.spikes.map(function(sp){ return {lane:sp.lane, z:sp.z}; })
+    }));
+    setMsg('State saved — pick it up any time from the pause menu.');
+    return true;
+  }catch(e){ setMsg('Save failed in this browser.'); return false; }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem('tubestorm.save');
+    if(!raw){ setMsg('No saved state yet — ride a tube first.'); return false; }
+    var d=JSON.parse(raw);
+    if(d.v!==1) return false;
+    var keepHi=state.hi, keepWatch=state.watchGame, keepMuted=state.muted;
+    state=freshState();
+    state.mode=d.mode; state.level=d.level; state.score=d.score; state.lives=d.lives;
+    state.hi=d.hi||keepHi; state.watchGame=keepWatch; state.muted=keepMuted;
+    state.zapCharges=d.zapCharges; state.spawned=d.spawned; state.quota=d.quota;
+    state.player={lane:d.playerLane, invulnT:60, bob:0, flame:0};
+    fpCam.lane=d.playerLane; fpCam.lean=0;
+    state.enemies=d.enemies.map(function(ed){
+      var def=ENEMY_DEFS[ed.type];
+      return {type:ed.type, name:def.name, color:def.color, dark:def.dark, score:def.score,
+        lane:ed.lane, z:ed.z, speed:ed.speed, flipT:ed.flipT, spikeMarks:ed.spikeMarks,
+        split:ed.split, atRim:ed.atRim, hopT:ed.hopT, bob:0, wob:0};
+    });
+    state.shots=d.shots.map(function(s){ return {lane:s.lane, z:s.z}; });
+    state.spikes=d.spikes.map(function(sp){ return {lane:sp.lane, z:sp.z}; });
+    if(state.mode==='watch') setupWatchAgent();
+    state.phase='playing'; state.paused=false;
+    var ov=$('pauseOverlay'); if(ov) ov.style.display='none';
+    setMsg('Saved state loaded — tube '+state.level+', score '+state.score+'.');
+    return true;
+  }catch(e){ setMsg('Load failed — save may be from an older build.'); return false; }
+}
+
+/* ---------- XR hook: the shared engine, SIM-labelled ---------- */
+function xrNote(t){ setMsg(t); }
+function enterVR(){
+  if(!XE || typeof XE.enter!=='function'){
+    xrNote('XR engine not loaded — flat first-person (V) is the verified mode. (SIM)');
+    return;
+  }
+  try{
+    var p=XE.enter({id:'tubestorm', title:'TUBESTORM', canvas:cv,
+      input:{left:false,right:false,up:false,down:false,a:false,b:false,start:false}});
+    if(p && typeof p.then==='function'){
+      p.then(function(){ xrNote('XR session ended — back to the flat rim. (SIM)'); })
+       .catch(function(){ xrNote('No WebXR on this device — flat first-person is the verified mode. (SIM)'); });
+    } else {
+      xrNote('XR request sent — if no headset answers, flat first-person is the verified mode. (SIM)');
+    }
+  }catch(e){
+    xrNote('XR unavailable here — flat first-person (V) is the verified mode. (SIM)');
+  }
+}
+
+/* ---------- fullscreen ----------
+   The shell (stage on desktop, whole handheld console on phones) goes true
+   fullscreen via the Fullscreen API: button + F key toggle, Esc exits
+   before it can pause. Label follows the real fullscreen state. ---- */
+var fsShell=document.getElementById('shell');
+function isFullscreen(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function updateFsBtn(){ var b=$('btnFs');
+  if(b) b.innerHTML=isFullscreen()?'✕ Exit Fullscreen<small>Esc / F — back to the page</small>':'⛶ Fullscreen<small>F — tube fills the screen</small>'; }
+function toggleFullscreen(){
+  if(isFullscreen()){ if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+  else if(fsShell){ if(fsShell.requestFullscreen) fsShell.requestFullscreen(); else if(fsShell.webkitRequestFullscreen) fsShell.webkitRequestFullscreen(); }
+}
+if(document.addEventListener) document.addEventListener('fullscreenchange',updateFsBtn);
+
+/* ---------- input ---------- */
+var DIR_KEYS={
+  arrowleft:-1, a:-1,
+  arrowright:1, d:1
+};
+function keyName(e){ return (e.key||'').toLowerCase(); }
+document.addEventListener('keydown',function(e){
+  var k=keyName(e);
+  state.keys[k]=true;
+  if(DIR_KEYS[k]!==undefined){
+    if(state.phase==='title') startGame('solo');
+    else if(state.moveCd<=0) movePlayer(DIR_KEYS[k]);
+  }
+  if(k===' '){ if(state.phase==='title') startGame('solo'); else fireShot(); }
+  if(k==='b'||k==='shift'){ stormSurge(); }
+  if(k==='f'){ toggleFullscreen(); return; }
+  if(k==='escape' && isFullscreen()){ /* Esc exits fullscreen first (browser); P still pauses */ return; }
+  if(k==='p'||k==='escape'){ togglePause(); e.preventDefault(); }
+  if(k==='r'){ startGame(state.mode); }
+  if(k==='v'){ toggleFP(); }
+  if(k==='m'){ toggleMute(); }
+  if(['arrowleft','arrowright','arrowup','arrowdown',' '].indexOf(k)>=0) e.preventDefault();
+});
+document.addEventListener('keyup',function(e){ state.keys[keyName(e)]=false; });
+function bindBtn(id,fn){ var b=$(id); if(b) b.addEventListener('click',fn); }
+bindBtn('btnSolo',function(){ startGame('solo'); });
+bindBtn('btnWatch',function(){ startGame('watch'); });
+bindBtn('btnFP',function(){ toggleFP(); });
+bindBtn('btnZap',function(){ stormSurge(); });
+bindBtn('btnVR',function(){ enterVR(); });
+bindBtn('btnPause',function(){ togglePause(); });
+bindBtn('btnFs',function(){ toggleFullscreen(); });
+bindBtn('resumeBtn',function(){ togglePause(); });
+bindBtn('saveBtn',function(){ saveState(); });
+bindBtn('loadBtn',function(){ loadState(); });
+bindBtn('restartBtn',function(){ var ov=$('pauseOverlay'); if(ov) ov.style.display='none'; state.paused=false; startGame(state.mode); });
+bindBtn('quitArcadeBtn',function(){ location.href='../arcade.html'; });
+bindBtn('startBtn',function(){ togglePause(); });
+bindBtn('selectBtn',function(){ toggleFP(); });
+bindBtn('btnA',function(){ fireShot(); });
+bindBtn('btnB',function(){ stormSurge(); });
+/* D-pad: slide the rim */
+function bindDpad(id, dir){
+  var b=$(id); if(!b) return;
+  var fn=function(e){ if(e) e.preventDefault(); if(state.phase==='title') startGame('solo'); else movePlayer(dir); };
+  b.addEventListener('pointerdown',fn);
+  b.addEventListener('click',fn);
+}
+bindDpad('dUp',0);
+bindDpad('dDown',0);
+bindDpad('dLeft',-1);
+bindDpad('dRight',1);
+/* drag on the tube: slide VEXA to the dragged lane */
+function laneFromEvent(e){
+  var r=cv.getBoundingClientRect();
+  var x=(e.clientX-r.left)/r.width*W, y=(e.clientY-r.top)/r.height*H;
+  var ang=Math.atan2(y-CY, x-CX);
+  var t=tubeFor(state.level);
+  var frac=((ang-Math.PI/2)/(2*Math.PI))%1;
+  if(frac<0) frac+=1;
+  return Math.round(frac*t.lanes)%t.lanes;
+}
+var dragging=false;
+cv.addEventListener('pointerdown',function(e){
+  dragging=true;
+  if(state.phase==='title'){ startGame('solo'); return; }
+  state.player.lane=laneFromEvent(e);
+});
+cv.addEventListener('pointermove',function(e){
+  if(!dragging || state.phase!=='playing') return;
+  state.player.lane=laneFromEvent(e);
+});
+cv.addEventListener('pointerup',function(){ dragging=false; });
+cv.addEventListener('pointerleave',function(){ dragging=false; });
+
+/* ---------- boot ---------- */
+if(q.get('touch')==='1' || (typeof window!=='undefined' && 'ontouchstart' in window)) document.body.classList.add('touch');
+if(q.get('auto')==='watch') startGame('watch');
+else if(q.get('auto')==='play') startGame('solo');
+
+function loop(){
+  update();
+  try{ render(); }catch(e){ /* headless stub contexts may lack gradients; logic still runs */ }
+  if(typeof requestAnimationFrame!=='function') return;
+  requestAnimationFrame(loop);
+}
+if(typeof requestAnimationFrame==='function') requestAnimationFrame(loop);
+
+/* test/debug surface — same shape as the other arcade games */
+window.__tubestorm={
+  get state(){ return {phase:state.phase,mode:state.mode,paused:state.paused,fp:state.fp,
+    frame:state.frame, level:state.level, tube:tubeName(), lanes:lanes(),
+    score:state.score, hi:state.hi, lives:state.lives, zapCharges:state.zapCharges,
+    spawned:state.spawned, quota:state.quota,
+    enemies:state.enemies.map(function(e){ return {type:e.type, lane:e.lane, z:+e.z.toFixed(3),
+      atRim:e.atRim, split:e.split}; }),
+    shots:state.shots.map(function(s){ return {lane:s.lane, z:+s.z.toFixed(3)}; }),
+    spikes:state.spikes.map(function(sp){ return {lane:sp.lane, z:sp.z}; }),
+    watchAgentId:state.watchAgentId, watchTraces:state.watchTraces.length,
+    fpLane:+fpCam.lane.toFixed(2), fpLean:+fpCam.lean.toFixed(2), fpLock:state.fpLock,
+    fpStreaks:fpStreaks.length,
+    player: state.player ? {lane:state.player.lane, invulnT:state.player.invulnT} : null,
+    banner:state.banner}; },
+  startGame:startGame,
+  debugFire:fireShot,
+  debugMove:function(dir){ movePlayer(dir); },
+  debugPlaceEnemy:function(type, lane, z){ spawnEnemy(type, lane, z); },
+  debugClearTube:function(){
+    state.spawned=state.quota; state.enemies=[];
+    if(state.phase==='playing') levelClear();
+  },
+  debugSetLives:function(n){ state.lives=n; },
+  debugSetZap:function(n){ state.zapCharges=n; },
+  debugStormSurge:stormSurge,
+  debugSetSpawned:function(n){ state.spawned=n; },
+  debugEnemyCount:function(){ return state.enemies.length; },
+  debugSpikeCount:function(){ return state.spikes.length; },
+  debugWatchTraces:function(){ return state.watchTraces; },
+  debugSave:saveState, debugLoad:loadState,
+  debugToggleFP:toggleFP, debugTogglePause:togglePause,
+  get fs(){return isFullscreen();},
+  toggleFullscreen:toggleFullscreen,
+  isFullscreen:isFullscreen,
+  debugProject:function(lane,z){ return project(lane,z); }
+};
+</script>
+</body>
+</html>
