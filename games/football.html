@@ -441,32 +441,66 @@ function teamNameForTeam(t){
   return t===HUMAN?'YOU BLITZ':'CPU HAVOC';
 }
 
+/* Agent art is procedural, drawn in code (no external image files): a
+   helmet bust in the agent's signature colour — dome + facemask + padded
+   jersey shoulders. The same generated art fills portrait / action /
+   char-select slots; the ready flags flip on load exactly as file art did. */
+function makeHelmetArt(a){
+  var cv=document.createElement('canvas'); cv.width=192; cv.height=256;
+  var g=cv.getContext('2d'); var acc=a.color;
+  var bg=g.createLinearGradient(0,0,0,256);
+  bg.addColorStop(0,'#0a1420'); bg.addColorStop(1,'#04140a');
+  g.fillStyle=bg; g.fillRect(0,0,192,256);
+  var glow=g.createRadialGradient(96,120,8,96,120,130);
+  glow.addColorStop(0,acc+'55'); glow.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=glow; g.fillRect(0,0,192,256);
+  for(var i=0;i<6;i++){ g.fillStyle=i%2?'rgba(20,90,40,.45)':'rgba(13,60,28,.45)'; g.fillRect(i*32,228,32,28); }
+  g.fillStyle='rgba(255,255,255,.5)'; g.fillRect(0,228,192,2);
+  function rr(x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+  // padded jersey shoulders
+  g.fillStyle=acc; rr(34,178,124,78,18); g.fill();
+  g.fillStyle='rgba(0,0,0,.30)'; rr(34,178,124,24,18); g.fill();
+  g.fillStyle='#ffffff'; g.beginPath(); g.arc(96,224,15,0,Math.PI*2); g.fill();
+  g.fillStyle='#0a1420'; g.font='900 19px system-ui, sans-serif';
+  g.textAlign='center'; g.textBaseline='middle'; g.fillText(a.id[0],96,225);
+  // helmet dome
+  g.fillStyle=acc;
+  g.beginPath(); g.arc(96,108,52,Math.PI,0); g.lineTo(148,128); g.lineTo(44,128); g.closePath(); g.fill();
+  g.fillStyle='rgba(255,255,255,.35)'; g.fillRect(92,52,8,58);
+  g.strokeStyle='rgba(0,0,0,.35)'; g.lineWidth=2;
+  g.beginPath(); g.arc(96,108,52,Math.PI,0); g.stroke();
+  // face + facemask bars
+  g.fillStyle='#0d1524'; rr(66,112,60,44,10); g.fill();
+  g.fillStyle=acc; g.fillRect(74,124,44,7);
+  g.fillStyle='#04121c'; g.fillRect(82,127,12,4); g.fillRect(100,127,12,4);
+  g.strokeStyle='#dfe8f2'; g.lineWidth=4;
+  g.beginPath(); g.moveTo(62,132); g.lineTo(130,132); g.stroke();
+  g.beginPath(); g.moveTo(66,146); g.lineTo(126,146); g.stroke();
+  g.beginPath(); g.moveTo(78,132); g.lineTo(78,150); g.stroke();
+  g.beginPath(); g.moveTo(114,132); g.lineTo(114,150); g.stroke();
+  return cv.toDataURL('image/png');
+}
 AGENTS.forEach(function(a){
+  var url=makeHelmetArt(a);
   a.ready=false;
   var img=new Image();
   img.onload=function(){ a.ready=true; };
   img.onerror=function(){ a.ready=false; };
-  img.src='../assets/agents/'+a.id+'-portrait.png';
+  img.src=url;
   a.img=img;
 
-  /* action-art: cinematic football image, falls back to portrait */
   a.artReady=false;
   var art=new Image();
   art.onload=function(){ a.artReady=true; };
-  art.onerror=function(){
-    /* fallback: reuse portrait img already loaded */
-    a.artReady=false;
-  };
-  art.src='/sports/football/assets/players/'+a.id+'.png?v=cine1';
+  art.onerror=function(){ a.artReady=false; };
+  art.src=url;
   a.art=art;
 
-  /* THEMED UNIFORM char-select art (768x1024 vertical, football pads in signature colors).
-     Highest-priority image for the vertical selector cards. Falls back through art→portrait. */
   a.charReady=false;
   var ch=new Image();
   ch.onload=function(){ a.charReady=true; };
   ch.onerror=function(){ a.charReady=false; };
-  ch.src='../assets/games/football/chars/'+a.id+'.png?v=uni1';
+  ch.src=url;
   a.charImg=ch;
 });
 
@@ -3330,12 +3364,49 @@ function drawWrapped(text, cx, topY, maxW, lineH){
   return topY+lines.length*lineH;
 }
 
-/* ============================ background art (start / win screens) ============================ */
+/* ============================ background art (start / win screens) ============================
+   Procedural stadium art drawn in code (no external image files): night
+   stadium, floodlight glows, crowd band, striped field; the win variant
+   adds gold confetti + a championship glow. */
+function makeBgArt(kind){
+  var cv=document.createElement('canvas'); cv.width=1280; cv.height=720;
+  var x=cv.getContext('2d');
+  var sky=x.createLinearGradient(0,0,0,720);
+  if(kind==='win'){ sky.addColorStop(0,'#1a0f2e'); sky.addColorStop(.55,'#0a1030'); sky.addColorStop(1,'#04140a'); }
+  else { sky.addColorStop(0,'#050914'); sky.addColorStop(.55,'#081226'); sky.addColorStop(1,'#03140a'); }
+  x.fillStyle=sky; x.fillRect(0,0,1280,720);
+  var cols=['#8fa3bf','#c9b8a3','#7d8aa5','#b5c4d8','#5f7089'];
+  for(var i=0;i<2600;i++){ x.fillStyle=cols[(Math.random()*cols.length)|0]; x.globalAlpha=.5;
+    x.fillRect(Math.random()*1280, 210+Math.random()*150, 2.4, 2.4); }
+  x.globalAlpha=1;
+  [[170,120],[1110,120],[420,80],[860,80]].forEach(function(p){
+    var g=x.createRadialGradient(p[0],p[1],4,p[0],p[1],190);
+    g.addColorStop(0,'rgba(255,255,240,.85)'); g.addColorStop(.25,'rgba(160,220,255,.28)'); g.addColorStop(1,'rgba(160,220,255,0)');
+    x.fillStyle=g; x.fillRect(p[0]-190,p[1]-190,380,380);
+    x.fillStyle='#eaf6ff'; x.fillRect(p[0]-26,p[1]-8,52,16);
+  });
+  var f=x.createLinearGradient(0,430,0,720);
+  f.addColorStop(0,'#0d5a26'); f.addColorStop(1,'#063d18');
+  x.fillStyle=f; x.fillRect(0,430,1280,290);
+  x.strokeStyle='rgba(255,255,255,.35)'; x.lineWidth=3;
+  for(var s=0;s<6;s++){ x.beginPath(); x.moveTo(0,478+s*44); x.lineTo(1280,478+s*44); x.stroke(); }
+  x.beginPath(); x.ellipse(640,600,150,44,0,0,Math.PI*2); x.stroke();
+  if(kind==='win'){
+    var cols2=['#ffd700','#ff9d3d','#37e6ff','#ff4d94'];
+    for(var j=0;j<340;j++){ x.fillStyle=cols2[(Math.random()*4)|0]; x.globalAlpha=.8;
+      x.fillRect(Math.random()*1280, Math.random()*430, 5, 8); }
+    x.globalAlpha=1;
+    var wg=x.createRadialGradient(640,300,10,640,300,340);
+    wg.addColorStop(0,'rgba(255,215,0,.30)'); wg.addColorStop(1,'rgba(255,215,0,0)');
+    x.fillStyle=wg; x.fillRect(0,0,1280,720);
+  }
+  return cv.toDataURL('image/png');
+}
 var BG={ start:{img:new Image(),ready:false}, win:{img:new Image(),ready:false} };
 BG.start.img.onload=function(){ BG.start.ready=true; };
-BG.start.img.src='../assets/games/football/start-bg.png';
+BG.start.img.src=makeBgArt('start');
 BG.win.img.onload=function(){ BG.win.ready=true; };
-BG.win.img.src='../assets/games/football/win-bg.png';
+BG.win.img.src=makeBgArt('win');
 /* draw a cover-fit background image over the whole viewport with a dark scrim.
    Falls back to the caller's gradient (does nothing) if the image isn't ready. */
 function drawBgCover(slot, scrim){

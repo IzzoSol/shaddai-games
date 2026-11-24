@@ -466,36 +466,120 @@ const AGENTS = [
 const SP_COOLDOWN = 8; // seconds (default; agent.spCd overrides per-ship)
 function spMax(){ return agent.spCd || SP_COOLDOWN; }
 
-// ── ship HF art (per-agent PNG, graceful fallback to vector) ──────────
-// Real ship art: /assets/games/ships/<AGENT>.png (SHADDAI, NEXUS, ...).
-// If a PNG 404s, img.ok stays false and draw() uses the procedural ship.
+// ── ship + selector art: procedural, drawn in code (no external files) ──
+// Ships are neon vector sprites rendered per agent colour; selector art is
+// a pilot bust + ship; thumbs are the bust cropped square; screen
+// backgrounds are generated starfields. img.ok flips true on load exactly
+// as it did for file art, and the letter-tile fallbacks remain as backstop.
+function _mkCanvas(w,h){ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; return cv; }
+function _rr(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function drawShipSprite(g, cx, cy, s, acc){
+  // sleek neon fighter, nose up, centred on (cx,cy); s = half-length px
+  g.save(); g.translate(cx,cy);
+  g.shadowColor=acc; g.shadowBlur=s*0.35;
+  g.fillStyle='#0d1524';
+  g.strokeStyle=acc; g.lineWidth=Math.max(2,s*0.07);
+  g.beginPath();
+  g.moveTo(0,-s);                       // nose
+  g.lineTo(s*0.22,-s*0.25);
+  g.lineTo(s*0.95,s*0.55);              // right wing tip
+  g.lineTo(s*0.55,s*0.62);
+  g.lineTo(s*0.30,s*0.42);
+  g.lineTo(s*0.30,s*0.85);              // right tail fin
+  g.lineTo(-s*0.30,s*0.85);
+  g.lineTo(-s*0.30,s*0.42);
+  g.lineTo(-s*0.55,s*0.62);
+  g.lineTo(-s*0.95,s*0.55);             // left wing tip
+  g.lineTo(-s*0.22,-s*0.25);
+  g.closePath(); g.fill(); g.stroke();
+  g.shadowBlur=0;
+  // canopy
+  g.fillStyle=acc;
+  g.beginPath(); g.ellipse(0,-s*0.28,s*0.13,s*0.30,0,0,Math.PI*2); g.fill();
+  g.fillStyle='#ffffff';
+  g.beginPath(); g.ellipse(0,-s*0.34,s*0.05,s*0.14,0,0,Math.PI*2); g.fill();
+  // wing lights + engine glow
+  g.beginPath(); g.arc(-s*0.88,s*0.52,s*0.07,0,Math.PI*2); g.fill();
+  g.beginPath(); g.arc( s*0.88,s*0.52,s*0.07,0,Math.PI*2); g.fill();
+  const eg=g.createRadialGradient(0,s*0.88,1,0,s*0.88,s*0.34);
+  eg.addColorStop(0,'rgba(255,255,255,.95)'); eg.addColorStop(.4,acc); eg.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=eg; g.beginPath(); g.arc(0,s*0.88,s*0.34,0,Math.PI*2); g.fill();
+  g.restore();
+}
+function makeShipArt(a){
+  const cv=_mkCanvas(240,240), g=cv.getContext('2d');
+  drawShipSprite(g,120,118,86,a.color);
+  return cv.toDataURL('image/png');
+}
+function makePilotArt(a, thumb){
+  const W=thumb?160:192, H=thumb?160:256;
+  const cv=_mkCanvas(W,H), g=cv.getContext('2d'), acc=a.color;
+  const bg=g.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0a1020'); bg.addColorStop(1,'#05070f');
+  g.fillStyle=bg; g.fillRect(0,0,W,H);
+  // starfield
+  g.fillStyle='rgba(220,235,255,.75)';
+  for(let i=0;i<70;i++){ g.fillRect((i*53)%W,(i*97)%H,1.6,1.6); }
+  const glow=g.createRadialGradient(W/2,H*0.44,6,W/2,H*0.44,W*0.62);
+  glow.addColorStop(0,acc+'55'); glow.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=glow; g.fillRect(0,0,W,H);
+  const u=W/192; // scale unit from the 192-wide layout
+  // torso
+  g.fillStyle='#131c2c'; _rr(g,38*u,176*u,116*u,80*u,16*u); g.fill();
+  g.strokeStyle=acc; g.lineWidth=2.5; g.globalAlpha=.9; g.stroke(); g.globalAlpha=1;
+  const core=g.createRadialGradient(96*u,222*u,2,96*u,222*u,17*u);
+  core.addColorStop(0,'#ffffff'); core.addColorStop(.35,acc); core.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=core; g.beginPath(); g.arc(96*u,222*u,17*u,0,Math.PI*2); g.fill();
+  g.fillStyle='#0d1524'; g.fillRect(86*u,158*u,20*u,20*u);
+  // helm + visor
+  g.fillStyle='#0d1524'; _rr(g,54*u,48*u,84*u,112*u,20*u); g.fill();
+  g.strokeStyle=acc; g.lineWidth=3; g.stroke();
+  g.fillStyle=acc; g.fillRect(92*u,30*u,8*u,20*u);
+  g.beginPath(); g.arc(96*u,28*u,6*u,0,Math.PI*2); g.fill();
+  g.beginPath(); g.arc(52*u,108*u,8*u,0,Math.PI*2); g.fill();
+  g.beginPath(); g.arc(140*u,108*u,8*u,0,Math.PI*2); g.fill();
+  g.fillStyle=acc; _rr(g,64*u,88*u,64*u,22*u,9*u); g.fill();
+  g.fillStyle='#04121c'; g.fillRect(76*u,96*u,16*u,6*u); g.fillRect(102*u,96*u,16*u,6*u);
+  if(!thumb) drawShipSprite(g, 152*u, 208*u, 30*u, acc);   // companion ship on select art
+  return cv.toDataURL('image/png');
+}
+function makeStarBg(kind){
+  const cv=_mkCanvas(1024,576), g=cv.getContext('2d');
+  const neb = kind==='win' ? '255,215,0' : kind==='lose' ? '255,60,70' : '55,230,255';
+  const sky=g.createLinearGradient(0,0,0,576);
+  sky.addColorStop(0,'#04060f'); sky.addColorStop(1,'#01020a');
+  g.fillStyle=sky; g.fillRect(0,0,1024,576);
+  for(let i=0;i<3;i++){
+    const x=180+i*330, y=120+((i*170)%260);
+    const rg=g.createRadialGradient(x,y,8,x,y,300);
+    rg.addColorStop(0,'rgba('+neb+',.20)'); rg.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=rg; g.fillRect(0,0,1024,576);
+  }
+  for(let i=0;i<420;i++){
+    const x=(i*389)%1024, y=(i*271)%576, s=i%9===0?2.2:1.2;
+    g.fillStyle='rgba(225,238,255,'+(0.35+((i*7)%60)/100)+')';
+    g.fillRect(x,y,s,s);
+  }
+  return cv.toDataURL('image/png');
+}
+function _artImg(src){
+  const im=new Image(); im.ok=false;
+  im.onload=()=>{ im.ok=(im.naturalWidth>0); }; im.onerror=()=>{ im.ok=false; };
+  im.src=src; return im;
+}
 const shipImgs = {};
-AGENTS.forEach(a=>{
-  const im = new Image();
-  im.ok = false;
-  im.onload = ()=>{ im.ok = (im.naturalWidth>0); };
-  im.onerror = ()=>{ im.ok = false; };
-  im.src = '../assets/games/ships/'+a.id.toUpperCase()+'.png';
-  shipImgs[a.id] = im;
-});
+AGENTS.forEach(a=>{ shipImgs[a.id] = _artImg(makeShipArt(a)); });
 
-// ── STARFALL character-selector art: agent standing next to their ship (HF) ──
+// ── STARFALL character-selector art: pilot bust + their ship ──
 // select = tall pilot+ship portrait; thumb = square face for dialog boxes.
-// Graceful: if a portrait 404s (credits not yet regenerated), the card falls
-// back to the transparent ship PNG, then to a letter tile. Re-run
-// scripts/gen-starfall-art.js to fill any missing ones later.
 const selImgs = {}, thumbImgs = {};
 AGENTS.forEach(a=>{
-  const s=new Image(); s.ok=false;
-  s.onload=()=>{ s.ok=(s.naturalWidth>0); }; s.onerror=()=>{ s.ok=false; };
-  s.src='../assets/games/starfall/'+a.id+'-select.png'; selImgs[a.id]=s;
-  const t=new Image(); t.ok=false;
-  t.onload=()=>{ t.ok=(t.naturalWidth>0); }; t.onerror=()=>{ t.ok=false; };
-  t.src='../assets/games/starfall/'+a.id+'-thumb.png'; thumbImgs[a.id]=t;
+  selImgs[a.id]   = _artImg(makePilotArt(a, false));
+  thumbImgs[a.id] = _artImg(makePilotArt(a, true));
 });
-// cinematic screen backgrounds (HF); optional, screens still work without them
+// cinematic screen backgrounds; generated starfields
 const bgImgs={};
-['start','win','lose'].forEach(k=>{ const im=new Image(); im.src='../assets/games/starfall/bg-'+k+'.png'; bgImgs[k]=im; });
+['start','win','lose'].forEach(k=>{ bgImgs[k]=_artImg(makeStarBg(k)); });
 
 // ── per-agent dialog banter (intro / wave clear / game over) ──
 const BANTER={
@@ -778,7 +862,7 @@ AGENTS.forEach((a,i)=>{
   d.style.borderColor=a.color+'55';
   d.innerHTML=`
     <div class="av" style="background:${a.color};box-shadow:0 0 16px ${a.color};overflow:hidden">
-      <img src="../assets/games/ships/${a.id.toUpperCase()}.png" alt="" style="width:100%;height:100%;object-fit:contain"
+      <img src="${shipImgs[a.id].src}" alt="" style="width:100%;height:100%;object-fit:contain"
            onerror="this.style.display='none';this.parentNode.textContent='${a.name[0]}'">
     </div>
     <div class="nm" style="color:${a.color}">${a.name}</div>
@@ -817,7 +901,7 @@ AGENTS.forEach((a,i)=>{
   s.style.setProperty('--c',a.color);
   s.title=a.name+' — '+(a.trait||a.special);
   // portrait: HF agent+ship art → ship PNG fallback (contain) → letter tile
-  const shipPng='../assets/games/ships/'+a.id.toUpperCase()+'.png';
+  const shipPng=shipImgs[a.id].src;
   s.innerHTML=`
     <div class="portrait">
       <img class="portart" alt="${a.name}"
@@ -828,7 +912,7 @@ AGENTS.forEach((a,i)=>{
       <div class="shint">${traitShort}</div>
     </div>`;
   // set primary src after wiring onerror so fallback chain fires reliably
-  s.querySelector('.portart').src='../assets/games/starfall/'+a.id+'-select.png';
+  s.querySelector('.portart').src=selImgs[a.id].src;
   s.onclick=()=>selectAgent(i);
   rosterEl.appendChild(s);
   shipCards.push(s);
@@ -1336,7 +1420,7 @@ function refreshTitle(){
   hero.onerror=()=>{ hero.style.display='none'; };
   if(sel && sel.ok){ hero.src=sel.src; hero.style.display=''; hero.style.objectFit='cover'; hero.style.borderRadius='16px'; }
   else if(ship && ship.ok){ hero.src=ship.src; hero.style.display=''; hero.style.objectFit='contain'; hero.style.borderRadius='0'; }
-  else { hero.src='../assets/games/ships/'+agent.id.toUpperCase()+'.png'; hero.style.display=''; hero.style.objectFit='contain'; }
+  else if(ship){ hero.src=ship.src; hero.style.display=''; hero.style.objectFit='contain'; }
   const nm=document.getElementById('titleAgentName');
   nm.textContent=agent.name;
   nm.style.color=agent.color; nm.style.textShadow='0 0 14px '+agent.color+'aa';

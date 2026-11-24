@@ -160,7 +160,28 @@ document.getElementById('codex').addEventListener('click', function(){
 var arenaBg=new Image(); var arenaReady=false;
 arenaBg.onload=function(){ arenaReady=true; };
 arenaBg.onerror=function(){ arenaReady=false; };
-arenaBg.src='../assets/games/dodgeball/arena-bg.jpg?v=1';
+// Procedural arena backdrop drawn in code (no external image): dark neon
+// bowl, crowd speckle, magenta/cyan glow — same mood as the gradient fallback.
+arenaBg.src=(function(){
+  var cv=document.createElement('canvas'); cv.width=1024; cv.height=576;
+  var g=cv.getContext('2d');
+  var sky=g.createLinearGradient(0,0,0,576);
+  sky.addColorStop(0,'#12001a'); sky.addColorStop(.55,'#1a0022'); sky.addColorStop(1,'#02110b');
+  g.fillStyle=sky; g.fillRect(0,0,1024,576);
+  var cols=['#8fa3bf','#c9b8a3','#7d8aa5','#b5c4d8','#96897c','#5f7089'];
+  for(var i=0;i<4200;i++){ g.fillStyle=cols[(Math.random()*cols.length)|0]; g.globalAlpha=.55;
+    g.fillRect(Math.random()*1024, 60+Math.random()*300, 2.2, 2.2); }
+  g.globalAlpha=1;
+  var rg=g.createRadialGradient(512,300,10,512,300,420);
+  rg.addColorStop(0,'rgba(255,43,214,.20)'); rg.addColorStop(.6,'rgba(0,240,255,.08)'); rg.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=rg; g.fillRect(0,0,1024,576);
+  g.fillStyle='rgba(0,240,255,.16)'; g.fillRect(0,392,1024,3);
+  g.fillStyle='rgba(255,43,214,.14)'; g.fillRect(0,398,1024,2);
+  var fl=g.createLinearGradient(0,404,0,576);
+  fl.addColorStop(0,'#0a0618'); fl.addColorStop(1,'#04030c');
+  g.fillStyle=fl; g.fillRect(0,404,1024,172);
+  return cv.toDataURL('image/png');
+})();
 // draw HF art as a "cover" fill; gentle dark scrim keeps text readable. Falls back to gradient.
 function drawArenaBg(scrim){
   if(arenaReady && arenaBg.width){
@@ -236,16 +257,57 @@ function sndMove(){ beep(520,0.04,'square',0.05,0); }
 
 /* ============================ AGENT ROSTER ============================ */
 // stats are 1..5 display values (spd=speed, pwr=throw power, cat=catch skill, hp=durability)
-// selImg = themed neon-dodgeball-uniform portrait (task art); img = fallback agent portrait
+// Portraits are procedural glow-bot busts drawn in code per agent (assigned
+// just below) — no external image files are fetched. selImg and img both
+// point at the generated bust; the colour-disc fallback still applies if
+// canvas is unavailable.
 var AGENTS=[
-  {key:'SHADDAI', color:'#ffcf1a', selImg:'../assets/games/dodgeball/chars/SHADDAI.png', img:'../assets/agents/SHADDAI-portrait.png', tag:'Supreme',  stats:{spd:3,pwr:4,cat:3,hp:5}},
-  {key:'NEXUS',   color:'#00f0ff', selImg:'../assets/games/dodgeball/chars/NEXUS.png',   img:'../assets/agents/NEXUS-portrait.png',   tag:'Architect',stats:{spd:4,pwr:4,cat:3,hp:3}},
-  {key:'ORACLE',  color:'#b06bff', selImg:'../assets/games/dodgeball/chars/ORACLE.png',  img:'../assets/agents/ORACLE-portrait.png',  tag:'Intel',    stats:{spd:3,pwr:2,cat:5,hp:3}},
-  {key:'ZEROX',   color:'#ff9d3d', selImg:'../assets/games/dodgeball/chars/ZEROX.png',   img:'../assets/agents/ZEROX-portrait.png',   tag:'Wealth',   stats:{spd:3,pwr:5,cat:2,hp:4}},
-  {key:'TURTLE',  color:'#ff2bd6', selImg:'../assets/games/dodgeball/chars/TURTLE.png',  img:'../assets/agents/TURTLE-portrait.png',  tag:'Creative', stats:{spd:2,pwr:3,cat:4,hp:5}},
-  {key:'QUILL',   color:'#f5e000', selImg:'../assets/games/dodgeball/chars/QUILL.png',   img:'../assets/agents/QUILL-portrait.png',   tag:'Comms',    stats:{spd:5,pwr:2,cat:4,hp:2}},
-  {key:'PIKADON', color:'#ff2a2a', selImg:'../assets/games/dodgeball/chars/PIKADON.png', img:'../assets/agents/PIKADON-portrait.png', tag:'Security', stats:{spd:4,pwr:5,cat:3,hp:3}}
+  {key:'SHADDAI', color:'#ffcf1a', selImg:'', img:'', tag:'Supreme',  stats:{spd:3,pwr:4,cat:3,hp:5}},
+  {key:'NEXUS',   color:'#00f0ff', selImg:'', img:'', tag:'Architect',stats:{spd:4,pwr:4,cat:3,hp:3}},
+  {key:'ORACLE',  color:'#b06bff', selImg:'', img:'', tag:'Intel',    stats:{spd:3,pwr:2,cat:5,hp:3}},
+  {key:'ZEROX',   color:'#ff9d3d', selImg:'', img:'', tag:'Wealth',   stats:{spd:3,pwr:5,cat:2,hp:4}},
+  {key:'TURTLE',  color:'#ff2bd6', selImg:'', img:'', tag:'Creative', stats:{spd:2,pwr:3,cat:4,hp:5}},
+  {key:'QUILL',   color:'#f5e000', selImg:'', img:'', tag:'Comms',    stats:{spd:5,pwr:2,cat:4,hp:2}},
+  {key:'PIKADON', color:'#ff2a2a', selImg:'', img:'', tag:'Security', stats:{spd:4,pwr:5,cat:3,hp:3}}
 ];
+// Procedural glow-bot portrait (canvas -> data URL) in the agent's colour.
+function makeBotPortrait(a){
+  var cv=document.createElement('canvas'); cv.width=192; cv.height=256;
+  var g=cv.getContext('2d'); var acc=a.color;
+  var bg=g.createLinearGradient(0,0,0,256);
+  bg.addColorStop(0,'#12001a'); bg.addColorStop(1,'#02110b');
+  g.fillStyle=bg; g.fillRect(0,0,192,256);
+  var glow=g.createRadialGradient(96,118,8,96,118,130);
+  glow.addColorStop(0,acc+'55'); glow.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=glow; g.fillRect(0,0,192,256);
+  g.fillStyle='rgba(200,215,235,0.20)';
+  for(var i=0;i<120;i++){ g.fillRect((i*67)%192, 200+((i*41)%52), 2, 2); }
+  g.fillStyle=acc+'66'; g.fillRect(14,228,164,2);
+  function rr(x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+  // jersey shoulders with agent-colour trim + chest core
+  g.fillStyle='#171126'; rr(38,176,116,80,16); g.fill();
+  g.strokeStyle=acc; g.lineWidth=2.5; g.globalAlpha=.9; g.stroke(); g.globalAlpha=1;
+  g.fillStyle=acc; g.fillRect(52,190,88,7);
+  var core=g.createRadialGradient(96,222,2,96,222,17);
+  core.addColorStop(0,'#ffffff'); core.addColorStop(.35,acc); core.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=core; g.beginPath(); g.arc(96,222,17,0,Math.PI*2); g.fill();
+  g.fillStyle='#0d1524'; g.fillRect(86,158,20,20);
+  // helm head + visor
+  g.fillStyle='#0d1524'; rr(54,48,84,112,20); g.fill();
+  g.strokeStyle=acc; g.lineWidth=3; g.stroke();
+  g.fillStyle=acc; g.fillRect(92,30,8,20);
+  g.beginPath(); g.arc(96,28,6,0,Math.PI*2); g.fill();
+  g.beginPath(); g.arc(52,108,8,0,Math.PI*2); g.fill();
+  g.beginPath(); g.arc(140,108,8,0,Math.PI*2); g.fill();
+  g.fillStyle=acc; rr(64,88,64,22,9); g.fill();
+  g.fillStyle='#04121c'; g.fillRect(76,96,16,6); g.fillRect(102,96,16,6);
+  g.fillStyle=acc+'aa'; g.fillRect(80,140,32,4);
+  return cv.toDataURL('image/png');
+}
+for(var pi=0; pi<AGENTS.length; pi++){
+  var pu=makeBotPortrait(AGENTS[pi]);
+  AGENTS[pi].img=pu; AGENTS[pi].selImg=pu;
+}
 // derive gameplay multipliers from display stats
 for(var si=0; si<AGENTS.length; si++){
   var st=AGENTS[si].stats;

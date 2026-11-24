@@ -6,8 +6,8 @@
 <title>XTO — The SHADDAI Chronicles</title>
 <script type="importmap">
 { "imports": {
-  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
-  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+  "three": "../vendor/three/three.module.js",
+  "three/addons/": "../vendor/three/addons/"
 } }
 </script>
 <style>
@@ -41,13 +41,13 @@
 <div id="err"></div>
 
 <!-- ═══ XTO MODULES (classic scripts — each sets window.XTO_<Name> = { build(ctx) → {update(dt,t), ...} } before the shell runs) ═══ -->
-<script src="../games/xto/terrain.js?v=2"></script>
-<script src="../games/xto/daynight.js?v=2"></script>
-<script src="../games/xto/city.js?v=2"></script>
-<script src="../games/xto/mechanics.js?v=2"></script>
-<script src="../games/xto/npcs.js?v=2"></script>
-<script src="../games/xto/player.js?v=2"></script>
-<script src="../games/xto/story.js?v=2"></script>
+<script src="/games/xto/terrain.js?v=2"></script>
+<script src="/games/xto/daynight.js?v=2"></script>
+<script src="/games/xto/city.js?v=2"></script>
+<script src="/games/xto/mechanics.js?v=2"></script>
+<script src="/games/xto/npcs.js?v=2"></script>
+<script src="/games/xto/player.js?v=2"></script>
+<script src="/games/xto/story.js?v=2"></script>
 
 <!-- ═══ SHELL — owns renderer/scene/camera/loop + the shared context every module plugs into ═══ -->
 <script type="module">

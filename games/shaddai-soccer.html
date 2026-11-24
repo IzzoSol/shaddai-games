@@ -47,7 +47,8 @@
     overflow-y:auto; overflow-x:hidden;
     background:
       linear-gradient(180deg, rgba(3,5,10,.82), rgba(3,5,10,.9) 55%, rgba(3,5,10,.97)),
-      url('../assets/games/soccer/bg.png') center/cover no-repeat,
+      radial-gradient(ellipse 90% 40% at 50% 108%, rgba(45,230,255,.20) 0%, rgba(45,230,255,0) 62%),
+      repeating-linear-gradient(0deg, rgba(159,179,201,.08) 0 2px, transparent 2px 7px),
       radial-gradient(ellipse at 50% 30%, #0c1828, #03050a);
   }
   .screen > * { position:relative; z-index:1; width:100%; max-width:820px; }
@@ -407,11 +408,55 @@ const AGENTS = [
   { id:'QUILL',   role:'Comms',        color:'#ff9f45', speed:0.9,  power:0.8,  control:0.85 },
   { id:'PIKADON', role:'Security',     color:'#ff5a7a', speed:0.85, power:1.0,  control:0.7  },
 ];
-// Themed soccer-kit portraits (uppercase filenames — all 7 verified on
-// disk). The old legacy fallback (../assets/games/soccer/<id>.png) never
-// existed on disk and was removed in the quality pass; if a portrait
-// ever fails to load, the initial badge stays — the designed fallback.
-const CHAR_ART = id => `/assets/games/soccer/chars/${id}.png`;
+// Soccer-kit portraits are procedural glow-bot busts drawn in code per
+// agent (kit shoulders in the agent colour) — no external image files are
+// fetched. If canvas is unavailable the initial badge stays as fallback.
+const _portraitCache = {};
+function charArt(a) {
+  if (_portraitCache[a.id]) return _portraitCache[a.id];
+  const cv = document.createElement('canvas');
+  cv.width = 192; cv.height = 256;
+  const g = cv.getContext('2d');
+  const acc = a.color;
+  const bg = g.createLinearGradient(0, 0, 0, 256);
+  bg.addColorStop(0, '#0a1a12'); bg.addColorStop(1, '#04140a');
+  g.fillStyle = bg; g.fillRect(0, 0, 192, 256);
+  const glow = g.createRadialGradient(96, 118, 8, 96, 118, 130);
+  glow.addColorStop(0, acc + '55'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = glow; g.fillRect(0, 0, 192, 256);
+  // pitch stripes at the bottom
+  for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? 'rgba(20,90,40,.5)' : 'rgba(13,60,28,.5)'; g.fillRect(i * 32, 226, 32, 30); }
+  g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(0, 226, 192, 2);
+  const rr = (x, y, w, h, r) => {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  };
+  // kit torso: agent-colour jersey with white trim + number disc
+  g.fillStyle = acc; rr(38, 176, 116, 80, 16); g.fill();
+  g.fillStyle = 'rgba(0,0,0,.28)'; rr(38, 176, 116, 22, 16); g.fill();
+  g.fillStyle = '#ffffff'; g.beginPath(); g.arc(96, 224, 15, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#0a1420'; g.font = '900 19px system-ui, sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(a.id[0], 96, 225);
+  g.fillStyle = '#0d1524'; g.fillRect(86, 158, 20, 20);
+  // helm head + visor
+  g.fillStyle = '#0d1524'; rr(54, 48, 84, 112, 20); g.fill();
+  g.strokeStyle = acc; g.lineWidth = 3; g.stroke();
+  g.fillStyle = acc; g.fillRect(92, 30, 8, 20);
+  g.beginPath(); g.arc(96, 28, 6, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(52, 108, 8, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(140, 108, 8, 0, Math.PI * 2); g.fill();
+  g.fillStyle = acc; rr(64, 88, 64, 22, 9); g.fill();
+  g.fillStyle = '#04121c'; g.fillRect(76, 96, 16, 6); g.fillRect(102, 96, 16, 6);
+  const url = cv.toDataURL('image/png');
+  _portraitCache[a.id] = url;
+  return url;
+}
+const CHAR_ART = id => charArt(AGENTS.find(x => x.id === id) || AGENTS[0]);
 
 let selectedAgent = AGENTS[0];
 let matchMinutes = 2;

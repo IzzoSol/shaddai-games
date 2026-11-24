@@ -93,7 +93,7 @@
 </style>
 </head>
 <body>
-<div class="topbar"><h1>GEM<span>SHAFT</span></h1><span class="tag">Falling-rock gem dig · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="../arcade.html">← Arcade</a></div>
+<div class="topbar"><h1>GEM<span>SHAFT</span></h1><span class="tag">Falling-rock gem dig · Original IP · Shaddai Arcade</span><span class="spacer"></span><a class="back" href="/arcade.html">← Arcade</a></div>
 <div class="wrap">
   <div id="shell">
     <div class="shell-brand"><span>SHADDAI · HANDHELD</span><span class="shell-led">● REC</span></div>
@@ -255,9 +255,9 @@ function spawnParticles(x,y,col,n,spread){
   for(var i=0;i<n;i++) state.particles.push({x:x,y:y,vx:rnd(-spread,spread),vy:rnd(-spread,spread),life:rnd(20,50),col:col,r:rnd(1.5,4)});
 }
 function inBounds(tx,ty){ return tx>=0 && tx<COLS && ty>=0 && ty<ROWS; }
-function cellAt(tx,ty){ if(!inBounds(tx,ty)) return '#'; return state.grid[ty][tx]; }
-function setCell(tx,ty,c){ if(inBounds(tx,ty)) state.grid[ty][tx]=c; }
-function dirtAt(tx,ty){ if(!inBounds(tx,ty)) return false; return state.dirt[ty][tx]; }
+function cellAt(tx,ty){ if(!inBounds(tx,ty)) return '#'; var row=state.grid[ty]; return row ? row[tx] : '#'; }
+function setCell(tx,ty,c){ if(inBounds(tx,ty) && state.grid[ty]) state.grid[ty][tx]=c; }
+function dirtAt(tx,ty){ if(!inBounds(tx,ty)) return false; var d=state.dirt[ty]; return d ? !!d[tx] : false; }
 function enemyAt(tx,ty){ for(var i=0;i<state.enemies.length;i++){ var e=state.enemies[i]; if(e.alive && e.tx===tx && e.ty===ty) return e; } return null; }
 function isBoulder(c){ return c==='O'; }
 function isGem(c){ return c==='*'; }
@@ -1304,7 +1304,7 @@ bind('resumeBtn',function(){ togglePause(); });
 bind('saveBtn',function(){ saveGame(); });
 bind('loadBtn',function(){ if(loadGame()) togglePause(); });
 bind('restartBtn',function(){ if(state.paused) togglePause(); startGame(state.mode); });
-bind('quitArcadeBtn',function(){ window.location.href='../arcade.html'; });
+bind('quitArcadeBtn',function(){ window.location.href='/arcade.html'; });
 /* touch shell: D-pad steers, A dash, B cam, START menu, SELECT cam */
 function bindHold(id,down,up){
   var b=$(id); if(!b) return;

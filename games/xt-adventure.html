@@ -7,8 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
-  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
-  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+  "three": "../vendor/three/three.module.js",
+  "three/addons/": "../vendor/three/addons/"
 } }
 </script>
 <style>
@@ -322,8 +322,8 @@ const VILLAIN_KEY = 'ADRAGONA';
 // Playable heroes = the 7 council clones (order shown in the vertical selector).
 const HERO_ORDER = ['ZEROX','TURTLE','SHADDAI','NEXUS','ORACLE','QUILL','PIKADON'];
 // XTO portrait/thumbnail asset resolvers (used by selector + dialogue).
-const artPortrait = k => `/assets/games/xto/chars/${(AGENT[k]&&AGENT[k].art)||k}.png`;
-const artThumb    = k => `/assets/games/xto/thumbs/${(AGENT[k]&&AGENT[k].art)||k}.png`;
+const artPortrait = k => `../assets/games/xto/chars/${(AGENT[k]&&AGENT[k].art)||k}.png`;
+const artThumb    = k => `../assets/games/xto/thumbs/${(AGENT[k]&&AGENT[k].art)||k}.png`;
 // CHAR = per-hero combat template (all heroes reuse the two rigged bodies we ship).
 const BODY = { ZEROX:'../assets/characters/XEROX.glb', TURTLE:'../assets/characters/TURTLE.glb' };
 const CHAR = {};

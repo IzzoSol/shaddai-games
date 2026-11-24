@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link rel="icon" href="data:,">
 <title>NEON HOOPS // SHADDAI</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": {
   "three": "../vendor/three/three.module.js",
@@ -96,7 +96,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   display:flex;align-items:center;justify-content:center;padding:56px 16px;
   background:
     radial-gradient(ellipse at center,rgba(2,4,8,.55) 0%,rgba(2,4,8,.9) 100%),
-    url('../assets/games/hoops/start-bg.png') center/cover no-repeat,
+    radial-gradient(ellipse 95% 42% at 50% 108%, rgba(55,230,255,.30) 0%, rgba(55,230,255,0) 62%),
+    radial-gradient(ellipse 75% 30% at 50% -8%, rgba(255,77,148,.22) 0%, rgba(255,77,148,0) 62%),
+    repeating-linear-gradient(0deg, rgba(159,179,201,.10) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(90deg, rgba(55,230,255,.05) 0 2px, transparent 2px 46px),
     linear-gradient(135deg,#04101f 0%,#0a0416 100%);}
 #tipoff .tipoff-card{width:min(92vw,540px);
   display:flex;flex-direction:column;align-items:center;gap:14px;
@@ -146,7 +149,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
   align-items:center;justify-content:center;padding:56px 16px;overflow-y:auto;
   background:
     radial-gradient(ellipse at center,rgba(2,4,8,.6) 0%,rgba(2,4,8,.94) 100%),
-    url('../assets/games/hoops/start-bg.png') center/cover no-repeat,
+    radial-gradient(ellipse 95% 42% at 50% 108%, rgba(55,230,255,.26) 0%, rgba(55,230,255,0) 62%),
+    radial-gradient(ellipse 75% 30% at 50% -8%, rgba(255,77,148,.18) 0%, rgba(255,77,148,0) 62%),
+    repeating-linear-gradient(0deg, rgba(159,179,201,.09) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(90deg, rgba(55,230,255,.05) 0 2px, transparent 2px 46px),
     linear-gradient(135deg,#04101f 0%,#0a0416 100%);}
 #endscreen.show{display:flex;}
 #endscreen .end-card{width:min(92vw,460px);text-align:center;
@@ -171,7 +177,28 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
 #endBackBtn{background:rgba(255,255,255,.06);border:1px solid #37e6ff44;color:#37e6ff;}
 #endBackBtn:hover{box-shadow:0 0 18px #37e6ff44;}
 
-/* NOTE: on-screen joystick / touch controls intentionally REMOVED — keyboard only. */
+/* ── TOUCH CONTROLS — shown only on touch devices (body.touch); joystick feeds
+   the same keys{} state as the keyboard, SHOOT feeds mouseDown. ── */
+#touch-ui{display:none;}
+body.touch #touch-ui{display:block;position:fixed;inset:0;z-index:40;pointer-events:none;}
+#joy{position:absolute;left:18px;bottom:84px;width:128px;height:128px;border-radius:50%;
+  border:1.5px solid #37e6ff55;background:rgba(10,20,36,.35);pointer-events:auto;touch-action:none;}
+#joy-nub{position:absolute;left:50%;top:50%;width:56px;height:56px;border-radius:50%;
+  transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#37e6ffcc,#37e6ff33);
+  border:1.5px solid #37e6ffaa;box-shadow:0 0 16px #37e6ff55;pointer-events:none;}
+#touch-btns{position:absolute;right:16px;bottom:84px;display:flex;flex-direction:column;gap:12px;align-items:flex-end;}
+.tbtn{pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;
+  font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:2px;color:#dff6ff;
+  background:rgba(10,20,36,.55);border:1.5px solid #37e6ff66;border-radius:999px;
+  padding:14px 18px;font-size:12px;min-width:84px;min-height:52px;text-align:center;}
+.tbtn.on{background:rgba(55,230,255,.35);box-shadow:0 0 18px #37e6ff66;}
+#btn-shoot{width:94px;height:94px;border-radius:50%;font-size:13px;padding:0;min-width:94px;
+  background:radial-gradient(circle at 35% 30%,rgba(255,77,148,.75),rgba(255,77,148,.25));
+  border-color:#ff4d94aa;}
+#btn-shoot.on{background:radial-gradient(circle at 35% 30%,rgba(255,77,148,1),rgba(255,77,148,.45));}
+body.touch #power-wrap{bottom:238px;}
+.touch-row{display:none;}
+body.touch .touch-row{display:flex;}
 
 /* CAMERA MODE HUD label (top-left, below auto badge) */
 #cam-badge{position:fixed;top:54px;right:16px;z-index:60;
@@ -238,6 +265,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
 <div id="cam-badge">CAM <span class="k" id="cam-mode-label">BROADCAST</span> · <span class="k">V</span></div>
 <div id="basket-flash"></div>
 
+<!-- Touch controls (visible on touch devices only) -->
+<div id="touch-ui">
+  <div id="joy"><div id="joy-nub"></div></div>
+  <div id="touch-btns">
+    <button class="tbtn" id="btn-shoot" type="button">SHOOT</button>
+    <button class="tbtn" id="btn-act" type="button">ACT</button>
+    <button class="tbtn" id="btn-xover" type="button">XOVER</button>
+    <button class="tbtn" id="btn-sprint" type="button">SPRINT</button>
+  </div>
+</div>
+
 <!-- ONE clean top strip: title + single BACK button -->
 <div id="top-strip">
   <span id="game-title">NEON HOOPS</span>
@@ -269,6 +307,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Sh
       <div class="ctrl-row"><span class="k">H</span><span class="d">Swap home / away court</span></div>
       <div class="ctrl-row"><span class="k">V</span><span class="d">Cycle camera: broadcast → enemy-facing → first-person</span></div>
       <div class="ctrl-row"><span class="k">T</span><span class="d">Toggle AUTO demo (agents self-play)</span></div>
+      <div class="ctrl-row touch-row"><span class="k">TOUCH</span><span class="d">Left stick move · hold SHOOT to charge, release to fire · ACT jump / block · XOVER juke · SPRINT hold</span></div>
     </div>
     <div id="char-select-wrap">
       <div id="char-select-title">CHOOSE YOUR BALLER</div>
@@ -316,16 +355,15 @@ const SHOT_CLOCK_MAX = 24;
 const QUARTER_SEC = 120;
 const QUARTERS = 4;
 
-// GLB paths — team 0 = Vanguard (cyan), team 1 = Ghost (magenta)
-const GLB_PATHS = [
-  { walk: '../assets/bots/lanky.glb', idle: '../assets/bots/lanky.glb' },
-  { walk: '../assets/bots/scrap.glb', idle: '../assets/bots/scrap.glb' },
-];
+// Player bodies are procedural glow-bots (createPlayer) — no external model
+// files are fetched, so there are no GLB paths to load. (loadGLBPlayer is
+// retained below for reference but is never called.)
 const GLB_TINTS = [0x37e6ff, 0xff4d94];
 
 // ─────────────────────────────────────────────────────────────────
 // AGENT ROSTER — themed uniform portraits for the character selector.
-// Portraits live in /assets/games/hoops/chars/<AGENT>.png (uppercase).
+// Portraits are procedural glow-bot busts drawn in code per agent
+// (portraitArt below) — no external image files are fetched.
 // The chosen agent becomes YOUR baller (team 0 / Vanguard); a random
 // remaining agent is assigned as the GHOST opponent (team 1).
 // ─────────────────────────────────────────────────────────────────
@@ -339,7 +377,66 @@ const ROSTER = [
   { id: 'PIKADON', name: 'PIKADON', role: 'Knight',     color: 0xff3b4d, hex: '#ff3b4d' },
   { id: 'QUILL',   name: 'QUILL',   role: 'Mage',       color: 0xff8fd0, hex: '#ff8fd0' },
 ];
-const CHAR_ART = id => `/assets/games/hoops/chars/${id}.png`;
+// Procedural glow-bot portrait (canvas -> data URL), cached per agent.
+const _portraitCache = {};
+function portraitArt(a) {
+  if (_portraitCache[a.id]) return _portraitCache[a.id];
+  const cv = document.createElement('canvas');
+  cv.width = 192; cv.height = 256;
+  const g = cv.getContext('2d');
+  const acc = a.hex;
+  // arena backdrop: dark gradient + agent-colour glow + crowd speckle
+  const bg = g.createLinearGradient(0, 0, 0, 256);
+  bg.addColorStop(0, '#0a1626'); bg.addColorStop(1, '#160a1e');
+  g.fillStyle = bg; g.fillRect(0, 0, 192, 256);
+  const glow = g.createRadialGradient(96, 118, 8, 96, 118, 130);
+  glow.addColorStop(0, acc + '55'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = glow; g.fillRect(0, 0, 192, 256);
+  g.fillStyle = 'rgba(200,215,235,0.20)';
+  for (let i = 0; i < 130; i++) {
+    const x = (i * 67) % 192, y = 196 + ((i * 41) % 56);
+    g.fillRect(x, y, 2, 2);
+  }
+  // floor line
+  g.fillStyle = acc + '66'; g.fillRect(14, 228, 164, 2);
+  const rr = (x, y, w, h, r) => {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  };
+  // torso / shoulders — dark metal with accent rim + glowing chest core
+  g.fillStyle = '#131c2c';
+  rr(38, 176, 116, 80, 16); g.fill();
+  g.strokeStyle = acc; g.lineWidth = 2.5; g.globalAlpha = 0.9; g.stroke(); g.globalAlpha = 1;
+  g.fillStyle = '#0b1220'; rr(52, 192, 88, 10, 5); g.fill();
+  const core = g.createRadialGradient(96, 222, 2, 96, 222, 17);
+  core.addColorStop(0, '#ffffff'); core.addColorStop(0.35, acc); core.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = core; g.beginPath(); g.arc(96, 222, 17, 0, Math.PI * 2); g.fill();
+  // neck
+  g.fillStyle = '#0d1524'; g.fillRect(86, 158, 20, 20);
+  // helm head
+  g.fillStyle = '#0d1524'; rr(54, 48, 84, 112, 20); g.fill();
+  g.strokeStyle = acc; g.lineWidth = 3; g.stroke();
+  // crown fin / antenna
+  g.fillStyle = acc; g.fillRect(92, 30, 8, 20);
+  g.beginPath(); g.arc(96, 28, 6, 0, Math.PI * 2); g.fill();
+  // ear discs
+  g.beginPath(); g.arc(52, 108, 8, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(140, 108, 8, 0, Math.PI * 2); g.fill();
+  // visor band with eye slits
+  g.fillStyle = acc; rr(64, 88, 64, 22, 9); g.fill();
+  g.fillStyle = '#04121c';
+  g.fillRect(76, 96, 16, 6); g.fillRect(102, 96, 16, 6);
+  // chin light strip
+  g.fillStyle = acc + 'aa'; g.fillRect(80, 140, 32, 4);
+  const url = cv.toDataURL('image/png');
+  _portraitCache[a.id] = url;
+  return url;
+}
 // selection: index 0 = your baller, index 1 = ghost opponent
 let selectedAgent = ROSTER[2];       // default ZEROX (cyan Vanguard)
 let ghostAgent    = ROSTER[6];       // default PIKADON (crimson Ghost)
@@ -465,36 +562,124 @@ function sfxBounce() { playTone(220, 0.05,'sine',0.05); }
 // ─────────────────────────────────────────────────────────────────
 // COURT TEXTURE (canvas wood-grain)
 // ─────────────────────────────────────────────────────────────────
-function createCourtTexture() {
+function createCourtTexture(side) {
+  // FULL-COURT procedural texture, drawn in code and mapped 1:1 onto the
+  // COURT_W x COURT_D floor plane (no external court photos). Canvas top =
+  // far end (hoop end, -Z). Markings are drawn symmetric at both ends.
+  const HOME = (side !== 'away');
+  const ACC  = HOME ? '#37e6ff' : '#ff4d94';          // primary glow accent
+  const ACC2 = HOME ? '#ffd700' : '#9d5cff';          // secondary accent
+  const KEYF = HOME ? 'rgba(55,230,255,0.14)' : 'rgba(255,77,148,0.14)';
+  const HUE  = HOME ? 218 : 275;                      // board tint family
+  const W = 768, H = 1434;                            // ~15:28 court aspect
+  const S = W / COURT_W;                              // px per metre (x); y uses H / COURT_D
+  const SY = H / COURT_D;
   const cv = document.createElement('canvas');
-  cv.width = 512; cv.height = 512;
+  cv.width = W; cv.height = H;
   const ctx = cv.getContext('2d');
-  ctx.fillStyle = '#08101e';
-  ctx.fillRect(0, 0, 512, 512);
-  // Wood grain
-  for (let i = 0; i < 44; i++) {
-    ctx.strokeStyle = `rgba(18,28,52,${0.3 + Math.random() * 0.3})`;
-    ctx.lineWidth = 1 + Math.random();
-    ctx.beginPath();
-    const y = i * 12 + (Math.random() - 0.5) * 3;
-    ctx.moveTo(0, y); ctx.lineTo(512, y + (Math.random() - 0.5) * 6);
-    ctx.stroke();
+
+  // ── Floorboards (run the length of the court) ──
+  ctx.fillStyle = `hsl(${HUE},42%,6%)`;
+  ctx.fillRect(0, 0, W, H);
+  const boards = 13, bw = W / boards;
+  for (let i = 0; i < boards; i++) {
+    const l = 6.5 + ((i * 37) % 5) * 1.1;             // deterministic shade steps
+    ctx.fillStyle = `hsl(${HUE},44%,${l}%)`;
+    ctx.fillRect(i * bw, 0, bw, H);
+    // staggered board-end joints
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    const joints = 3 + (i % 3);
+    for (let j = 0; j < joints; j++) {
+      const y = ((i * 311 + j * 479) % 100) / 100 * H;
+      ctx.fillRect(i * bw, y, bw, 2);
+    }
+    // grain streaks
+    ctx.strokeStyle = `hsla(${HUE},50%,16%,0.25)`;
+    ctx.lineWidth = 1;
+    for (let gLine = 0; gLine < 3; gLine++) {
+      const x = i * bw + ((i * 53 + gLine * 29) % 90) / 100 * bw;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 3, H); ctx.stroke();
+    }
+    // glow seam between boards
+    ctx.fillStyle = HOME ? 'rgba(55,230,255,0.10)' : 'rgba(255,77,148,0.10)';
+    ctx.fillRect(i * bw - 1, 0, 2, H);
   }
-  // Center SHADDAI glow
-  const g = ctx.createRadialGradient(256,256,0,256,256,160);
-  g.addColorStop(0,'rgba(55,230,255,0.06)');
-  g.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle = g; ctx.fillRect(0,0,512,512);
+  // overall sheen — brighter at centre, darker at the ends
+  const sheen = ctx.createRadialGradient(W/2, H/2, 60, W/2, H/2, H * 0.62);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.07)');
+  sheen.addColorStop(0.55, 'rgba(255,255,255,0.0)');
+  sheen.addColorStop(1, 'rgba(0,0,0,0.42)');
+  ctx.fillStyle = sheen; ctx.fillRect(0, 0, W, H);
+
+  const line = (fn) => { ctx.save(); fn(); ctx.restore(); };
+  const strokeACC = (wdt, alpha) => { ctx.strokeStyle = ACC; ctx.globalAlpha = alpha; ctx.lineWidth = wdt; };
+
+  // ── Boundary ──
+  line(() => { strokeACC(5, 0.85); ctx.strokeRect(0.45 * S, 0.45 * SY, W - 0.9 * S, H - 0.9 * SY); });
+
+  // ── Painted keys + free-throw circles + 3pt arcs (both ends) ──
+  function paintEnd(topEnd) {
+    const yBase = topEnd ? 0 : H;                     // end line (canvas px)
+    const dir = topEnd ? 1 : -1;                      // inward direction
+    const y = m => yBase + dir * m * SY;              // metres from end line -> px
+    // key: 4.9 m wide, 5.8 m long
+    ctx.save();
+    ctx.fillStyle = KEYF;
+    ctx.fillRect(W/2 - 2.45 * S, Math.min(y(0), y(5.8)), 4.9 * S, 5.8 * SY);
+    strokeACC(4, 0.9);
+    ctx.strokeRect(W/2 - 2.45 * S, Math.min(y(0), y(5.8)), 4.9 * S, 5.8 * SY);
+    // free-throw circle at the end of the key
+    ctx.beginPath(); ctx.arc(W/2, y(5.8), 1.8 * S, 0, Math.PI * 2); ctx.stroke();
+    // 3pt: corner lines at x=±6.7 m up to 4.2 m, then arc r=6.75 m around the hoop point (3 m from end line)
+    ctx.beginPath();
+    ctx.moveTo(W/2 - 6.7 * S, y(0)); ctx.lineTo(W/2 - 6.7 * S, y(4.2));
+    ctx.moveTo(W/2 + 6.7 * S, y(0)); ctx.lineTo(W/2 + 6.7 * S, y(4.2));
+    ctx.stroke();
+    ctx.beginPath();
+    const hoopY = y(3.0);
+    ctx.ellipse(W/2, hoopY, 6.75 * S, 6.75 * SY, 0, 0, Math.PI * 2);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(W/2 - 6.7 * S, Math.min(y(4.2), y(12)), 13.4 * S, Math.abs(y(12) - y(4.2))); ctx.clip();
+    ctx.stroke();
+    ctx.restore();
+    // restricted-area tick + backboard shadow glow
+    const gg = ctx.createRadialGradient(W/2, y(3.0), 4, W/2, y(3.0), 3.4 * S);
+    gg.addColorStop(0, 'rgba(255,102,0,0.20)'); gg.addColorStop(1, 'rgba(255,102,0,0)');
+    ctx.fillStyle = gg; ctx.fillRect(W/2 - 3.4 * S, y(3.0) - 3.4 * SY, 6.8 * S, 6.8 * SY);
+    ctx.restore();
+  }
+  paintEnd(true);
+  paintEnd(false);
+
+  // ── Centre: glow, logo rings, wordmark ──
+  line(() => {
+    const cg = ctx.createRadialGradient(W/2, H/2, 10, W/2, H/2, 3.4 * S);
+    cg.addColorStop(0, HOME ? 'rgba(55,230,255,0.16)' : 'rgba(255,77,148,0.16)');
+    cg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = cg; ctx.fillRect(W/2 - 3.4 * S, H/2 - 3.4 * SY, 6.8 * S, 6.8 * SY);
+    strokeACC(5, 0.9);
+    ctx.beginPath(); ctx.arc(W/2, H/2, 1.8 * S, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = ACC2; ctx.globalAlpha = 0.85; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(W/2, H/2, 1.28 * S, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = ACC2; ctx.globalAlpha = 0.95;
+    ctx.font = `900 ${Math.round(0.62 * S)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('S H A D D A I', W/2, H/2);
+  });
+  // half-court line
+  line(() => { strokeACC(4, 0.7); ctx.beginPath(); ctx.moveTo(0.45 * S, H/2); ctx.lineTo(W - 0.45 * S, H/2); ctx.stroke(); });
+
   const tex = new THREE.CanvasTexture(cv);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(3, 6);
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.repeat.set(1, 1);
+  tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
 
 // ─────────────────────────────────────────────────────────────────
 // MATERIALS (shared/reused)
 // ─────────────────────────────────────────────────────────────────
-const courtTex  = createCourtTexture();
+const courtTex  = createCourtTexture('home');
 const matFloor  = new THREE.MeshStandardMaterial({ map: courtTex, roughness: 0.15, metalness: 0.35 });
 const matLine   = new THREE.MeshBasicMaterial({ color: 0x37e6ff, transparent: true, opacity: 0.4 });
 const matRim    = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0xff4400, emissiveIntensity: 0.8, roughness: 0.3, metalness: 0.8 });
@@ -794,40 +979,25 @@ function buildArena() {
 buildArena();
 
 // ─────────────────────────────────────────────────────────────────
-// COURT FLOOR TEXTURES (generated jpgs) — Home / Away toggle (Fix 4)
-// Loaded via THREE.TextureLoader, sRGB, mapped 1:1 onto the court floor plane
-// (PlaneGeometry is COURT_W×COURT_D so repeat(1,1) fits without distortion).
-// Falls back gracefully to the procedural canvas floor if an image fails.
+// COURT FLOOR TEXTURES — Home / Away toggle. Both variants are procedural
+// canvas courts drawn in code by createCourtTexture() (floorboards with
+// glow seams, painted keys, 3pt arcs, centre logo ring) and mapped 1:1
+// onto the floor plane. No external image files are fetched.
 // ─────────────────────────────────────────────────────────────────
-const _fallbackFloorTex = courtTex;            // procedural canvas texture (already on matFloor)
-const COURT_TEX_URLS = { home: '../assets/court-home.jpg', away: '../assets/court-away.jpg' };
-const _courtTexCache  = {};
+const _courtTexCache  = { home: courtTex };
 let courtSide = 'home';
-const _texLoader = new THREE.TextureLoader();
 
 function _setFloorMap(tex) {
   matFloor.map = tex;
   matFloor.needsUpdate = true;
 }
 function applyCourtTexture(side) {
-  if (_courtTexCache[side]) { _setFloorMap(_courtTexCache[side]); return; }
-  _texLoader.load(
-    COURT_TEX_URLS[side],
-    tex => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;  // fit whole image to court, no tiling
-      tex.repeat.set(1, 1);
-      try { tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); } catch(e) {}
-      _courtTexCache[side] = tex;
-      // Only apply if this side is still the selected one
-      if (courtSide === side) _setFloorMap(tex);
-    },
-    undefined,
-    err => {
-      console.warn(`[COURT] Failed to load ${COURT_TEX_URLS[side]} — keeping fallback floor.`, err && err.message);
-      if (courtSide === side) _setFloorMap(_fallbackFloorTex);
-    }
-  );
+  if (!_courtTexCache[side]) {
+    const tex = createCourtTexture(side);
+    try { tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); } catch(e) {}
+    _courtTexCache[side] = tex;
+  }
+  _setFloorMap(_courtTexCache[side]);
 }
 function toggleCourtSide() {
   courtSide = (courtSide === 'home') ? 'away' : 'home';
@@ -1230,9 +1400,8 @@ function initMeshes() {
   ball.mesh.castShadow = true;
   scene.add(ball.mesh);
 
-  // Start loading real GLB bodies (procedural stays visible until load complete)
-  loadGLBPlayer(0);
-  loadGLBPlayer(1);
+  // Player bodies are the procedural glow-bots built by createPlayer() above —
+  // fully self-contained: no external model files are fetched.
 }
 initMeshes();
 
@@ -3068,13 +3237,7 @@ function buildCharSelector() {
     img.className = 'portrait';
     img.alt = a.name;
     img.loading = 'lazy';
-    img.src = CHAR_ART(a.id);
-    // Fallback to existing forge/agent art if themed portrait is missing
-    img.onerror = () => {
-      if (img.dataset.fb) { img.style.opacity = '0.35'; return; }
-      img.dataset.fb = '1';
-      img.src = `/assets/agents/${a.id}-portrait.png`;
-    };
+    img.src = portraitArt(a);   // procedural glow-bot bust, drawn in code
     const nm = document.createElement('div'); nm.className = 'cc-name'; nm.textContent = a.name;
     const rl = document.createElement('div'); rl.className = 'cc-role'; rl.textContent = a.role;
     const ck = document.createElement('div'); ck.className = 'cc-check'; ck.textContent = '✓';
@@ -3117,6 +3280,65 @@ document.getElementById('endBackBtn').addEventListener('click', exitGame);
 updateControlsHUD();
 game.lastFrameTime = performance.now();
 requestAnimationFrame(tick);
+
+// ─────────────────────────────────────────────────────────────────
+// TOUCH CONTROLS — the joystick feeds the same keys{} state the keyboard
+// uses; SHOOT feeds mouseDown (hold to charge, release to shoot), ACT is
+// Space (shoot/jump/block context), XOVER is Q, SPRINT is Shift.
+// ─────────────────────────────────────────────────────────────────
+(function initTouchControls() {
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if (!isTouch) return;
+  document.body.classList.add('touch');
+  const controlsEl = document.getElementById('controls');
+  if (controlsEl) controlsEl.textContent = 'Left stick move · hold SHOOT to charge, release to fire · ACT jump/block · XOVER juke · SPRINT hold';
+  const joy = document.getElementById('joy');
+  const nub = document.getElementById('joy-nub');
+  let joyId = null;
+  function joySet(dx, dy) {
+    const t = 0.35;
+    keys['KeyW'] = dy < -t; keys['KeyS'] = dy > t;
+    keys['KeyA'] = dx < -t; keys['KeyD'] = dx > t;
+    nub.style.transform = `translate(calc(-50% + ${Math.round(dx * 34)}px), calc(-50% + ${Math.round(dy * 34)}px))`;
+  }
+  function joyClear() {
+    keys['KeyW'] = keys['KeyA'] = keys['KeyS'] = keys['KeyD'] = false;
+    nub.style.transform = 'translate(-50%,-50%)';
+  }
+  function joyPos(t) {
+    const r = joy.getBoundingClientRect();
+    let dx = (t.clientX - (r.left + r.width / 2)) / (r.width / 2);
+    let dy = (t.clientY - (r.top + r.height / 2)) / (r.height / 2);
+    const m = Math.hypot(dx, dy);
+    if (m > 1) { dx /= m; dy /= m; }
+    return { dx, dy };
+  }
+  joy.addEventListener('touchstart', e => {
+    e.preventDefault(); initAudio();
+    const t = e.changedTouches[0]; joyId = t.identifier;
+    const p = joyPos(t); joySet(p.dx, p.dy);
+  }, { passive: false });
+  joy.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) if (t.identifier === joyId) { const p = joyPos(t); joySet(p.dx, p.dy); }
+  }, { passive: false });
+  const joyEnd = e => { for (const t of e.changedTouches) if (t.identifier === joyId) { joyId = null; joyClear(); } };
+  joy.addEventListener('touchend', joyEnd);
+  joy.addEventListener('touchcancel', joyEnd);
+  function bindBtn(id, down, up) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('touchstart', e => { e.preventDefault(); initAudio(); el.classList.add('on'); down(); }, { passive: false });
+    const end = e => { e.preventDefault(); el.classList.remove('on'); up(); };
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', end);
+  }
+  bindBtn('btn-shoot',  () => { mouseDown = true; },  () => { mouseDown = false; });
+  bindBtn('btn-act',    () => { keys['Space'] = true; }, () => { keys['Space'] = false; });
+  bindBtn('btn-xover',  () => { keys['KeyQ'] = true; },  () => { keys['KeyQ'] = false; });
+  bindBtn('btn-sprint', () => { keys['ShiftLeft'] = true; keys['ShiftRight'] = true; },
+                        () => { keys['ShiftLeft'] = false; keys['ShiftRight'] = false; });
+})();
 
 // Expose for headless verification
 window.__NEON_HOOPS = { scene, renderer, game, players, ball, glbLoaded, glbMixers, THREE, jerseyData,
