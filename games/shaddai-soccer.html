@@ -22,6 +22,11 @@
     pointer-events:none;
   }
   body.playing #topStrip { background:none; }
+  body.playing #topStrip .brand { display:none; }
+  body.touch #pauseHint { display:none; }   /* keyboard hint; the ⏸ button covers touch */   /* it sat on top of the in-canvas VIEW pill */
+  /* portrait phones: the pitch turns to run up the screen and sits under the top
+     strip, leaving a clear band below it for the stick and buttons */
+  body.portrait-pitch #wrap { align-items:flex-start; padding-top:64px; }
   #topStrip .brand {
     font-weight:900; letter-spacing:2px; font-size:clamp(13px,2.4vw,17px);
     background:linear-gradient(90deg,#2de6ff,#ffd35c); -webkit-background-clip:text;
@@ -255,6 +260,7 @@
   .tbtn.big.on { background:rgba(255,211,92,.45); }
   .tminis { position:absolute; right:12px; top:58px; display:flex; flex-direction:column; gap:8px; }
   .tbtn.small { width:48px; height:48px; font-size:10px; }
+  body.portrait-pitch .tminis { top:auto; right:auto; left:50%; bottom:26px; transform:translateX(-50%); flex-direction:row; }
 
   /* MOBILE — stacked menus, >=44px tap targets, no horizontal scroll */
   @media (max-width:640px){
@@ -567,13 +573,25 @@ const ctx = cv.getContext('2d');
 const FIELD = { w: 1040, h: 660, margin: 46 };
 let scale = 1, offX = 0, offY = 0;
 
+// portraitRot: on tall phones the pitch is drawn rotated -90deg (your attack runs
+// up the screen) so it fills the width instead of a 390x280 strip. Input is
+// remapped in keyDirX/keyDirY so "up" on the stick still means "up" on screen.
+let portraitRot = false;
 function resize(){
-  const availW = window.innerWidth, availH = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  portraitRot = window.innerHeight > window.innerWidth*1.15 && window.innerWidth <= 760;
+  document.body.classList.toggle('portrait-pitch', portraitRot);
+  const topPad = portraitRot ? 64 : 0;
+  const availW = window.innerWidth, availH = window.innerHeight - topPad;
   const totalW = FIELD.w + FIELD.margin*2;
   const totalH = FIELD.h + FIELD.margin*2;
-  scale = Math.min(availW/totalW, availH/totalH);
-  cv.width = Math.floor(totalW*scale);
-  cv.height = Math.floor(totalH*scale);
+  const s = portraitRot ? Math.min(availW/totalH, availH/totalW) : Math.min(availW/totalW, availH/totalH);
+  const cssW = portraitRot ? totalH*s : totalW*s, cssH = portraitRot ? totalW*s : totalH*s;
+  // backing store at device resolution (was 1x, so phones and HiDPI screens were blurry)
+  cv.width = Math.floor(cssW*dpr);
+  cv.height = Math.floor(cssH*dpr);
+  cv.style.width = Math.floor(cssW)+'px'; cv.style.height = Math.floor(cssH)+'px';
+  scale = s*dpr;
   offX = FIELD.margin; offY = FIELD.margin;
 }
 window.addEventListener('resize', resize);
@@ -779,8 +797,12 @@ function releaseKick(){
   }
   charging=false; charge=0;
 }
-function keyDirX(){ return (keys['a']||keys['arrowleft']?-1:0)+(keys['d']||keys['arrowright']?1:0); }
-function keyDirY(){ return (keys['w']||keys['arrowup']?-1:0)+(keys['s']||keys['arrowdown']?1:0); }
+function rawDirX(){ return (keys['a']||keys['arrowleft']?-1:0)+(keys['d']||keys['arrowright']?1:0); }
+function rawDirY(){ return (keys['w']||keys['arrowup']?-1:0)+(keys['s']||keys['arrowdown']?1:0); }
+// screen-relative input -> field axes (rotated pitch: screen up = field +x)
+try{ Object.defineProperty(window,'SHSOCCER',{value:Object.freeze({state:function(){ return state; }, portrait:function(){ return portraitRot; }}),configurable:true}); }catch(e){}
+function keyDirX(){ return portraitRot ? -rawDirY() : rawDirX(); }
+function keyDirY(){ return portraitRot ? rawDirX() : rawDirY(); }
 
 // ------------------------------------------------------------------
 // AI
@@ -1223,6 +1245,7 @@ function draw(){
   shakeY = shake>0 ? (Math.random()-0.5)*shake : 0;
 
   ctx.save();
+  if(portraitRot){ ctx.translate(0, cv.height); ctx.rotate(-Math.PI/2); }
   ctx.translate((offX+shakeX)*scale, (offY+shakeY)*scale);
   ctx.scale(scale,scale);
   applyCamera();   // <-- view transform (default / opponent-flip / chase-zoom)
@@ -1274,7 +1297,7 @@ function draw(){
     ctx.font='900 '+Math.floor(64*scale)+'px Orbitron, sans-serif';
     ctx.fillStyle=celebrateColor;
     ctx.shadowColor=celebrateColor; ctx.shadowBlur=30;
-    ctx.fillText(celebrateText, cv.width/2, cv.height/2);
+    ctx.fillText(celebrateText, cv.width/2, cv.height/2, cv.width*0.92);
     ctx.restore();
   }
 }
@@ -1329,9 +1352,12 @@ function drawStar4(x,y,r,color){
   ctx.quadraticCurveTo(x,y,x-r,y); ctx.quadraticCurveTo(x,y,x,y-r);
   ctx.fill(); ctx.restore();
 }
+// counter-rotate marks/labels so they read upright in the opponent view and on the rotated portrait pitch
+function viewRot(){ return (cameraView===1?Math.PI:0) + (portraitRot?Math.PI/2:0); }
+function uprightAt(x,y){ const r=viewRot(); if(r){ ctx.translate(x,y); ctx.rotate(r); ctx.translate(-x,-y); } }
 function drawCape(p){ // CAPE goes BEFORE the body disc — it flows behind
   ctx.save();
-  if(cameraView===1){ ctx.translate(p.x,p.y); ctx.rotate(Math.PI); ctx.translate(-p.x,-p.y); }
+  uprightAt(p.x,p.y);
   const sway = Math.sin(lastTime*0.006 + (p.phase||0))*3;
   ctx.fillStyle = hexA(p.color, 0.5);
   ctx.beginPath();
@@ -1346,7 +1372,7 @@ function drawAccessory(p){
   const acc = currentAccessory();
   if(acc==='NONE' || acc==='CAPE') return; // cape is drawn behind the disc
   ctx.save();
-  if(cameraView===1){ ctx.translate(p.x,p.y); ctx.rotate(Math.PI); ctx.translate(-p.x,-p.y); }
+  uprightAt(p.x,p.y);
   const r=p.r;
   if(acc==='HALO'){
     ctx.strokeStyle='#ffe98a'; ctx.lineWidth=2.5; ctx.shadowColor='#ffd35c'; ctx.shadowBlur=10;
@@ -1410,15 +1436,30 @@ function drawPlayer(p){
   ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
+  // dark outer rim so both kits separate from the turf and from each other
+  ctx.lineWidth=2;
+  ctx.strokeStyle='rgba(2,6,10,0.65)';
+  ctx.beginPath(); ctx.arc(p.x,p.y,p.r+2.2,0,Math.PI*2); ctx.stroke();
   ctx.lineWidth=2.5;
-  ctx.strokeStyle = p.team==='you' ? 'rgba(255,255,255,0.7)':'rgba(20,10,14,0.6)';
+  ctx.strokeStyle = p.team==='you' ? 'rgba(255,255,255,0.8)':'rgba(20,10,14,0.7)';
   ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.stroke();
+  // facing wedge: shows run direction at a glance (visual only)
+  const spd=Math.hypot(p.vx||0,p.vy||0);
+  if(spd>25){
+    const fa=Math.atan2(p.vy,p.vx), fr=p.r+5;
+    ctx.fillStyle = p.team==='you' ? 'rgba(255,255,255,0.85)' : hexA(p.color,0.9);
+    ctx.beginPath();
+    ctx.moveTo(p.x+Math.cos(fa)*(fr+6), p.y+Math.sin(fa)*(fr+6));
+    ctx.lineTo(p.x+Math.cos(fa+0.42)*fr, p.y+Math.sin(fa+0.42)*fr);
+    ctx.lineTo(p.x+Math.cos(fa-0.42)*fr, p.y+Math.sin(fa-0.42)*fr);
+    ctx.closePath(); ctx.fill();
+  }
 
   ctx.textAlign='center'; ctx.textBaseline='middle';
   // keep marker labels upright even in the 180° OPPONENT view
   const uprightLabel = (txt, style, font)=>{
     ctx.save();
-    if(cameraView===1){ ctx.translate(p.x,p.y); ctx.rotate(Math.PI); ctx.translate(-p.x,-p.y); }
+    uprightAt(p.x,p.y);
     ctx.fillStyle=style; ctx.font=font; ctx.fillText(txt,p.x,p.y);
     ctx.restore();
   };
@@ -1432,10 +1473,11 @@ function drawPlayer(p){
   if(isUser){
     ctx.strokeStyle=p.color; ctx.lineWidth=2;
     ctx.beginPath(); ctx.arc(p.x,p.y,p.r+6,0,Math.PI*2); ctx.stroke();
+    ctx.save(); uprightAt(p.x,p.y);
     ctx.fillStyle=p.color;
     ctx.beginPath();
     ctx.moveTo(p.x,p.y-p.r-11); ctx.lineTo(p.x-5,p.y-p.r-19); ctx.lineTo(p.x+5,p.y-p.r-19); ctx.closePath();
-    ctx.fill();
+    ctx.fill(); ctx.restore();
     if(charge>0){
       ctx.strokeStyle='#ffd35c'; ctx.lineWidth=3;
       ctx.beginPath(); ctx.arc(p.x,p.y,p.r+10,-Math.PI/2,-Math.PI/2+charge*Math.PI*2); ctx.stroke();
@@ -1497,7 +1539,9 @@ function drawHUD(){
   const vFont = Math.floor((viewFlash>0?13:11)*scale);
   ctx.font='800 '+vFont+'px Orbitron, sans-serif';
   const vw = ctx.measureText(vLabel).width + 22*scale;
-  const vx = cv.width - vw - 12*scale, vy = 14*scale, vh = 26*scale;
+  // keep the VIEW pill clear of the DOM top strip (CODEX / ARCADE MENU buttons)
+  const cssTop = cv.getBoundingClientRect().top, pxr = cv.width / (cv.clientWidth || cv.width);
+  const vx = cv.width - vw - 12*scale, vy = Math.max(14*scale, (62 - cssTop)*pxr), vh = 26*scale;
   ctx.fillStyle= viewFlash>0 ? 'rgba(45,230,255,0.22)' : 'rgba(6,12,22,0.8)';
   roundRect(vx, vy, vw, vh, 8*scale); ctx.fill();
   ctx.strokeStyle= viewFlash>0 ? '#2de6ff' : 'rgba(45,230,255,0.4)';

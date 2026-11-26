@@ -94,6 +94,7 @@
     font-size:clamp(9px,1.5vw,13px);line-height:1.5;letter-spacing:.5px;
     color:#8fe;opacity:.9;text-shadow:0 0 6px rgba(0,240,255,.4);}
   #hint b{color:var(--green);}
+  @media (pointer:coarse){ #hint{display:none!important;} }
 </style>
 </head>
 <body>
@@ -145,6 +146,13 @@ document.getElementById('codex').addEventListener('click', function(){
 /* ============================ CANVAS ============================ */
 var canvas = document.getElementById('game');
 var ctx = canvas.getContext('2d');
+var TOUCH_UI = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
+/* Radial gradients with guarded radii: a tiny or negative radius (e.g. a collapsed
+   far field or a sub-pixel sprite on a narrow phone) used to throw IndexSizeError. */
+function safeRadial(c,x0,y0,r0,x1,y1,r1){
+  r0=(isFinite(r0)&&r0>0)?r0:0; r1=(isFinite(r1)&&r1>r0+0.01)?r1:r0+0.01;
+  return c.createRadialGradient(x0,y0,r0,x1,y1,r1);
+}
 var W=0,H=0,DPR=1;
 function resize(){
   DPR = Math.min(window.devicePixelRatio||1, 2);
@@ -711,6 +719,14 @@ function computeView(){
   baseY    = H*eBASE;
   PPX      = (W/62)*ePPX_MUL;   // px per yard of width, at the near plane (scale=1)
   PLAYER_H = Math.max(46, H*0.17);
+  // Portrait phones: the 62-yard frame made the field a thin strip with giant
+  // players (22 yd tall vs 6.6 yd on desktop) and an empty top half. Widen the
+  // field, lift the horizon into the dead band and keep players in proportion.
+  if(H > W*1.15){
+    PPX      = (W/50)*ePPX_MUL;
+    horizonY = H*(CAMVIEW===2 ? 0.20 : 0.02);
+    PLAYER_H = Math.max(46, Math.min(H*0.17, PPX*11));
+  }
 }
 // project a field point (x=yardline, y=width) -> screen {x,y,s=depthScale}
 // eFLIP mirrors the field end-for-end (opponent-facing view) about the camera focus.
@@ -2369,6 +2385,7 @@ function frame(now){
 
 /* ============================ RENDER ============================ */
 var _titleShown=true, _hintShown=false;
+try{ Object.defineProperty(window,'GRIDIRON',{value:Object.freeze({state:function(){ return G.state; }}),configurable:true}); }catch(e){}
 function syncChrome(){
   // Show the big DOM game-title only on menu/end screens so it never overlaps the
   // in-game canvas scoreboard. Show the controls legend only during live gameplay.
@@ -2389,7 +2406,6 @@ function render(){
     drawPlayersSorted();
     drawJukeGhosts();
     drawFlames();
-    drawBall();
     drawParticles();
     drawAim();
     drawPopups();
@@ -2407,8 +2423,15 @@ function render(){
 
 function drawPlayersSorted(){
   // painter's algorithm: farthest (largest x) first, nearest last
-  var list = players.slice().sort(function(a,b){ return b.x - a.x; });
-  for(var i=0;i<list.length;i++) drawPlayer(list[i]);
+  var list = players.slice().sort(function(a,b){ return (b.x - a.x)*eFLIP; });   // respects the flipped opponent view
+  // an airborne ball is painted at its own depth, so it passes behind near
+  // players and in front of far ones instead of always on top
+  var ballDone = !ball.inAir, bd = ball.x*eFLIP;
+  for(var i=0;i<list.length;i++){
+    if(!ballDone && list[i].x*eFLIP < bd){ drawBall(); ballDone=true; }
+    drawPlayer(list[i]);
+  }
+  if(!ballDone) drawBall();
 }
 
 function yardLabel(){
@@ -2505,7 +2528,7 @@ function drawField(){
 
   // subtle inner vignette on the field for depth
   var fgx1=W/2, fgy1=fl.y+(nl.y-fl.y)*0.5;
-  var fieldVig=ctx.createRadialGradient(fgx1,fgy1,0, fgx1,fgy1,(nl.y-fl.y)*1.2);
+  var fieldVig=safeRadial(ctx,fgx1,fgy1,0, fgx1,fgy1,(nl.y-fl.y)*1.2);
   fieldVig.addColorStop(0,'rgba(0,0,0,0)');
   fieldVig.addColorStop(1,'rgba(0,0,0,0.38)');
   ctx.fillStyle=fieldVig;
@@ -2532,7 +2555,10 @@ function drawField(){
 
     if(major && yd>0 && yd<100){
       var num = yd<=50 ? yd : 100-yd;
-      var fs=Math.max(8, PLAYER_H*0.42*ln.a.s);
+      var fs=PLAYER_H*0.42*ln.a.s;
+      var numA=Math.max(0, Math.min(1, (fs-9)/7));   // fade out tiny far numbers
+      if(numA>0){
+      ctx.save(); ctx.globalAlpha=numA;
       ctx.font="800 "+fs+"px 'Share Tech Mono', monospace";
       var p1=proj(yd, MIDY-13), p2=proj(yd, MIDY+13);
       // dark backing + white number for legibility on turf
@@ -2542,6 +2568,8 @@ function drawField(){
       ctx.fillStyle= mid50?'rgba(255,255,255,0.92)':'rgba(230,252,242,0.72)';
       ctx.fillText(num, p1.x, p1.y);
       ctx.fillText(num, p2.x, p2.y);
+      ctx.restore();
+      }
     }
     // hash ticks — two inner rows (NFL-style)
     var hs=Math.max(2,4*ln.a.s);
@@ -2667,7 +2695,7 @@ function drawPlayer(p){
   var accNow=accForTeam(p.team);
   var auraPh=0.5+0.5*Math.sin(perfNow*0.005 + p.x*0.7 + p.y*0.3);
   var agRad=w*(accNow==='STAR'?2.3:1.6);
-  var ag3=ctx.createRadialGradient(cx,footY,agRad*0.1,cx,footY,agRad);
+  var ag3=safeRadial(ctx,cx,footY,agRad*0.1,cx,footY,agRad);
   ag3.addColorStop(0,hexA(col,(accNow==='STAR'?0.30:0.17)+0.07*auraPh));
   ag3.addColorStop(1,hexA(col,0));
   ctx.save(); ctx.fillStyle=ag3;
@@ -2767,7 +2795,8 @@ function drawPlayer(p){
 
   // ---- TORSO (tapered: wider at shoulders, narrower at waist) ----
   ctx.save();
-  ctx.shadowColor=col; ctx.shadowBlur=isCarrier?22:(onFire?20:10);
+  var hero = isCarrier || onFire || isControlled;
+  ctx.shadowColor=col; ctx.shadowBlur=isCarrier?22:(onFire?20:(isControlled?10:0));
   // main jersey body — trapezoid for taper
   ctx.fillStyle=col;
   ctx.beginPath();
@@ -2777,6 +2806,8 @@ function drawPlayer(p){
   ctx.lineTo(cx - w*0.38, hipY);          // hip left
   ctx.closePath(); ctx.fill();
   ctx.shadowBlur=0;
+  // cheap ink rim instead of a blur halo: keeps every silhouette readable on turf
+  if(!hero){ ctx.strokeStyle='rgba(0,8,4,0.7)'; ctx.lineWidth=Math.max(1,w*0.06); ctx.stroke(); }
 
   // jersey side shading for 3D depth
   ctx.fillStyle='rgba(0,0,0,0.22)';
@@ -2902,12 +2933,13 @@ function drawPlayer(p){
   // ---- HELMET (more detailed) ----
   ctx.save();
   // shell — rounded top
-  var grad2 = ctx.createRadialGradient(cx-headR*0.25, headY-headR*0.28, headR*0.06, cx, headY, headR*1.05);
+  var grad2 = safeRadial(ctx,cx-headR*0.25, headY-headR*0.28, headR*0.06, cx, headY, headR*1.05);
   grad2.addColorStop(0, light);
   grad2.addColorStop(0.55, dark);
   grad2.addColorStop(1, shade(dark,-40));
-  ctx.fillStyle=grad2; ctx.shadowColor=col; ctx.shadowBlur=8;
+  ctx.fillStyle=grad2; ctx.shadowColor=col; ctx.shadowBlur=hero?8:0;
   ctx.beginPath(); ctx.arc(cx, headY, headR, 0, 6.283); ctx.fill(); ctx.shadowBlur=0;
+  if(!hero){ ctx.strokeStyle='rgba(0,8,4,0.75)'; ctx.lineWidth=Math.max(1,headR*0.12); ctx.stroke(); }
   // helmet gloss highlight
   ctx.fillStyle='rgba(255,255,255,0.17)';
   ctx.beginPath(); ctx.ellipse(cx-headR*0.22, headY-headR*0.38, headR*0.38, headR*0.20, -0.45, 0, 6.283); ctx.fill();
@@ -3084,12 +3116,21 @@ function drawParticles(){
   }
 }
 function drawPopups(){
-  for(var i=0;i<popups.length;i++){
+  var used=[];
+  for(var i=popups.length-1;i>=0;i--){          // newest first so it keeps its spot
     var q=popups[i]; var a=Math.min(1,q.life/(q.max*0.6));
+    var fsz=q.big?Math.max(20,Math.min(56,W*0.05)):(W<500?13:16);
     ctx.save(); ctx.globalAlpha=a; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.font="800 "+(q.big?Math.max(24,Math.min(56,W*0.05)):16)+"px 'Orbitron',sans-serif";
+    ctx.font="800 "+fsz+"px 'Orbitron',sans-serif";
+    var tw=Math.min(ctx.measureText(q.txt).width, W-16), hh=fsz*1.15;
+    var px=Math.max(8+tw/2, Math.min(W-8-tw/2, q.x)), py=q.y;
+    for(var k=0;k<used.length;k++){            // nudge up past any label already drawn here
+      var u=used[k];
+      if(Math.abs(px-u.x) < (tw+u.w)/2 && Math.abs(py-u.y) < (hh+u.h)/2){ py=u.y-(hh+u.h)/2-2; k=-1; }
+    }
+    used.push({x:px,y:py,w:tw,h:hh});
     ctx.fillStyle=q.color; ctx.shadowColor=q.color; ctx.shadowBlur=q.big?24:10;
-    ctx.fillText(q.txt, q.x, q.y); ctx.restore();
+    ctx.fillText(q.txt, px, py, W-16); ctx.restore();
   }
 }
 
@@ -3124,11 +3165,15 @@ function drawHUD(){
 
   /* CAMERA VIEW label — top-center under the down/distance, pulses briefly on change */
   drawCamLabel(HT);
-  /* YOU chip — bottom-left corner */
-  drawYouChip();
-  /* MAIN MENU button — bottom-right, lifted above the controls legend so nothing overlaps */
+  /* YOU chip — bottom-left corner (touch: the joystick lives there and the
+     scoreboard already marks YOU, so the chip is skipped) */
+  if(!TOUCH_UI) drawYouChip();
+  /* MAIN MENU button — bottom-right, lifted above the controls legend so nothing overlaps.
+     On touch screens the action buttons own that corner, so it moves to the top-left,
+     under the scoreboard. */
   if(G.state==='LIVE'||G.state==='PRESNAP'||G.state==='PLAYCALL'||G.state==='DEAD'||G.state==='THROWN'){
-    drawNavBtn(W-148, H-72, 134, 32, '⌂ MAIN MENU', 'rgba(0,240,255,0.7)', gotoTitle, 'main');
+    if(TOUCH_UI) drawNavBtn(12, HT+barH+6, 104, 36, '⌂ MENU', 'rgba(0,240,255,0.7)', gotoTitle, 'main');
+    else drawNavBtn(W-148, H-72, 134, 32, '⌂ MAIN MENU', 'rgba(0,240,255,0.7)', gotoTitle, 'main');
   }
 
   if((MODE==='watch'||MODE==='skill') && (G.state==='LIVE'||G.state==='THROWN'||G.state==='PRESNAP')){
@@ -3290,7 +3335,7 @@ function drawStatePrompts(){
       ctx.font="800 "+Math.max(16,Math.min(28,W*0.024))+"px 'Orbitron',sans-serif";
       var jc=ball.jumpPressed?'#00ff88':'#ffdd00';
       ctx.fillStyle=jc; ctx.shadowColor=jc; ctx.shadowBlur=16;
-      ctx.fillText(ball.jumpPressed?'✓ JUMP!':'↑ SPACE TO JUMP-CATCH', W/2, H*0.82);
+      ctx.fillText(ball.jumpPressed?'✓ JUMP!':(TOUCH_UI?'↑ TAP ACT TO JUMP-CATCH':'↑ SPACE TO JUMP-CATCH'), W/2, H*(TOUCH_UI?0.62:0.82), W-24);
       ctx.shadowBlur=0; ctx.restore();
     }
   }
@@ -3305,15 +3350,16 @@ function drawStatePrompts(){
       var pulse=0.6+0.4*Math.sin(perfNow*0.006); ctx.globalAlpha=pulse;
       ctx.font="800 "+Math.max(24,Math.min(46,W*0.045))+"px 'Orbitron',sans-serif";
       ctx.fillStyle='#00ff88'; ctx.shadowColor='#00ff88'; ctx.shadowBlur=22;
-      ctx.fillText('▶ SNAP (SPACE)', W/2, H*0.80); ctx.globalAlpha=1; ctx.shadowBlur=0;
+      // touch: prompts sit above the stick/ACT band and name the on-screen buttons
+      ctx.fillText(TOUCH_UI?'▶ SNAP (ACT)':'▶ SNAP (SPACE)', W/2, H*(TOUCH_UI?0.60:0.80), W-24); ctx.globalAlpha=1; ctx.shadowBlur=0;
       ctx.font="13px 'Share Tech Mono',monospace"; ctx.fillStyle='#9fe';
-      ctx.fillText(G.playType==='run'?'HAND-OFF · run with the RB':'HOLD SPACE to charge throw · RELEASE to throw · E=cycle receiver · SPACE=jump-catch after ball', W/2, H*0.85);
+      ctx.fillText(G.playType==='run'?'HAND-OFF · run with the RB':(TOUCH_UI?'HOLD ACT to charge · release to throw':'HOLD SPACE to charge throw · RELEASE to throw · E=cycle receiver · SPACE=jump-catch after ball'), W/2, H*(TOUCH_UI?0.645:0.85), W-24);
     } else {
       ctx.font="800 "+Math.max(18,Math.min(32,W*0.03))+"px 'Orbitron',sans-serif";
       ctx.fillStyle=teamCol(CPU); ctx.shadowColor=teamCol(CPU); ctx.shadowBlur=16;
-      ctx.fillText(agentName(CPU)+' BALL — DEFENSE!', W/2, H*0.80); ctx.shadowBlur=0;
+      ctx.fillText(agentName(CPU)+' BALL — DEFENSE!', W/2, H*(TOUCH_UI?0.60:0.80), W-24); ctx.shadowBlur=0;
       ctx.font="13px 'Share Tech Mono',monospace"; ctx.fillStyle='#9fe';
-      ctx.fillText('move your defender (green ring) · E=switch · SPACE=dive tackle', W/2, H*0.85);
+      ctx.fillText(TOUCH_UI?'move the green-ring defender · ACT = dive tackle':'move your defender (green ring) · E=switch · SPACE=dive tackle', W/2, H*(TOUCH_UI?0.645:0.85), W-24);
     }
   }
   ctx.restore();
@@ -3460,7 +3506,7 @@ function drawSelect(){
     // the cursor card burns brighter and pulses so the pick reads at a glance
     var auraPulse=0.5+0.5*Math.sin(perfNow*0.005 + i*0.9);
     var auraR=Math.max(cw,ch)*0.95;
-    var ag2=ctx.createRadialGradient(x+cw/2,y+ch/2,auraR*0.15,x+cw/2,y+ch/2,auraR);
+    var ag2=safeRadial(ctx,x+cw/2,y+ch/2,auraR*0.15,x+cw/2,y+ch/2,auraR);
     ag2.addColorStop(0,hexA(a.color,(isSel?0.34:0.15)+(isSel?0.16:0.06)*auraPulse));
     ag2.addColorStop(1,hexA(a.color,0));
     ctx.fillStyle=ag2;
@@ -3541,14 +3587,18 @@ function drawSelect(){
   var pulse=0.6+0.4*Math.sin(perfNow*0.006); ctx.globalAlpha=pulse;
   ctx.font="800 "+Math.max(16,Math.min(26,W*0.024))+"px 'Orbitron',sans-serif";
   ctx.fillStyle='#00f0ff'; ctx.shadowColor='#00f0ff'; ctx.shadowBlur=16;
-  ctx.fillText('◀ A / D ▶  ·  SPACE / TAP CARD = '+(selPhase===0?'PICK TEAM':'KICK OFF'), W/2, promptY);
+  var promptTxt=(W<560?'TAP A CARD = ':'◀ A / D ▶  ·  SPACE / TAP CARD = ')+(selPhase===0?'PICK TEAM':'KICK OFF');
+  fitFont(promptTxt, W-24, 800, Math.max(13,Math.min(26,W*0.024)), "'Orbitron',sans-serif");
+  ctx.fillText(promptTxt, W/2, promptY);
   ctx.globalAlpha=1; ctx.shadowBlur=0;
 
   // ---- ACCESSORY PICKER — applies to the highlighted agent; cosmetic only ----
   var curAgent=AGENTS[selIdx], curAcc=accGet(curAgent.id);
   ctx.font="800 "+Math.max(9,Math.min(12,W*0.013))+"px 'Orbitron',sans-serif";
   ctx.fillStyle='#ffd24a'; ctx.shadowColor='#ffd24a'; ctx.shadowBlur=6;
-  ctx.fillText('ACCESSORY — '+curAgent.id+' · COSMETIC ONLY · NO STAT EFFECT · KEYS 1–6', W/2, promptY+27);
+  var accTxt=W<560?('ACCESSORY — '+curAgent.id+' · COSMETIC ONLY'):('ACCESSORY — '+curAgent.id+' · COSMETIC ONLY · NO STAT EFFECT · KEYS 1–6');
+  fitFont(accTxt, W-24, 800, Math.max(9,Math.min(12,W*0.013)), "'Orbitron',sans-serif");
+  ctx.fillText(accTxt, W/2, promptY+27);
   ctx.shadowBlur=0;
   accBtns.length=0;
   var aGap=6, aTotalW=Math.min(W*0.94, 576), aChipW=(aTotalW-aGap*(ACCESSORIES.length-1))/ACCESSORIES.length;
@@ -3562,11 +3612,20 @@ function drawSelect(){
     ctx.shadowColor=acOn?'#ffd24a':curAgent.color; ctx.shadowBlur=acOn?12:3;
     roundRect(acx,aY,aChipW,aChipH,8); ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
     ctx.fillStyle=acOn?'#ffd24a':'rgba(210,255,230,0.85)';
-    ctx.font="800 "+Math.max(8.5,aChipW*0.115)+"px 'Orbitron',sans-serif";
-    ctx.fillText((acd.glyph?acd.glyph+' ':'')+acd.label, acx+aChipW/2, aY+aChipH/2);
+    var chipTxt=(acd.glyph?acd.glyph+' ':'')+acd.label;
+    fitFont(chipTxt, aChipW-6, 800, Math.max(8.5,aChipW*0.115), "'Orbitron',sans-serif", 6.5);
+    ctx.fillText(chipTxt, acx+aChipW/2, aY+aChipH/2);
     ctx.restore();
   }
   ctx.restore();
+}
+/* Shrink a canvas label until it fits maxW (never below minPx). */
+function fitFont(txt, maxW, weight, px, fam, minPx){
+  minPx=minPx||8;
+  ctx.font=weight+" "+px+"px "+fam;
+  var w0=ctx.measureText(txt).width;
+  if(w0>maxW){ px=Math.max(minPx, px*maxW/w0); ctx.font=weight+" "+px.toFixed(1)+"px "+fam; }
+  return px;
 }
 function drawBadgePlaceholder(x,y,w,h,a){
   ctx.fillStyle=shade(a.color,-120); ctx.fillRect(x,y,w,h);
@@ -3993,6 +4052,7 @@ window.__football={
 
 })();
 </script>
+<script>window.DNA_TICKER_TOP=window.DNA_TICKER_TOP||190; /* compact presenter strip sits below the scoreboard on phones */</script>
 <script src="agent-dna-live.js"></script>
 </body>
 </html>

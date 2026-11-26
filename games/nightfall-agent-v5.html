@@ -57,7 +57,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#020a06;font-family:
 #brief-wren .who{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:#7de9ff;display:block;margin-bottom:2px;}
 /* crosshair + extract progress */
 #cross{position:fixed;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);z-index:21;pointer-events:none;display:none;}
-#cross span{position:absolute;background:rgba(210,255,235,.92);box-shadow:0 0 5px rgba(52,255,176,.9);}
+#cross span{position:absolute;background:rgba(210,255,235,.95);box-shadow:0 0 0 1px rgba(0,0,0,.85),0 0 5px rgba(52,255,176,.9);}
+/* static lens vignette: frames the view and lifts the HUD panels off busy walls */
+#frame-vig{position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 78% 74% at 50% 48%,rgba(0,0,0,0) 60%,rgba(0,6,4,.46) 100%),
+    linear-gradient(180deg,rgba(0,8,5,.34) 0%,rgba(0,8,5,0) 16%,rgba(0,8,5,0) 82%,rgba(0,8,5,.38) 100%);}
 #cross .t{left:12px;top:0;width:2px;height:8px;} #cross .b{left:12px;bottom:0;width:2px;height:8px;}
 #cross .l{left:0;top:12px;width:8px;height:2px;} #cross .r{right:0;top:12px;width:8px;height:2px;}
 #cross .dot{left:12px;top:12px;width:2px;height:2px;}
@@ -106,8 +110,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#020a06;font-family:
 #btn-scan.on,#btn-use.on{transform:scale(.94);}
 .tbtn .sub{font-size:8px;letter-spacing:1px;color:#ffcf5e;margin-top:2px;font-family:'Share Tech Mono',monospace;}
 /* ---------- Overlays ---------- */
-.overlay{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;flex-direction:column;
+.overlay{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:flex-start;flex-direction:column;
   background:radial-gradient(ellipse at 50% 32%,rgba(6,42,26,.92),rgba(1,6,4,.97));text-align:center;padding:22px;overflow-y:auto;}
+.overlay>:first-child{margin-top:auto;}   /* centred when it fits, scrollable from the top when it doesn't */
+.overlay>:last-child{margin-bottom:auto;}
 .overlay h1{font-family:'Orbitron',sans-serif;font-size:clamp(28px,8vw,50px);font-weight:900;letter-spacing:5px;color:#eafff3;
   text-shadow:0 0 26px rgba(52,255,176,.75),0 0 60px rgba(52,255,176,.3);}
 .overlay h1 .gold{color:#ffcf5e;text-shadow:0 0 26px rgba(255,190,60,.75);}
@@ -136,6 +142,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#020a06;font-family:
 .mcard{pointer-events:auto;cursor:pointer;width:236px;text-align:left;padding:16px 16px 14px;border-radius:10px;
   background:rgba(3,24,15,.82);border:1px solid rgba(52,255,176,.4);box-shadow:0 0 18px rgba(20,255,170,.10);}
 .mcard:active{filter:brightness(1.3);}
+.mcard:focus-visible,.mcard.kb{outline:2px solid #ffcf5e;outline-offset:2px;}
+.kbhint{margin-top:10px;font-size:10.5px;letter-spacing:2px;color:#5f9c7d;}
+.kbhint b{color:#ffcf5e;font-family:'Orbitron',sans-serif;font-size:10px;}
+@media (pointer:coarse){ .kbhint{display:none;} }
 .mcard.locked{opacity:.42;cursor:default;filter:grayscale(.6);}
 .mcard .mnum{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#ffcf5e;}
 .mcard .mname{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:900;letter-spacing:2px;color:#eafff3;margin-top:5px;}
@@ -146,6 +156,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#020a06;font-family:
 .diffrow .lab{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#5f9c7d;}
 .dbtn{pointer-events:auto;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;
   color:#7de9bb;background:rgba(6,32,20,.7);border:1px solid rgba(52,255,176,.45);border-radius:6px;padding:10px 18px;touch-action:manipulation;}
+@media (pointer:coarse){ .dbtn{min-height:44px;} }
 .dbtn.sel{color:#241a02;background:linear-gradient(180deg,#ffe08a,#f5a623);border-color:#ffcf5e;box-shadow:0 0 16px rgba(255,180,0,.4);}
 .objbox{max-width:560px;width:100%;margin-top:16px;text-align:left;background:rgba(3,24,15,.7);border:1px solid rgba(52,255,176,.3);border-radius:8px;padding:14px 18px;}
 .objbox .oh{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#ffcf5e;margin-bottom:6px;}
@@ -155,18 +166,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#020a06;font-family:
 .objbox .oi.sec::before{content:'▸ ';color:#7de9bb;}
 @media (max-height:500px){ .overlay .brief{display:none;} .controls{line-height:1.7;margin-top:8px;} }
 @media (max-width:600px){
-  #objective-wrap{top:calc(58px + env(safe-area-inset-top));left:10px;transform:none;text-align:left;max-width:56vw;padding:6px 8px;}
+  #objective-wrap{top:calc(62px + env(safe-area-inset-top));left:10px;transform:none;text-align:left;max-width:calc(100vw - 170px);padding:6px 8px;}
   #objective{font-size:10px;letter-spacing:1px;white-space:normal;line-height:1.5;}
   #detected{font-size:9px;letter-spacing:2px;}
   #alarm-line{font-size:9px;letter-spacing:2px;}
   #objlist{display:none;}
   #timer-wrap{font-size:11px;padding:6px 8px;}
-  #minimap{width:112px;height:82px;}
+  #minimap{width:112px!important;height:auto!important;}
   #chips-line{font-size:9px;margin-top:3px;}
   #map-wrap{padding:4px;}
   #health-wrap{width:148px;bottom:calc(118px + env(safe-area-inset-bottom));}
-  #ammo-wrap{bottom:calc(212px + env(safe-area-inset-bottom));min-width:104px;padding:6px 10px;}
+  /* phones: the viewmodel and the action buttons own the lower right, so the
+     ammo readout tucks under the minimap (top set from JS once the map is sized) */
+  #ammo-wrap{top:var(--ammo-top,150px);bottom:auto;min-width:104px;padding:5px 10px;}
   #ammo-big{font-size:25px;}
+  /* handler comms move up into the ceiling band instead of covering the sight line */
+  #comms{top:calc(118px + env(safe-area-inset-top));bottom:auto;left:10px;max-width:calc(100vw - 170px);padding:6px 10px 7px;}
+  #comms-text{font-size:11.5px;line-height:1.4;}
   #ammo-big .res{font-size:14px;}
   .mcard{width:88vw;}
 }
@@ -180,6 +196,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#020a06;font-family:
 <div id="dmgdir"><div class="arc"></div></div>
 
 <div id="hud">
+  <div id="frame-vig"></div>
   <div id="timer-wrap" class="panel"><span class="lab" id="timer-lab">MISSION TIME</span><span id="timer">00:00</span></div>
   <div id="objective-wrap" class="panel">
     <div id="objective">—</div>
@@ -249,6 +266,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#020a06;font-family:
     <button id="btn-deploy" class="bigbtn">▶ DEPLOY</button>
     <button id="btn-brief-back" class="bigbtn ghost">← MISSIONS</button>
   </div>
+  <div class="kbhint"><b>ENTER</b> deploy · <b>ESC</b> back to missions</div>
 </div>
 
 <div id="end-screen" class="overlay">
@@ -1755,7 +1773,8 @@ if (typeof document !== 'undefined') (function () {
   const ctx = cv.getContext('2d', { alpha: false });
   const COLW = 2;
   let BW = 0, BH = 0, horizon = 0, projDist = 0;
-  const FOV = 1.15;
+  let FOV = 1.15;          // horizontal; narrowed on portrait screens by resize()
+  const BASE_FOV = 1.15;
 
   function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
   function rngSeed(seed) { let s = seed >>> 0; return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
@@ -2612,10 +2631,19 @@ if (typeof document !== 'undefined') (function () {
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    BW = Math.max(240, Math.min(1100, Math.floor(window.innerWidth * dpr)));
-    BH = Math.max(240, Math.min(1100, Math.floor(window.innerHeight * dpr)));
+    // one shared scale for both axes: capping each axis separately stretched the
+    // view (1.5x tall on phones, squashed on wide desktops)
+    const w = window.innerWidth * dpr, h = window.innerHeight * dpr;
+    const k = Math.min(1, 1100 / Math.max(w, h));
+    BW = Math.max(240, Math.floor(w * k));
+    BH = Math.max(240, Math.floor(h * k));
     cv.width = BW; cv.height = BH;
-    projDist = (BW / COLW / 2) / Math.tan(FOV / 2) * COLW;
+    projDist = (BW / COLW / 2) / Math.tan(BASE_FOV / 2) * COLW;
+    // portrait: keep walls and agents a readable height instead of a sliver
+    // between a huge floor and ceiling; FOV follows so rays stay consistent
+    projDist = Math.max(projDist, BH * 0.62);
+    FOV = 2 * Math.atan((BW / 2) / projDist);
+    if (typeof placeAmmo === 'function') placeAmmo();
   }
   window.addEventListener('resize', resize);
   resize();
@@ -2651,6 +2679,17 @@ if (typeof document !== 'undefined') (function () {
       o.drawImage(img, -wPx / 2, -hPx / 2, wPx, hPx);
     }
     o.setTransform(1, 0, 0, 1, 0, 0);
+    if (deathT < 0.5) {
+      // cool top-down rim light, painted only onto the figure, so heads and
+      // shoulders separate from dark walls (cheap: one gradient fill per stack)
+      const topY = baseY - layers * step - hPx * 0.35;
+      const rim = o.createLinearGradient(0, topY, 0, topY + (baseY - topY) * 0.6);
+      rim.addColorStop(0, 'rgba(200,245,255,' + (0.34 * (1 - deathT * 2)).toFixed(3) + ')');
+      rim.addColorStop(1, 'rgba(200,245,255,0)');
+      o.globalCompositeOperation = 'source-atop';
+      o.fillStyle = rim; o.fillRect(0, 0, c.width, c.height);
+      o.globalCompositeOperation = 'source-over';
+    }
     return c;
   }
   /* Compose canvas world footprint: 260/300 wide, 360/300 tall. */
@@ -2881,6 +2920,11 @@ if (typeof document !== 'undefined') (function () {
         const slot = stackSlots[slotIdx++ % stackSlots.length];
         const relAng = NF.angDiff(o.ang, p.ang) + Math.PI / 2;
         const img = composeStack(slot, set, phase, isG && o.flashT > 0, relAng, isG ? o.deathT : 0, isG ? o.id : 99, o.moving, o.walkPh, layers, clsH);
+        if (ty2 < zbuf[cMid]) { // grounding shadow so figures don't float on the floor
+          ctx.save(); ctx.globalAlpha = 0.42; ctx.fillStyle = '#000';
+          ctx.beginPath(); ctx.ellipse(sx, groundY, 0.24 * scale, 0.06 * scale, 0, 0, 7); ctx.fill();
+          ctx.restore();
+        }
         drawSprite(img, sx, groundY + ghPx * (1 - STACK_FEET), gwPx, ghPx, ty2);
       } else if (it.kind === 'camera') {
         const bobY = groundY - 0.60 * scale;
@@ -3121,9 +3165,14 @@ if (typeof document !== 'undefined') (function () {
     const dipTarget = st.reloading ? 1 : 0;
     view.reloadDip += (dipTarget - view.reloadDip) * 0.14;
 
-    const gw = BW * 0.52, gh = gw * (340 / 520);
-    const bx = BW * 0.62 + Math.sin(view.bobPh) * BW * 0.006;
-    const by = BH - gh * 1.45 + Math.abs(Math.cos(view.bobPh)) * BH * 0.008
+    // anchored low-right like a held sidearm instead of floating mid-screen; on
+    // touch screens it rides just above the FIRE / RLD / WPN cluster
+    const touchUI = touchEl && touchEl.style.display === 'block';
+    const portrait = BH > BW * 1.15;
+    const gw = portrait ? Math.min(BW * 0.66, BH * 0.36) : Math.min(BW * 0.46, BH * 0.78), gh = gw * (340 / 520);
+    const lift = touchUI ? BH * (portrait ? 0.20 : 0.16) : 0;
+    const bx = BW * (portrait ? 0.60 : 0.64) + Math.sin(view.bobPh) * BW * 0.006;
+    const by = BH - gh * 0.40 - lift + Math.abs(Math.cos(view.bobPh)) * BH * 0.008
       + view.recoil * BH * 0.03 + view.reloadDip * BH * 0.11;
     const rot = view.reloadDip * 0.38 + view.recoil * 0.05;
     function layer(img, par) {
@@ -3157,6 +3206,13 @@ if (typeof document !== 'undefined') (function () {
     dmgEl = el('dmgdir'), extWrap = el('extract-wrap'), extBar = el('extract-bar'), extLab = el('extract-lab'),
     commEl = el('comms'), commTextEl = el('comms-text'), scanEl = el('scan-line'), floorEl = el('floor-line');
   const mmCanvas = el('minimap');
+  function placeAmmo() {
+    const mw = document.getElementById('map-wrap');
+    if (!mw || window.innerWidth > 600) return;
+    const r = mw.getBoundingClientRect();
+    if (r.height > 0) document.documentElement.style.setProperty('--ammo-top', Math.round(r.bottom + 8) + 'px');
+  }
+  setInterval(placeAmmo, 700);
   const mm = mmCanvas.getContext('2d');
   let mmStatic = null, mmCell = 6, mmW = 0, mmH = 0, mmFloor = -1;
   function buildMinimap() {
@@ -3405,6 +3461,7 @@ if (typeof document !== 'undefined') (function () {
   }
 
   window.addEventListener('keydown', function (e) {
+    if (!running && menuKey(e)) return;
     keys[e.code] = true;
     if (e.code === 'KeyR') wantReload = true;
     if (e.code === 'Digit1') weaponReq = 'pistol';
@@ -3547,6 +3604,29 @@ if (typeof document !== 'undefined') (function () {
     el('btn-voice').addEventListener('click', function () { save.settings.voice = !save.settings.voice; NF.storeSave(window.localStorage, save); renderSettings(); });
     el('btn-comms').addEventListener('click', function () { save.settings.comms = !save.settings.comms; NF.storeSave(window.localStorage, save); renderSettings(); });
   }
+  // Menus were mouse/touch-only (cards had no key path), so keyboard players and
+  // QA automation stalled on the mission list. Enter/Space now walks the flow.
+  function menuKey(e) {
+    const go = e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Space';
+    const isOpen = function (x) { return x && x.style.display === 'flex'; };
+    if (isOpen(briefEl)) {
+      if (go && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) { e.preventDefault(); startGame(briefMission); return true; }
+      if (e.code === 'Escape') { e.preventDefault(); briefEl.style.display = 'none'; renderSelect(); selectEl.style.display = 'flex'; return true; }
+      return false;
+    }
+    if (isOpen(selectEl) || selectEl.style.display === '') {
+      if (!go || selectEl.style.display === 'none') return false;
+      const a = document.activeElement;
+      if (a && a.tagName === 'BUTTON') return false;  // let focused buttons click normally
+      e.preventDefault();
+      const mi = (a && a.classList && a.classList.contains('mcard')) ? parseInt(a.getAttribute('data-mi'), 10)
+        : Math.max(0, Math.min(NF.MISSIONS.length - 1, save.unlocked - 1));
+      if (mi >= save.unlocked) return true;
+      briefMission = mi; selectEl.style.display = 'none'; renderBrief(mi); briefEl.style.display = 'flex';
+      return true;
+    }
+    return false;
+  }
   function renderSelect() {
     const wrap = el('mission-cards');
     let h = '';
@@ -3554,7 +3634,8 @@ if (typeof document !== 'undefined') (function () {
       const locked = i >= save.unlocked;
       const recs = NF.DIFF_ORDER.map(function (dk) { return { dk: dk, rec: save.done[i + ':' + dk] }; }).filter(function (r) { return !!r.rec; });
       const mc = missionCounts(m);
-      h += '<div class="mcard' + (locked ? ' locked' : '') + '" data-mi="' + i + '">';
+      const nextUp = !locked && i === Math.min(NF.MISSIONS.length - 1, save.unlocked - 1);
+      h += '<div class="mcard' + (locked ? ' locked' : '') + (nextUp ? ' kb' : '') + '" data-mi="' + i + '"' + (locked ? '' : ' tabindex="0" role="button"') + '>';
       h += '<div class="mnum">MISSION 0' + (i + 1) + (locked ? ' · 🔒 LOCKED' : '') + '</div>';
       h += '<div class="mname">' + m.name + '</div>';
       h += '<div class="mcode">' + m.code + '</div>';
@@ -3569,6 +3650,11 @@ if (typeof document !== 'undefined') (function () {
       h += '</div>';
     });
     wrap.innerHTML = h;
+    if (!el('kbhint-sel')) {
+      const kh = document.createElement('div'); kh.className = 'kbhint'; kh.id = 'kbhint-sel';
+      kh.innerHTML = '<b>ENTER</b> brief the highlighted mission · <b>TAB</b> pick another';
+      wrap.parentNode.insertBefore(kh, wrap.nextSibling);
+    }
     const cards = wrap.querySelectorAll('.mcard');
     for (let i = 0; i < cards.length; i++) cards[i].addEventListener('click', function () {
       const mi = parseInt(this.getAttribute('data-mi'), 10);
@@ -3611,6 +3697,7 @@ if (typeof document !== 'undefined') (function () {
     touchEl.style.display = (navigator.maxTouchPoints > 0) ? 'block' : 'none';
     refreshWeaponBtn();
     running = true; lastTs = performance.now();
+    setTimeout(placeAmmo, 0);
   }
 
   function endGame(won) {
