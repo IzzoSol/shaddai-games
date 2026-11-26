@@ -322,8 +322,8 @@ const VILLAIN_KEY = 'ADRAGONA';
 // Playable heroes = the 7 council clones (order shown in the vertical selector).
 const HERO_ORDER = ['ZEROX','TURTLE','SHADDAI','NEXUS','ORACLE','QUILL','PIKADON'];
 // XTO portrait/thumbnail asset resolvers (used by selector + dialogue).
-const artPortrait = k => `../assets/games/xto/chars/${(AGENT[k]&&AGENT[k].art)||k}.png`;
-const artThumb    = k => `../assets/games/xto/thumbs/${(AGENT[k]&&AGENT[k].art)||k}.png`;
+const artPortrait = k => `../public/assets/games/xto/chars/${(AGENT[k]&&AGENT[k].art)||k}.png`;
+const artThumb    = k => `../public/assets/games/xto/thumbs/${(AGENT[k]&&AGENT[k].art)||k}.png`;
 // CHAR = per-hero combat template (all heroes reuse the two rigged bodies we ship).
 const BODY = { ZEROX:'../assets/characters/XEROX.glb', TURTLE:'../assets/characters/TURTLE.glb' };
 const CHAR = {};
@@ -1462,7 +1462,7 @@ function endGame(win) {
   document.getElementById('legend').classList.add('hidden');
   document.getElementById('exitBtn').style.display = 'block';
   const over = document.getElementById('overScreen');
-  over.style.backgroundImage = `url('../assets/games/xto/scenes/${win ? 'victory' : 'intro'}.png')`;
+  over.style.backgroundImage = `url('../public/assets/games/xto/scenes/${win ? 'victory' : 'intro'}.png')`;
   over.classList.add('cineBg');
   const v = document.getElementById('goVerdict');
   v.textContent = win ? 'CORE FREED' : 'YOU FELL';
@@ -1657,7 +1657,7 @@ function renderIntroPage() {
 function showIntro() {
   document.getElementById('titleScreen').classList.add('hidden');
   const intro = document.getElementById('introScreen');
-  intro.style.backgroundImage = `url('../assets/games/xto/scenes/intro.png')`;
+  intro.style.backgroundImage = `url('../public/assets/games/xto/scenes/intro.png')`;
   intro.classList.add('cineBg');
   introPage = 0; renderIntroPage();
   intro.classList.remove('hidden');

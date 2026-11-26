@@ -129,17 +129,40 @@
   }
 
   /* ---------- presenter ticker ---------- */
+  /* Desktop: bottom-left card (unchanged). Touch / narrow screens: a compact
+     2-line strip pinned top-left under the game HUD (the right-hand 86px column
+     stays clear for CAM / PAUSE style buttons) that fades out a
+     few seconds after each line, so it never sits on the joystick or the
+     THROW / JUMP / action buttons at the bottom of the screen. */
+  var TICKER_DESKTOP='position:fixed;left:10px;bottom:10px;z-index:80;max-width:min(430px,92vw);background:rgba(0,0,0,.82);border:1px solid rgba(192,132,252,.45);border-left:4px solid #c084fc;padding:8px 12px;font-family:"Share Tech Mono",monospace;font-size:12px;color:#d7e8dc;max-height:118px;overflow:hidden;pointer-events:none;';
+  var TICKER_COMPACT='position:fixed;left:10px;top:calc(env(safe-area-inset-top,0px) + '+(window.DNA_TICKER_TOP||128)+'px);bottom:auto;z-index:80;width:min(300px,calc(100vw - 96px));max-width:none;background:rgba(0,0,0,.72);border:1px solid rgba(192,132,252,.35);border-left:3px solid #c084fc;border-radius:6px;padding:4px 8px;font-family:"Share Tech Mono",monospace;font-size:10.5px;line-height:1.3;color:#d7e8dc;max-height:30px;overflow:hidden;pointer-events:none;transition:opacity .5s ease;';
+  var tickerHideT=null;
+  function tickerCompact(){
+    try{ return (window.matchMedia&&matchMedia('(pointer:coarse)').matches) || (window.innerWidth||1024)<=760; }catch(e){ return false; }
+  }
+  function styleTicker(d){
+    var c=tickerCompact(); d.style.cssText=c?TICKER_COMPACT:TICKER_DESKTOP; d.setAttribute('data-compact',c?'1':'0');
+    if(c){ while(d.children.length>2) d.removeChild(d.firstChild); }
+  }
   function ensureTicker(){
     if(document.getElementById('dnaTicker')) return document.getElementById('dnaTicker');
     var d=document.createElement('div'); d.id='dnaTicker';
-    d.style.cssText='position:fixed;left:10px;bottom:10px;z-index:80;max-width:min(430px,92vw);background:rgba(0,0,0,.82);border:1px solid rgba(192,132,252,.45);border-left:4px solid #c084fc;padding:8px 12px;font-family:"Share Tech Mono",monospace;font-size:12px;color:#d7e8dc;max-height:118px;overflow:hidden;pointer-events:none;';
+    styleTicker(d);
+    window.addEventListener('resize',function(){ styleTicker(d); });
     document.body.appendChild(d); return d;
   }
   var WHO={vex:['VEX','#00f0ff'],mira:['MIRA','#c084fc'],kane:['KANE','#f5c542']};
   function say(who, text){
     var t=ensureTicker(); var p=document.createElement('div');
     var w=WHO[who]||WHO.vex; p.innerHTML='<b style="color:'+w[1]+'">'+w[0]+':</b> '+text;
-    t.appendChild(p); while(t.children.length>4) t.removeChild(t.firstChild);
+    t.appendChild(p);
+    var compact=t.getAttribute('data-compact')==='1';
+    while(t.children.length>(compact?1:4)) t.removeChild(t.firstChild);
+    if(compact){
+      t.style.opacity='1';
+      if(tickerHideT) clearTimeout(tickerHideT);
+      tickerHideT=setTimeout(function(){ t.style.opacity='0'; }, 5200);
+    }
   }
   function deskIntro(gameLabel, youName, oppName, seed){
     var y=get(youName), o=get(oppName);
@@ -155,7 +178,7 @@
     var cs=document.createElement('div');
     cs.style.cssText='position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:Orbitron,sans-serif;padding:16px;cursor:pointer;';
     function card(n,d,c){ return '<div style="min-width:230px;max-width:300px;background:#050505;border:2px solid '+c+';padding:14px;color:#d7e8dc;font-family:\'Share Tech Mono\',monospace">'
-      +'<img src="../assets/agents/'+n+'-portrait.png" onerror="this.style.display=\'none\'" style="width:84px;height:84px;object-fit:cover"/>'
+      +'<img src="../public/assets/agents/'+n+'-portrait.png" onerror="this.style.display=\'none\'" style="width:84px;height:84px;object-fit:cover"/>'
       +'<div style="font-family:Orbitron,sans-serif;font-size:19px;color:#fff;margin:6px 0">'+n+'</div>'
       +'<div style="font-size:11px;color:'+c+'">'+(d.providerLabel||'')+' · '+(d.archetypeName||'')+' · OVR '+d.overall+'</div>'
       +'<div style="font-size:12px;margin-top:6px">▲ '+d.bestStat+' '+d.stats[d.bestStat]+' &nbsp; ▼ <span style="color:#ff5a7a">'+d.worstStat+' '+d.stats[d.worstStat]+'</span></div>'

@@ -1541,20 +1541,25 @@ function drawCourt(){
 
   // 1) polished floor base — dark surface, brighter at center, darker toward edges
   var floorBase=ctx.createLinearGradient(0,T,0,B);
-  floorBase.addColorStop(0,'#140120'); floorBase.addColorStop(0.5,'#1c0330'); floorBase.addColorStop(1,'#0c0016');
+  // neutral cool-slate floor (readability pass): no team hue under the players
+  floorBase.addColorStop(0,'#0c111b'); floorBase.addColorStop(0.5,'#131b29'); floorBase.addColorStop(1,'#080c14');
   ctx.fillStyle=floorBase; ctx.fillRect(L,T,cw,ch);
   // radial center-court glow (magenta) so players/balls pop against a bright middle
   var rad=ctx.createRadialGradient(mx,midY,0,mx,midY,Math.max(cw,ch)*0.62);
-  rad.addColorStop(0,'rgba(255,43,214,0.22)'); rad.addColorStop(0.5,'rgba(255,43,214,0.07)'); rad.addColorStop(1,'rgba(255,43,214,0)');
+  rad.addColorStop(0,'rgba(170,200,235,0.13)'); rad.addColorStop(0.5,'rgba(170,200,235,0.04)'); rad.addColorStop(1,'rgba(170,200,235,0)');
   ctx.fillStyle=rad; ctx.fillRect(L,T,cw,ch);
 
-  // 2) team-tinted halves (agent colors, subtle)
-  var gA=ctx.createLinearGradient(L,0,mx,0);
-  gA.addColorStop(0,rgba(pc,0.20)); gA.addColorStop(1,rgba(pc,0.04));
-  ctx.fillStyle=gA; ctx.fillRect(L,T,mx-L,ch);
-  var gB=ctx.createLinearGradient(mx,0,R,0);
-  gB.addColorStop(0,rgba(cc,0.04)); gB.addColorStop(1,rgba(cc,0.20));
-  ctx.fillStyle=gB; ctx.fillRect(mx,T,R-mx,ch);
+  // 2) team identity lives on the BASELINES only (readability pass).
+  //    The play surface under the players stays neutral so a team colour
+  //    can never blend into its own half; a 6px stripe + soft fade marks each end.
+  var gA=ctx.createLinearGradient(L,0,L+cw*0.10,0);
+  gA.addColorStop(0,rgba(pc,0.16)); gA.addColorStop(1,rgba(pc,0));
+  ctx.fillStyle=gA; ctx.fillRect(L,T,cw*0.10,ch);
+  var gB=ctx.createLinearGradient(R,0,R-cw*0.10,0);
+  gB.addColorStop(0,rgba(cc,0.16)); gB.addColorStop(1,rgba(cc,0));
+  ctx.fillStyle=gB; ctx.fillRect(R-cw*0.10,T,cw*0.10,ch);
+  ctx.fillStyle=rgba(pc,0.85); ctx.fillRect(L,T,6,ch);
+  ctx.fillStyle=rgba(cc,0.85); ctx.fillRect(R-6,T,6,ch);
 
   // 3) tile / panel grid — cyan hairlines, brighter near center via a soft overlay pass
   ctx.strokeStyle='rgba(0,240,255,0.10)'; ctx.lineWidth=1;
@@ -1568,7 +1573,7 @@ function drawCourt(){
   ctx.globalCompositeOperation='lighter';
   var sheen=ctx.createLinearGradient(L,T,R*0.55,B);
   sheen.addColorStop(0,'rgba(255,255,255,0.045)');
-  sheen.addColorStop(0.35,'rgba(255,120,230,0.02)');
+  sheen.addColorStop(0.35,'rgba(200,220,255,0.02)');
   sheen.addColorStop(0.6,'rgba(255,255,255,0)');
   ctx.fillStyle=sheen; ctx.fillRect(L,T,cw,ch);
   ctx.restore();
@@ -1673,6 +1678,75 @@ function drawAccessory(p,u,faceSign){
   }
   ctx.restore();
 }
+/* ===== READABILITY PASS: cached head silhouettes (original shapes) =====
+   Each council agent gets a distinct head outline so teams of the same hue
+   still read at ~24px on a phone. Sprites are rendered once per
+   (agent, size bucket, flash) into an offscreen canvas at device resolution,
+   facing right; drawPlayer mirrors with ctx.scale(faceSign,1). */
+var OUTLINE_COL='rgba(4,6,12,0.92)';
+var HEAD_CACHE={};
+function agentKeyForColor(col){
+  for(var i=0;i<AGENTS.length;i++) if(AGENTS[i].color===col) return AGENTS[i].key;
+  return 'GENERIC';
+}
+function headShapePath(g,key,r){
+  // path in head-local units: centre (0,0), radius r, facing +x
+  g.beginPath();
+  switch(key){
+    case 'NEXUS':   // squared visor helmet
+      g.moveTo(-r*0.95,-r*0.55); g.quadraticCurveTo(-r*0.95,-r*1.05,-r*0.45,-r*1.05);
+      g.lineTo(r*0.55,-r*1.05); g.quadraticCurveTo(r*1.0,-r*1.05,r*1.0,-r*0.5);
+      g.lineTo(r*1.0,r*0.55); g.quadraticCurveTo(r*1.0,r*0.95,r*0.5,r*0.95);
+      g.lineTo(-r*0.5,r*0.95); g.quadraticCurveTo(-r*0.95,r*0.95,-r*0.95,r*0.5); g.closePath(); break;
+    case 'ORACLE':  // pointed hood, tip swept back
+      g.moveTo(-r*0.55,-r*1.75); g.quadraticCurveTo(r*0.55,-r*1.25,r*0.95,-r*0.15);
+      g.quadraticCurveTo(r*1.05,r*0.95,0,r*0.98); g.quadraticCurveTo(-r*1.05,r*0.9,-r*0.95,-r*0.1);
+      g.quadraticCurveTo(-r*0.95,-r*0.9,-r*0.55,-r*1.75); g.closePath(); break;
+    case 'ZEROX':   // round head + long swept-back blade fin
+      g.arc(0,0,r*0.92,0,6.283);
+      g.moveTo(r*0.25,-r*0.85); g.lineTo(-r*1.75,-r*1.15); g.lineTo(-r*0.85,-r*0.2); g.closePath(); break;
+    case 'TURTLE':  // wide low shell dome
+      g.ellipse(0,r*0.05,r*1.2,r*0.85,0,0,6.283);
+      g.moveTo(-r*1.25,r*0.05); g.lineTo(-r*1.45,r*0.25); g.lineTo(-r*1.05,r*0.35); g.closePath(); break;
+    case 'QUILL':   // round head + tall single plume at the back
+      g.arc(0,0,r*0.9,0,6.283);
+      g.moveTo(-r*0.35,-r*0.75); g.quadraticCurveTo(-r*0.9,-r*2.2,-r*0.05,-r*2.35);
+      g.quadraticCurveTo(-r*0.25,-r*1.5,r*0.25,-r*0.85); g.closePath(); break;
+    case 'PIKADON': // jaw-guard helm with two forward horns
+      g.arc(0,0,r*0.92,0,6.283);
+      g.moveTo(-r*0.55,-r*0.65); g.lineTo(-r*0.85,-r*1.65); g.lineTo(-r*0.1,-r*0.88); g.closePath();
+      g.moveTo(r*0.25,-r*0.85); g.lineTo(r*0.55,-r*1.75); g.lineTo(r*0.8,-r*0.5); g.closePath(); break;
+    case 'SHADDAI': // round head + three-point sun crest
+      g.arc(0,0,r*0.92,0,6.283);
+      g.moveTo(-r*0.75,-r*0.5); g.lineTo(-r*0.8,-r*1.45); g.lineTo(-r*0.3,-r*0.85);
+      g.lineTo(0,-r*1.85); g.lineTo(r*0.3,-r*0.85); g.lineTo(r*0.8,-r*1.45); g.lineTo(r*0.75,-r*0.5); g.closePath(); break;
+    default:
+      g.arc(0,0,r,0,6.283);
+  }
+}
+function headSprite(key,col,u,flash){
+  var bucket=Math.max(4,Math.round(u*2)/2);             // half-px buckets keep the cache small
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  var id=key+'|'+col+'|'+bucket+'|'+(flash?1:0)+'|'+dpr;
+  var hs=HEAD_CACHE[id]; if(hs) return hs;
+  var r=bucket*0.62, pad=Math.max(3,bucket*0.3);
+  var w=Math.ceil(r*2*1.6+pad*2), h=Math.ceil(r*2*1.6+r*1.2+pad*2);   // room for crests above
+  var c=document.createElement('canvas'); c.width=Math.ceil(w*dpr); c.height=Math.ceil(h*dpr);
+  var g=c.getContext('2d'); g.scale(dpr,dpr);
+  var ox=w/2, oy=h-(r*1.6+pad);                         // head centre inside the sprite
+  g.translate(ox,oy); g.lineJoin='round';
+  headShapePath(g,key,r);
+  g.fillStyle=flash?'#ffffff':lighten(col,0.72); g.fill();
+  g.strokeStyle=OUTLINE_COL; g.lineWidth=Math.max(1.6,bucket*0.2); g.stroke();
+  // team-colour inner rim so the head still carries the jersey hue
+  g.strokeStyle=flash?'#ffffff':col; g.lineWidth=Math.max(0.8,bucket*0.07); g.stroke();
+  // visor toward facing (+x)
+  g.fillStyle=flash?'#888':tint(col,0.35);
+  g.beginPath(); g.ellipse(r*0.32,0,r*0.45,r*0.26,0,0,6.283); g.fill();
+  hs={c:c,w:w,h:h,ox:ox,oy:oy};
+  var keys=Object.keys(HEAD_CACHE); if(keys.length>400){ HEAD_CACHE={}; }
+  HEAD_CACHE[id]=hs; return hs;
+}
 function drawPlayer(p){
   var X=sx(p.x);
   var footY=sy(p.y);
@@ -1735,59 +1809,61 @@ function drawPlayer(p){
   var glowCol = p.color;
   var walk = Math.sin(p.anim*2.0);
 
-  // legs
-  ctx.strokeStyle=bodyDark; ctx.lineWidth=u*0.5; ctx.lineCap='round';
+  var olW = Math.max(2, u*0.22);      // dark silhouette rim width (readability pass)
+  // legs: dark rim pass, then colour pass
+  ctx.lineCap='round';
   ctx.beginPath();
   ctx.moveTo(-u*0.35, -u*1.05); ctx.lineTo(-u*0.35 + walk*u*0.3, 0);
   ctx.moveTo( u*0.35, -u*1.05); ctx.lineTo( u*0.35 - walk*u*0.3, 0);
-  ctx.stroke();
+  ctx.strokeStyle=OUTLINE_COL; ctx.lineWidth=u*0.5+olW; ctx.stroke();
+  ctx.strokeStyle=bodyDark; ctx.lineWidth=u*0.5; ctx.stroke();
 
   // accessory: cape hangs BEHIND the torso
   drawCape(p, u, faceSign);
 
   // torso (jersey)
-  ctx.shadowColor=glowCol; ctx.shadowBlur=isActive?16:8;
+  // only the controlled player keeps a live blur; everyone else gets a crisp dark rim (cheaper on phones)
+  if(isActive){ ctx.shadowColor=glowCol; ctx.shadowBlur=14; }
   ctx.fillStyle=bodyCol;
   roundRect(-u*0.85, -u*2.55, u*1.7, u*1.6, u*0.45); ctx.fill();
   ctx.shadowBlur=0;
+  ctx.strokeStyle=OUTLINE_COL; ctx.lineWidth=olW; ctx.stroke();
   // jersey side shade
   ctx.globalAlpha=iframeFlick*0.30; ctx.fillStyle='#000';
   roundRect(-u*0.85, -u*1.55, u*1.7, u*0.55, u*0.3); ctx.fill();
   ctx.globalAlpha=iframeFlick;
 
   // arms (throw wind-up / follow-through)
-  ctx.strokeStyle=bodyDark; ctx.lineWidth=u*0.42; ctx.lineCap='round';
+  ctx.lineCap='round';
   var shoulderY=-u*2.2;
+  var armStroke=function(){ ctx.strokeStyle=OUTLINE_COL; ctx.lineWidth=u*0.42+olW; ctx.stroke(); ctx.strokeStyle=bodyDark; ctx.lineWidth=u*0.42; ctx.stroke(); };
   if(p.throwAnim>0){
     // throwing arm thrust forward
     ctx.beginPath();
     ctx.moveTo(0,shoulderY);
     ctx.lineTo(faceSign*u*1.5, shoulderY - u*0.2);
-    ctx.stroke();
+    armStroke();
   } else if(p.charging || p.hasBall){
     // ball-side arm cocked back/up
     ctx.beginPath();
     ctx.moveTo(0,shoulderY);
     ctx.lineTo(-faceSign*u*0.9, shoulderY - u*0.9);
-    ctx.stroke();
+    armStroke();
     // front guard arm
-    ctx.beginPath(); ctx.moveTo(0,shoulderY); ctx.lineTo(faceSign*u*0.8, shoulderY+u*0.2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,shoulderY); ctx.lineTo(faceSign*u*0.8, shoulderY+u*0.2); armStroke();
   } else {
     // swinging arms while moving
     ctx.beginPath();
     ctx.moveTo(0,shoulderY); ctx.lineTo(-u*0.75, shoulderY+u*0.5 + walk*u*0.3);
     ctx.moveTo(0,shoulderY); ctx.lineTo( u*0.75, shoulderY+u*0.5 - walk*u*0.3);
-    ctx.stroke();
+    armStroke();
   }
 
-  // head
-  ctx.shadowColor=glowCol; ctx.shadowBlur=6;
-  ctx.fillStyle = flash ? '#ffffff' : lighten(p.color,0.72);
-  ctx.beginPath(); ctx.arc(0,-u*3.0,u*0.62,0,6.283); ctx.fill();
-  ctx.shadowBlur=0;
-  // visor / eye toward facing
-  ctx.fillStyle=flash?'#888':tint(p.color,0.35);
-  ctx.beginPath(); ctx.ellipse(faceSign*u*0.2,-u*3.0,u*0.28,u*0.16,0,0,6.283); ctx.fill();
+  // head: per-agent silhouette from a cached offscreen sprite (no per-frame paths or blur)
+  var hs=headSprite((p.agent&&p.agent.key)||agentKeyForColor(p.color), p.color, u, flash);
+  ctx.save(); ctx.scale(faceSign,1);
+  ctx.drawImage(hs.c, -hs.ox, -u*3.0-hs.oy, hs.w, hs.h);
+  ctx.restore();
 
   // accessory: above-head overlays (halo / crown / horns / orbiting stars)
   drawAccessory(p, u, faceSign);
